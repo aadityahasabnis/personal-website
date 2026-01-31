@@ -6,6 +6,7 @@ import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ContentCard } from '@/components/content/ContentCard';
 import { NotesGridSkeleton } from '@/components/feedback/Skeleton';
+import type { INote } from '@/interfaces';
 
 export const metadata: Metadata = {
   title: 'Notes',
@@ -18,6 +19,26 @@ export const metadata: Metadata = {
 
 // ISR: Revalidate every 30 minutes
 export const revalidate = 1800;
+
+/**
+ * Helper to transform MongoDB notes to plain objects
+ */
+function transformNote(note: any): INote {
+  return {
+    _id: note._id?.toString(),
+    type: 'note',
+    slug: note.slug,
+    title: note.title,
+    description: note.description,
+    body: note.body,
+    html: note.html,
+    tags: note.tags || [],
+    published: note.published,
+    publishedAt: note.publishedAt,
+    createdAt: note.createdAt,
+    updatedAt: note.updatedAt,
+  };
+}
 
 /**
  * Notes List - Server Component
@@ -35,9 +56,11 @@ async function NotesList() {
     );
   }
 
+  const transformedNotes = notes.map(transformNote);
+
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {notes.map((note, i) => (
+      {transformedNotes.map((note, i) => (
         <ContentCard
           key={note.slug}
           href={`/notes/${note.slug}`}
@@ -61,7 +84,7 @@ async function NotesList() {
  */
 export default function NotesPage() {
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-24 md:py-32">
       {/* Page Header */}
       <PageHeader
         label="Knowledge"

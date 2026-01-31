@@ -74,18 +74,23 @@ const TableOfContents = ({ className }: ITableOfContentsProps) => {
 
     return (
         <nav
-            className={cn('sticky top-24', className)}
+            className={cn('', className)}
             aria-label="Table of contents"
         >
-            <h4 className="mb-4 text-sm font-semibold text-foreground">
+            <h4 className="mb-4 text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)]">
                 On this page
             </h4>
-            <ul className="space-y-2">
+            <ul className="space-y-2 border-l border-[var(--border-color)]">
                 {headings.map(({ id, text, level }) => (
                     <li
                         key={id}
-                        style={{ paddingLeft: `${(level - 2) * 0.75}rem` }}
+                        style={{ paddingLeft: `${(level - 2) * 0.75 + 1}rem` }}
+                        className="relative"
                     >
+                        {/* Active indicator */}
+                        {activeId === id && (
+                            <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] -translate-x-[1px]" />
+                        )}
                         <a
                             href={`#${id}`}
                             onClick={(e) => {
@@ -96,11 +101,11 @@ const TableOfContents = ({ className }: ITableOfContentsProps) => {
                                 setActiveId(id);
                             }}
                             className={cn(
-                                'block text-sm transition-colors',
-                                'hover:text-foreground',
+                                'block text-sm transition-colors py-1',
+                                'hover:text-[var(--fg)]',
                                 activeId === id
-                                    ? 'font-medium text-primary'
-                                    : 'text-muted-foreground'
+                                    ? 'font-medium text-[var(--accent)]'
+                                    : 'text-[var(--fg-muted)]'
                             )}
                         >
                             {text}

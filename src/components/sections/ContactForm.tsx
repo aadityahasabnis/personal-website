@@ -6,8 +6,6 @@ import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { submitContact } from '@/server/actions/contact';
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 
 interface IContactFormData {
     name: string;
@@ -20,14 +18,14 @@ interface IContactFormData {
 type FormStatus = 'idle' | 'submitting' | 'success' | 'error';
 
 const CONTACT_TYPES = [
-    { value: 'general', label: 'General Inquiry' },
+    { value: 'general', label: 'General' },
     { value: 'collaboration', label: 'Collaboration' },
-    { value: 'hiring', label: 'Job Opportunity' },
+    { value: 'hiring', label: 'Hiring' },
     { value: 'feedback', label: 'Feedback' },
 ] as const;
 
 /**
- * ContactForm - Professional contact form with validation and status feedback
+ * ContactForm - Premium contact form with validation and status feedback
  */
 const ContactForm = () => {
     const [status, setStatus] = useState<FormStatus>('idle');
@@ -61,21 +59,19 @@ const ContactForm = () => {
 
     if (status === 'success') {
         return (
-            <Card className="p-8 text-center">
-                <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                <h3 className="mt-4 text-xl font-semibold">Message Sent!</h3>
-                <p className="mt-2 text-muted-foreground">
-                    Thank you for reaching out. I will get back to you as soon as
-                    possible.
+            <div className="p-8 text-center rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)]">
+                <CheckCircle className="mx-auto size-12 text-[var(--success)]" />
+                <h3 className="mt-4 text-xl font-semibold text-[var(--fg)]">Message Sent!</h3>
+                <p className="mt-2 text-[var(--fg-muted)]">
+                    Thank you for reaching out. I&apos;ll get back to you as soon as possible.
                 </p>
-                <Button
-                    variant="outline"
-                    className="mt-6"
+                <button
+                    className="mt-6 px-6 py-3 rounded-full border border-[var(--border-color)] text-[var(--fg)] font-medium hover:border-[var(--border-hover)] transition-colors"
                     onClick={() => setStatus('idle')}
                 >
                     Send Another Message
-                </Button>
-            </Card>
+                </button>
+            </div>
         );
     }
 
@@ -83,15 +79,15 @@ const ContactForm = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Error Alert */}
             {status === 'error' && (
-                <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                    <AlertCircle className="h-5 w-5 shrink-0" />
+                <div className="flex items-center gap-3 rounded-xl border border-[var(--error)]/30 bg-[var(--error)]/10 p-4 text-sm text-[var(--error)]">
+                    <AlertCircle className="size-5 shrink-0" />
                     {errorMessage}
                 </div>
             )}
 
             {/* Contact Type */}
-            <div className="space-y-2">
-                <label className="text-sm font-medium">
+            <div className="space-y-3">
+                <label className="text-sm font-medium text-[var(--fg)]">
                     What is this regarding?
                 </label>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -99,9 +95,9 @@ const ContactForm = () => {
                         <label
                             key={type.value}
                             className={cn(
-                                'flex cursor-pointer items-center justify-center rounded-lg border p-3 text-sm transition-all',
-                                'hover:border-primary/50 hover:bg-primary/5',
-                                'has-[:checked]:border-primary has-[:checked]:bg-primary/10'
+                                'flex cursor-pointer items-center justify-center rounded-xl border border-[var(--border-color)] p-3 text-sm transition-all',
+                                'hover:border-[var(--border-hover)] hover:bg-[var(--surface)]',
+                                'has-[:checked]:border-[var(--accent)] has-[:checked]:bg-[var(--accent)]/10 has-[:checked]:text-[var(--accent)]'
                             )}
                         >
                             <input
@@ -119,18 +115,19 @@ const ContactForm = () => {
             {/* Name & Email Row */}
             <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium">
-                        Name <span className="text-destructive">*</span>
+                    <label htmlFor="name" className="text-sm font-medium text-[var(--fg)]">
+                        Name <span className="text-[var(--error)]">*</span>
                     </label>
                     <input
                         id="name"
                         type="text"
                         placeholder="Your name"
                         className={cn(
-                            'w-full rounded-lg border bg-background px-4 py-3 text-sm',
-                            'placeholder:text-muted-foreground',
-                            'focus:outline-none focus:ring-2 focus:ring-ring',
-                            errors.name && 'border-destructive focus:ring-destructive'
+                            'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
+                            'placeholder:text-[var(--fg-subtle)]',
+                            'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
+                            'transition-colors',
+                            errors.name && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
                         )}
                         {...register('name', {
                             required: 'Name is required',
@@ -141,25 +138,26 @@ const ContactForm = () => {
                         })}
                     />
                     {errors.name && (
-                        <p className="text-xs text-destructive">
+                        <p className="text-xs text-[var(--error)]">
                             {errors.name.message}
                         </p>
                     )}
                 </div>
 
                 <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium">
-                        Email <span className="text-destructive">*</span>
+                    <label htmlFor="email" className="text-sm font-medium text-[var(--fg)]">
+                        Email <span className="text-[var(--error)]">*</span>
                     </label>
                     <input
                         id="email"
                         type="email"
                         placeholder="you@example.com"
                         className={cn(
-                            'w-full rounded-lg border bg-background px-4 py-3 text-sm',
-                            'placeholder:text-muted-foreground',
-                            'focus:outline-none focus:ring-2 focus:ring-ring',
-                            errors.email && 'border-destructive focus:ring-destructive'
+                            'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
+                            'placeholder:text-[var(--fg-subtle)]',
+                            'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
+                            'transition-colors',
+                            errors.email && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
                         )}
                         {...register('email', {
                             required: 'Email is required',
@@ -170,7 +168,7 @@ const ContactForm = () => {
                         })}
                     />
                     {errors.email && (
-                        <p className="text-xs text-destructive">
+                        <p className="text-xs text-[var(--error)]">
                             {errors.email.message}
                         </p>
                     )}
@@ -179,18 +177,19 @@ const ContactForm = () => {
 
             {/* Subject */}
             <div className="space-y-2">
-                <label htmlFor="subject" className="text-sm font-medium">
-                    Subject <span className="text-destructive">*</span>
+                <label htmlFor="subject" className="text-sm font-medium text-[var(--fg)]">
+                    Subject <span className="text-[var(--error)]">*</span>
                 </label>
                 <input
                     id="subject"
                     type="text"
                     placeholder="What is this about?"
                     className={cn(
-                        'w-full rounded-lg border bg-background px-4 py-3 text-sm',
-                        'placeholder:text-muted-foreground',
-                        'focus:outline-none focus:ring-2 focus:ring-ring',
-                        errors.subject && 'border-destructive focus:ring-destructive'
+                        'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
+                        'placeholder:text-[var(--fg-subtle)]',
+                        'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
+                        'transition-colors',
+                        errors.subject && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
                     )}
                     {...register('subject', {
                         required: 'Subject is required',
@@ -201,7 +200,7 @@ const ContactForm = () => {
                     })}
                 />
                 {errors.subject && (
-                    <p className="text-xs text-destructive">
+                    <p className="text-xs text-[var(--error)]">
                         {errors.subject.message}
                     </p>
                 )}
@@ -209,18 +208,19 @@ const ContactForm = () => {
 
             {/* Message */}
             <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium">
-                    Message <span className="text-destructive">*</span>
+                <label htmlFor="message" className="text-sm font-medium text-[var(--fg)]">
+                    Message <span className="text-[var(--error)]">*</span>
                 </label>
                 <textarea
                     id="message"
                     rows={6}
                     placeholder="Your message..."
                     className={cn(
-                        'w-full resize-none rounded-lg border bg-background px-4 py-3 text-sm',
-                        'placeholder:text-muted-foreground',
-                        'focus:outline-none focus:ring-2 focus:ring-ring',
-                        errors.message && 'border-destructive focus:ring-destructive'
+                        'w-full resize-none rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
+                        'placeholder:text-[var(--fg-subtle)]',
+                        'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
+                        'transition-colors',
+                        errors.message && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
                     )}
                     {...register('message', {
                         required: 'Message is required',
@@ -231,31 +231,34 @@ const ContactForm = () => {
                     })}
                 />
                 {errors.message && (
-                    <p className="text-xs text-destructive">
+                    <p className="text-xs text-[var(--error)]">
                         {errors.message.message}
                     </p>
                 )}
             </div>
 
             {/* Submit Button */}
-            <Button
+            <button
                 type="submit"
-                size="lg"
-                className="w-full sm:w-auto"
                 disabled={status === 'submitting'}
+                className={cn(
+                    'inline-flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all',
+                    'bg-[var(--fg)] text-[var(--bg)]',
+                    'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+                )}
             >
                 {status === 'submitting' ? (
                     <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="size-4 animate-spin" />
                         Sending...
                     </>
                 ) : (
                     <>
-                        <Send className="mr-2 h-4 w-4" />
+                        <Send className="size-4" />
                         Send Message
                     </>
                 )}
-            </Button>
+            </button>
         </form>
     );
 };

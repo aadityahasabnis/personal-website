@@ -1,9 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Mail, MapPin, Clock, MessageSquare } from 'lucide-react';
+import { Mail, MapPin, Clock, MessageSquare, ArrowUpRight } from 'lucide-react';
 
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants';
-import { Card } from '@/components/ui/card';
 import { ContactForm } from '@/components/sections/ContactForm';
 
 export const metadata: Metadata = {
@@ -48,99 +47,119 @@ const CONTACT_INFO = [
  */
 const ContactPage = () => {
     return (
-        <div className="container-narrow py-12">
-            {/* Page Header */}
-            <header className="mb-12 text-center">
-                <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+        <div className="min-h-screen">
+            {/* Header Section */}
+            <div className="max-w-4xl mx-auto px-6 lg:px-8 pt-24 md:pt-32 pb-12 text-center">
+                <p className="text-sm font-medium uppercase tracking-widest text-[var(--accent)] mb-4">
+                    Contact
+                </p>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[var(--fg)]">
                     Get in Touch
                 </h1>
-                <p className="mt-4 text-lg text-muted-foreground max-w-xl mx-auto">
+                <p className="mt-6 text-lg text-[var(--fg-muted)] max-w-2xl mx-auto leading-relaxed">
                     Have a question, project idea, or just want to say hello?
-                    I would love to hear from you. Fill out the form below or reach
+                    I&apos;d love to hear from you. Fill out the form below or reach
                     out through any of my social channels.
                 </p>
-            </header>
+                <div className="mt-8 w-16 h-px bg-[var(--accent)] mx-auto" />
+            </div>
 
-            <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
-                {/* Contact Form */}
-                <div>
-                    <Card className="p-6 sm:p-8">
-                        <div className="mb-6">
-                            <h2 className="text-xl font-semibold flex items-center gap-2">
-                                <MessageSquare className="h-5 w-5 text-primary" />
-                                Send a Message
-                            </h2>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Fill out the form and I will get back to you as soon as
-                                possible.
+            {/* Content */}
+            <div className="max-w-5xl mx-auto px-6 lg:px-8 pb-24">
+                <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+                    {/* Contact Form */}
+                    <div className="order-2 lg:order-1">
+                        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6 sm:p-8">
+                            <div className="mb-8">
+                                <h2 className="text-xl font-medium text-[var(--fg)] flex items-center gap-2">
+                                    <MessageSquare className="size-5 text-[var(--accent)]" />
+                                    Send a Message
+                                </h2>
+                                <p className="mt-2 text-sm text-[var(--fg-muted)]">
+                                    Fill out the form and I&apos;ll get back to you as soon as possible.
+                                </p>
+                            </div>
+                            <ContactForm />
+                        </div>
+                    </div>
+
+                    {/* Sidebar */}
+                    <aside className="order-1 lg:order-2 space-y-6">
+                        {/* Contact Info */}
+                        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6">
+                            <h3 className="text-sm font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6">
+                                Contact Info
+                            </h3>
+                            <ul className="space-y-5">
+                                {CONTACT_INFO.map((item) => (
+                                    <li key={item.label} className="flex items-start gap-4">
+                                        <div className="p-2 rounded-lg bg-[var(--surface)]">
+                                            <item.icon className="size-4 text-[var(--accent)]" />
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-medium uppercase tracking-wider text-[var(--fg-muted)] mb-1">
+                                                {item.label}
+                                            </p>
+                                            {item.href ? (
+                                                <a
+                                                    href={item.href}
+                                                    className="text-sm text-[var(--fg)] hover:text-[var(--accent)] transition-colors"
+                                                >
+                                                    {item.value}
+                                                </a>
+                                            ) : (
+                                                <p className="text-sm text-[var(--fg)]">
+                                                    {item.value}
+                                                </p>
+                                            )}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+
+                        {/* Social Links */}
+                        <div className="rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6">
+                            <h3 className="text-sm font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6">
+                                Connect Online
+                            </h3>
+                            <ul className="space-y-3">
+                                {SOCIAL_LINKS.filter((l) => l.platform !== 'email').map(
+                                    (link) => (
+                                        <li key={link.platform}>
+                                            <Link
+                                                href={link.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group flex items-center justify-between text-sm text-[var(--fg)] hover:text-[var(--accent)] transition-colors capitalize"
+                                            >
+                                                <span className="flex items-center gap-3">
+                                                    <span className="size-1.5 rounded-full bg-[var(--accent)]" />
+                                                    {link.platform}
+                                                </span>
+                                                <ArrowUpRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            </Link>
+                                        </li>
+                                    )
+                                )}
+                            </ul>
+                        </div>
+
+                        {/* Availability */}
+                        <div className="rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-6">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="size-2 rounded-full bg-[var(--success)] animate-pulse" />
+                                <h3 className="font-medium text-[var(--fg)]">
+                                    Currently Available
+                                </h3>
+                            </div>
+                            <p className="text-sm text-[var(--fg-muted)] leading-relaxed">
+                                I&apos;m open to freelance projects, consulting work, and full-time
+                                opportunities. Let&apos;s discuss how I can help with your project.
                             </p>
                         </div>
-                        <ContactForm />
-                    </Card>
+                    </aside>
                 </div>
-
-                {/* Sidebar */}
-                <aside className="space-y-6">
-                    {/* Contact Info */}
-                    <Card className="p-6">
-                        <h3 className="mb-4 font-semibold">Contact Information</h3>
-                        <ul className="space-y-4">
-                            {CONTACT_INFO.map((item) => (
-                                <li key={item.label} className="flex items-start gap-3">
-                                    <item.icon className="mt-0.5 h-5 w-5 text-primary shrink-0" />
-                                    <div>
-                                        <p className="text-sm font-medium">{item.label}</p>
-                                        {item.href ? (
-                                            <a
-                                                href={item.href}
-                                                className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                                            >
-                                                {item.value}
-                                            </a>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground">
-                                                {item.value}
-                                            </p>
-                                        )}
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </Card>
-
-                    {/* Social Links */}
-                    <Card className="p-6">
-                        <h3 className="mb-4 font-semibold">Connect Online</h3>
-                        <ul className="space-y-3">
-                            {SOCIAL_LINKS.filter((l) => l.platform !== 'email').map(
-                                (link) => (
-                                    <li key={link.platform}>
-                                        <Link
-                                            href={link.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors capitalize"
-                                        >
-                                            <span className="h-2 w-2 rounded-full bg-primary/60" />
-                                            {link.platform}
-                                        </Link>
-                                    </li>
-                                )
-                            )}
-                        </ul>
-                    </Card>
-
-                    {/* Availability */}
-                    <Card className="p-6 bg-primary/5 border-primary/20">
-                        <h3 className="mb-2 font-semibold text-primary">
-                            Currently Available
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                            I am open to freelance projects, consulting work, and full-time
-                            opportunities. Let us discuss how I can help with your project.
-                        </p>
-                    </Card>
-                </aside>
             </div>
         </div>
     );

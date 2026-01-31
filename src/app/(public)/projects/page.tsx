@@ -8,6 +8,7 @@ import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProjectCard } from '@/components/content/ProjectCard';
 import { ProjectsGridSkeleton } from '@/components/feedback/Skeleton';
+import type { IProject } from '@/interfaces';
 
 export const metadata: Metadata = {
   title: 'Projects',
@@ -20,6 +21,32 @@ export const metadata: Metadata = {
 
 // ISR: Revalidate every hour
 export const revalidate = 3600;
+
+/**
+ * Helper to transform MongoDB projects to plain objects
+ */
+function transformProject(project: any): IProject {
+  return {
+    _id: project._id?.toString(),
+    slug: project.slug,
+    title: project.title,
+    description: project.description,
+    longDescription: project.longDescription,
+    coverImage: project.coverImage,
+    image: project.image,
+    tags: project.tags || [],
+    techStack: project.techStack || [],
+    github: project.github,
+    repoUrl: project.repoUrl,
+    live: project.live,
+    liveUrl: project.liveUrl,
+    featured: project.featured,
+    status: project.status,
+    order: project.order,
+    createdAt: project.createdAt,
+    updatedAt: project.updatedAt,
+  };
+}
 
 /**
  * Projects List - Server Component
@@ -37,9 +64,10 @@ async function ProjectsList() {
     );
   }
 
-  // Separate featured and other projects
-  const featuredProjects = projects.filter((p) => p.featured);
-  const otherProjects = projects.filter((p) => !p.featured);
+  // Transform projects to plain objects and separate featured
+  const transformedProjects = projects.map(transformProject);
+  const featuredProjects = transformedProjects.filter((p) => p.featured);
+  const otherProjects = transformedProjects.filter((p) => !p.featured);
 
   return (
     <div className="space-y-20">
@@ -91,15 +119,15 @@ async function ProjectsList() {
  */
 export default function ProjectsPage() {
   // Get GitHub URL from social links
-  const githubUrl = SITE_CONFIG.socials?.find(s => s.platform === 'github')?.url || '#';
+  const githubUrl = SITE_CONFIG.socials?.find(s => s.name.toLowerCase() === 'github')?.url || '#';
 
   return (
-    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-20 md:py-28">
+    <div className="max-w-6xl mx-auto px-6 lg:px-8 py-24 md:py-32">
       {/* Page Header */}
       <PageHeader
         label="Work"
         title="Projects"
-        description="A collection of projects I've worked on. From open source contributions to side projects and professional work."
+        description="Open source contributions, side projects, and experiments in web development."
       />
 
       {/* Projects Grid */}
@@ -108,21 +136,19 @@ export default function ProjectsPage() {
       </Suspense>
 
       {/* GitHub CTA */}
-      <div className="mt-20 pt-12 border-t border-[var(--border-color)]">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <p className="text-[var(--fg-muted)]">
-            Want to see more? Check out my GitHub for open source contributions.
-          </p>
-          <Link
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--fg)] hover:text-[var(--accent)] transition-colors"
-          >
-            View GitHub
-            <ArrowUpRight className="size-4" />
-          </Link>
-        </div>
+      <div className="mt-20 text-center">
+        <p className="text-[var(--fg-muted)] mb-6">
+          Want to see more? Check out my GitHub for additional projects.
+        </p>
+        <Link
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[var(--fg)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+        >
+          <ArrowUpRight className="size-5" />
+          View on GitHub
+        </Link>
       </div>
     </div>
   );
