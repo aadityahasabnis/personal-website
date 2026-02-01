@@ -4,11 +4,11 @@ import type { Metadata } from 'next';
 import { getArticleByTopicSlug, getAllPublishedArticles } from '@/server/queries/content';
 import { getTopic } from '@/server/queries/topics';
 import { getSubtopic } from '@/server/queries/subtopics';
-import { getArticleStats } from '@/server/queries/stats';
+import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
 import { ArticleHeader } from '@/components/content/ArticleHeader';
 import { ArticleBody } from '@/components/content/ArticleBody';
-import { ArticleStatsClient } from '@/components/content/ArticleStatsClient';
-import { ArticleCommentsClient } from '@/components/content/ArticleCommentsClient';
+import { ContentStats } from '@/components/common/ContentStats';
+import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { 
@@ -57,6 +57,9 @@ export async function generateMetadata({
 
     const topic = await getTopic(topicSlug);
     const subtopic = article.subtopicSlug ? await getSubtopic(article.subtopicSlug) : null;
+
+    // Calculate reading time if not present
+    const readingTime = article.readingTime || Math.ceil((article.body?.split(/\s+/).length || 0) / 200);
 
     const seoTitle = article.seo?.title || article.title;
     const seoDescription = article.seo?.description || article.description;
@@ -124,11 +127,17 @@ export async function generateMetadata({
                 'max-snippet': -1,
             },
         },
-        // Additional metadata for better SEO
+        // Enhanced metadata with reading time and timestamps
         other: {
             'article:author': SITE_CONFIG.author.name,
             'article:section': topic?.title || topicSlug,
+            ...(article.publishedAt && { 'article:published_time': article.publishedAt.toISOString() }),
+            ...(article.updatedAt && { 'article:modified_time': article.updatedAt.toISOString() }),
             'article:tag': keywords.join(', '),
+            'twitter:label1': 'Reading time',
+            'twitter:data1': `${readingTime} min read`,
+            'twitter:label2': 'Written by',
+            'twitter:data2': SITE_CONFIG.author.name,
         },
     };
 }
@@ -156,10 +165,11 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
     const fullSlug = `${topicSlug}/${articleSlug}`;
 
     // Fetch all data in parallel
-    const [article, topic, stats] = await Promise.all([
+    const [article, topic, stats, commentCount] = await Promise.all([
         getArticleByTopicSlug(topicSlug, articleSlug),
         getTopic(topicSlug),
         getArticleStats(fullSlug),
+        getArticleCommentCount(fullSlug),
     ]);
 
     if (!article) {
@@ -188,13 +198,14 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
         href: `/articles/${topicSlug}/${articleSlug}`,
     });
 
-    // Generate JSON-LD schemas for SEO
+    // Generate JSON-LD schemas for SEO with comment count
     const articleSchema = generateArticleSchema({
         article,
         topicSlug,
         articleSlug,
         topicTitle: topic?.title || topicSlug,
         subtopicTitle: subtopic?.title,
+        commentCount,
     });
 
     const breadcrumbSchema = generateBreadcrumbSchema(
@@ -262,8 +273,9 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
                         <p className="text-[var(--fg-muted)]">
                             Enjoyed this article? Show some love!
                         </p>
-                        <ArticleStatsClient
+                        <ContentStats
                             slug={fullSlug}
+                            contentType="articles"
                             initialViews={stats?.views ?? 0}
                             initialLikes={stats?.likes ?? 0}
                         />
@@ -272,7 +284,10 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
 
                 {/* Comments Section - Animated & Lazy Loaded */}
                 <FadeIn delay={0.7}>
-                    <ArticleCommentsClient slug={fullSlug} />
+                    <CommentSection 
+                        slug={fullSlug} 
+                        contentType="articles"
+                    />
                 </FadeIn>
             </article>
         </>

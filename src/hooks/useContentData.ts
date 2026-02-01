@@ -166,17 +166,18 @@ async function postComment(
  * Hook to fetch and cache page stats (views + likes)
  *
  * Strategy:
- * - Caches for 30 seconds
- * - Always refetches on mount for fresh data
- * - Returns cached data while revalidating
+ * - Caches for 5 minutes (longer to prevent re-fetches)
+ * - Does NOT refetch on mount (uses cache)
+ * - Returns cached data immediately
  */
 export function usePageStats(slug: string, contentType: ContentType) {
     return useQuery({
         queryKey: ['stats', contentType, slug],
         queryFn: () => fetchPageStats(slug, contentType),
-        staleTime: QUERY_CONFIG.statsStaleTime, // 30s
-        gcTime: QUERY_CONFIG.statsGcTime, // 2min
-        refetchOnMount: 'always', // Always get fresh stats
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 30 * 60 * 1000, // 30 minutes
+        refetchOnMount: false, // IMPORTANT: Don't refetch on mount
+        refetchOnWindowFocus: false, // Don't refetch on focus
         retry: 1,
     });
 }
@@ -198,9 +199,10 @@ export function useComments(
     return useQuery({
         queryKey: ['comments', contentType, slug, limit, offset],
         queryFn: () => fetchComments(slug, contentType, limit, offset),
-        staleTime: QUERY_CONFIG.contentStaleTime, // 5min
-        gcTime: QUERY_CONFIG.contentGcTime, // 10min
-        refetchOnMount: 'always', // Always get fresh comments
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+        refetchOnMount: true, // Refetch comments on mount
+        refetchOnWindowFocus: false,
         retry: 1,
     });
 }

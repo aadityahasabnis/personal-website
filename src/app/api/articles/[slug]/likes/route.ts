@@ -46,9 +46,9 @@ export const GET = async (
 
 /**
  * POST /api/articles/[slug]/likes
- * Toggles like: increment or decrement based on current state
+ * One-time like only (no unlike)
  * 
- * Body: { action: 'like' | 'unlike' }
+ * Body: { action: 'like' }
  */
 export const POST = async (
     request: NextRequest,
@@ -64,19 +64,13 @@ export const POST = async (
             );
         }
 
-        // Parse action from body
-        const body = await request.json().catch(() => ({}));
-        const action = body.action || 'like'; // Default to like for backwards compatibility
-
         const collection = await getCollection<IArticleStats>(COLLECTIONS.articleStats);
 
-        // Toggle: increment or decrement
-        const increment = action === 'like' ? 1 : -1;
-
+        // Increment like count (ONE-TIME ONLY)
         const result = await collection.findOneAndUpdate(
             { slug },
             {
-                $inc: { likes: increment },
+                $inc: { likes: 1 },
                 $set: { updatedAt: new Date() },
                 $setOnInsert: { createdAt: new Date(), views: 0, shares: 0 },
             },
@@ -86,24 +80,15 @@ export const POST = async (
             }
         );
 
-        // Ensure likes never go below 0
-        const finalLikes = Math.max(result?.likes ?? 0, 0);
-        if (finalLikes !== result?.likes) {
-            await collection.updateOne(
-                { slug },
-                { $set: { likes: finalLikes } }
-            );
-        }
-
         return NextResponse.json({
             success: true,
             data: {
-                likes: finalLikes,
-                userHasLiked: action === 'like',
+                likes: result?.likes ?? 1,
+                userHasLiked: true,
             },
         });
     } catch (error) {
-        console.error('Failed to toggle like:', error);
+        console.error('Failed to like:', error);
         return NextResponse.json(
             { success: false, error: 'Failed to save like' },
             { status: 500 }

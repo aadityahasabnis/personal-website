@@ -44,18 +44,27 @@ const ArticleHeader = ({
 }: IArticleHeaderProps) => {
     return (
         <header className={cn('mb-10 pt-4', className)}>
-            {/* Breadcrumbs - All clickable */}
+            {/* Breadcrumbs - All clickable with Microdata */}
             <nav
                 className="mb-8 flex items-center gap-1.5 text-sm text-[var(--fg-muted)] flex-wrap"
                 aria-label="Breadcrumb"
+                itemScope
+                itemType="https://schema.org/BreadcrumbList"
             >
                 {breadcrumbs.map((crumb, index) => (
-                    <span key={crumb.href} className="flex items-center gap-1.5">
+                    <span 
+                        key={crumb.href} 
+                        className="flex items-center gap-1.5"
+                        itemProp="itemListElement"
+                        itemScope
+                        itemType="https://schema.org/ListItem"
+                    >
                         {index > 0 && (
                             <ChevronRight className="size-3.5 text-[var(--fg-subtle)] shrink-0" />
                         )}
                         <Link
                             href={crumb.href}
+                            itemProp="item"
                             className={cn(
                                 'hover:text-[var(--accent)] transition-colors',
                                 index === breadcrumbs.length - 1 
@@ -63,8 +72,9 @@ const ArticleHeader = ({
                                     : 'hover:underline underline-offset-2'
                             )}
                         >
-                            {crumb.label}
+                            <span itemProp="name">{crumb.label}</span>
                         </Link>
+                        <meta itemProp="position" content={(index + 1).toString()} />
                     </span>
                 ))}
             </nav>

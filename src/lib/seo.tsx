@@ -84,11 +84,14 @@ interface IArticleSchemaProps {
     articleSlug: string;
     topicTitle: string;
     subtopicTitle?: string;
+    commentCount?: number;
+    relatedArticles?: Array<{ slug: string; title: string }>;
 }
 
 /**
  * Generate comprehensive Article schema
  * Combines TechArticle and BlogPosting for maximum SEO
+ * Now includes comment count and related articles for better SEO
  */
 export function generateArticleSchema({
     article,
@@ -96,6 +99,8 @@ export function generateArticleSchema({
     articleSlug,
     topicTitle,
     subtopicTitle,
+    commentCount = 0,
+    relatedArticles = [],
 }: IArticleSchemaProps) {
     const url = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
     
@@ -105,7 +110,7 @@ export function generateArticleSchema({
         ...(article.tags || []),
     ];
 
-    return {
+    const schema: any = {
         '@context': 'https://schema.org',
         '@type': ['TechArticle', 'BlogPosting'],
         '@id': url,
@@ -131,6 +136,25 @@ export function generateArticleSchema({
         inLanguage: 'en-US',
         isAccessibleForFree: true,
     };
+
+    // Add interaction statistics if comments exist
+    if (commentCount > 0) {
+        schema.interactionStatistic = {
+            '@type': 'InteractionCounter',
+            interactionType: 'https://schema.org/CommentAction',
+            userInteractionCount: commentCount,
+        };
+        schema.commentCount = commentCount;
+    }
+
+    // Add related articles for internal linking
+    if (relatedArticles.length > 0) {
+        schema.relatedLink = relatedArticles.map(
+            (article) => `${SITE_CONFIG.url}/articles/${topicSlug}/${article.slug}`
+        );
+    }
+
+    return schema;
 }
 
 /**

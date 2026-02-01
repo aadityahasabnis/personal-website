@@ -417,6 +417,34 @@ export const getNotesByTag = async (
     }
 };
 
+/**
+ * Get all unique tags from published notes
+ */
+export const getAllNoteTags = async (): Promise<string[]> => {
+    try {
+        const collection = await getCollection<IContent>(COLLECTIONS.content);
+
+        const notes = await collection
+            .find({
+                type: 'note',
+                published: true,
+                tags: { $exists: true, $ne: [] },
+            })
+            .project({ tags: 1 })
+            .toArray();
+
+        // Flatten and deduplicate tags
+        const allTags = notes.flatMap((note) => note.tags || []);
+        const uniqueTags = Array.from(new Set(allTags)).sort();
+
+        return uniqueTags;
+    } catch (error) {
+        console.error('Failed to fetch note tags', error);
+        return [];
+    }
+};
+
+
 // ===== GENERIC CONTENT QUERIES =====
 
 /**
