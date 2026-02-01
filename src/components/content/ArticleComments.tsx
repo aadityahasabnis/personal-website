@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, type FormEvent, useRef } from 'react';
+import Image from 'next/image';
 import { 
     MessageSquare, 
     Send, 
@@ -127,16 +128,22 @@ function AvatarSelector({ selectedAvatar, onSelect }: IAvatarSelectorProps) {
                             type="button"
                             onClick={() => onSelect(avatar.id)}
                             className={cn(
-                                'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-2xl',
+                                'flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center overflow-hidden',
                                 'border-2 transition-all duration-200 snap-center',
                                 'hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]',
                                 selectedAvatar === avatar.id
-                                    ? 'border-[var(--accent)] bg-[var(--accent)]/10 scale-110'
-                                    : 'border-[var(--border-color)] bg-[var(--surface)] hover:border-[var(--border-hover)]'
+                                    ? 'border-[var(--accent)] scale-110'
+                                    : 'border-[var(--border-color)] hover:border-[var(--border-hover)]'
                             )}
                             title={avatar.label}
                         >
-                            {avatar.emoji}
+                            <Image
+                                src={avatar.image}
+                                alt={avatar.label}
+                                width={48}
+                                height={48}
+                                className="object-cover w-full h-full"
+                            />
                         </button>
                     ))}
                 </div>
@@ -172,10 +179,15 @@ function CommentCard({ comment, onReply }: ICommentCardProps) {
             {/* Avatar */}
             <div className="shrink-0">
                 <div className={cn(
-                    'size-10 rounded-full flex items-center justify-center text-lg',
-                    'bg-[var(--accent-subtle)]'
+                    'size-10 rounded-full overflow-hidden border-2 border-[var(--border-color)]'
                 )}>
-                    {avatar?.emoji || '😊'}
+                    <Image
+                        src={avatar?.image || '/avatars/avatar-1.png'}
+                        alt={avatar?.label || 'User avatar'}
+                        width={40}
+                        height={40}
+                        className="object-cover w-full h-full"
+                    />
                 </div>
             </div>
 
@@ -217,8 +229,14 @@ function CommentCard({ comment, onReply }: ICommentCardProps) {
                             const replyAvatar = reply.author.avatar ? getAvatarById(reply.author.avatar) : null;
                             return (
                                 <div key={reply._id} className="flex gap-3">
-                                    <div className="size-8 rounded-full flex items-center justify-center text-sm bg-[var(--surface)]">
-                                        {replyAvatar?.emoji || '😊'}
+                                    <div className="size-8 rounded-full overflow-hidden border border-[var(--border-color)]">
+                                        <Image
+                                            src={replyAvatar?.image || '/avatars/avatar-1.png'}
+                                            alt={replyAvatar?.label || 'User avatar'}
+                                            width={32}
+                                            height={32}
+                                            className="object-cover w-full h-full"
+                                        />
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">

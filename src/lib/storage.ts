@@ -27,6 +27,7 @@ export const STORAGE_KEYS = {
     STATS: {
         LIKES: 'rc::s:likes',              // Record<slug, timestamp>
         VIEWS: 'rc::s:views',              // Record<slug, timestamp>
+        COMMENT_UPVOTES: 'rc::s:comment-upvotes',  // Record<commentId, timestamp>
     },
     // Comment namespace (rc::c)  
     COMMENT: {
@@ -146,6 +147,29 @@ class SiteStorage {
         this.set(STORAGE_KEYS.STATS.LIKES, likes);
     }
 
+    // ===== COMMENT UPVOTES TRACKING =====
+
+    getCommentUpvotes(): IStatsRecord {
+        return this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) || {};
+    }
+
+    hasUpvotedComment(commentId: string): boolean {
+        const upvotes = this.getCommentUpvotes();
+        return commentId in upvotes;
+    }
+
+    setCommentUpvoted(commentId: string): void {
+        const upvotes = this.getCommentUpvotes();
+        upvotes[commentId] = Date.now();
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, upvotes);
+    }
+
+    removeCommentUpvote(commentId: string): void {
+        const upvotes = this.getCommentUpvotes();
+        delete upvotes[commentId];
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, upvotes);
+    }
+
     // ===== VIEWS TRACKING (Session-based deduplication) =====
 
     getViews(): IStatsRecord {
@@ -156,7 +180,7 @@ class SiteStorage {
         const views = this.getViews();
         const lastViewed = views[slug];
         if (!lastViewed) return false;
-        
+
         const hourInMs = hours * 60 * 60 * 1000;
         return Date.now() - lastViewed < hourInMs;
     }
@@ -165,7 +189,7 @@ class SiteStorage {
         const views = this.getViews();
         views[slug] = Date.now();
         this.set(STORAGE_KEYS.STATS.VIEWS, views);
-        
+
         // Cleanup old entries (older than 7 days)
         this.cleanupOldViews();
     }
@@ -174,14 +198,14 @@ class SiteStorage {
         const views = this.getViews();
         const weekInMs = 7 * 24 * 60 * 60 * 1000;
         const now = Date.now();
-        
+
         const cleaned: IStatsRecord = {};
         for (const [slug, timestamp] of Object.entries(views)) {
             if (now - timestamp < weekInMs) {
                 cleaned[slug] = timestamp;
             }
         }
-        
+
         this.set(STORAGE_KEYS.STATS.VIEWS, cleaned);
     }
 
@@ -222,18 +246,15 @@ export const siteStorage = new SiteStorage();
 // ===== AVATAR OPTIONS =====
 
 export const AVATAR_OPTIONS = [
-    { id: 'avatar-1', emoji: '😊', label: 'Smiling' },
-    { id: 'avatar-2', emoji: '🚀', label: 'Rocket' },
-    { id: 'avatar-3', emoji: '💡', label: 'Lightbulb' },
-    { id: 'avatar-4', emoji: '🎯', label: 'Target' },
-    { id: 'avatar-5', emoji: '⚡', label: 'Lightning' },
-    { id: 'avatar-6', emoji: '🔥', label: 'Fire' },
-    { id: 'avatar-7', emoji: '🌟', label: 'Star' },
-    { id: 'avatar-8', emoji: '🎨', label: 'Art' },
-    { id: 'avatar-9', emoji: '🧠', label: 'Brain' },
-    { id: 'avatar-10', emoji: '💻', label: 'Laptop' },
-    { id: 'avatar-11', emoji: '📚', label: 'Books' },
-    { id: 'avatar-12', emoji: '🎮', label: 'Gaming' },
+    { id: 'avatar-1', image: '/avatars/avatar-2.png', label: 'Working Man' },
+    { id: 'avatar-2', image: '/avatars/avatar-1.png', label: 'Working Women' },
+    { id: 'avatar-3', image: '/avatars/avatar-3.png', label: 'Man with Beard' },
+    { id: 'avatar-4', image: '/avatars/avatar-4.png', label: 'Funcky Boy' },
+    { id: 'avatar-5', image: '/avatars/avatar-5.png', label: 'British Women' },
+    { id: 'avatar-6', image: '/avatars/avatar-6.png', label: 'Middle Aged Man' },
+    { id: 'avatar-7', image: '/avatars/avatar-7.png', label: 'Women in Saree' },
+    { id: 'avatar-8', image: '/avatars/avatar-8.png', label: 'Old Man' },
+    { id: 'avatar-9', image: '/avatars/avatar-9.png', label: 'Exciting Girl' }
 ] as const;
 
 export type AvatarId = typeof AVATAR_OPTIONS[number]['id'];

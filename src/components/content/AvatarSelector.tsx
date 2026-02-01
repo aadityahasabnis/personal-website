@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState, useEffect } from 'react';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AVATAR_OPTIONS } from '@/lib/storage';
 import { cn } from '@/lib/utils';
@@ -11,10 +12,10 @@ interface IAvatarSelectorProps {
 }
 
 /**
- * AvatarSelector - Horizontal scrolling emoji avatar picker
+ * AvatarSelector - Horizontal scrolling avatar image picker
  * 
  * Features:
- * - 12 emoji avatars to choose from
+ * - 9 avatar images to choose from
  * - Horizontal scroll with navigation buttons
  * - Smooth scroll behavior
  * - Keyboard accessible
@@ -81,17 +82,23 @@ export function AvatarSelector({ selectedAvatar, onSelect }: IAvatarSelectorProp
                             type="button"
                             onClick={() => onSelect(avatar.id)}
                             className={cn(
-                                'flex-shrink-0 size-14 rounded-full flex items-center justify-center text-2xl',
+                                'flex-shrink-0 size-14 rounded-full flex items-center justify-center overflow-hidden',
                                 'border-2 transition-all hover:scale-110',
                                 'focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2',
                                 selectedAvatar === avatar.id
-                                    ? 'border-[var(--accent)] bg-[var(--accent-subtle)] scale-110'
-                                    : 'border-[var(--border-color)] bg-[var(--surface)] hover:border-[var(--accent)]'
+                                    ? 'border-[var(--accent)] scale-110'
+                                    : 'border-[var(--border-color)] hover:border-[var(--accent)]'
                             )}
                             aria-label={`Select ${avatar.label} avatar`}
                             title={avatar.label}
                         >
-                            {avatar.emoji}
+                            <Image
+                                src={avatar.image}
+                                alt={avatar.label}
+                                width={56}
+                                height={56}
+                                className="object-cover w-full h-full"
+                            />
                         </button>
                     ))}
                 </div>

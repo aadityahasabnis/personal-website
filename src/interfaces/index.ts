@@ -149,6 +149,7 @@ export interface ICommentReply {
     author: ICommentAuthor;
     content: string;
     likes?: number;
+    upvotes?: number;
     createdAt: Date;
 }
 
@@ -159,6 +160,7 @@ export interface IComment {
     content: string;
     replies?: ICommentReply[];
     likes?: number;
+    upvotes?: number;
     reported?: boolean;
     approved: boolean;               // Moderation flag
     createdAt: Date;

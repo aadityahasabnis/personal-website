@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Reply, Shield } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { getAvatarById } from '@/lib/storage';
@@ -25,7 +26,7 @@ interface ICommentCardProps {
  * CommentCard - Display a single comment with avatar and metadata
  * 
  * Features:
- * - Emoji avatar display
+ * - Avatar image display
  * - Author badge for site owner replies
  * - Reply button
  * - Nested replies support
@@ -40,8 +41,14 @@ export function CommentCard({ comment, onReply, isReply = false }: ICommentCardP
                 {/* Comment Header */}
                 <div className="flex items-start gap-4 mb-4">
                     {/* Avatar */}
-                    <div className="flex-shrink-0 size-10 rounded-full bg-[var(--accent-subtle)] border-2 border-[var(--accent)] flex items-center justify-center text-xl">
-                        {avatar?.emoji || '😊'}
+                    <div className="flex-shrink-0 size-10 rounded-full overflow-hidden border-2 border-[var(--accent)]">
+                        <Image
+                            src={avatar?.image || '/avatars/avatar-1.png'}
+                            alt={avatar?.label || 'User avatar'}
+                            width={40}
+                            height={40}
+                            className="object-cover w-full h-full"
+                        />
                     </div>
 
                     {/* Author Info */}

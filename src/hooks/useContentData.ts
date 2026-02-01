@@ -21,6 +21,7 @@ export interface IComment {
     };
     content: string;
     likes: number;
+    upvotes: number;
     replies?: IComment[];
     createdAt: string;
 }
@@ -160,6 +161,27 @@ async function postComment(
     return data;
 }
 
+async function upvoteComment(
+    slug: string,
+    contentType: ContentType,
+    commentId: string
+): Promise<{ upvotes: number }> {
+    const response = await fetch(
+        `/api/${contentType}/${encodeURIComponent(slug)}/comments/${commentId}/upvote`,
+        {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error('Failed to upvote comment');
+    }
+
+    const data = await response.json();
+    return data.data;
+}
+
 // ===== HOOKS =====
 
 /**
@@ -291,6 +313,31 @@ export function usePostComment(slug: string, contentType: ContentType) {
 
         onSuccess: () => {
             // Invalidate all comment queries for this slug
+            queryClient.invalidateQueries({
+                queryKey: ['comments', contentType, slug],
+            });
+        },
+    });
+}
+
+/**
+ * Hook to upvote a comment
+ *
+ * Strategy:
+ * - ONE-TIME UPVOTE ONLY (no un-upvote)
+ * - Check localStorage before allowing upvote
+ * - Optimistic update with rollback on error
+ * - Update localStorage on success
+ * - Invalidate comments cache to refresh count
+ */
+export function useUpvoteComment(slug: string, contentType: ContentType) {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: (commentId: string) => upvoteComment(slug, contentType, commentId),
+
+        onSuccess: () => {
+            // Invalidate comments cache to refresh upvote counts
             queryClient.invalidateQueries({
                 queryKey: ['comments', contentType, slug],
             });
