@@ -1,6 +1,152 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IContent, IArticle, INote, ISeries } from '@/interfaces';
+import type { IContent, IArticle, INote, ISeries, ISubtopic } from '@/interfaces';
+
+// ===== TOPIC-BASED ARTICLE QUERIES =====
+
+/**
+ * Get a single article by topic and article slug (for article page)
+ */
+export const getArticleByTopicSlug = async (
+    topicSlug: string,
+    articleSlug: string
+): Promise<IArticle | null> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const article = await collection.findOne({
+            type: 'article',
+            topicSlug,
+            slug: articleSlug,
+            published: true,
+        });
+
+        return article;
+    } catch (error) {
+        console.error(`Failed to fetch article: ${topicSlug}/${articleSlug}`, error);
+        return null;
+    }
+};
+
+/**
+ * Get articles by topic slug
+ */
+export const getArticlesByTopic = async (topicSlug: string): Promise<IArticle[]> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const articles = await collection
+            .find({
+                type: 'article',
+                topicSlug,
+                published: true,
+            })
+            .sort({ order: 1 })
+            .project({ body: 0, html: 0 })
+            .toArray();
+
+        return articles as unknown as IArticle[];
+    } catch (error) {
+        console.error(`Failed to fetch articles for topic: ${topicSlug}`, error);
+        return [];
+    }
+};
+
+/**
+ * Get articles by subtopic slug
+ */
+export const getArticlesBySubtopic = async (
+    topicSlug: string,
+    subtopicSlug: string
+): Promise<IArticle[]> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const articles = await collection
+            .find({
+                type: 'article',
+                topicSlug,
+                subtopicSlug,
+                published: true,
+            })
+            .sort({ order: 1 })
+            .project({ body: 0, html: 0 })
+            .toArray();
+
+        return articles as unknown as IArticle[];
+    } catch (error) {
+        console.error(`Failed to fetch articles for subtopic: ${subtopicSlug}`, error);
+        return [];
+    }
+};
+
+/**
+ * Get all published articles for static generation (with topic slug)
+ */
+export const getAllPublishedArticles = async (): Promise<
+    Pick<IArticle, 'topicSlug' | 'slug'>[]
+> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const articles = await collection
+            .find({ type: 'article', published: true })
+            .project({ topicSlug: 1, slug: 1, _id: 0 })
+            .toArray();
+
+        return articles as Pick<IArticle, 'topicSlug' | 'slug'>[];
+    } catch (error) {
+        console.error('Failed to fetch all published articles', error);
+        return [];
+    }
+};
+
+/**
+ * Get sidebar navigation for article page (subtopics with articles)
+ */
+export const getArticleSidebarData = async (
+    topicSlug: string
+): Promise<{
+    subtopics: ISubtopic[];
+    articles: Pick<IArticle, 'slug' | 'title' | 'subtopicSlug' | 'order'>[];
+}> => {
+    try {
+        const subtopicsCollection = await getCollection<ISubtopic>(COLLECTIONS.subtopics);
+        const contentCollection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const [subtopics, articles] = await Promise.all([
+            subtopicsCollection
+                .find({ topicSlug, published: true })
+                .sort({ order: 1 })
+                .toArray(),
+            contentCollection
+                .find({
+                    type: 'article',
+                    topicSlug,
+                    published: true,
+                })
+                .sort({ order: 1 })
+                .project({
+                    slug: 1,
+                    title: 1,
+                    subtopicSlug: 1,
+                    order: 1,
+                    _id: 0,
+                })
+                .toArray(),
+        ]);
+
+        return {
+            subtopics,
+            articles: articles as Pick<IArticle, 'slug' | 'title' | 'subtopicSlug' | 'order'>[],
+        };
+    } catch (error) {
+        console.error(`Failed to fetch sidebar data for topic: ${topicSlug}`, error);
+        return { subtopics: [], articles: [] };
+    }
+};
+
+// ===== LEGACY ARTICLE QUERIES =====
 
 /**
  * Get a single published article by slug

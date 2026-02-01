@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
@@ -9,11 +9,11 @@ import { cn } from '@/lib/utils';
 import { SITE_CONFIG } from '@/constants';
 
 /**
- * Admin Login Page
+ * Admin Login Form Component
  *
- * Credentials-based login for admin access.
+ * Inner component that uses useSearchParams - wrapped in Suspense
  */
-const AdminLoginPage = (): React.ReactElement => {
+const LoginForm = (): React.ReactElement => {
     const router = useRouter();
     const searchParams = useSearchParams();
     const callbackUrl = searchParams.get('callbackUrl') ?? '/admin';
@@ -169,6 +169,27 @@ const AdminLoginPage = (): React.ReactElement => {
                 </p>
             </div>
         </div>
+    );
+};
+
+/**
+ * Admin Login Page
+ *
+ * Credentials-based login for admin access.
+ * Wrapped in Suspense to handle useSearchParams() requirement.
+ */
+const AdminLoginPage = (): React.ReactElement => {
+    return (
+        <Suspense fallback={
+            <div className="flex min-h-screen items-center justify-center bg-muted/30 px-4">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Loading...</span>
+                </div>
+            </div>
+        }>
+            <LoginForm />
+        </Suspense>
     );
 };
 

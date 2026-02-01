@@ -8,7 +8,6 @@ import { getNote, getAllNoteSlugs } from '@/server/queries/content';
 import { getPageStats } from '@/server/queries/stats';
 import { parseMarkdown } from '@/lib/markdown';
 import { formatDate } from '@/lib/utils';
-import { SITE_CONFIG } from '@/constants';
 
 import { ArticleBody, Views } from '@/components/content';
 import { LikeButton } from '@/components/interactive';

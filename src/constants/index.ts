@@ -102,6 +102,10 @@ export const QUERY_CONFIG = {
 // Database Collections
 export const COLLECTIONS = {
     content: 'content',
+    topics: 'topics',
+    subtopics: 'subtopics',
+    articleStats: 'article_stats',
+    comments: 'comments',
     pageStats: 'pageStats',
     subscribers: 'subscribers',
     users: 'users',
@@ -116,3 +120,6 @@ export const VALIDATION = {
     body: { min: 100 },
     email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
 } as const;
+
+// Query Keys - Re-export from dedicated file
+export { QUERY_KEYS } from './query-keys';

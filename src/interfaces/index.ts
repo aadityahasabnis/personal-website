@@ -1,5 +1,48 @@
 import { type ObjectId } from 'mongodb';
 
+// ===== TOPIC TYPES =====
+
+export interface ITopic {
+    _id?: ObjectId;
+    slug: string;                    // "dsa", "web-development"
+    title: string;                   // "Data Structures & Algorithms"
+    description: string;
+    icon?: string;                   // Lucide icon name
+    coverImage?: string;
+    order: number;                   // Display order
+    published: boolean;
+    featured: boolean;
+    metadata: {
+        articleCount: number;        // Denormalized for performance
+        lastUpdated?: Date;
+    };
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface ISubtopic {
+    _id?: ObjectId;
+    topicSlug: string;               // Parent topic reference
+    slug: string;                    // "dsa-fundamentals"
+    title: string;                   // "DSA Fundamentals"
+    description?: string;
+    order: number;                   // Order within topic
+    published: boolean;
+    metadata: {
+        articleCount: number;        // Denormalized
+    };
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// ===== TABLE OF CONTENTS =====
+
+export interface IHeading {
+    id: string;
+    text: string;
+    level: number;
+}
+
 // ===== CONTENT TYPES =====
 
 export interface IContent {
@@ -15,7 +58,7 @@ export interface IContent {
     published: boolean;
     publishedAt?: Date;
     featured?: boolean;
-    readingTime?: number;    // Estimated reading time in minutes
+    readingTime?: number;            // Estimated reading time in minutes
     seriesSlug?: string;
     seriesOrder?: number;
     createdAt: Date;
@@ -24,7 +67,17 @@ export interface IContent {
 
 export interface IArticle extends IContent {
     type: 'article';
+    topicSlug: string;               // "dsa"
+    subtopicSlug?: string;           // "dsa-fundamentals" (optional)
+    order: number;                   // Order within subtopic
     readingTime?: number;
+    tableOfContents?: IHeading[];    // Pre-generated TOC
+    seo?: {
+        title?: string;
+        description?: string;
+        keywords?: string[];
+        ogImage?: string;
+    };
 }
 
 export interface INote extends IContent {
@@ -67,6 +120,47 @@ export interface IPageStats {
     views: number;
     likes: number;
     lastViewedAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+export interface IArticleStats {
+    _id?: ObjectId;
+    slug: string;                    // Full path: "dsa/logic-building-problems"
+    views: number;
+    likes: number;
+    shares?: number;
+    lastViewedAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
+// ===== COMMENT TYPES =====
+
+export interface ICommentAuthor {
+    name: string;
+    email: string;
+    avatar?: string;
+    isAuthor?: boolean;             // True for site owner replies
+}
+
+export interface ICommentReply {
+    _id?: ObjectId;
+    author: ICommentAuthor;
+    content: string;
+    likes?: number;
+    createdAt: Date;
+}
+
+export interface IComment {
+    _id?: ObjectId;
+    articleSlug: string;             // Full path: "dsa/logic-building-problems"
+    author: ICommentAuthor;
+    content: string;
+    replies?: ICommentReply[];
+    likes?: number;
+    reported?: boolean;
+    approved: boolean;               // Moderation flag
     createdAt: Date;
     updatedAt: Date;
 }
