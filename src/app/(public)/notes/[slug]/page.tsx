@@ -1,14 +1,13 @@
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import Link from 'next/link';
-import { ArrowLeft, Calendar, Clock } from 'lucide-react';
 
 import { getNote, getAllNoteSlugs } from '@/server/queries/content';
 import { getPageStats, getArticleCommentCount } from '@/server/queries/stats';
 import { parseMarkdown } from '@/lib/markdown';
-import { formatDate, cn, calculateReadingTime } from '@/lib/utils';
-import { ArticleBody } from '@/components/content';
+import { calculateReadingTime } from '@/lib/utils';
+import { NoteHeader } from '@/components/content/NoteHeader';
+import { ArticleBody } from '@/components/content/ArticleBody';
 import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
@@ -32,8 +31,8 @@ export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
     return slugs.map((slug) => ({ slug }));
 };
 
-// ISR: Revalidate every hour
-export const revalidate = 3600;
+// Static generation
+export const revalidate = false;
 
 // Generate metadata for SEO
 export const generateMetadata = async ({ params }: INotePageProps): Promise<Metadata> => {
@@ -121,17 +120,24 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
 };
 
 /**
- * Note Detail Page - Professional Layout with Full Features
- *
+ * Note Page - Professional Layout Matching Article Page Quality
+ * 
  * Features:
- * - Static HTML content served instantly (SSG + ISR)
+ * - Static HTML content served instantly (SSG)
  * - Fade-in animations for smooth UX
  * - Comprehensive JSON-LD structured data
- * - Views and likes with TanStack Query
- * - Comments section with replies
- * - Scroll-to-top button
- * - Responsive design (mobile, tablet, desktop)
- * - SEO optimized
+ * - Semantic HTML for AI scraping
+ * - Optimistic UI updates for likes/views
+ * - Cached comments with TanStack Query
+ * - Professional NoteHeader component
+ * - Consistent styling with Articles
+ * 
+ * SEO Strategy:
+ * 1. JSON-LD schemas (Article, Breadcrumb, Organization)
+ * 2. Semantic HTML5 tags (article, section, header, footer)
+ * 3. Microdata attributes (itemscope, itemprop)
+ * 4. Enhanced meta tags (OG, Twitter, keywords)
+ * 5. Structured content hierarchy
  */
 const NotePage = async ({ params }: INotePageProps) => {
     const { slug } = await params;
@@ -184,130 +190,68 @@ const NotePage = async ({ params }: INotePageProps) => {
 
     return (
         <>
+            {/* JSON-LD Structured Data */}
+            <JsonLd data={combinedSchemas} />
+
             {/* Scroll to Top Button */}
             <ScrollToTop />
 
-            {/* JSON-LD for SEO */}
-            <JsonLd data={combinedSchemas} />
+            {/* Article Container with Semantic HTML */}
+            <article 
+                className="article-content"
+                itemScope
+                itemType="https://schema.org/TechArticle"
+            >
+                {/* Note Header - Animated */}
+                <FadeIn delay={0.1}>
+                    <NoteHeader
+                        title={note.title}
+                        description={note.description}
+                        tags={note.tags}
+                        publishedAt={note.publishedAt}
+                        updatedAt={note.updatedAt}
+                        readingTime={readingTime}
+                    />
+                </FadeIn>
 
-            <article className="min-h-screen">
-                {/* Header Section */}
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24 md:pt-32 pb-8 md:pb-12">
-                    {/* Back Link with Breadcrumb Microdata */}
-                    <FadeIn delay={0.1}>
-                        <nav 
-                            className="mb-6 md:mb-8"
-                            itemScope
-                            itemType="https://schema.org/BreadcrumbList"
-                        >
-                            <span
-                                itemProp="itemListElement"
-                                itemScope
-                                itemType="https://schema.org/ListItem"
-                            >
-                                <Link
-                                    href="/notes"
-                                    itemProp="item"
-                                    className="inline-flex items-center gap-2 text-sm text-[var(--fg-muted)] hover:text-[var(--fg)] transition-colors"
-                                >
-                                    <ArrowLeft className="size-4" />
-                                    <span itemProp="name">Back to notes</span>
-                                </Link>
-                                <meta itemProp="position" content="1" />
-                            </span>
-                        </nav>
-                    </FadeIn>
-
-                    {/* Type Badge + Tags */}
-                    <FadeIn delay={0.2}>
-                        <div className="flex flex-wrap items-center gap-2 mb-4 md:mb-6">
-                            <span className="px-3 py-1.5 text-xs font-semibold rounded-full bg-[#9b87f5]/10 text-[#9b87f5] border-2 border-[#9b87f5]/30">
-                                📝 Note
-                            </span>
-                            {note.tags?.map((tag) => (
-                                <Link
-                                    key={tag}
-                                    href={`/notes?tag=${encodeURIComponent(tag)}`}
-                                    className={cn(
-                                        'px-3 py-1 text-xs font-medium rounded-full',
-                                        'bg-[var(--surface)] text-[var(--fg-muted)]',
-                                        'border-2 border-[var(--border-color)]',
-                                        'hover:border-[#9b87f5] hover:text-[#9b87f5]',
-                                        'transition-colors'
-                                    )}
-                                >
-                                    {tag}
-                                </Link>
-                            ))}
-                        </div>
-                    </FadeIn>
-
-                    {/* Title */}
+                {/* Content Section with Consistent Padding */}
+                <div className="max-w-4xl mx-auto px-6 lg:px-8 pb-12 md:pb-16">
+                    {/* Note Body - Animated */}
                     <FadeIn delay={0.3}>
-                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-[var(--fg)] leading-tight">
-                            {note.title}
-                        </h1>
+                        {htmlContent ? (
+                            <ArticleBody html={htmlContent} />
+                        ) : (
+                            <div className="prose max-w-none text-[var(--fg-muted)]">
+                                <p>This note content is being prepared. Check back soon.</p>
+                            </div>
+                        )}
                     </FadeIn>
 
-                    {/* Description */}
-                    {note.description && (
-                        <FadeIn delay={0.4}>
-                            <p className="mt-4 md:mt-6 text-base md:text-lg text-[var(--fg-muted)] leading-relaxed">
-                                {note.description}
+                    {/* Note Footer - Stats & Engagement - Animated */}
+                    <FadeIn 
+                        as="footer" 
+                        delay={0.5}
+                        className="mt-12 pt-8 border-t border-[var(--border-color)]"
+                    >
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <p className="text-[var(--fg-muted)]">
+                                Found this note helpful? Show some love!
                             </p>
-                        </FadeIn>
-                    )}
-
-                    {/* Meta */}
-                    <FadeIn delay={0.5}>
-                        <div className="mt-6 md:mt-8 flex flex-wrap items-center gap-4 md:gap-6 text-sm text-[var(--fg-muted)]">
-                            {note.publishedAt && (
-                                <span className="flex items-center gap-2">
-                                    <Calendar className="size-4" />
-                                    <time dateTime={new Date(note.publishedAt).toISOString()}>
-                                        {formatDate(note.publishedAt)}
-                                    </time>
-                                </span>
-                            )}
-                            {readingTime && (
-                                <span className="flex items-center gap-2">
-                                    <Clock className="size-4" />
-                                    {readingTime} min read
-                                </span>
-                            )}
-                            {note.updatedAt && note.publishedAt && new Date(note.updatedAt) > new Date(note.publishedAt) && (
-                                <span className="text-[var(--fg-subtle)]">
-                                    (Updated {formatDate(note.updatedAt)})
-                                </span>
-                            )}
+                            <ContentStats
+                                slug={slug}
+                                contentType="notes"
+                                initialViews={stats?.views ?? 0}
+                                initialLikes={stats?.likes ?? 0}
+                            />
                         </div>
                     </FadeIn>
-                </div>
 
-                {/* Content */}
-                <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 md:pb-16">
+                    {/* Comments Section - Animated & Lazy Loaded */}
                     <FadeIn delay={0.7}>
-                        <ArticleBody html={htmlContent} />
-                    </FadeIn>
-
-                    {/* Footer with Stats */}
-                    <FadeIn delay={0.8}>
-                        <footer className="mt-12 md:mt-16 pt-6 md:pt-8 border-t border-[var(--border-color)]">
-                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                                <p className="text-sm md:text-base text-[var(--fg-muted)]">Found this helpful?</p>
-                                <ContentStats
-                                    slug={slug}
-                                    contentType="notes"
-                                    initialViews={stats?.views ?? 0}
-                                    initialLikes={stats?.likes ?? 0}
-                                />
-                            </div>
-                        </footer>
-                    </FadeIn>
-
-                    {/* Comments Section - Animated */}
-                    <FadeIn delay={0.9}>
-                        <CommentSection slug={slug} contentType="notes" />
+                        <CommentSection 
+                            slug={slug} 
+                            contentType="notes"
+                        />
                     </FadeIn>
                 </div>
             </article>

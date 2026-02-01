@@ -254,7 +254,11 @@ export const AVATAR_OPTIONS = [
     { id: 'avatar-6', image: '/avatars/avatar-6.png', label: 'Middle Aged Man' },
     { id: 'avatar-7', image: '/avatars/avatar-7.png', label: 'Women in Saree' },
     { id: 'avatar-8', image: '/avatars/avatar-8.png', label: 'Old Man' },
-    { id: 'avatar-9', image: '/avatars/avatar-9.png', label: 'Exciting Girl' }
+    { id: 'avatar-9', image: '/avatars/avatar-9.png', label: 'Exciting Girl' },
+    { id: 'avatar-10', image: '/avatars/avatar-10.png', label: 'Magical Girl' },
+    { id: 'avatar-11', image: '/avatars/avatar-11.png', label: 'Astronaut' },
+    { id: 'avatar-12', image: '/avatars/avatar-12.png', label: 'Girl With Stick' },
+    { id: 'avatar-13', image: '/avatars/avatar-13.png', label: 'Long Hair Man' },
 ] as const;
 
 export type AvatarId = typeof AVATAR_OPTIONS[number]['id'];
