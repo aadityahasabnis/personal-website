@@ -15,7 +15,6 @@ export const env = {
 
     // Auth
     AUTH_SECRET: getEnvVar('AUTH_SECRET'),
-    NEXTAUTH_URL: getEnvVar('NEXTAUTH_URL', false) || 'http://localhost:3000',
 
     // Revalidation
     REVALIDATE_SECRET: getEnvVar('REVALIDATE_SECRET'),
@@ -23,10 +22,6 @@ export const env = {
     // Optional Services
     CLOUDINARY_URL: getEnvVar('CLOUDINARY_URL', false),
     ANALYTICS_ID: getEnvVar('ANALYTICS_ID', false),
-
-    // Public (available on client)
-    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
-    NEXT_PUBLIC_SITE_NAME: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Aaditya Hasabnis',
 
     // Derived
     IS_PRODUCTION: process.env.NODE_ENV === 'production',
