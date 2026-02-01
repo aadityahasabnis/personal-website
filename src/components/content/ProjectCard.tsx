@@ -37,9 +37,9 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
       >
         {/* Project Image/Preview */}
         <div className="relative aspect-video overflow-hidden bg-[var(--surface)]">
-          {project.image ? (
+          {project.coverImage ? (
             <Image
-              src={project.image}
+              src={project.coverImage}
               alt={project.title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -101,9 +101,9 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
 
           {/* Links */}
           <div className="flex items-center gap-4 mt-6">
-            {project.github && (
+            {project.githubUrl && (
               <Link
-                href={project.github}
+                href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-[var(--fg)] hover:text-[var(--accent)] transition-colors"
@@ -113,9 +113,9 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
                 <span>Code</span>
               </Link>
             )}
-            {project.live && (
+            {project.liveUrl && (
               <Link
-                href={project.live}
+                href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm font-medium text-[var(--fg)] hover:text-[var(--accent)] transition-colors"

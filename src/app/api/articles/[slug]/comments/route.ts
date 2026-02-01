@@ -65,7 +65,6 @@ export const GET = async (
                 isAuthor: comment.author.isAuthor ?? false,
             },
             content: comment.content,
-            likes: comment.likes ?? 0,
             upvotes: comment.upvotes ?? 0,
             replies: comment.replies?.map((reply) => ({
                 _id: reply._id?.toString(),
@@ -75,7 +74,6 @@ export const GET = async (
                     isAuthor: reply.author.isAuthor ?? false,
                 },
                 content: reply.content,
-                likes: reply.likes ?? 0,
                 upvotes: reply.upvotes ?? 0,
                 createdAt: reply.createdAt,
             })),
@@ -164,7 +162,6 @@ export const POST = async (
                     avatar: author.avatar,
                 },
                 content,
-                likes: 0,
                 upvotes: 0,
                 createdAt: new Date(),
             };
@@ -202,7 +199,6 @@ export const POST = async (
                 avatar: author.avatar,
             },
             content,
-            likes: 0,
             upvotes: 0,
             replies: [],
             approved: true, // Auto-approve for instant feedback

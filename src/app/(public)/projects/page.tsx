@@ -32,13 +32,10 @@ function transformProject(project: any): IProject {
     description: project.description,
     longDescription: project.longDescription,
     coverImage: project.coverImage,
-    image: project.image,
     tags: project.tags || [],
     techStack: project.techStack || [],
-    github: project.github,
-    repoUrl: project.repoUrl,
-    live: project.live,
-    liveUrl: project.liveUrl,
+    githubUrl: project.githubUrl || project.github || project.repoUrl, // Support legacy fields
+    liveUrl: project.liveUrl || project.live, // Support legacy fields
     featured: project.featured,
     status: project.status,
     order: project.order,

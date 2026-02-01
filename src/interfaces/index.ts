@@ -97,14 +97,11 @@ export interface IProject {
     title: string;
     description: string;
     longDescription?: string;
-    coverImage?: string;
-    image?: string;          // Alternative image field for cards
+    coverImage?: string;     // Primary image for cards and detail pages
     tags: string[];
     techStack?: string[];    // Tech stack badges
-    github?: string;
-    repoUrl?: string;        // Alternative for github
-    live?: string;
-    liveUrl?: string;        // Alternative for live
+    githubUrl?: string;      // Repository URL (standardized)
+    liveUrl?: string;        // Live demo URL (standardized)
     featured: boolean;
     status: 'active' | 'archived' | 'wip';
     order: number;
@@ -148,8 +145,7 @@ export interface ICommentReply {
     _id?: ObjectId;
     author: ICommentAuthor;
     content: string;
-    likes?: number;
-    upvotes?: number;
+    upvotes: number;                 // Standardized field name
     createdAt: Date;
 }
 
@@ -159,8 +155,7 @@ export interface IComment {
     author: ICommentAuthor;
     content: string;
     replies?: ICommentReply[];
-    likes?: number;
-    upvotes?: number;
+    upvotes: number;                 // Standardized field name (removed likes)
     reported?: boolean;
     approved: boolean;               // Moderation flag
     createdAt: Date;

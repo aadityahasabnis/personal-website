@@ -53,14 +53,14 @@ interface IProjectCardProps {
 }
 
 const ProjectCard = ({ project }: IProjectCardProps) => {
-  // Use image or coverImage as fallback
-  const imageUrl = project.image ?? project.coverImage;
+  // Prepare image URL
+  const imageUrl = project.coverImage;
   // Use techStack or tags as fallback
   const techItems = project.techStack ?? project.tags ?? [];
-  // Use liveUrl or live as fallback
-  const liveLink = project.liveUrl ?? project.live;
-  // Use repoUrl or github as fallback
-  const repoLink = project.repoUrl ?? project.github;
+  // Prepare URLs
+  const liveLink = project.liveUrl;
+  // Get github link
+  const repoLink = project.githubUrl;
 
   return (
     <motion.article
