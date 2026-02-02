@@ -34,4 +34,5 @@ export {
     deleteArticle,
     reorderArticles,
     toggleArticleFeatured,
+    toggleArticlePublished,
 } from './articles';

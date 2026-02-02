@@ -545,3 +545,64 @@ export const toggleArticleFeatured = async (
         };
     }
 };
+
+/**
+ * Toggle article published status
+ */
+export const toggleArticlePublished = async (
+    topicSlug: string, 
+    slug: string
+): Promise<IApiResponse<boolean>> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const article = await collection.findOne({ type: 'article', topicSlug, slug });
+        if (!article) {
+            return {
+                success: false,
+                status: 404,
+                error: 'Article not found',
+            };
+        }
+
+        const newPublished = !article.published;
+        const updateData: Partial<IArticle> & { updatedAt: Date } = {
+            published: newPublished,
+            updatedAt: new Date(),
+        };
+
+        // Set publishedAt date when publishing for the first time
+        if (newPublished && !article.publishedAt) {
+            updateData.publishedAt = new Date();
+        }
+
+        await collection.updateOne(
+            { type: 'article', topicSlug, slug },
+            { $set: updateData }
+        );
+
+        // Update article counts for topic and subtopic
+        const countChange = newPublished ? 1 : -1;
+        await updateTopicArticleCount(topicSlug, countChange);
+        if (article.subtopicSlug) {
+            await updateSubtopicArticleCount(topicSlug, article.subtopicSlug, countChange);
+        }
+
+        revalidateArticlePaths(topicSlug, slug);
+
+        return {
+            success: true,
+            status: 200,
+            data: newPublished,
+            message: newPublished ? 'Article published' : 'Article unpublished',
+        };
+    } catch (error) {
+        console.error('Failed to toggle article published:', error);
+        return {
+            success: false,
+            status: 500,
+            error: 'Failed to update article. Please try again.',
+        };
+    }
+};
+

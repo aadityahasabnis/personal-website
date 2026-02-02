@@ -137,12 +137,12 @@ export const TopicActions = ({ topic }: ITopicActionsProps): React.ReactElement 
                             {topic.featured ? (
                                 <>
                                     <StarOff className="h-4 w-4" />
-                                    Remove from featured
+                                    Unfeature
                                 </>
                             ) : (
                                 <>
                                     <Star className="h-4 w-4" />
-                                    Mark as featured
+                                    Feature
                                 </>
                             )}
                         </button>
