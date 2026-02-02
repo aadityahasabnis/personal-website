@@ -28,6 +28,8 @@ type SubtopicUpdate = z.infer<typeof subtopicUpdateSchema>;
 
 const revalidateSubtopicPaths = (topicSlug: string): void => {
     revalidatePath('/articles');
+    revalidatePath('/admin/subtopics'); // Admin list page
+    revalidatePath('/admin/articles'); // Articles depend on subtopics
     revalidatePath(`/articles/${topicSlug}`);
 };
 

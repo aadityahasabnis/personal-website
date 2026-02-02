@@ -18,7 +18,11 @@ async function getFormData() {
         .sort({ topicSlug: 1, order: 1 })
         .toArray();
 
-    return { topics, allSubtopics };
+    // Serialize data for client component (convert ObjectId to string)
+    return { 
+        topics: JSON.parse(JSON.stringify(topics)), 
+        allSubtopics: JSON.parse(JSON.stringify(allSubtopics))
+    };
 }
 
 export default async function NewArticlePage() {
@@ -42,13 +46,11 @@ export default async function NewArticlePage() {
                 />
             </div>
 
-            {/* Form */}
-            <div className="max-w-4xl">
-                <ArticleForm 
-                    topics={topics} 
-                    allSubtopics={allSubtopics}
-                />
-            </div>
+            {/* Form - Full Width */}
+            <ArticleForm 
+                topics={topics} 
+                allSubtopics={allSubtopics}
+            />
         </div>
     );
 }

@@ -33,7 +33,12 @@ async function getFormData(topicSlug: string, slug: string) {
         .sort({ topicSlug: 1, order: 1 })
         .toArray();
 
-    return { article, topics, allSubtopics };
+    // Serialize data for client component (convert ObjectId to string)
+    return { 
+        article: JSON.parse(JSON.stringify(article)),
+        topics: JSON.parse(JSON.stringify(topics)), 
+        allSubtopics: JSON.parse(JSON.stringify(allSubtopics))
+    };
 }
 
 export default async function EditArticlePage({ params }: EditArticlePageProps) {
@@ -60,15 +65,13 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
                 </div>
             </div>
 
-            {/* Form */}
-            <div className="max-w-4xl">
-                <ArticleForm 
-                    article={article}
-                    topics={topics} 
-                    allSubtopics={allSubtopics}
-                    isEditing
-                />
-            </div>
+            {/* Form - Full Width */}
+            <ArticleForm 
+                article={article}
+                topics={topics} 
+                allSubtopics={allSubtopics}
+                isEditing
+            />
         </div>
     );
 }

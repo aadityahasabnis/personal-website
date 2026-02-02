@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ArrowUpRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useScrollPosition } from '@/hooks';
-import { NAV_LINKS } from '@/constants';
-import ThemeToggle from './ThemeToggle';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
+import { Menu, X, ArrowUpRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useScrollPosition } from "@/hooks";
+import { NAV_LINKS } from "@/constants";
+import ThemeToggle from "./ThemeToggle";
 
 /**
  * Premium Navbar - Minimal, transparent, abstract design
@@ -27,12 +27,12 @@ const Navbar = () => {
   // Prevent scroll when mobile menu is open
   useEffect(() => {
     if (isMobileMenuOpen) {
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isMobileMenuOpen]);
 
@@ -47,11 +47,12 @@ const Navbar = () => {
         {/* Subtle gradient fade - only when scrolled */}
         <div
           className={cn(
-            'absolute inset-0 transition-opacity duration-500',
-            scrolled ? 'opacity-100' : 'opacity-0',
+            "absolute inset-0 transition-opacity duration-500",
+            scrolled ? "opacity-100" : "opacity-0",
           )}
           style={{
-            background: 'linear-gradient(to bottom, var(--bg) 0%, transparent 100%)',
+            background:
+              "linear-gradient(to bottom, var(--bg) 0%, transparent 100%)",
           }}
         />
 
@@ -59,7 +60,6 @@ const Navbar = () => {
         <nav className="relative pointer-events-auto">
           <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12">
             <div className="flex items-center justify-between h-20 md:h-24">
-              
               {/* Logo - Minimal wordmark */}
               <Link href="/" className="group relative">
                 <motion.div
@@ -68,16 +68,15 @@ const Navbar = () => {
                   className="relative"
                 >
                   {/* Minimal text logo */}
-                  <span className="text-xl md:text-2xl font-light tracking-tight text-[var(--fg)]">
-                    aaditya
-                    <span className="font-semibold">.dev</span>
+                  <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--fg)]">
+                    aadizz
                   </span>
-                  
+
                   {/* Subtle underline on hover */}
                   <motion.span
                     className="absolute -bottom-1 left-0 h-px bg-gradient-to-r from-[var(--accent)] to-transparent"
                     initial={{ width: 0 }}
-                    whileHover={{ width: '100%' }}
+                    whileHover={{ width: "100%" }}
                     transition={{ duration: 0.3 }}
                   />
                 </motion.div>
@@ -86,9 +85,10 @@ const Navbar = () => {
               {/* Desktop Navigation - Minimal links */}
               <div className="hidden md:flex items-center gap-1">
                 {NAV_LINKS.filter((link) => !link.hideOnDesktop).map((link) => {
-                  const isActive = pathname === link.href || 
-                    (link.href !== '/' && pathname.startsWith(link.href));
-                  
+                  const isActive =
+                    pathname === link.href ||
+                    (link.href !== "/" && pathname.startsWith(link.href));
+
                   return (
                     <Link
                       key={link.href}
@@ -97,21 +97,25 @@ const Navbar = () => {
                     >
                       <span
                         className={cn(
-                          'relative z-10 text-sm tracking-wide transition-colors duration-300',
+                          "relative z-10 text-sm tracking-wide transition-colors duration-300",
                           isActive
-                            ? 'text-[var(--fg)] font-medium'
-                            : 'text-[var(--fg-muted)] group-hover:text-[var(--fg)]',
+                            ? "text-[var(--fg)] font-medium"
+                            : "text-[var(--fg-muted)] group-hover:text-[var(--fg)]",
                         )}
                       >
                         {link.label}
                       </span>
-                      
+
                       {/* Active indicator - subtle dot */}
                       {isActive && (
                         <motion.span
                           layoutId="nav-dot"
                           className="absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[var(--accent)]"
-                          transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 30,
+                          }}
                         />
                       )}
                     </Link>
@@ -122,7 +126,7 @@ const Navbar = () => {
               {/* Desktop Actions */}
               <div className="hidden md:flex items-center gap-6">
                 <ThemeToggle />
-                
+
                 {/* CTA - Minimal border button */}
                 <Link
                   href="/contact"
@@ -202,9 +206,10 @@ const Navbar = () => {
             >
               <div className="space-y-2">
                 {NAV_LINKS.map((link, index) => {
-                  const isActive = pathname === link.href || 
-                    (link.href !== '/' && pathname.startsWith(link.href));
-                  
+                  const isActive =
+                    pathname === link.href ||
+                    (link.href !== "/" && pathname.startsWith(link.href));
+
                   return (
                     <motion.div
                       key={link.href}
@@ -216,10 +221,10 @@ const Navbar = () => {
                         href={link.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
-                          'block py-4 text-3xl font-light tracking-tight transition-colors',
+                          "block py-4 text-3xl font-light tracking-tight transition-colors",
                           isActive
-                            ? 'text-[var(--fg)]'
-                            : 'text-[var(--fg-muted)] hover:text-[var(--fg)]',
+                            ? "text-[var(--fg)]"
+                            : "text-[var(--fg-muted)] hover:text-[var(--fg)]",
                         )}
                       >
                         {link.label}

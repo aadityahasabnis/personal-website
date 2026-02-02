@@ -30,8 +30,11 @@ type TopicUpdate = z.infer<typeof topicUpdateSchema>;
 
 const revalidateTopicPaths = (slug?: string): void => {
     revalidatePath('/articles');
+    revalidatePath('/admin/topics'); // Admin list page
+    revalidatePath('/admin/articles'); // Articles depend on topics
     if (slug) {
         revalidatePath(`/articles/${slug}`);
+        revalidatePath(`/admin/topics/${slug}/edit`);
     }
 };
 

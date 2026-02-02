@@ -29,8 +29,10 @@ type NoteUpdate = z.infer<typeof noteUpdateSchema>;
 
 const revalidateNotePaths = (slug?: string): void => {
     revalidatePath('/notes');
+    revalidatePath('/admin/notes'); // Admin list page
     if (slug) {
         revalidatePath(`/notes/${slug}`);
+        revalidatePath(`/admin/notes/${slug}/edit`);
     }
     revalidatePath('/'); // Homepage might show featured notes
 };

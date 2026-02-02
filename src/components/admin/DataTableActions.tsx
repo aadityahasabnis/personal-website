@@ -14,6 +14,9 @@ import {
     Copy,
     ExternalLink,
     AlertTriangle,
+    CheckCircle2,
+    Clock,
+    Pause,
     type LucideIcon,
 } from 'lucide-react';
 import {
@@ -45,6 +48,9 @@ const ICON_MAP: Record<string, LucideIcon> = {
     StarOff,
     Copy,
     ExternalLink,
+    CheckCircle2,
+    Clock,
+    Pause,
 };
 
 export interface IDataTableAction {

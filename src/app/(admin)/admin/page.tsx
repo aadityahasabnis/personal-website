@@ -41,7 +41,7 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp }: IStatCardProps):
                 {trend && (
                     <p className={cn(
                         'mt-1 flex items-center gap-1 text-xs',
-                        trendUp ? 'text-green-600' : 'text-muted-foreground'
+                        trendUp ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'
                     )}>
                         {trendUp && <TrendingUp className="h-3 w-3" />}
                         {trend}
@@ -133,7 +133,7 @@ const RecentContent = async (): Promise<React.ReactElement> => {
                                     {article.published ? (
                                         <>Published {formatDate(article.publishedAt)}</>
                                     ) : (
-                                        <span className="text-amber-600">Draft</span>
+                                        <span className="text-amber-600 dark:text-amber-400">Draft</span>
                                     )}
                                 </p>
                             </div>
@@ -166,7 +166,7 @@ const QuickActions = (): React.ReactElement => (
                     'hover:border-primary hover:bg-primary/5 transition-colors'
                 )}
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
                     <FileText className="h-5 w-5" />
                 </div>
                 <div>
@@ -181,7 +181,7 @@ const QuickActions = (): React.ReactElement => (
                     'hover:border-primary hover:bg-primary/5 transition-colors'
                 )}
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                     <BookOpen className="h-5 w-5" />
                 </div>
                 <div>
@@ -196,7 +196,7 @@ const QuickActions = (): React.ReactElement => (
                     'hover:border-primary hover:bg-primary/5 transition-colors'
                 )}
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400">
                     <FolderKanban className="h-5 w-5" />
                 </div>
                 <div>
@@ -211,7 +211,7 @@ const QuickActions = (): React.ReactElement => (
                     'hover:border-primary hover:bg-primary/5 transition-colors'
                 )}
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
                     <Users className="h-5 w-5" />
                 </div>
                 <div>

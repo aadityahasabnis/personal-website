@@ -36,3 +36,22 @@ export {
     toggleArticleFeatured,
     toggleArticlePublished,
 } from './articles';
+
+// Note actions
+export {
+    createNote,
+    updateNote,
+    deleteNote,
+    toggleNotePublished,
+    toggleNoteFeatured,
+} from './notes';
+
+// Project actions
+export {
+    createProject,
+    updateProject,
+    deleteProject,
+    toggleProjectFeatured,
+    updateProjectStatus,
+    reorderProjects,
+} from './projects';
