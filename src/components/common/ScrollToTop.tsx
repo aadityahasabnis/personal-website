@@ -60,12 +60,12 @@ export function ScrollToTop({ showAfter = 400, className }: IScrollToTopProps) {
                 'fixed bottom-8 right-8 z-50',
                 'size-12 rounded-full',
                 'flex items-center justify-center',
-                'bg-[#9b87f5] text-white',
-                'shadow-lg shadow-[#9b87f5]/30',
-                'border-2 border-[#9b87f5]',
-                'hover:bg-[#8b77e5] hover:border-[#8b77e5]',
+                'bg-[var(--accent)] text-white',
+                'shadow-lg shadow-[var(--glow-color)]',
+                'border-2 border-[var(--accent)]',
+                'hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)]',
                 'hover:scale-110 active:scale-95',
-                'focus:outline-none focus:ring-2 focus:ring-[#9b87f5] focus:ring-offset-2',
+                'focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2',
                 'transition-all duration-300',
                 isVisible
                     ? 'opacity-100 translate-y-0 pointer-events-auto'

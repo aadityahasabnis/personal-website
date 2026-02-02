@@ -129,16 +129,16 @@ export function ContentStats({
                     userHasLiked
                         ? [
                             // Liked state - Lavender filled (DISABLED)
-                            'bg-[#9b87f5] border-[#9b87f5] text-white',
+                            'bg-[var(--accent)] border-[var(--accent)] text-white',
                             'cursor-not-allowed',
-                            'shadow-lg shadow-[#9b87f5]/30',
+                            'shadow-lg shadow-[var(--glow-color)]',
                         ]
                         : [
                             // Unliked state - Interactive
                             'bg-transparent border-[var(--border-color)] text-[var(--fg-muted)]',
-                            'hover:border-[#9b87f5] hover:text-[#9b87f5] hover:bg-[#9b87f5]/5',
+                            'hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5',
                             'hover:scale-105 active:scale-95',
-                            'focus:ring-[#9b87f5]',
+                            'focus:ring-[var(--accent)]',
                             'disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100',
                         ]
                 )}

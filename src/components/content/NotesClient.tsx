@@ -57,8 +57,8 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                     <div className="mb-8 md:mb-12">
                         {/* Filter Header */}
                         <div className="flex items-center gap-2 mb-4 md:mb-6">
-                            <div className="size-8 rounded-full bg-[#9b87f5]/10 flex items-center justify-center">
-                                <Filter className="size-4 text-[#9b87f5]" />
+                            <div className="size-8 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
+                                <Filter className="size-4 text-[var(--accent)]" />
                             </div>
                             <h2 className="text-base md:text-lg font-semibold text-[var(--fg)]">
                                 Filter by Tag
@@ -85,8 +85,8 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                                     transition-all duration-200
                                     ${
                                         !selectedTag
-                                            ? 'bg-[#9b87f5] text-white shadow-lg shadow-[#9b87f5]/30'
-                                            : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[#9b87f5] hover:text-[#9b87f5]'
+                                            ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                            : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                                     }
                                 `}
                             >
@@ -106,8 +106,8 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                                             transition-all duration-200
                                             ${
                                                 isActive
-                                                    ? 'bg-[#9b87f5] text-white shadow-lg shadow-[#9b87f5]/30'
-                                                    : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[#9b87f5] hover:text-[#9b87f5]'
+                                                    ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                                    : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                                             }
                                         `}
                                     >
@@ -131,7 +131,7 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                                 </p>
                                 <button
                                     onClick={() => setSelectedTag(null)}
-                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#9b87f5] text-white text-sm font-medium hover:bg-[#8b77e5] transition-colors shadow-lg shadow-[#9b87f5]/20"
+                                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--accent)] text-white text-sm font-medium hover:bg-[var(--accent-hover)] transition-colors shadow-lg shadow-[var(--glow-color)]"
                                 >
                                     View all notes
                                 </button>

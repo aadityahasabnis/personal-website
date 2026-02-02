@@ -76,9 +76,9 @@ export const NoteHeader = ({
             {/* Badge + Tags Row */}
             <div className="flex flex-wrap items-center gap-2 mb-6">
                 {/* Note Type Badge with Icon */}
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#9b87f5]/20 to-[#9b87f5]/10 border-2 border-[#9b87f5]/30">
-                    <Lightbulb className="size-4 text-[#9b87f5]" />
-                    <span className="text-sm font-semibold text-[#9b87f5]">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[var(--accent)]/20 to-[var(--accent)]/10 border-2 border-[var(--accent)]/30">
+                    <Lightbulb className="size-4 text-[var(--accent)]" />
+                    <span className="text-sm font-semibold text-[var(--accent)]">
                         Quick Note
                     </span>
                 </div>
@@ -93,7 +93,7 @@ export const NoteHeader = ({
                                 className={cn(
                                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium',
                                     'bg-[var(--surface)] text-[var(--fg-muted)] border border-[var(--border-color)]',
-                                    'hover:border-[#9b87f5] hover:text-[#9b87f5] hover:bg-[#9b87f5]/5',
+                                    'hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5',
                                     'transition-all duration-200'
                                 )}
                             >
@@ -160,7 +160,7 @@ export const NoteHeader = ({
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
-                className="mt-8 h-px bg-gradient-to-r from-[#9b87f5] via-[#9b87f5]/50 to-transparent"
+                className="mt-8 h-px bg-gradient-to-r from-[var(--accent)] via-[var(--accent)]/50 to-transparent"
                 style={{ transformOrigin: 'left' }}
             />
         </header>

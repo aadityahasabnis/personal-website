@@ -193,8 +193,8 @@ export function CommentSection({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-full bg-[#9b87f5]/10 flex items-center justify-center flex-shrink-0">
-            <MessageSquare className="size-5 text-[#9b87f5]" />
+          <div className="size-10 rounded-full bg-[var(--accent)]/10 flex items-center justify-center flex-shrink-0">
+            <MessageSquare className="size-5 text-[var(--accent)]" />
           </div>
           <div>
             <h2 className="text-xl md:text-2xl font-bold text-[var(--fg)]">
@@ -213,10 +213,10 @@ export function CommentSection({
             onClick={() => setShowForm(true)}
             className={cn(
               "inline-flex items-center gap-2 px-4 md:px-5 py-2 md:py-2.5 rounded-full",
-              "bg-[#9b87f5] text-white",
+              "bg-[var(--accent)] text-white",
               "font-medium text-sm",
-              "hover:bg-[#8b77e5] transition-colors",
-              "shadow-lg shadow-[#9b87f5]/20",
+              "hover:bg-[var(--accent-hover)] transition-colors",
+              "shadow-lg shadow-[var(--glow-color)]",
               "w-full sm:w-auto justify-center sm:justify-start",
             )}
           >
@@ -231,7 +231,7 @@ export function CommentSection({
         <div
           ref={formRef}
           id="comment-form"
-          className="mb-6 md:mb-8 p-4 md:p-6 border-2 border-[#9b87f5]/20 rounded-2xl bg-gradient-to-br from-[#9b87f5]/5 to-transparent relative"
+          className="mb-6 md:mb-8 p-4 md:p-6 border-2 border-[var(--accent)]/20 rounded-2xl bg-gradient-to-br from-[var(--accent)]/5 to-transparent relative"
         >
           {/* Cancel Button - Top Right */}
           <button
@@ -244,7 +244,7 @@ export function CommentSection({
           </button>
 
           <div className="flex items-center gap-2 mb-4">
-            <User className="size-5 text-[#9b87f5]" />
+            <User className="size-5 text-[var(--accent)]" />
             <h3 className="text-base md:text-lg font-semibold text-[var(--fg)]">
               Share your thoughts
             </h3>
@@ -279,7 +279,7 @@ export function CommentSection({
                   "px-3 md:px-4 py-2.5 md:py-3 rounded-xl border-2 border-[var(--border-color)]",
                   "bg-[var(--bg)] text-[var(--fg)] text-sm md:text-base",
                   "placeholder:text-[var(--fg-subtle)]",
-                  "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                  "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                   "transition-all",
                 )}
               />
@@ -293,7 +293,7 @@ export function CommentSection({
                   "px-3 md:px-4 py-2.5 md:py-3 rounded-xl border-2 border-[var(--border-color)]",
                   "bg-[var(--bg)] text-[var(--fg)] text-sm md:text-base",
                   "placeholder:text-[var(--fg-subtle)]",
-                  "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                  "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                   "transition-all",
                 )}
               />
@@ -312,7 +312,7 @@ export function CommentSection({
                 "w-full px-3 md:px-4 py-2.5 md:py-3 rounded-xl border-2 border-[var(--border-color)]",
                 "bg-[var(--bg)] text-[var(--fg)] text-sm md:text-base",
                 "placeholder:text-[var(--fg-subtle)]",
-                "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                 "resize-none transition-all",
               )}
             />
@@ -326,11 +326,11 @@ export function CommentSection({
                 disabled={postMutation.isPending}
                 className={cn(
                   "inline-flex items-center justify-center gap-2 px-5 md:px-6 py-2.5 md:py-3 rounded-full",
-                  "bg-[#9b87f5] text-white font-medium text-sm",
-                  "hover:bg-[#8b77e5] transition-all",
-                  "shadow-lg shadow-[#9b87f5]/30",
+                  "bg-[var(--accent)] text-white font-medium text-sm",
+                  "hover:bg-[var(--accent-hover)] transition-all",
+                  "shadow-lg shadow-[var(--glow-color)]",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "focus:outline-none focus:ring-2 focus:ring-[#9b87f5] focus:ring-offset-2",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2",
                   "w-full sm:w-auto",
                 )}
               >
@@ -357,11 +357,11 @@ export function CommentSection({
           <CommentsSkeleton />
         ) : comments.length === 0 ? (
           <div
-            className="text-center py-12 md:py-16 border-2 border-dashed border-[var(--border-color)] rounded-2xl cursor-pointer hover:border-[#9b87f5]/50 transition-colors group"
+            className="text-center py-12 md:py-16 border-2 border-dashed border-[var(--border-color)] rounded-2xl cursor-pointer hover:border-[var(--accent)]/50 transition-colors group"
             onClick={() => setShowForm(true)}
           >
-            <div className="size-12 md:size-16 mx-auto mb-3 md:mb-4 rounded-full bg-[#9b87f5]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-              <MessageSquare className="size-6 md:size-8 text-[#9b87f5]" />
+            <div className="size-12 md:size-16 mx-auto mb-3 md:mb-4 rounded-full bg-[var(--accent)]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <MessageSquare className="size-6 md:size-8 text-[var(--accent)]" />
             </div>
             <p className="text-[var(--fg-muted)] text-base md:text-lg font-medium">
               No comments yet
@@ -508,10 +508,10 @@ function CommentCard({
 
   return (
     <div className={cn("group", isReply && "ml-6 sm:ml-8 md:ml-12")}>
-      <div className="p-4 md:p-5 border-2 border-[var(--border-color)] rounded-xl md:rounded-2xl bg-[var(--card-bg)] hover:border-[#9b87f5]/30 transition-all hover:shadow-lg hover:shadow-[#9b87f5]/5">
+      <div className="p-4 md:p-5 border-2 border-[var(--border-color)] rounded-xl md:rounded-2xl bg-[var(--card-bg)] hover:border-[var(--accent)]/30 transition-all hover:shadow-lg hover:shadow-[var(--accent)]/5">
         <div className="flex items-start gap-3 md:gap-4">
           {/* Avatar */}
-          <div className="flex-shrink-0 size-10 md:size-11 rounded-full overflow-hidden border-2 border-[#9b87f5]/30 shadow-sm">
+          <div className="flex-shrink-0 size-10 md:size-11 rounded-full overflow-hidden border-2 border-[var(--accent)]/30 shadow-sm">
             <Image
               src={avatar?.image || "/avatars/avatar-1.png"}
               alt={avatar?.label || "User avatar"}
@@ -532,7 +532,7 @@ function CommentCard({
                 </span>
                 {comment.author.isAuthor && (
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#9b87f5] text-white text-xs font-medium"
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--accent)] text-white text-xs font-medium"
                     title="Content Author"
                   >
                     <Shield className="size-3" />
@@ -550,7 +550,7 @@ function CommentCard({
                   <button
                     type="button"
                     onClick={() => onReply(comment._id, comment.author.name)}
-                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs md:text-sm text-[var(--fg-subtle)] hover:text-[#9b87f5] hover:bg-[#9b87f5]/5 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs md:text-sm text-[var(--fg-subtle)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5 transition-colors"
                   >
                     <ReplyIcon className="size-3.5" />
                     Reply
@@ -573,14 +573,14 @@ function CommentCard({
                     "text-xs md:text-sm font-medium transition-all",
                     userHasUpvoted
                       ? [
-                          "bg-[#9b87f5] text-white",
+                          "bg-[var(--accent)] text-white",
                           "cursor-not-allowed",
-                          "shadow-md shadow-[#9b87f5]/30",
+                          "shadow-md shadow-[var(--glow-color)]",
                         ]
                       : [
-                          "text-[var(--fg-subtle)] hover:text-[#9b87f5]",
-                          "hover:bg-[#9b87f5]/5",
-                          "border border-[var(--border-color)] hover:border-[#9b87f5]/30",
+                          "text-[var(--fg-subtle)] hover:text-[var(--accent)]",
+                          "hover:bg-[var(--accent)]/5",
+                          "border border-[var(--border-color)] hover:border-[var(--accent)]/30",
                         ],
                   )}
                 >
@@ -607,7 +607,7 @@ function CommentCard({
       {isReplyFormOpen && (
         <div
           ref={formRef}
-          className="mt-3 ml-6 sm:ml-8 md:ml-12 p-4 md:p-5 border-2 border-[#9b87f5]/20 rounded-xl bg-gradient-to-br from-[#9b87f5]/5 to-transparent relative"
+          className="mt-3 ml-6 sm:ml-8 md:ml-12 p-4 md:p-5 border-2 border-[var(--accent)]/20 rounded-xl bg-gradient-to-br from-[var(--accent)]/5 to-transparent relative"
         >
           {/* Cancel Button */}
           <button
@@ -620,7 +620,7 @@ function CommentCard({
           </button>
 
           <div className="flex items-center gap-2 mb-3">
-            <User className="size-4 text-[#9b87f5]" />
+            <User className="size-4 text-[var(--accent)]" />
             <h4 className="text-sm md:text-base font-semibold text-[var(--fg)]">
               Reply to {replyingTo.name}
             </h4>
@@ -653,7 +653,7 @@ function CommentCard({
                   "px-3 py-2 rounded-lg border-2 border-[var(--border-color)]",
                   "bg-[var(--bg)] text-[var(--fg)] text-sm",
                   "placeholder:text-[var(--fg-subtle)]",
-                  "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                  "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                   "transition-all",
                 )}
               />
@@ -667,7 +667,7 @@ function CommentCard({
                   "px-3 py-2 rounded-lg border-2 border-[var(--border-color)]",
                   "bg-[var(--bg)] text-[var(--fg)] text-sm",
                   "placeholder:text-[var(--fg-subtle)]",
-                  "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                  "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                   "transition-all",
                 )}
               />
@@ -686,7 +686,7 @@ function CommentCard({
                 "w-full px-3 py-2 rounded-lg border-2 border-[var(--border-color)]",
                 "bg-[var(--bg)] text-[var(--fg)] text-sm",
                 "placeholder:text-[var(--fg-subtle)]",
-                "focus:outline-none focus:border-[#9b87f5] focus:ring-2 focus:ring-[#9b87f5]/20",
+                "focus:outline-none focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20",
                 "resize-none transition-all",
               )}
             />
@@ -697,11 +697,11 @@ function CommentCard({
                 disabled={postMutation.isPending}
                 className={cn(
                   "inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full",
-                  "bg-[#9b87f5] text-white font-medium text-sm",
-                  "hover:bg-[#8b77e5] transition-all",
-                  "shadow-lg shadow-[#9b87f5]/30",
+                  "bg-[var(--accent)] text-white font-medium text-sm",
+                  "hover:bg-[var(--accent-hover)] transition-all",
+                  "shadow-lg shadow-[var(--glow-color)]",
                   "disabled:opacity-50 disabled:cursor-not-allowed",
-                  "focus:outline-none focus:ring-2 focus:ring-[#9b87f5] focus:ring-offset-2",
+                  "focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2",
                 )}
               >
                 {postMutation.isPending ? (
@@ -725,7 +725,7 @@ function CommentCard({
       {comment.replies && comment.replies.length > 0 && (
         <div className="mt-3 space-y-3 relative">
           {/* Thread line */}
-          <div className="absolute left-3 md:left-4 top-0 bottom-0 w-0.5 bg-[#9b87f5]/20" />
+          <div className="absolute left-3 md:left-4 top-0 bottom-0 w-0.5 bg-[var(--accent)]/20" />
           {comment.replies.map((reply) => (
             <CommentCard
               key={reply._id}
