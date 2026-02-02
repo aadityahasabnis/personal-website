@@ -28,6 +28,13 @@ const articleInputSchema = z.object({
     // Pre-rendered HTML for SSR (generated on save)
     html: z.string().optional(),
     
+    // Table of contents extracted from headings
+    tableOfContents: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        level: z.number(),
+    })).optional(),
+    
     topicSlug: z.string().min(1, 'Topic is required'),
     subtopicSlug: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -45,6 +52,11 @@ const articleInputSchema = z.object({
 const articleUpdateSchema = articleInputSchema.partial().extend({
     slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern).optional(),
     body: z.string().optional(), // Make body optional for updates
+    tableOfContents: z.array(z.object({
+        id: z.string(),
+        text: z.string(),
+        level: z.number(),
+    })).optional(),
 });
 
 type ArticleInput = z.infer<typeof articleInputSchema>;
@@ -136,6 +148,7 @@ export const createArticle = async (data: ArticleInput): Promise<IApiResponse<st
             editorType: (parsed.data.editorType || 'markdown') as EditorType,
             content: parsed.data.content as YooptaContent | undefined,
             html: parsed.data.html,
+            tableOfContents: parsed.data.tableOfContents as IArticle['tableOfContents'],
             published: false,
             createdAt: now,
             updatedAt: now,
@@ -231,6 +244,7 @@ export const updateArticle = async (
             coverImage: parsed.data.coverImage || undefined,
             editorType: parsed.data.editorType as EditorType | undefined,
             content: parsed.data.content as YooptaContent | undefined,
+            tableOfContents: parsed.data.tableOfContents as IArticle['tableOfContents'],
             updatedAt: new Date(),
         };
 

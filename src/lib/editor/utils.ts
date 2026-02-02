@@ -9,23 +9,24 @@
  */
 
 import type { YooptaContentValue } from '@yoopta/editor';
-import type { ContentStats, ExtractedHeading, YooptaText, YooptaElement } from '@/types/yoopta';
+import type { ContentStats, ExtractedHeading } from '@/types/yoopta';
 
 // ===== TEXT EXTRACTION =====
 
 /**
  * Extract plain text from a Yoopta element recursively
  */
-function extractTextFromElement(element: YooptaElement | YooptaText): string {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function extractTextFromElement(element: any): string {
     // If it's a text node
-    if ('text' in element) {
-        return element.text;
+    if (element && typeof element === 'object' && 'text' in element) {
+        return element.text || '';
     }
     
     // If it has children, recursively extract
-    if ('children' in element && Array.isArray(element.children)) {
+    if (element && 'children' in element && Array.isArray(element.children)) {
         return element.children
-            .map(child => extractTextFromElement(child as YooptaElement | YooptaText))
+            .map((child: unknown) => extractTextFromElement(child))
             .join('');
     }
     
@@ -120,6 +121,7 @@ export function getContentStats(content: YooptaContentValue): ContentStats {
 
 /**
  * Extract headings from content for Table of Contents
+ * Note: IDs are generated from text slugs to match YooptaRenderer's heading IDs
  */
 export function extractHeadings(content: YooptaContentValue): ExtractedHeading[] {
     if (!content || typeof content !== 'object') {
@@ -127,6 +129,7 @@ export function extractHeadings(content: YooptaContentValue): ExtractedHeading[]
     }
 
     const headings: ExtractedHeading[] = [];
+    const usedIds = new Set<string>();
     
     // Sort blocks by order
     const sortedBlocks = Object.values(content).sort(
@@ -160,8 +163,21 @@ export function extractHeadings(content: YooptaContentValue): ExtractedHeading[]
             .trim();
 
         if (text) {
+            // Generate slug-based ID to match YooptaRenderer's heading IDs
+            let id = generateHeadingSlug(text);
+            
+            // Handle duplicate headings by appending a number
+            if (usedIds.has(id)) {
+                let counter = 1;
+                while (usedIds.has(`${id}-${counter}`)) {
+                    counter++;
+                }
+                id = `${id}-${counter}`;
+            }
+            usedIds.add(id);
+            
             headings.push({
-                id: block.id,
+                id,
                 text,
                 level,
             });

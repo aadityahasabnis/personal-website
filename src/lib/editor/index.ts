@@ -6,15 +6,12 @@
 
 // Plugins and configuration
 export { 
-    getBasePlugins, 
     getEditorPlugins, 
-    getThemedPlugins,
     marks,
     uploadImage,
     uploadVideo,
     uploadFile,
     keyboardShortcuts,
-    emptyContent,
     defaultPlaceholder,
 } from './plugins';
 

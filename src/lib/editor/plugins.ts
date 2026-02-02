@@ -26,12 +26,16 @@ import Accordion from '@yoopta/accordion';
 import Link from '@yoopta/link';
 import Tabs from '@yoopta/tabs';
 import Steps from '@yoopta/steps';
+import Carousel from '@yoopta/carousel';
 
 // Marks (text formatting)
 import { Bold, Italic, CodeMark, Underline, Strike, Highlight } from '@yoopta/marks';
 
 // Types
 import type { ImageUploadResponse } from '@yoopta/image';
+
+// Custom UI components (commented out temporarily for debugging)
+// import { CustomImageUI, CustomVideoUI, CustomFileUI } from './custom-ui';
 
 // ===== UPLOAD HANDLERS =====
 
@@ -56,6 +60,7 @@ export const uploadImage = async (file: File): Promise<ImageUploadResponse> => {
     const data = await response.json();
 
     return {
+        id: data.data.publicId || `img-${Date.now()}`,
         src: data.data.url,
         alt: file.name.replace(/\.[^/.]+$/, ''), // Remove extension for alt
         sizes: {
@@ -68,7 +73,7 @@ export const uploadImage = async (file: File): Promise<ImageUploadResponse> => {
 /**
  * Upload video to Cloudinary via our API
  */
-export const uploadVideo = async (file: File): Promise<{ src: string; sizes?: { width: number; height: number } }> => {
+export const uploadVideo = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', 'portfolio/videos');
@@ -87,6 +92,7 @@ export const uploadVideo = async (file: File): Promise<{ src: string; sizes?: { 
     const data = await response.json();
 
     return {
+        id: data.data.publicId || `vid-${Date.now()}`,
         src: data.data.url,
         sizes: {
             width: data.data.width || 1280,
@@ -98,7 +104,7 @@ export const uploadVideo = async (file: File): Promise<{ src: string; sizes?: { 
 /**
  * Upload file to Cloudinary via our API
  */
-export const uploadFile = async (file: File): Promise<{ src: string; name: string; size: number }> => {
+export const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('folder', 'portfolio/files');
@@ -117,9 +123,11 @@ export const uploadFile = async (file: File): Promise<{ src: string; name: strin
     const data = await response.json();
 
     return {
+        id: data.data.publicId || `file-${Date.now()}`,
         src: data.data.url,
         name: file.name,
         size: file.size,
+        format: file.name.split('.').pop() || 'unknown',
     };
 };
 
@@ -141,7 +149,9 @@ export const getBasePlugins = () => [
     Divider,
     Callout,
     Table,
-    Code,
+    Code.Code,
+    Code.CodeGroup,
+    Carousel,
     Accordion,
     Link,
     Tabs,
@@ -168,7 +178,7 @@ export const getEditorPlugins = () => [
     // Image with Cloudinary upload
     Image.extend({
         options: {
-            onUpload: uploadImage,
+            upload: uploadImage,
             maxSizes: {
                 maxWidth: 1200,
                 maxHeight: 800,
@@ -179,14 +189,14 @@ export const getEditorPlugins = () => [
     // Video with upload support
     Video.extend({
         options: {
-            onUpload: uploadVideo,
+            upload: uploadVideo,
         },
     }),
     
     // File attachment
     File.extend({
         options: {
-            onUpload: uploadFile,
+            upload: uploadFile,
         },
     }),
     
@@ -196,7 +206,13 @@ export const getEditorPlugins = () => [
     Table,
     
     // Code with syntax highlighting
-    Code,
+    Code.Code,
+    
+    // Code Group for multi-language examples
+    Code.CodeGroup,
+    
+    // Carousel for image galleries
+    Carousel,
     
     // Accordion for collapsible content
     Accordion,

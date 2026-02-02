@@ -1,9 +1,6 @@
 /* ===== TAILWIND IMPORT ===== */
 @import "tailwindcss";
 
-/* ===== YOOPTA EDITOR THEME ===== */
-/* Note: The shadcn theme CSS is imported in the YooptaRichEditor component */
-
 /* ===== CUSTOM VARIANTS ===== */
 @custom-variant dark (&:is(.dark *));
 
@@ -1536,172 +1533,1527 @@
     }
 }
 
-/* ===== EDITOR STYLES ===== */
-@layer components {
-    /* Tiptap Editor Styles */
-    .ProseMirror {
-        min-height: 400px;
-    }
+/* ===== YOOPTA EDITOR - SCOPED THEME ===== */
+/* 
+ * We import UI components from @yoopta/themes-shadcn SUBMODULES to avoid global CSS injection.
+ * The shadcn components use CSS variables (--background, --foreground, etc).
+ * We define these variables ONLY within .yoopta-editor-container to not affect the rest of the site.
+ */
 
-    .ProseMirror:focus {
-        outline: none;
-    }
+/* ===== SCOPED SHADCN VARIABLES FOR YOOPTA (LIGHT MODE) ===== */
+.yoopta-editor-container,
+.yoopta-editor-wrapper {
+    /* Shadcn HSL variables scoped to editor only */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+    --primary: 271 70% 45%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 10% 12%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 10% 12%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 271 70% 45%;
+    --radius: 0.5rem;
+}
 
-    .ProseMirror p.is-editor-empty:first-child::before {
-        content: attr(data-placeholder);
-        float: left;
-        color: var(--fg-subtle);
-        pointer-events: none;
-        height: 0;
-    }
+/* ===== SCOPED SHADCN VARIABLES FOR YOOPTA (DARK MODE) ===== */
+.dark .yoopta-editor-container,
+.dark .yoopta-editor-wrapper {
+    --background: 240 10% 10%;
+    --foreground: 0 0% 95%;
+    --card: 240 10% 10%;
+    --card-foreground: 0 0% 95%;
+    --popover: 240 10% 10%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 271 70% 60%;
+    --primary-foreground: 240 10% 10%;
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 95%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --accent: 240 4% 16%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 95%;
+    --border: 240 4% 20%;
+    --input: 240 4% 20%;
+    --ring: 271 70% 60%;
+}
 
-    .ProseMirror table {
-        border-collapse: collapse;
-        table-layout: fixed;
-        width: 100%;
-        margin: 1em 0;
-        overflow: hidden;
-    }
+/* ===== YOOPTA EDITOR - OKLCH COLOR OVERRIDES ===== */
+/* 
+ * Override with OKLCH colors for consistency with the rest of the site.
+ * These take precedence over the shadcn HSL variables for direct styles.
+ * 
+ * Light mode colors:
+ *   --bg: oklch(0.99 0.002 90)
+ *   --fg: oklch(0.20 0.02 285)
+ *   --fg-muted: oklch(0.45 0.02 285)
+ *   --surface: oklch(0.96 0.006 285)
+ *   --card-bg: oklch(1.00 0 0) (white)
+ *   --accent: oklch(0.55 0.24 285)
+ *   --border-color: oklch(0.90 0.01 285)
+ * 
+ * Dark mode colors:
+ *   --bg: oklch(0.13 0.03 285)
+ *   --fg: oklch(0.95 0.01 285)
+ *   --fg-muted: oklch(0.70 0.02 285)
+ *   --surface: oklch(0.18 0.04 285)
+ *   --card-bg: oklch(0.16 0.035 285)
+ *   --accent: oklch(0.70 0.22 285)
+ *   --border-color: oklch(0.25 0.04 285)
+ */
 
-    .ProseMirror table td,
-    .ProseMirror table th {
-        min-width: 1em;
-        border: 2px solid var(--border-color);
-        padding: 0.5em;
-        vertical-align: top;
-        box-sizing: border-box;
-        position: relative;
-    }
+/* ===== LIGHT MODE - YOOPTA EDITOR ===== */
 
-    .ProseMirror table th {
-        font-weight: bold;
-        text-align: left;
-        background-color: var(--surface);
-    }
+/* Editor wrapper and container */
+.yoopta-editor-wrapper {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    .ProseMirror ul[data-type="taskList"] {
-        list-style: none;
-        padding: 0;
-    }
+.yoopta-editor-container {
+    color: oklch(0.20 0.02 285) !important;
+    background: oklch(1.00 0 0) !important;
+}
 
-    .ProseMirror ul[data-type="taskList"] li {
-        display: flex;
-        align-items: flex-start;
-    }
+/* All text inside editor */
+.yoopta-editor-container * {
+    color: inherit;
+}
 
-    .ProseMirror ul[data-type="taskList"] li > label {
-        flex: 0 0 auto;
-        margin-right: 0.5rem;
-        user-select: none;
-    }
+/* Headings */
+.yoopta-editor-container h1,
+.yoopta-editor-container [data-yoopta-block="HeadingOne"] {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    .ProseMirror ul[data-type="taskList"] li > div {
-        flex: 1 1 auto;
-    }
+.yoopta-editor-container h2,
+.yoopta-editor-container [data-yoopta-block="HeadingTwo"] {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    .ProseMirror ul[data-type="taskList"] input[type="checkbox"] {
-        cursor: pointer;
-    }
+.yoopta-editor-container h3,
+.yoopta-editor-container [data-yoopta-block="HeadingThree"] {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    /* ===== YOOPTA EDITOR OVERRIDES ===== */
-    /* Override Yoopta styles to match the site theme */
-    .yoopta-editor-wrapper {
-        --yoopta-editor-bg: var(--card-bg);
-        --yoopta-editor-text: var(--fg);
-        --yoopta-editor-muted: var(--fg-muted);
-        --yoopta-editor-border: var(--border-color);
-        --yoopta-editor-accent: var(--accent);
-    }
+/* Paragraphs */
+.yoopta-editor-container p,
+.yoopta-editor-container [data-yoopta-block="Paragraph"] {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    /* Yoopta container styling */
-    .yoopta-editor-container {
-        font-family: var(--font-sans);
-    }
+/* Placeholder */
+[data-slate-placeholder="true"] {
+    color: oklch(0.45 0.02 285) !important;
+    opacity: 0.6 !important;
+}
 
-    /* Yoopta block styling */
-    .yoopta-editor-container [data-yoopta-block] {
-        margin-bottom: 0.5rem;
-    }
+/* Caret */
+.yoopta-editor-container [contenteditable="true"] {
+    caret-color: oklch(0.55 0.24 285) !important;
+    outline: none !important;
+}
 
-    /* Yoopta placeholder styling */
-    .yoopta-editor-container [data-placeholder]::before {
-        color: var(--fg-subtle) !important;
-        opacity: 0.6;
-    }
+/* Lists */
+.yoopta-editor-container ul,
+.yoopta-editor-container ol,
+.yoopta-editor-container li {
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    /* Yoopta selection styling */
-    .yoopta-editor-container ::selection {
-        background: var(--accent);
-        color: var(--accent-fg);
-    }
+/* Blockquote */
+.yoopta-editor-container blockquote,
+.yoopta-editor-container [data-yoopta-block="Blockquote"] {
+    color: oklch(0.20 0.02 285) !important;
+    border-left: 3px solid oklch(0.55 0.24 285) !important;
+    background: oklch(0.96 0.006 285) !important;
+    padding: 0.75rem 1rem !important;
+    border-radius: 0 0.5rem 0.5rem 0 !important;
+}
 
-    /* Yoopta toolbar styling - ensure visibility */
-    [data-yoopta-floating-toolbar],
-    [data-yoopta-block-actions],
-    [data-yoopta-slash-menu] {
-        z-index: 50;
-        border-radius: 0.5rem;
-        border: 1px solid var(--border-color);
-        background: var(--card-bg);
-        box-shadow: 0 4px 12px oklch(0 0 0 / 0.15);
-    }
+/* Callout */
+.yoopta-editor-container [data-yoopta-block="Callout"] {
+    background: oklch(0.96 0.006 285) !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.5rem !important;
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    /* Yoopta code block styling */
-    .yoopta-editor-container pre[data-language] {
-        background: #1e1e1e !important;
-        border-radius: 0.75rem;
-        padding: 1rem;
-        overflow-x: auto;
-    }
+/* Code blocks */
+.yoopta-editor-container pre,
+.yoopta-editor-container [data-yoopta-block="Code"] pre {
+    background: oklch(0.18 0.02 285) !important;
+    border-radius: 0.5rem !important;
+    padding: 1rem !important;
+    border: 1px solid oklch(0.25 0.04 285) !important;
+}
 
-    .yoopta-editor-container pre[data-language] code {
-        font-family: var(--font-mono);
-        font-size: 0.875rem;
-        line-height: 1.6;
-    }
+.yoopta-editor-container pre code,
+.yoopta-editor-container [data-yoopta-block="Code"] code {
+    color: oklch(0.92 0.01 285) !important;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.6 !important;
+    background: transparent !important;
+}
 
-    /* Yoopta table styling */
-    .yoopta-editor-container table {
-        width: 100%;
-        border-collapse: collapse;
-    }
+/* Inline code */
+.yoopta-editor-container code:not(pre code) {
+    background: oklch(0.96 0.006 285) !important;
+    color: oklch(0.35 0.15 285) !important;
+    padding: 0.125rem 0.375rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.875em !important;
+}
 
-    .yoopta-editor-container table td,
-    .yoopta-editor-container table th {
-        border: 1px solid var(--border-color);
-        padding: 0.5rem 0.75rem;
-    }
+/* Links */
+.yoopta-editor-container a {
+    color: oklch(0.55 0.24 285) !important;
+    text-decoration: underline !important;
+}
 
-    .yoopta-editor-container table th {
-        background: var(--surface);
-        font-weight: 600;
-    }
+.yoopta-editor-container a:hover {
+    color: oklch(0.48 0.26 285) !important;
+}
 
-    /* Yoopta callout styling */
-    .yoopta-editor-container [data-type="callout"] {
-        border-radius: 0.5rem;
-        padding: 1rem;
-        margin: 0.5rem 0;
-    }
+/* Divider */
+.yoopta-editor-container hr,
+.yoopta-editor-container [data-yoopta-block="Divider"] hr {
+    border-color: oklch(0.90 0.01 285) !important;
+}
 
-    /* Yoopta image styling */
-    .yoopta-editor-container [data-type="image"] img {
-        border-radius: 0.75rem;
-        max-width: 100%;
-        height: auto;
-    }
+/* Table */
+.yoopta-editor-container table {
+    border-color: oklch(0.90 0.01 285) !important;
+}
 
-    /* Yoopta divider styling */
-    .yoopta-editor-container [data-type="divider"] hr {
-        border-color: var(--border-color);
-        margin: 1.5rem 0;
-    }
+.yoopta-editor-container th,
+.yoopta-editor-container td {
+    border-color: oklch(0.90 0.01 285) !important;
+    color: oklch(0.20 0.02 285) !important;
+}
 
-    /* Dark mode adjustments for Yoopta */
-    .dark .yoopta-editor-container [data-yoopta-floating-toolbar],
-    .dark .yoopta-editor-container [data-yoopta-block-actions],
-    .dark .yoopta-editor-container [data-yoopta-slash-menu] {
-        background: var(--card-bg);
-        border-color: var(--border-color);
-    }
+.yoopta-editor-container th {
+    background: oklch(0.96 0.006 285) !important;
+}
+
+/* ===== DARK MODE - YOOPTA EDITOR ===== */
+
+.dark .yoopta-editor-wrapper {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container {
+    color: oklch(0.95 0.01 285) !important;
+    background: oklch(0.16 0.035 285) !important;
+}
+
+.dark .yoopta-editor-container h1,
+.dark .yoopta-editor-container h2,
+.dark .yoopta-editor-container h3,
+.dark .yoopta-editor-container [data-yoopta-block="HeadingOne"],
+.dark .yoopta-editor-container [data-yoopta-block="HeadingTwo"],
+.dark .yoopta-editor-container [data-yoopta-block="HeadingThree"] {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container p,
+.dark .yoopta-editor-container [data-yoopta-block="Paragraph"] {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-slate-placeholder="true"] {
+    color: oklch(0.70 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container [contenteditable="true"] {
+    caret-color: oklch(0.70 0.22 285) !important;
+}
+
+.dark .yoopta-editor-container ul,
+.dark .yoopta-editor-container ol,
+.dark .yoopta-editor-container li {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container blockquote,
+.dark .yoopta-editor-container [data-yoopta-block="Blockquote"] {
+    color: oklch(0.95 0.01 285) !important;
+    border-left-color: oklch(0.70 0.22 285) !important;
+    background: oklch(0.18 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"] {
+    background: oklch(0.18 0.04 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container pre,
+.dark .yoopta-editor-container [data-yoopta-block="Code"] pre {
+    background: oklch(0.12 0.025 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container code:not(pre code) {
+    background: oklch(0.22 0.05 285) !important;
+    color: oklch(0.80 0.15 285) !important;
+}
+
+.dark .yoopta-editor-container a {
+    color: oklch(0.70 0.22 285) !important;
+}
+
+.dark .yoopta-editor-container a:hover {
+    color: oklch(0.75 0.24 285) !important;
+}
+
+.dark .yoopta-editor-container hr,
+.dark .yoopta-editor-container [data-yoopta-block="Divider"] hr {
+    border-color: oklch(0.25 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container table {
+    border-color: oklch(0.25 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container th,
+.dark .yoopta-editor-container td {
+    border-color: oklch(0.25 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container th {
+    background: oklch(0.18 0.04 285) !important;
+}
+
+/* ===== BLOCK SPACING ===== */
+
+.yoopta-editor-container [data-yoopta-block] {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block]:first-child {
+    margin-top: 0 !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Paragraph"] {
+    margin-top: 0.125rem !important;
+    margin-bottom: 0.125rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="HeadingOne"],
+.yoopta-editor-container [data-yoopta-block="HeadingTwo"],
+.yoopta-editor-container [data-yoopta-block="HeadingThree"] {
+    margin-top: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="HeadingOne"]:first-child,
+.yoopta-editor-container [data-yoopta-block="HeadingTwo"]:first-child,
+.yoopta-editor-container [data-yoopta-block="HeadingThree"]:first-child {
+    margin-top: 0 !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="BulletedList"],
+.yoopta-editor-container [data-yoopta-block="NumberedList"],
+.yoopta-editor-container [data-yoopta-block="TodoList"] {
+    margin-top: 0.125rem !important;
+    margin-bottom: 0.125rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"],
+.yoopta-editor-container [data-yoopta-block="Blockquote"],
+.yoopta-editor-container [data-yoopta-block="Callout"],
+.yoopta-editor-container [data-yoopta-block="Image"],
+.yoopta-editor-container [data-yoopta-block="Video"],
+.yoopta-editor-container [data-yoopta-block="Table"] {
+    margin-top: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Divider"] {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* ===== YOOPTA FLOATING UI ONLY - LIGHT MODE ===== */
+/* Only target Yoopta-specific floating elements, NOT all radix/floating-ui */
+
+/* Yoopta slash command menu */
+[data-yoopta-slash-command] {
+    background: oklch(1.00 0 0) !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
+    color: oklch(0.20 0.02 285) !important;
+    z-index: 100 !important;
+}
+
+[data-yoopta-slash-command] button {
+    color: oklch(0.20 0.02 285) !important;
+}
+
+[data-yoopta-slash-command] button:hover,
+[data-yoopta-slash-command] [data-selected="true"] {
+    background: oklch(0.96 0.006 285) !important;
+    color: oklch(0.55 0.24 285) !important;
+}
+
+[data-yoopta-slash-command] [role="option"],
+[data-yoopta-slash-command] [data-radix-collection-item] {
+    color: oklch(0.20 0.02 285) !important;
+}
+
+[data-yoopta-slash-command] [role="option"]:hover,
+[data-yoopta-slash-command] [data-radix-collection-item]:hover {
+    background: oklch(0.96 0.006 285) !important;
+}
+
+/* Yoopta floating toolbar */
+[data-yoopta-floating-toolbar] {
+    background: oklch(1.00 0 0) !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12) !important;
+    color: oklch(0.20 0.02 285) !important;
+    z-index: 100 !important;
+}
+
+[data-yoopta-floating-toolbar] button {
+    color: oklch(0.20 0.02 285) !important;
+}
+
+[data-yoopta-floating-toolbar] button:hover,
+[data-yoopta-floating-toolbar] button[data-active="true"] {
+    background: oklch(0.96 0.006 285) !important;
+    color: oklch(0.55 0.24 285) !important;
+}
+
+/* ===== YOOPTA FLOATING UI ONLY - DARK MODE ===== */
+
+.dark [data-yoopta-slash-command] {
+    background: oklch(0.16 0.035 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-yoopta-slash-command] button {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-yoopta-slash-command] button:hover,
+.dark [data-yoopta-slash-command] [data-selected="true"] {
+    background: oklch(0.22 0.05 285) !important;
+    color: oklch(0.70 0.22 285) !important;
+}
+
+.dark [data-yoopta-slash-command] [role="option"],
+.dark [data-yoopta-slash-command] [data-radix-collection-item] {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-yoopta-slash-command] [role="option"]:hover,
+.dark [data-yoopta-slash-command] [data-radix-collection-item]:hover {
+    background: oklch(0.22 0.05 285) !important;
+}
+
+.dark [data-yoopta-floating-toolbar] {
+    background: oklch(0.16 0.035 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-yoopta-floating-toolbar] button {
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark [data-yoopta-floating-toolbar] button:hover,
+.dark [data-yoopta-floating-toolbar] button[data-active="true"] {
+    background: oklch(0.22 0.05 285) !important;
+    color: oklch(0.70 0.22 285) !important;
+}
+
+/* ===== SELECTION & HIGHLIGHT ===== */
+
+.yoopta-editor-container ::selection {
+    background: oklch(0.55 0.24 285 / 0.3) !important;
+}
+
+.dark .yoopta-editor-container ::selection {
+    background: oklch(0.70 0.22 285 / 0.3) !important;
+}
+
+/* Highlighted text */
+.yoopta-editor-container mark,
+.yoopta-editor-container [data-mark="highlight"] {
+    background: oklch(0.85 0.15 90) !important;
+    color: oklch(0.20 0.02 285) !important;
+    padding: 0.0625rem 0.125rem !important;
+    border-radius: 0.125rem !important;
+}
+
+.dark .yoopta-editor-container mark,
+.dark .yoopta-editor-container [data-mark="highlight"] {
+    background: oklch(0.45 0.12 90) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* ===== DIVIDER / HORIZONTAL RULE ===== */
+
+.yoopta-editor-container [data-yoopta-block="Divider"],
+.yoopta-editor-container [data-element-type="divider"] {
+    padding: 1rem 0 !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Divider"] hr,
+.yoopta-editor-container [data-element-type="divider"] hr,
+.yoopta-editor-container hr {
+    border: none !important;
+    border-top: 2px solid oklch(0.85 0.01 285) !important;
+    margin: 0 !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Divider"] hr,
+.dark .yoopta-editor-container [data-element-type="divider"] hr,
+.dark .yoopta-editor-container hr {
+    border-top-color: oklch(0.30 0.04 285) !important;
+}
+
+/* ===== HIGHLIGHT MARK IN EDITOR ===== */
+
+.yoopta-editor-container [data-slate-leaf] mark,
+.yoopta-editor-container span[style*="background"] {
+    background-color: oklch(0.85 0.18 90) !important;
+    padding: 0.125rem 0.25rem !important;
+    border-radius: 0.125rem !important;
+}
+
+.dark .yoopta-editor-container [data-slate-leaf] mark,
+.dark .yoopta-editor-container span[style*="background"] {
+    background-color: oklch(0.50 0.15 90) !important;
+}
+
+/* ===== IMAGE/VIDEO/FILE/EMBED BLOCKS - MINIMAL STYLING ===== */
+/* 
+ * IMPORTANT: Do NOT override layout properties (display, flex, padding, etc.)
+ * Only style colors and borders to match theme without breaking shadcn components
+ */
+
+.yoopta-editor-container [data-yoopta-block="Image"],
+.yoopta-editor-container [data-yoopta-block="Video"],
+.yoopta-editor-container [data-yoopta-block="File"],
+.yoopta-editor-container [data-yoopta-block="Embed"] {
+    margin: 0.75rem 0 !important;
+}
+
+/* Uploaded images/videos styling */
+.yoopta-editor-container [data-yoopta-block="Image"] img {
+    border-radius: 0.5rem !important;
+    max-width: 100% !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Video"] video,
+.yoopta-editor-container [data-yoopta-block="Video"] iframe {
+    border-radius: 0.5rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Embed"] iframe {
+    border-radius: 0.5rem !important;
+}
+
+/* ===== SHADCN PLACEHOLDER UI - COLOR ONLY ===== */
+/* Style the placeholder container border/background without breaking layout */
+
+.yoopta-editor-container .rounded-lg.border.bg-background {
+    border-color: oklch(0.88 0.015 285) !important;
+}
+
+.dark .yoopta-editor-container .rounded-lg.border.bg-background {
+    background: oklch(0.16 0.035 285) !important;
+    border-color: oklch(0.28 0.04 285) !important;
+}
+
+/* Tab styling - colors only */
+.yoopta-editor-container [role="tablist"] {
+    background: oklch(0.95 0.008 285) !important;
+}
+
+.dark .yoopta-editor-container [role="tablist"] {
+    background: oklch(0.20 0.04 285) !important;
+}
+
+.yoopta-editor-container [role="tab"][data-state="active"] {
+    background: white !important;
+    color: oklch(0.20 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container [role="tab"][data-state="active"] {
+    background: oklch(0.28 0.05 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* Muted backgrounds in placeholders */
+.yoopta-editor-container .bg-muted {
+    background: oklch(0.95 0.008 285) !important;
+}
+
+.dark .yoopta-editor-container .bg-muted {
+    background: oklch(0.22 0.04 285) !important;
+}
+
+/* Muted text */
+.yoopta-editor-container .text-muted-foreground {
+    color: oklch(0.50 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container .text-muted-foreground {
+    color: oklch(0.65 0.02 285) !important;
+}
+
+/* Primary buttons */
+.yoopta-editor-container button.bg-primary,
+.yoopta-editor-container .bg-primary {
+    background: oklch(0.55 0.22 285) !important;
+}
+
+.yoopta-editor-container button.bg-primary:hover {
+    background: oklch(0.50 0.24 285) !important;
+}
+
+.dark .yoopta-editor-container button.bg-primary,
+.dark .yoopta-editor-container .bg-primary {
+    background: oklch(0.65 0.20 285) !important;
+}
+
+/* Border colors */
+.yoopta-editor-container .border-border {
+    border-color: oklch(0.88 0.015 285) !important;
+}
+
+.dark .yoopta-editor-container .border-border {
+    border-color: oklch(0.28 0.04 285) !important;
+}
+
+/* Input fields */
+.yoopta-editor-container input.border {
+    border-color: oklch(0.88 0.015 285) !important;
+    background: white !important;
+}
+
+.yoopta-editor-container input.border:focus {
+    border-color: oklch(0.55 0.22 285) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px oklch(0.55 0.22 285 / 0.15) !important;
+}
+
+.dark .yoopta-editor-container input.border {
+    border-color: oklch(0.28 0.04 285) !important;
+    background: oklch(0.18 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container input.border:focus {
+    border-color: oklch(0.65 0.20 285) !important;
+    box-shadow: 0 0 0 2px oklch(0.65 0.20 285 / 0.15) !important;
+}
+
+/* ===== EMBED BLOCKS ===== */
+/* Minimal styling - don't break shadcn layout */
+
+/* Instagram embed - remove height constraints, let it size naturally */
+.yoopta-editor-container [data-yoopta-block="Embed"] iframe[src*="instagram"] {
+    border-radius: 0.75rem !important;
+    border: 1px solid oklch(0.88 0.015 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Embed"] iframe[src*="instagram"] {
+    border-color: oklch(0.28 0.04 285) !important;
+}
+
+/* Spotify embed */
+.yoopta-editor-container [data-yoopta-block="Embed"] iframe[src*="spotify"] {
+    border-radius: 0.75rem !important;
+    border: none !important;
+}
+
+/* ===== CODE BLOCK - FULL TOOLBAR SUPPORT ===== */
+/* 
+ * The shadcn Code block has:
+ * - Header bar with language selector, theme selector
+ * - Action buttons (copy, beautify, delete) that appear on hover
+ * - Code area with Shiki syntax highlighting overlay
+ */
+
+.yoopta-editor-container [data-yoopta-block="Code"] {
+    margin: 1rem 0 !important;
+}
+
+/* Main code block container */
+.yoopta-editor-container [data-yoopta-block="Code"] > div.group\/code-block,
+.yoopta-editor-container [data-yoopta-block="Code"] > div:first-child {
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
+    border: 1px solid oklch(0.28 0.04 285) !important;
+}
+
+/* Header toolbar */
+.yoopta-editor-container [data-yoopta-block="Code"] > div > div:first-child[contenteditable="false"] {
+    background: oklch(0.18 0.03 285) !important;
+    border-bottom: 1px solid oklch(0.25 0.04 285) !important;
+    padding: 0.5rem 0.75rem !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+}
+
+/* Language and Theme selector buttons */
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="flex"][class*="items-center"][class*="gap"] {
+    background: oklch(0.22 0.035 285) !important;
+    color: oklch(0.80 0.01 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.625rem !important;
+    font-size: 0.75rem !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="flex"][class*="items-center"][class*="gap"]:hover {
+    background: oklch(0.26 0.04 285) !important;
+    border-color: oklch(0.38 0.05 285) !important;
+    color: oklch(0.90 0.01 285) !important;
+}
+
+/* Chevron icons in selectors */
+.yoopta-editor-container [data-yoopta-block="Code"] button svg.lucide-chevron-down {
+    opacity: 0.7 !important;
+}
+
+/* Action buttons container - make always visible instead of hover-only */
+.yoopta-editor-container [data-yoopta-block="Code"] .opacity-0.group-hover\/code-block\:opacity-100 {
+    opacity: 1 !important;
+}
+
+/* Action buttons (copy, beautify, delete) */
+.yoopta-editor-container [data-yoopta-block="Code"] button.h-7,
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="size-7"] {
+    background: oklch(0.22 0.035 285) !important;
+    color: oklch(0.75 0.01 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    border-radius: 0.375rem !important;
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"] button.h-7:hover,
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="size-7"]:hover {
+    background: oklch(0.28 0.045 285) !important;
+    color: oklch(0.90 0.01 285) !important;
+    border-color: oklch(0.40 0.06 285) !important;
+}
+
+/* Code content area */
+.yoopta-editor-container [data-yoopta-block="Code"] .bg-background {
+    background: oklch(0.12 0.02 285) !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"] pre,
+.yoopta-editor-container [data-yoopta-block="Code"] .font-mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace !important;
+    font-size: 0.875rem !important;
+    line-height: 1.6 !important;
+}
+
+/* Ensure caret is visible */
+.yoopta-editor-container [data-yoopta-block="Code"] [contenteditable="true"] {
+    caret-color: oklch(0.90 0.01 285) !important;
+}
+
+/* Language/Theme selector popovers */
+[data-radix-popper-content-wrapper]:has([class*="max-h-"]) {
+    z-index: 99999 !important;
+}
+
+[data-radix-popper-content-wrapper] .max-h-\[300px\],
+[data-radix-popper-content-wrapper] [class*="overflow-y-auto"] {
+    background: oklch(0.16 0.03 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Search input in popover */
+[data-radix-popper-content-wrapper] input[placeholder*="Search"] {
+    background: oklch(0.12 0.02 285) !important;
+    border: 1px solid oklch(0.28 0.04 285) !important;
+    color: oklch(0.90 0.01 285) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.8125rem !important;
+}
+
+[data-radix-popper-content-wrapper] input[placeholder*="Search"]::placeholder {
+    color: oklch(0.55 0.02 285) !important;
+}
+
+/* Language/Theme items in popover */
+[data-radix-popper-content-wrapper] button[class*="w-full"][class*="justify-start"],
+[data-radix-popper-content-wrapper] div[class*="cursor-pointer"] {
+    color: oklch(0.80 0.01 285) !important;
+    padding: 0.5rem 0.75rem !important;
+    transition: background 0.1s ease !important;
+}
+
+[data-radix-popper-content-wrapper] button[class*="w-full"][class*="justify-start"]:hover,
+[data-radix-popper-content-wrapper] div[class*="cursor-pointer"]:hover {
+    background: oklch(0.22 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* ===== ACCORDION BLOCKS ===== */
+
+.yoopta-editor-container [data-yoopta-block="Accordion"] {
+    margin: 0.5rem 0 !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.5rem !important;
+    overflow: hidden !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Accordion"] {
+    border-color: oklch(0.25 0.04 285) !important;
+}
+
+/* ===== TABLE BLOCKS ===== */
+
+.yoopta-editor-container [data-yoopta-block="Table"] {
+    margin: 1rem 0 !important;
+    overflow-x: auto !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Table"] table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Table"] th,
+.yoopta-editor-container [data-yoopta-block="Table"] td {
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    padding: 0.5rem 0.75rem !important;
+    text-align: left !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Table"] th {
+    background: oklch(0.96 0.006 285) !important;
+    font-weight: 600 !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Table"] table,
+.dark .yoopta-editor-container [data-yoopta-block="Table"] th,
+.dark .yoopta-editor-container [data-yoopta-block="Table"] td {
+    border-color: oklch(0.25 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Table"] th {
+    background: oklch(0.18 0.04 285) !important;
+}
+
+/* ===== FIX BLOCK EDITABILITY ===== */
+
+/* Ensure all text blocks remain editable */
+.yoopta-editor-container [data-yoopta-block] [contenteditable="true"] {
+    outline: none !important;
+    min-height: 1.5em !important;
+}
+
+/* Fix for void elements like images */
+.yoopta-editor-container [data-yoopta-block] [data-slate-void="true"] {
+    user-select: none !important;
+}
+
+/* Ensure blocks have proper cursor */
+.yoopta-editor-container [data-yoopta-block] {
+    cursor: text !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Image"],
+.yoopta-editor-container [data-yoopta-block="Video"],
+.yoopta-editor-container [data-yoopta-block="File"],
+.yoopta-editor-container [data-yoopta-block="Embed"],
+.yoopta-editor-container [data-yoopta-block="Divider"] {
+    cursor: default !important;
+}
+
+/* ===== YOOPTA DEFAULT EDITOR STYLES ===== */
+/* These ensure the default Yoopta renderer looks good without themes-shadcn */
+
+.yoopta-editor {
+    font-family: inherit !important;
+}
+
+.yoopta-block {
+    position: relative !important;
+}
+
+/* Block drag handle */
+.yoopta-block-actions {
+    opacity: 0 !important;
+    transition: opacity 0.15s ease !important;
+}
+
+.yoopta-block:hover .yoopta-block-actions {
+    opacity: 1 !important;
+}
+
+/* Ensure proper line height */
+.yoopta-editor-container p,
+.yoopta-editor-container li,
+.yoopta-editor-container blockquote {
+    line-height: 1.6 !important;
+}
+
+/* ===== YOOPTA RADIX UI PORTALS (SHADCN THEME) ===== */
+/* 
+ * Shadcn theme components use Radix UI which renders in portals outside the editor.
+ * We need to provide CSS variables for these portals while keeping them scoped.
+ * We use specific data attributes and class patterns to target only Yoopta-related portals.
+ */
+
+/* Radix Popover/Dialog/Select portals used by Yoopta shadcn theme */
+[data-radix-popper-content-wrapper] {
+    /* Only set these if the content is from Yoopta */
+    z-index: 9999 !important;
+}
+
+/* Target Radix portals that are likely from Yoopta image/video/embed UI */
+/* These use specific shadcn patterns */
+[data-radix-popper-content-wrapper]:has([data-yoopta]),
+[data-radix-popper-content-wrapper]:has(.yoopta) {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 12%;
+    --primary: 271 70% 45%;
+    --primary-foreground: 0 0% 98%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --border: 240 6% 90%;
+    --ring: 271 70% 45%;
+    --radius: 0.5rem;
+}
+
+.dark [data-radix-popper-content-wrapper]:has([data-yoopta]),
+.dark [data-radix-popper-content-wrapper]:has(.yoopta) {
+    --background: 240 10% 10%;
+    --foreground: 0 0% 95%;
+    --popover: 240 10% 10%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 271 70% 60%;
+    --primary-foreground: 240 10% 10%;
+    --muted: 240 4% 16%;
+    --muted-foreground: 240 5% 65%;
+    --border: 240 4% 20%;
+    --ring: 271 70% 60%;
+}
+
+/* ===== YOOPTA SHADCN COMPONENT OVERRIDES ===== */
+/* Style overrides for shadcn theme components within editor context */
+
+/* Shadcn tabs in Yoopta (image upload tabs: Upload, Link, Unsplash, AI) */
+.yoopta-editor-container [role="tablist"] {
+    background: oklch(0.96 0.006 285) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.125rem !important;
+}
+
+.yoopta-editor-container [role="tab"] {
+    color: oklch(0.45 0.02 285) !important;
+    padding: 0.375rem 0.75rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.875rem !important;
+}
+
+.yoopta-editor-container [role="tab"][data-state="active"] {
+    background: oklch(1.00 0 0) !important;
+    color: oklch(0.20 0.02 285) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+.dark .yoopta-editor-container [role="tablist"] {
+    background: oklch(0.18 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container [role="tab"] {
+    color: oklch(0.70 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container [role="tab"][data-state="active"] {
+    background: oklch(0.25 0.05 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* Shadcn buttons in Yoopta */
+.yoopta-editor-container button:not([data-yoopta-floating-block-actions] button):not([data-yoopta-floating-toolbar] button) {
+    font-size: 0.875rem !important;
+}
+
+/* Input fields in Yoopta (URL input for images, etc) */
+.yoopta-editor-container input[type="text"],
+.yoopta-editor-container input[type="url"] {
+    background: oklch(1.00 0 0) !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 0.75rem !important;
+    color: oklch(0.20 0.02 285) !important;
+    font-size: 0.875rem !important;
+}
+
+.yoopta-editor-container input[type="text"]:focus,
+.yoopta-editor-container input[type="url"]:focus {
+    border-color: oklch(0.55 0.24 285) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px oklch(0.55 0.24 285 / 0.2) !important;
+}
+
+.yoopta-editor-container input::placeholder {
+    color: oklch(0.45 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container input[type="text"],
+.dark .yoopta-editor-container input[type="url"] {
+    background: oklch(0.18 0.04 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container input[type="text"]:focus,
+.dark .yoopta-editor-container input[type="url"]:focus {
+    border-color: oklch(0.70 0.22 285) !important;
+    box-shadow: 0 0 0 2px oklch(0.70 0.22 285 / 0.2) !important;
+}
+
+.dark .yoopta-editor-container input::placeholder {
+    color: oklch(0.70 0.02 285) !important;
+}
+
+/* Primary buttons in Yoopta */
+.yoopta-editor-container button[class*="primary"],
+.yoopta-editor-container button[data-primary="true"] {
+    background: oklch(0.55 0.24 285) !important;
+    color: oklch(0.98 0 0) !important;
+    border: none !important;
+    border-radius: 0.375rem !important;
+    padding: 0.5rem 1rem !important;
+    font-weight: 500 !important;
+}
+
+.yoopta-editor-container button[class*="primary"]:hover,
+.yoopta-editor-container button[data-primary="true"]:hover {
+    background: oklch(0.48 0.26 285) !important;
+}
+
+.dark .yoopta-editor-container button[class*="primary"],
+.dark .yoopta-editor-container button[data-primary="true"] {
+    background: oklch(0.70 0.22 285) !important;
+    color: oklch(0.13 0.03 285) !important;
+}
+
+.dark .yoopta-editor-container button[class*="primary"]:hover,
+.dark .yoopta-editor-container button[data-primary="true"]:hover {
+    background: oklch(0.65 0.24 285) !important;
+}
+
+/* Select dropdowns in Yoopta (code language selector) */
+.yoopta-editor-container select,
+.yoopta-editor-container [role="combobox"] {
+    background: oklch(1.00 0 0) !important;
+    border: 1px solid oklch(0.90 0.01 285) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.375rem 0.625rem !important;
+    color: oklch(0.20 0.02 285) !important;
+    font-size: 0.75rem !important;
+}
+
+.dark .yoopta-editor-container select,
+.dark .yoopta-editor-container [role="combobox"] {
+    background: oklch(0.18 0.04 285) !important;
+    border-color: oklch(0.25 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* ===== TODO LIST CHECKBOX ===== */
+
+.yoopta-editor-container [data-yoopta-block="TodoList"] input[type="checkbox"],
+.yoopta-editor-container [role="checkbox"] {
+    width: 1rem !important;
+    height: 1rem !important;
+    border: 2px solid oklch(0.55 0.24 285) !important;
+    border-radius: 0.25rem !important;
+    background: transparent !important;
+    cursor: pointer !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="TodoList"] input[type="checkbox"]:checked,
+.yoopta-editor-container [role="checkbox"][data-state="checked"] {
+    background: oklch(0.55 0.24 285) !important;
+    border-color: oklch(0.55 0.24 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="TodoList"] input[type="checkbox"],
+.dark .yoopta-editor-container [role="checkbox"] {
+    border-color: oklch(0.70 0.22 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="TodoList"] input[type="checkbox"]:checked,
+.dark .yoopta-editor-container [role="checkbox"][data-state="checked"] {
+    background: oklch(0.70 0.22 285) !important;
+    border-color: oklch(0.70 0.22 285) !important;
+}
+
+/* ===== SHADCN SEPARATOR (DIVIDER) - CRITICAL FIX ===== */
+/* 
+ * The shadcn Divider theme uses a Radix Separator component with 'bg-border' class.
+ * We need to ensure this is visible with proper height and background color.
+ */
+
+/* Target the separator element directly */
+.yoopta-editor-container [role="separator"],
+.yoopta-editor-container [data-orientation="horizontal"],
+.yoopta-editor-container .bg-border {
+    background-color: oklch(0.85 0.01 285) !important;
+    height: 2px !important;
+    min-height: 2px !important;
+    width: 100% !important;
+}
+
+.dark .yoopta-editor-container [role="separator"],
+.dark .yoopta-editor-container [data-orientation="horizontal"],
+.dark .yoopta-editor-container .bg-border {
+    background-color: oklch(0.35 0.04 285) !important;
+}
+
+/* Support for dashed and dotted dividers */
+.yoopta-editor-container .border-dashed[role="separator"] {
+    background-color: transparent !important;
+    border-top: 2px dashed oklch(0.85 0.01 285) !important;
+}
+
+.yoopta-editor-container .border-dotted[role="separator"] {
+    background-color: transparent !important;
+    border-top: 2px dotted oklch(0.85 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container .border-dashed[role="separator"] {
+    border-top-color: oklch(0.35 0.04 285) !important;
+}
+
+.dark .yoopta-editor-container .border-dotted[role="separator"] {
+    border-top-color: oklch(0.35 0.04 285) !important;
+}
+
+/* ===== SHADCN LISTS - CRITICAL FIX ===== */
+/* 
+ * The shadcn Lists theme uses <ul> with 'list-disc ml-6' classes.
+ * Ensure proper list styling with visible bullets/numbers.
+ */
+
+/* Bulleted List */
+.yoopta-editor-container [data-yoopta-block="BulletedList"] ul,
+.yoopta-editor-container [data-yoopta-type="BulletedList"] ul,
+.yoopta-editor-container ul[data-element-type="bulleted-list"],
+.yoopta-editor-container ul.list-disc {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    margin-left: 1.5rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="BulletedList"] li,
+.yoopta-editor-container [data-yoopta-type="BulletedList"] li,
+.yoopta-editor-container ul[data-element-type="bulleted-list"] li,
+.yoopta-editor-container ul.list-disc li {
+    padding-left: 0.5rem !important;
+    margin-top: 0.25rem !important;
+    display: list-item !important;
+}
+
+/* Numbered List */
+.yoopta-editor-container [data-yoopta-block="NumberedList"] ol,
+.yoopta-editor-container [data-yoopta-type="NumberedList"] ol,
+.yoopta-editor-container ol[data-element-type="numbered-list"],
+.yoopta-editor-container ol.list-decimal {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    margin-left: 1.5rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="NumberedList"] li,
+.yoopta-editor-container [data-yoopta-type="NumberedList"] li,
+.yoopta-editor-container ol[data-element-type="numbered-list"] li,
+.yoopta-editor-container ol.list-decimal li {
+    padding-left: 0.5rem !important;
+    margin-top: 0.25rem !important;
+    display: list-item !important;
+}
+
+/* Alternative: Shadcn numbered list uses a div with manual count span */
+.yoopta-editor-container [data-yoopta-block="NumberedList"] .list-decimal,
+.yoopta-editor-container [data-element-type="numbered-list"] {
+    margin-left: 1.5rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="NumberedList"] .list-decimal > span:first-child,
+.yoopta-editor-container [data-element-type="numbered-list"] > span:first-child {
+    min-width: 1.5rem !important;
+    font-weight: 500 !important;
+    color: oklch(0.45 0.02 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="NumberedList"] .list-decimal > span:first-child,
+.dark .yoopta-editor-container [data-element-type="numbered-list"] > span:first-child {
+    color: oklch(0.70 0.02 285) !important;
+}
+
+/* Todo List checkbox styling */
+.yoopta-editor-container [data-yoopta-block="TodoList"] button,
+.yoopta-editor-container [data-element-type="todo-list"] button {
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    min-width: 1.25rem !important;
+    min-height: 1.25rem !important;
+    border: 2px solid oklch(0.55 0.24 285) !important;
+    border-radius: 0.25rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    flex-shrink: 0 !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="TodoList"] button.bg-primary,
+.yoopta-editor-container [data-element-type="todo-list"] button.bg-primary {
+    background: oklch(0.55 0.24 285) !important;
+    border-color: oklch(0.55 0.24 285) !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="TodoList"] button svg,
+.yoopta-editor-container [data-element-type="todo-list"] button svg {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+    color: white !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="TodoList"] button,
+.dark .yoopta-editor-container [data-element-type="todo-list"] button {
+    border-color: oklch(0.70 0.22 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="TodoList"] button.bg-primary,
+.dark .yoopta-editor-container [data-element-type="todo-list"] button.bg-primary {
+    background: oklch(0.70 0.22 285) !important;
+    border-color: oklch(0.70 0.22 285) !important;
+}
+
+/* Strikethrough for completed todos */
+.yoopta-editor-container .line-through {
+    text-decoration: line-through !important;
+    opacity: 0.6 !important;
+}
+
+/* ===== GENERIC LIST FALLBACK ===== */
+/* Catch-all for any ul/ol inside editor that doesn't have specific styling */
+.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]) {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    margin-left: 1.5rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]) {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    margin-left: 1.5rem !important;
+    padding-left: 0.5rem !important;
+}
+
+.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]) li,
+.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]) li {
+    display: list-item !important;
+    padding-left: 0.5rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* ===== HIGHLIGHT MARK - CRITICAL FIX ===== */
+/* 
+ * Yoopta highlight mark applies inline styles or specific data attributes.
+ * Cover all possible cases.
+ */
+
+/* Inline style highlight */
+.yoopta-editor-container [data-slate-leaf] span[style*="background"],
+.yoopta-editor-container span[style*="backgroundColor"] {
+    background-color: oklch(0.85 0.18 90) !important;
+    padding: 0.1rem 0.15rem !important;
+    border-radius: 0.15rem !important;
+}
+
+.dark .yoopta-editor-container [data-slate-leaf] span[style*="background"],
+.dark .yoopta-editor-container span[style*="backgroundColor"] {
+    background-color: oklch(0.55 0.15 90) !important;
+    color: oklch(0.15 0.02 285) !important;
+}
+
+/* Mark element */
+.yoopta-editor-container mark {
+    background-color: oklch(0.85 0.18 90) !important;
+    color: oklch(0.15 0.02 285) !important;
+    padding: 0.1rem 0.2rem !important;
+    border-radius: 0.15rem !important;
+}
+
+.dark .yoopta-editor-container mark {
+    background-color: oklch(0.55 0.15 90) !important;
+    color: oklch(0.15 0.02 285) !important;
+}
+
+/* Data attribute based highlight */
+.yoopta-editor-container [data-yoopta-mark="highlight"],
+.yoopta-editor-container [data-highlight="true"] {
+    background-color: oklch(0.85 0.18 90) !important;
+    color: oklch(0.15 0.02 285) !important;
+    padding: 0.1rem 0.2rem !important;
+    border-radius: 0.15rem !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-mark="highlight"],
+.dark .yoopta-editor-container [data-highlight="true"] {
+    background-color: oklch(0.55 0.15 90) !important;
+}
+
+/* ===== CODE BLOCK TOOLBAR - CRITICAL FIX ===== */
+/* 
+ * The shadcn Code block has a toolbar with language selector, theme picker,
+ * copy button, beautify button, and delete button.
+ * Ensure these are properly styled and visible.
+ */
+
+/* Code block wrapper - ensure toolbar is visible */
+.yoopta-editor-container [data-yoopta-block="Code"] > div,
+.yoopta-editor-container [data-element-type="code"] {
+    position: relative !important;
+}
+
+/* Code toolbar at top of code block */
+.yoopta-editor-container [data-yoopta-block="Code"] .group\/code-block,
+.yoopta-editor-container [data-element-type="code"] > div:first-child {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 0.5rem 0.75rem !important;
+    background: oklch(0.18 0.025 285) !important;
+    border-bottom: 1px solid oklch(0.25 0.04 285) !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+/* Language and theme selectors */
+.yoopta-editor-container [data-yoopta-block="Code"] [role="combobox"],
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="flex"][class*="items-center"] {
+    background: oklch(0.22 0.035 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    color: oklch(0.85 0.01 285) !important;
+    padding: 0.25rem 0.5rem !important;
+    border-radius: 0.25rem !important;
+    font-size: 0.75rem !important;
+    height: auto !important;
+    min-height: 1.75rem !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"] [role="combobox"]:hover,
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="flex"][class*="items-center"]:hover {
+    background: oklch(0.26 0.04 285) !important;
+    border-color: oklch(0.40 0.05 285) !important;
+}
+
+/* Action buttons (copy, beautify, delete) */
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="h-7"],
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="size-"] {
+    background: oklch(0.22 0.035 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    color: oklch(0.75 0.01 285) !important;
+    padding: 0.25rem !important;
+    border-radius: 0.25rem !important;
+    opacity: 0.7 !important;
+    transition: all 0.15s ease !important;
+}
+
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="h-7"]:hover,
+.yoopta-editor-container [data-yoopta-block="Code"] button[class*="size-"]:hover {
+    opacity: 1 !important;
+    background: oklch(0.28 0.04 285) !important;
+    color: oklch(0.90 0.01 285) !important;
+}
+
+/* Code content area with proper styling */
+.yoopta-editor-container [data-yoopta-block="Code"] pre {
+    margin: 0 !important;
+    padding: 1rem !important;
+    background: oklch(0.12 0.02 285) !important;
+    border-radius: 0 0 0.5rem 0.5rem !important;
+    border: 1px solid oklch(0.25 0.04 285) !important;
+    border-top: none !important;
+    overflow-x: auto !important;
+}
+
+/* Shiki highlighted code overlay */
+.yoopta-editor-container [data-yoopta-block="Code"] [style*="position: absolute"] {
+    pointer-events: none !important;
+}
+
+/* Ensure caret is visible in code */
+.yoopta-editor-container [data-yoopta-block="Code"] [contenteditable="true"] {
+    caret-color: oklch(0.90 0.01 285) !important;
+    color: transparent !important;
+}
+
+/* Popover for language/theme selection */
+[data-radix-popper-content-wrapper] [role="listbox"],
+[data-radix-popper-content-wrapper] [class*="popover"] {
+    background: oklch(0.16 0.03 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4) !important;
+    max-height: 300px !important;
+    overflow-y: auto !important;
+}
+
+[data-radix-popper-content-wrapper] [role="option"],
+[data-radix-popper-content-wrapper] [class*="popover"] button {
+    color: oklch(0.85 0.01 285) !important;
+    padding: 0.5rem 0.75rem !important;
+}
+
+[data-radix-popper-content-wrapper] [role="option"]:hover,
+[data-radix-popper-content-wrapper] [role="option"][data-highlighted],
+[data-radix-popper-content-wrapper] [class*="popover"] button:hover {
+    background: oklch(0.22 0.04 285) !important;
+    color: oklch(0.95 0.01 285) !important;
+}
+
+/* Search input in language/theme popover */
+[data-radix-popper-content-wrapper] input {
+    background: oklch(0.12 0.02 285) !important;
+    border: 1px solid oklch(0.30 0.04 285) !important;
+    color: oklch(0.90 0.01 285) !important;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 0.25rem !important;
+    margin: 0.5rem !important;
+    width: calc(100% - 1rem) !important;
+}
+
+[data-radix-popper-content-wrapper] input::placeholder {
+    color: oklch(0.55 0.02 285) !important;
+}
+
+/* ===== CALLOUT VARIANTS ===== */
+/* 
+ * Callout has different theme variants: default, info, success, warning, error.
+ * Apply proper colors for each.
+ */
+
+.yoopta-editor-container [data-yoopta-block="Callout"] {
+    padding: 1rem !important;
+    border-radius: 0.5rem !important;
+    margin: 0.75rem 0 !important;
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: flex-start !important;
+}
+
+/* Default callout */
+.yoopta-editor-container [data-yoopta-block="Callout"][data-theme="default"],
+.yoopta-editor-container [data-yoopta-block="Callout"]:not([data-theme]) {
+    background: oklch(0.96 0.006 285) !important;
+    border: 1px solid oklch(0.88 0.01 285) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"][data-theme="default"],
+.dark .yoopta-editor-container [data-yoopta-block="Callout"]:not([data-theme]) {
+    background: oklch(0.20 0.04 285) !important;
+    border-color: oklch(0.28 0.04 285) !important;
+}
+
+/* Info callout - blue */
+.yoopta-editor-container [data-yoopta-block="Callout"][data-theme="info"] {
+    background: oklch(0.95 0.02 240) !important;
+    border: 1px solid oklch(0.75 0.12 240) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"][data-theme="info"] {
+    background: oklch(0.22 0.06 240) !important;
+    border-color: oklch(0.40 0.12 240) !important;
+}
+
+/* Success callout - green */
+.yoopta-editor-container [data-yoopta-block="Callout"][data-theme="success"] {
+    background: oklch(0.95 0.03 145) !important;
+    border: 1px solid oklch(0.70 0.15 145) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"][data-theme="success"] {
+    background: oklch(0.22 0.06 145) !important;
+    border-color: oklch(0.45 0.12 145) !important;
+}
+
+/* Warning callout - yellow/orange */
+.yoopta-editor-container [data-yoopta-block="Callout"][data-theme="warning"] {
+    background: oklch(0.95 0.05 85) !important;
+    border: 1px solid oklch(0.75 0.15 85) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"][data-theme="warning"] {
+    background: oklch(0.25 0.08 85) !important;
+    border-color: oklch(0.50 0.15 85) !important;
+}
+
+/* Error callout - red */
+.yoopta-editor-container [data-yoopta-block="Callout"][data-theme="error"] {
+    background: oklch(0.95 0.03 25) !important;
+    border: 1px solid oklch(0.65 0.18 25) !important;
+}
+
+.dark .yoopta-editor-container [data-yoopta-block="Callout"][data-theme="error"] {
+    background: oklch(0.22 0.08 25) !important;
+    border-color: oklch(0.45 0.18 25) !important;
+}
+
+/* Callout icon */
+.yoopta-editor-container [data-yoopta-block="Callout"] svg:first-child {
+    flex-shrink: 0 !important;
+    width: 1.25rem !important;
+    height: 1.25rem !important;
+    margin-top: 0.125rem !important;
 }

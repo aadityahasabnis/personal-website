@@ -10,29 +10,49 @@ interface ITocItem {
 }
 
 interface ITableOfContentsProps {
+    /** Pre-computed headings (SSR optimization) - if not provided, scans DOM */
+    headings?: ITocItem[];
     className?: string;
 }
 
 /**
- * TableOfContents - Client Component that generates TOC from page headings
+ * TableOfContents - Client Component that displays TOC navigation
  * 
- * Scans the DOM for h2, h3, h4 elements and creates a navigation sidebar.
+ * Can receive pre-computed headings from server or scan the DOM for h2-h4 elements.
  * Highlights the current section based on scroll position.
  */
-const TableOfContents = ({ className }: ITableOfContentsProps) => {
-    const [headings, setHeadings] = useState<ITocItem[]>([]);
+const TableOfContents = ({ headings: precomputedHeadings, className }: ITableOfContentsProps) => {
+    const [headings, setHeadings] = useState<ITocItem[]>(precomputedHeadings || []);
     const [activeId, setActiveId] = useState<string>('');
 
+    // Scan DOM for headings if not pre-computed
     useEffect(() => {
+        if (precomputedHeadings && precomputedHeadings.length > 0) {
+            setHeadings(precomputedHeadings);
+            return;
+        }
+
         // Get all headings from the article
         const article = document.querySelector('article');
         if (!article) return;
 
-        const elements = article.querySelectorAll('h2, h3, h4');
+        const elements = article.querySelectorAll('h1, h2, h3, h4');
         const items: ITocItem[] = [];
 
         elements.forEach((element) => {
-            const id = element.id;
+            let id = element.id;
+            
+            // Generate id from text content if not present
+            if (!id && element.textContent) {
+                id = element.textContent
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s-]/g, '')
+                    .replace(/\s+/g, '-')
+                    .replace(/-+/g, '-')
+                    .trim();
+                element.id = id;
+            }
+            
             if (!id) return;
 
             items.push({
@@ -43,7 +63,7 @@ const TableOfContents = ({ className }: ITableOfContentsProps) => {
         });
 
         setHeadings(items);
-    }, []);
+    }, [precomputedHeadings]);
 
     useEffect(() => {
         if (headings.length === 0) return;

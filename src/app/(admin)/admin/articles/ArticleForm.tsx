@@ -9,7 +9,7 @@ import type { YooptaContentValue } from '@yoopta/editor';
 import { cn } from '@/lib/utils';
 import { createArticle, updateArticle } from '@/server/actions/articles';
 import type { IArticle, ITopic, ISubtopic, EditorType } from '@/interfaces';
-import { extractPlainText, getContentStats, markdownToYooptaContent, isContentEmpty } from '@/lib/editor';
+import { extractPlainText, getContentStats, markdownToYooptaContent, isContentEmpty, extractHeadings } from '@/lib/editor';
 
 // Lazy load editors to avoid SSR issues
 const HybridEditor = lazy(() => 
@@ -101,20 +101,32 @@ export const ArticleForm = ({
     const handleEditorTypeChange = useCallback((newType: EditorType) => {
         if (newType === editorType) return;
 
-        // Warn about data conversion
+        // Switching from Yoopta to Markdown - warn about loss of rich formatting
+        if (editorType === 'yoopta' && newType === 'markdown' && !isContentEmpty(yooptaContent)) {
+            const shouldConvert = window.confirm(
+                'Warning: Switching to Markdown will convert your rich content to plain text. ' +
+                'Rich formatting (images, tables, code blocks) may be lost.\n\n' +
+                'Are you sure you want to switch?'
+            );
+            
+            if (!shouldConvert) return;
+            
+            // Extract plain text from Yoopta content
+            const plainText = extractPlainText(yooptaContent);
+            setMarkdownBody(plainText);
+        }
+        
+        // Switching from Markdown to Yoopta - offer conversion
         if (editorType === 'markdown' && newType === 'yoopta' && markdownBody.trim()) {
             const shouldConvert = window.confirm(
-                'Would you like to convert your existing markdown content to the rich editor? ' +
-                'Note: Some complex formatting may not convert perfectly.'
+                'Would you like to convert your Markdown content to the rich editor?\n\n' +
+                'Note: Basic formatting will be preserved, but complex Markdown may need adjustment.'
             );
             
             if (shouldConvert) {
                 const converted = markdownToYooptaContent(markdownBody);
                 setYooptaContent(converted);
             }
-        } else if (editorType === 'yoopta' && newType === 'markdown' && !isContentEmpty(yooptaContent)) {
-            const plainText = extractPlainText(yooptaContent);
-            setMarkdownBody(plainText);
         }
 
         setEditorType(newType);
@@ -196,6 +208,11 @@ export const ArticleForm = ({
                 ? extractPlainText(yooptaContent)
                 : markdownBody;
 
+            // Extract table of contents from Yoopta content
+            const tableOfContents = editorType === 'yoopta' 
+                ? extractHeadings(yooptaContent) 
+                : undefined;
+
             const data = {
                 title,
                 slug,
@@ -205,6 +222,7 @@ export const ArticleForm = ({
                 body,
                 content: editorType === 'yoopta' ? yooptaContent : undefined,
                 editorType,
+                tableOfContents,
                 tags: tags.length > 0 ? tags : undefined,
                 coverImage: coverImage || undefined,
                 order,
