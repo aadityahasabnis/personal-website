@@ -1,17 +1,23 @@
 'use client';
 
-import { useState, useTransition, useEffect, lazy, Suspense } from 'react';
+import { useState, useTransition, useEffect, lazy, Suspense, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Loader2, Save } from 'lucide-react';
+import { ArrowLeft, Loader2, Save, Code, Type, Eye } from 'lucide-react';
+import type { YooptaContentValue } from '@yoopta/editor';
 
 import { cn } from '@/lib/utils';
 import { createArticle, updateArticle } from '@/server/actions/articles';
-import type { IArticle, ITopic, ISubtopic } from '@/interfaces';
+import type { IArticle, ITopic, ISubtopic, EditorType } from '@/interfaces';
+import { extractPlainText, getContentStats, markdownToYooptaContent, isContentEmpty } from '@/lib/editor';
 
-// Lazy load the editor to avoid SSR issues with Monaco
+// Lazy load editors to avoid SSR issues
 const HybridEditor = lazy(() => 
     import('@/components/admin/HybridEditor').then(mod => ({ default: mod.HybridEditor }))
+);
+
+const YooptaRichEditor = lazy(() => 
+    import('@/components/common/YooptaRichEditor').then(mod => ({ default: mod.YooptaRichEditor }))
 );
 
 interface IArticleFormProps {
@@ -30,9 +36,9 @@ const generateSlug = (title: string): string => {
         .trim();
 };
 
-const calculateReadingTime = (body: string): number => {
+const calculateReadingTime = (text: string): number => {
     const wordsPerMinute = 200;
-    const wordCount = body.trim().split(/\s+/).length;
+    const wordCount = text.trim().split(/\s+/).length;
     return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
 };
 
@@ -46,13 +52,24 @@ export const ArticleForm = ({
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
 
+    // Editor type state - 'yoopta' is the new default for new articles
+    const [editorType, setEditorType] = useState<EditorType>(
+        article?.editorType || (isEditing ? 'markdown' : 'yoopta')
+    );
+
     // Form state
     const [title, setTitle] = useState(article?.title ?? '');
     const [slug, setSlug] = useState(article?.slug ?? '');
     const [topicSlug, setTopicSlug] = useState(article?.topicSlug ?? '');
     const [subtopicSlug, setSubtopicSlug] = useState(article?.subtopicSlug ?? '');
     const [description, setDescription] = useState(article?.description ?? '');
-    const [body, setBody] = useState(article?.body ?? '');
+    
+    // Content state - supports both markdown and Yoopta
+    const [markdownBody, setMarkdownBody] = useState(article?.body ?? '');
+    const [yooptaContent, setYooptaContent] = useState<YooptaContentValue>(
+        article?.content ?? {}
+    );
+    
     const [tags, setTags] = useState<string[]>(article?.tags ?? []);
     const [tagInput, setTagInput] = useState('');
     const [coverImage, setCoverImage] = useState(article?.coverImage ?? '');
@@ -72,23 +89,45 @@ export const ArticleForm = ({
     // Filter subtopics based on selected topic
     const availableSubtopics = allSubtopics.filter(st => st.topicSlug === topicSlug);
 
-    // Editor wrapper component to handle loading state
-    const HybridEditorWrapper = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
-        <Suspense fallback={
-            <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
-                <div className="text-center space-y-2">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-sm text-muted-foreground">Loading editor...</p>
-                </div>
+    // Calculate stats based on editor type
+    const stats = editorType === 'yoopta' 
+        ? getContentStats(yooptaContent)
+        : {
+            wordCount: markdownBody.trim().split(/\s+/).filter(Boolean).length,
+            readingTime: calculateReadingTime(markdownBody),
+        };
+
+    // Handle editor type switch
+    const handleEditorTypeChange = useCallback((newType: EditorType) => {
+        if (newType === editorType) return;
+
+        // Warn about data conversion
+        if (editorType === 'markdown' && newType === 'yoopta' && markdownBody.trim()) {
+            const shouldConvert = window.confirm(
+                'Would you like to convert your existing markdown content to the rich editor? ' +
+                'Note: Some complex formatting may not convert perfectly.'
+            );
+            
+            if (shouldConvert) {
+                const converted = markdownToYooptaContent(markdownBody);
+                setYooptaContent(converted);
+            }
+        } else if (editorType === 'yoopta' && newType === 'markdown' && !isContentEmpty(yooptaContent)) {
+            const plainText = extractPlainText(yooptaContent);
+            setMarkdownBody(plainText);
+        }
+
+        setEditorType(newType);
+    }, [editorType, markdownBody, yooptaContent]);
+
+    // Editor loading wrapper
+    const EditorLoadingFallback = () => (
+        <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
+            <div className="text-center space-y-2">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                <p className="text-sm text-muted-foreground">Loading editor...</p>
             </div>
-        }>
-            <HybridEditor
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                height="600px"
-            />
-        </Suspense>
+        </div>
     );
 
     // Reset subtopic if topic changes
@@ -138,7 +177,25 @@ export const ArticleForm = ({
             return;
         }
 
+        // Validate content based on editor type
+        if (editorType === 'yoopta') {
+            if (isContentEmpty(yooptaContent)) {
+                setError('Please add some content to the article');
+                return;
+            }
+        } else {
+            if (markdownBody.trim().length < 100) {
+                setError('Article body must be at least 100 characters');
+                return;
+            }
+        }
+
         startTransition(async () => {
+            // Prepare body - for yoopta, extract plain text as fallback
+            const body = editorType === 'yoopta' 
+                ? extractPlainText(yooptaContent)
+                : markdownBody;
+
             const data = {
                 title,
                 slug,
@@ -146,10 +203,12 @@ export const ArticleForm = ({
                 subtopicSlug: subtopicSlug || undefined,
                 description,
                 body,
+                content: editorType === 'yoopta' ? yooptaContent : undefined,
+                editorType,
                 tags: tags.length > 0 ? tags : undefined,
                 coverImage: coverImage || undefined,
                 order,
-                readingTime: calculateReadingTime(body),
+                readingTime: stats.readingTime,
                 seo: {
                     title: seoTitle || undefined,
                     description: seoDescription || undefined,
@@ -170,9 +229,6 @@ export const ArticleForm = ({
             }
         });
     };
-
-    const readingTime = calculateReadingTime(body);
-    const wordCount = body.trim().split(/\s+/).filter(word => word.length > 0).length;
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -413,26 +469,80 @@ export const ArticleForm = ({
 
             {/* Content Section */}
             <div className="space-y-6 rounded-lg border bg-card p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between flex-wrap gap-4">
                     <h3 className="text-lg font-semibold">Content</h3>
-                    <div className="flex gap-4 text-sm text-muted-foreground">
-                        <span>{wordCount} words</span>
-                        <span>{readingTime} min read</span>
+                    
+                    {/* Editor Type Selector */}
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <span>{stats.wordCount} words</span>
+                            <span>·</span>
+                            <span>{stats.readingTime} min read</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 p-1 bg-muted rounded-lg">
+                            <button
+                                type="button"
+                                onClick={() => handleEditorTypeChange('yoopta')}
+                                className={cn(
+                                    'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                                    editorType === 'yoopta'
+                                        ? 'bg-background shadow-sm text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                                )}
+                                title="Rich Text Editor (Recommended)"
+                            >
+                                <Type className="h-4 w-4" />
+                                <span className="hidden sm:inline">Rich Editor</span>
+                            </button>
+                            
+                            <button
+                                type="button"
+                                onClick={() => handleEditorTypeChange('markdown')}
+                                className={cn(
+                                    'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                                    editorType === 'markdown'
+                                        ? 'bg-background shadow-sm text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
+                                )}
+                                title="Markdown Editor"
+                            >
+                                <Code className="h-4 w-4" />
+                                <span className="hidden sm:inline">Markdown</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Body - Dynamic Import to avoid SSR issues */}
+                {/* Editor Content */}
                 <div>
-                    <label htmlFor="body" className="block text-sm font-medium mb-3">
+                    <label className="block text-sm font-medium mb-3">
                         Article Body <span className="text-destructive">*</span>
                     </label>
-                    <HybridEditorWrapper
-                        value={body}
-                        onChange={setBody}
-                        placeholder="Start writing your article..."
-                    />
+                    
+                    <Suspense fallback={<EditorLoadingFallback />}>
+                        {editorType === 'yoopta' ? (
+                            <YooptaRichEditor
+                                value={yooptaContent}
+                                onChange={setYooptaContent}
+                                placeholder="Start writing your article... Type / for commands"
+                                height="600px"
+                                showStats={false}
+                            />
+                        ) : (
+                            <HybridEditor
+                                value={markdownBody}
+                                onChange={setMarkdownBody}
+                                placeholder="Start writing your article..."
+                                height="600px"
+                            />
+                        )}
+                    </Suspense>
+                    
                     <p className="mt-2 text-xs text-muted-foreground">
-                        Use the editor above to write your content. Minimum 100 characters required.
+                        {editorType === 'yoopta' 
+                            ? 'Use the rich editor above. Type / to see available blocks like headings, images, tables, and more.'
+                            : 'Use the markdown editor above. Minimum 100 characters required.'}
                     </p>
                 </div>
             </div>

@@ -12,7 +12,7 @@ export interface IViewDialogStructure {
     type: 'view';
 
     title: string;
-    icon?: React.ElementType;
+    icon?: React.ComponentType<{ className?: string }>;
     subText?: string;
 
     description?: React.JSX.Element;

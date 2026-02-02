@@ -92,7 +92,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
 
         // Configure Monaco for Markdown with better completions
         monaco.languages.registerCompletionItemProvider('markdown', {
-            provideCompletionItems: (model, position) => {
+            provideCompletionItems: (model: monacoEditor.editor.ITextModel, position: monacoEditor.Position) => {
                 const suggestions = [
                     {
                         label: 'h1',

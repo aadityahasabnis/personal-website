@@ -1,9 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, lazy, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Loader2, Save, X, Plus } from 'lucide-react';
+
+// Lazy load the editor to avoid SSR issues with Monaco
+const HybridEditor = lazy(() => 
+    import('@/components/admin/HybridEditor').then(mod => ({ default: mod.HybridEditor }))
+);
 
 import { cn } from '@/lib/utils';
 import { createNote, updateNote } from '@/server/actions/notes';
@@ -92,6 +97,25 @@ export const NoteForm = ({
 
     const wordCount = body.trim().split(/\s+/).filter(Boolean).length;
     const readingTime = Math.ceil(wordCount / 200);
+
+    // Editor wrapper component to handle loading state
+    const HybridEditorWrapper = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
+        <Suspense fallback={
+            <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
+                <div className="text-center space-y-2">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading editor...</p>
+                </div>
+            </div>
+        }>
+            <HybridEditor
+                value={value}
+                onChange={onChange}
+                placeholder={placeholder}
+                height="600px"
+            />
+        </Suspense>
+    );
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -187,19 +211,10 @@ export const NoteForm = ({
                 <label htmlFor="body" className="block text-sm font-medium mb-2">
                     Content <span className="text-destructive">*</span>
                 </label>
-                <textarea
-                    id="body"
+                <HybridEditorWrapper
                     value={body}
-                    onChange={(e) => setBody(e.target.value)}
+                    onChange={setBody}
                     placeholder="Write your note content here (Markdown supported)..."
-                    rows={15}
-                    className={cn(
-                        'w-full rounded-lg border border-border bg-background px-4 py-2.5',
-                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
-                        'placeholder:text-muted-foreground resize-y transition-colors font-mono text-sm'
-                    )}
-                    required
-                    minLength={50}
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                     {wordCount} words · {readingTime} min read

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Search, X, Filter, SlidersHorizontal } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
 // ===== TYPES =====
@@ -25,7 +24,7 @@ export interface ITableSearchProps {
     className?: string;
 }
 
-// ===== TABLE SEARCH COMPONENT =====
+// ===== TABLE SEARCH COMPONENT (MINIMAL INLINE DESIGN) =====
 
 export function TableSearch({
     placeholder = 'Search...',
@@ -36,7 +35,6 @@ export function TableSearch({
     className,
 }: ITableSearchProps): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState('');
-    const [showFilters, setShowFilters] = useState(false);
     const [filterValues, setFilterValues] = useState<Record<string, any>>({});
     const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -72,126 +70,67 @@ export function TableSearch({
 
     // Handle filter value change
     const handleFilterValueChange = useCallback((filterId: string, value: any) => {
-        setFilterValues((prev) => ({
-            ...prev,
+        const newFilters = {
+            ...filterValues,
             [filterId]: value,
-        }));
-    }, []);
-
-    // Apply filters
-    const handleApplyFilters = useCallback(() => {
+        };
+        setFilterValues(newFilters);
+        
         if (onFilterChange) {
-            onFilterChange(filterValues);
+            onFilterChange(newFilters);
         }
-        setShowFilters(false);
     }, [filterValues, onFilterChange]);
 
-    // Clear all filters
-    const handleClearFilters = useCallback(() => {
-        setFilterValues({});
-        if (onFilterChange) {
-            onFilterChange({});
-        }
-    }, [onFilterChange]);
-
     return (
-        <div className={cn('space-y-4', className)}>
-            {/* Search Bar */}
-            <div className="flex items-center gap-3">
-                {/* Search Input */}
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                        type="text"
-                        placeholder={placeholder}
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        className="pl-10 pr-10"
-                    />
-                    {searchQuery && (
-                        <button
-                            onClick={handleClearSearch}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            <X className="h-4 w-4" />
-                        </button>
-                    )}
-                </div>
-
-                {/* Filter Toggle Button */}
-                {filters.length > 0 && (
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setShowFilters(!showFilters)}
-                        className={cn(
-                            'relative',
-                            activeFiltersCount > 0 && 'border-primary text-primary'
-                        )}
+        <div className={cn('flex items-center gap-3', className)}>
+            {/* Search Input - Takes remaining space */}
+            <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    type="text"
+                    placeholder={placeholder}
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                    <button
+                        onClick={handleClearSearch}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        aria-label="Clear search"
                     >
-                        <SlidersHorizontal className="h-4 w-4" />
-                        {activeFiltersCount > 0 && (
-                            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                                {activeFiltersCount}
-                            </span>
-                        )}
-                    </Button>
+                        <X className="h-4 w-4" />
+                    </button>
                 )}
             </div>
 
-            {/* Filters Panel */}
-            {showFilters && filters.length > 0 && (
-                <div className="rounded-lg border bg-card p-4 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filters
-                        </h3>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleClearFilters}
-                            disabled={activeFiltersCount === 0}
-                        >
-                            Clear all
-                        </Button>
-                    </div>
-
-                    {/* Filter Fields */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {filters.map((filter) => (
-                            <div key={filter.id} className="space-y-2">
-                                <label className="text-sm font-medium">{filter.label}</label>
-                                {filter.type === 'select' && (
-                                    <select
-                                        value={filterValues[filter.id] || ''}
-                                        onChange={(e) =>
-                                            handleFilterValueChange(filter.id, e.target.value)
-                                        }
-                                        className={cn(
-                                            'w-full rounded-lg border border-border bg-background px-3 py-2 text-sm',
-                                            'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
-                                        )}
-                                    >
-                                        <option value="">All</option>
-                                        {filter.options?.map((option) => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Apply Filters Button */}
-                    <div className="flex justify-end pt-2">
-                        <Button onClick={handleApplyFilters} size="sm">
-                            Apply Filters
-                        </Button>
-                    </div>
-                </div>
+            {/* Inline Filter Dropdowns - Minimal Design */}
+            {filters.length > 0 && (
+                <>
+                    {filters.map((filter) => (
+                        <div key={filter.id} className="min-w-[160px]">
+                            {filter.type === 'select' && (
+                                <select
+                                    value={filterValues[filter.id] || ''}
+                                    onChange={(e) =>
+                                        handleFilterValueChange(filter.id, e.target.value)
+                                    }
+                                    className={cn(
+                                        'h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm',
+                                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
+                                        'transition-colors'
+                                    )}
+                                >
+                                    {filter.options?.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                    ))}
+                </>
             )}
         </div>
     );

@@ -13,14 +13,10 @@ export {
     BulkActionsBar,
     type IBulkActionsBarProps,
     type IBulkAction as IBulkActionNew,
-    createBulkPublishAction as createBulkPublishActionNew,
-    createBulkUnpublishAction as createBulkUnpublishActionNew,
-    createBulkFeatureAction,
-    createBulkUnfeatureAction,
+    // Status-specific bulk actions from BulkActionsBar
     createBulkSetActiveAction,
     createBulkSetWipAction,
     createBulkArchiveAction,
-    createBulkDeleteAction as createBulkDeleteActionNew,
 } from './BulkActionsBar';
 
 // Action Components
@@ -34,9 +30,18 @@ export {
     createToggleFeaturedAction,
     createViewAction,
     createDuplicateAction,
+    // New bulk action helpers (for BulkActionsBar)
     createBulkPublishAction,
     createBulkUnpublishAction,
     createBulkDeleteAction,
+    createBulkFeatureAction,
+    createBulkUnfeatureAction,
+    // Aliases for backward compatibility
+    createBulkDeleteAction as createBulkDeleteActionNew,
+    // Legacy bulk action helpers (for old BulkActions component)
+    createBulkPublishActionLegacy,
+    createBulkUnpublishActionLegacy,
+    createBulkDeleteActionLegacy,
 } from './action-helpers';
 
 // Filter & Search Components

@@ -24,9 +24,9 @@ export interface CloudinaryUploadResult {
     placeholder: boolean;
     url: string;
     secure_url: string;
-    folder: string;
+    folder?: string;
     original_filename: string;
-    api_key: string;
+    api_key?: string;
 }
 
 /**
@@ -42,13 +42,17 @@ export async function uploadToCloudinary(
         if (typeof file === 'string') {
             // Base64 or URL
             uploadSource = file;
-        } else if (file instanceof Buffer) {
+        } else if (Buffer.isBuffer(file)) {
+            // Node.js Buffer
             uploadSource = `data:image/jpeg;base64,${file.toString('base64')}`;
-        } else {
+        } else if (file && typeof file === 'object' && 'arrayBuffer' in file) {
             // File object - convert to base64
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
-            uploadSource = `data:${file.type};base64,${buffer.toString('base64')}`;
+            const fileType = 'type' in file ? (file as File).type : 'image/jpeg';
+            uploadSource = `data:${fileType};base64,${buffer.toString('base64')}`;
+        } else {
+            throw new Error('Invalid file type provided');
         }
 
         const result = await cloudinary.uploader.upload(uploadSource, {

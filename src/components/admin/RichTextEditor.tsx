@@ -75,10 +75,6 @@ export const RichTextEditor = forwardRef<RichTextEditorHandle, RichTextEditorPro
         extensions: [
             StarterKit.configure({
                 codeBlock: false, // We use CodeBlockLowlight instead
-                history: {
-                    depth: 100, // Store up to 100 undo/redo steps
-                    newGroupDelay: 500, // Group changes within 500ms
-                },
             }),
             Link.configure({
                 openOnClick: false,

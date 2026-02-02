@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS, VALIDATION } from '@/constants';
-import type { IArticle, IApiResponse } from '@/interfaces';
+import type { IArticle, IApiResponse, EditorType } from '@/interfaces';
+import type { YooptaContent } from '@/types/yoopta';
 import { updateTopicArticleCount } from './topics';
 import { updateSubtopicArticleCount } from './subtopics';
 
@@ -14,7 +15,19 @@ const articleInputSchema = z.object({
     title: z.string().min(VALIDATION.title.min).max(VALIDATION.title.max),
     slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern, 'Slug must be lowercase letters, numbers, and hyphens only'),
     description: z.string().max(VALIDATION.description.max),
-    body: z.string().min(VALIDATION.body.min, 'Article body must be at least 100 characters'),
+    
+    // Markdown content (required for backward compatibility)
+    body: z.string().min(1, 'Article body is required'),
+    
+    // Yoopta content (JSON block structure - optional)
+    content: z.record(z.string(), z.any()).optional(),
+    
+    // Editor type: 'markdown' or 'yoopta'
+    editorType: z.enum(['markdown', 'yoopta']).optional().default('markdown'),
+    
+    // Pre-rendered HTML for SSR (generated on save)
+    html: z.string().optional(),
+    
     topicSlug: z.string().min(1, 'Topic is required'),
     subtopicSlug: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -31,6 +44,7 @@ const articleInputSchema = z.object({
 
 const articleUpdateSchema = articleInputSchema.partial().extend({
     slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern).optional(),
+    body: z.string().optional(), // Make body optional for updates
 });
 
 type ArticleInput = z.infer<typeof articleInputSchema>;
@@ -119,6 +133,9 @@ export const createArticle = async (data: ArticleInput): Promise<IApiResponse<st
             ...parsed.data,
             coverImage: parsed.data.coverImage || undefined,
             readingTime: parsed.data.readingTime || calculateReadingTime(parsed.data.body),
+            editorType: (parsed.data.editorType || 'markdown') as EditorType,
+            content: parsed.data.content as YooptaContent | undefined,
+            html: parsed.data.html,
             published: false,
             createdAt: now,
             updatedAt: now,
@@ -212,6 +229,8 @@ export const updateArticle = async (
         const updateData: Partial<IArticle> & { updatedAt: Date } = {
             ...parsed.data,
             coverImage: parsed.data.coverImage || undefined,
+            editorType: parsed.data.editorType as EditorType | undefined,
+            content: parsed.data.content as YooptaContent | undefined,
             updatedAt: new Date(),
         };
 
