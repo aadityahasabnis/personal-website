@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ChevronLeft, Calendar, Clock, Tag, Lightbulb } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
+import { BeamLine } from '@/components/common/BeamLine';
 
 interface INoteHeaderProps {
     /** Note title */
@@ -156,13 +157,7 @@ export const NoteHeader = ({
             </div>
 
             {/* Decorative Gradient Line with Animation */}
-            <motion.div
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="mt-8 h-px bg-gradient-to-r from-[var(--accent)] via-[var(--accent)]/50 to-transparent"
-                style={{ transformOrigin: 'left' }}
-            />
+            <BeamLine />
         </header>
     );
 };

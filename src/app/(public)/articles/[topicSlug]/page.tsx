@@ -7,6 +7,7 @@ import * as LucideIcons from 'lucide-react';
 import { getTopicWithContent, getAllTopicSlugs } from '@/server/queries/topics';
 import { SubtopicAccordion } from '@/components/content/SubtopicAccordion';
 import { FadeIn } from '@/components/animation/FadeIn';
+import { BeamLine } from '@/components/common/BeamLine';
 import { formatDate } from '@/lib/utils';
 import type { ISubtopic, IArticle } from '@/interfaces';
 
@@ -160,8 +161,8 @@ export default async function TopicPage({ params }: ITopicPageProps) {
                     )}
                 </div>
 
-                {/* Decorative line */}
-                <div className="mt-8 h-px bg-gradient-to-r from-[var(--accent)] via-[var(--accent)]/50 to-transparent" />
+                {/* Decorative animated beam line */}
+                <BeamLine />
             </FadeIn>
 
             {/* Subtopics Accordion */}

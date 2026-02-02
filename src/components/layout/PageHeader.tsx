@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { BeamLine } from '@/components/common/BeamLine';
 
 interface IPageHeaderProps {
   /** Page title */
@@ -75,15 +76,9 @@ export const PageHeader = ({
       )}
 
       {/* Decorative line */}
-      <motion.div
-        initial={{ scaleX: 0 }}
-        animate={{ scaleX: 1 }}
-        transition={{ duration: 0.8, delay: 0.4 }}
-        className={cn(
-          'mt-8 h-px bg-gradient-to-r from-[var(--accent)] via-[var(--accent)]/50 to-transparent',
-          align === 'center' && 'mx-auto max-w-xs',
-        )}
-        style={{ transformOrigin: align === 'center' ? 'center' : 'left' }}
+      <BeamLine 
+        origin={align === 'center' ? 'center' : 'left'}
+        className={align === 'center' ? 'mx-auto max-w-xs' : ''}
       />
     </header>
   );
