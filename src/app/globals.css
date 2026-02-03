@@ -1,6 +1,69 @@
 /* ===== TAILWIND IMPORT ===== */
 @import "tailwindcss";
 
+/* ===== LIST STYLE RESTORATION ===== */
+/* 
+ * Yoopta lists render as individual <ul>/<ol> blocks, each with ONE <li>
+ * We need to restore browser default list styles for content, but not for navigation
+ */
+
+/* Apply list styles to Yoopta editor and rendered content */
+.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]),
+.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]),
+.yoopta-rendered-content ul:not([role]),
+.yoopta-rendered-content ol:not([role]),
+article ul.list-disc,
+article ol.list-decimal,
+.prose ul,
+.prose ol {
+    list-style-position: inside;
+    margin: 0.25rem 0;
+    padding: 0;
+}
+
+.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]),
+.yoopta-rendered-content ul:not([role]),
+article ul.list-disc,
+.prose ul {
+    list-style-type: disc;
+}
+
+.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]),
+.yoopta-rendered-content ol:not([role]),
+article ol.list-decimal,
+.prose ol {
+    list-style-type: decimal;
+}
+
+.yoopta-editor-container ul:not([role]) li,
+.yoopta-editor-container ol:not([role]) li,
+.yoopta-rendered-content li,
+article ul.list-disc li,
+article ol.list-decimal li,
+.prose ul li,
+.prose ol li {
+    display: list-item;
+}
+
+/* Explicitly remove list styles from navigation/menus */
+nav ul,
+nav ol,
+nav li,
+aside ul,
+aside ol,
+aside li,
+[role="navigation"] ul,
+[role="navigation"] ol,
+[role="navigation"] li,
+[role="menu"] ul,
+[role="menu"] ol,
+[role="menu"] li {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: block !important;
+}
+
 /* ===== CUSTOM VARIANTS ===== */
 @custom-variant dark (&:is(.dark *));
 
@@ -2807,6 +2870,36 @@
     margin-top: 0.25rem !important;
 }
 
+/* ===== LIST STYLING FOR RENDERER ===== */
+/* Make sure rendered content also shows list markers */
+.yoopta-rendered-content ul {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+    padding-left: 1.5rem !important;
+}
+
+.yoopta-rendered-content ol {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+    padding-left: 1.5rem !important;
+}
+
+.yoopta-rendered-content ul li,
+.yoopta-rendered-content ol li {
+    display: list-item !important;
+}
+
+/* Tailwind list classes */
+.yoopta-rendered-content .list-disc {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+}
+
+.yoopta-rendered-content .list-decimal {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+}
+
 /* ===== HIGHLIGHT MARK - CRITICAL FIX ===== */
 /* 
  * Yoopta highlight mark applies inline styles or specific data attributes.
@@ -3057,3 +3150,167 @@
     height: 1.25rem !important;
     margin-top: 0.125rem !important;
 }
+
+/* ===== YOOPTA RENDERED CONTENT STYLES ===== */
+/* 
+ * Styles for the YooptaRenderer component used on article pages.
+ * These ensure proper display of all rendered content types.
+ */
+
+.yoopta-rendered-content {
+    font-size: var(--font-size-body);
+    line-height: 1.75;
+    color: var(--fg);
+}
+
+/* List marker styling */
+.yoopta-rendered-content ul {
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+}
+
+.yoopta-rendered-content ol {
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+}
+
+.yoopta-rendered-content ul li,
+.yoopta-rendered-content ol li {
+    display: list-item !important;
+}
+
+.yoopta-rendered-content ul li::marker {
+    color: var(--accent);
+}
+
+.yoopta-rendered-content ol li::marker {
+    color: var(--accent);
+    font-weight: 600;
+}
+
+/* Code syntax highlighting */
+.yoopta-rendered-content pre code {
+    display: block;
+    white-space: pre;
+    word-wrap: normal;
+    overflow-x: auto;
+}
+
+/* Inline code */
+.yoopta-rendered-content p code,
+.yoopta-rendered-content li code {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: 0.25rem;
+    padding: 0.125rem 0.375rem;
+    font-size: 0.9em;
+    font-family: var(--font-mono);
+    color: var(--accent);
+}
+
+/* Links */
+.yoopta-rendered-content a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+}
+
+.yoopta-rendered-content a:hover {
+    text-decoration: underline;
+}
+
+/* Images */
+.yoopta-rendered-content figure img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* Blockquotes */
+.yoopta-rendered-content blockquote {
+    font-style: italic;
+}
+
+.yoopta-rendered-content blockquote p {
+    margin: 0;
+}
+
+/* Tables */
+.yoopta-rendered-content table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.yoopta-rendered-content th,
+.yoopta-rendered-content td {
+    text-align: left;
+    vertical-align: top;
+}
+
+/* Headings anchor links */
+.yoopta-rendered-content h1,
+.yoopta-rendered-content h2,
+.yoopta-rendered-content h3 {
+    position: relative;
+}
+
+.yoopta-rendered-content h1:hover::before,
+.yoopta-rendered-content h2:hover::before,
+.yoopta-rendered-content h3:hover::before {
+    content: '#';
+    position: absolute;
+    left: -1.5rem;
+    color: var(--accent);
+    opacity: 0.5;
+    font-weight: 400;
+}
+
+/* Smooth scroll margin for anchor links */
+.yoopta-rendered-content [id] {
+    scroll-margin-top: 6rem;
+}
+
+/* Selection highlight */
+.yoopta-rendered-content ::selection {
+    background-color: var(--accent-subtle);
+    color: var(--fg);
+}
+
+/* Dark mode adjustments */
+.dark .yoopta-rendered-content mark {
+    background-color: oklch(0.55 0.15 90);
+    color: oklch(0.15 0.02 285);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .yoopta-rendered-content ul,
+    .yoopta-rendered-content ol {
+        margin-left: 1rem;
+    }
+    
+    .yoopta-rendered-content h1:hover::before,
+    .yoopta-rendered-content h2:hover::before,
+    .yoopta-rendered-content h3:hover::before {
+        display: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .yoopta-rendered-content {
+        font-size: 12pt;
+        line-height: 1.5;
+    }
+    
+    .yoopta-rendered-content pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+    
+    .yoopta-rendered-content a {
+        text-decoration: underline;
+    }
+}
+

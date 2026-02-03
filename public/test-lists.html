@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>List Test</title>
+    <style>
+        /* Minimal reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, sans-serif;
+            padding: 40px;
+            line-height: 1.6;
+        }
+        
+        h1 { margin-bottom: 20px; }
+        h2 { margin: 30px 0 15px; }
+        
+        /* Critical list styles */
+        ul, ol {
+            list-style: revert !important;
+            padding-left: 2rem !important;
+            margin: 20px 0;
+        }
+        
+        ul {
+            list-style-type: disc !important;
+        }
+        
+        ol {
+            list-style-type: decimal !important;
+        }
+        
+        li {
+            display: list-item !important;
+            margin: 5px 0;
+        }
+        
+        .test-section {
+            border: 2px solid #ccc;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .yoopta-editor-container ul,
+        .yoopta-rendered-content ul {
+            list-style-type: disc !important;
+            padding-left: 2rem !important;
+        }
+        
+        .yoopta-editor-container ol,
+        .yoopta-rendered-content ol {
+            list-style-type: decimal !important;
+            padding-left: 2rem !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>List Styling Test</h1>
+    
+    <div class="test-section">
+        <h2>1. Basic HTML Lists (No Classes)</h2>
+        
+        <h3>Unordered List:</h3>
+        <ul>
+            <li>First bullet item</li>
+            <li>Second bullet item</li>
+            <li>Third bullet item</li>
+        </ul>
+        
+        <h3>Ordered List:</h3>
+        <ol>
+            <li>First numbered item</li>
+            <li>Second numbered item</li>
+            <li>Third numbered item</li>
+        </ol>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. Lists with Tailwind Classes</h2>
+        
+        <h3>Unordered List (list-disc):</h3>
+        <ul class="list-disc">
+            <li>First bullet item with class</li>
+            <li>Second bullet item with class</li>
+            <li>Third bullet item with class</li>
+        </ul>
+        
+        <h3>Ordered List (list-decimal):</h3>
+        <ol class="list-decimal">
+            <li>First numbered item with class</li>
+            <li>Second numbered item with class</li>
+            <li>Third numbered item with class</li>
+        </ol>
+    </div>
+    
+    <div class="test-section yoopta-editor-container">
+        <h2>3. Lists in .yoopta-editor-container</h2>
+        
+        <h3>Unordered List:</h3>
+        <ul>
+            <li>Editor bullet 1</li>
+            <li>Editor bullet 2</li>
+            <li>Editor bullet 3</li>
+        </ul>
+        
+        <h3>Ordered List:</h3>
+        <ol>
+            <li>Editor number 1</li>
+            <li>Editor number 2</li>
+            <li>Editor number 3</li>
+        </ol>
+    </div>
+    
+    <div class="test-section yoopta-rendered-content">
+        <h2>4. Lists in .yoopta-rendered-content</h2>
+        
+        <h3>Unordered List:</h3>
+        <ul class="list-disc">
+            <li>Rendered bullet 1</li>
+            <li>Rendered bullet 2</li>
+            <li>Rendered bullet 3</li>
+        </ul>
+        
+        <h3>Ordered List:</h3>
+        <ol class="list-decimal">
+            <li>Rendered number 1</li>
+            <li>Rendered number 2</li>
+            <li>Rendered number 3</li>
+        </ol>
+    </div>
+    
+    <div style="margin-top: 40px; padding: 20px; background: #f0f0f0; border-radius: 8px;">
+        <h2>Expected Results:</h2>
+        <p><strong>✅ Bulleted lists should show:</strong> • bullets</p>
+        <p><strong>✅ Numbered lists should show:</strong> 1. 2. 3. numbers</p>
+        <p><strong>❌ If you see no markers:</strong> CSS is not being applied correctly</p>
+    </div>
+</body>
+</html>

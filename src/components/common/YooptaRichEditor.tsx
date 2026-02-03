@@ -565,8 +565,7 @@ export function YooptaRichEditor({
                     'yoopta-editor-container',
                     'border border-[var(--border-color)] rounded-xl bg-[var(--card-bg)]',
                     'focus-within:border-[var(--accent)] focus-within:ring-1 focus-within:ring-[var(--accent)]/20',
-                    'transition-all duration-200',
-                    'overflow-hidden'
+                    'transition-all duration-200'
                 )}
                 style={{ minHeight: height }}
             >
