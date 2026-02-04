@@ -4,8 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS, VALIDATION } from '@/constants';
-import type { IArticle, IApiResponse, EditorType } from '@/interfaces';
-import type { YooptaContent } from '@/types/yoopta';
+import type { IArticle, IApiResponse } from '@/interfaces';
 import { updateTopicArticleCount } from './topics';
 import { updateSubtopicArticleCount } from './subtopics';
 
@@ -16,14 +15,8 @@ const articleInputSchema = z.object({
     slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern, 'Slug must be lowercase letters, numbers, and hyphens only'),
     description: z.string().max(VALIDATION.description.max),
     
-    // Markdown content (required for backward compatibility)
+    // Markdown content
     body: z.string().min(1, 'Article body is required'),
-    
-    // Yoopta content (JSON block structure - optional)
-    content: z.record(z.string(), z.any()).optional(),
-    
-    // Editor type: 'markdown' or 'yoopta'
-    editorType: z.enum(['markdown', 'yoopta']).optional().default('markdown'),
     
     // Pre-rendered HTML for SSR (generated on save)
     html: z.string().optional(),
@@ -145,8 +138,6 @@ export const createArticle = async (data: ArticleInput): Promise<IApiResponse<st
             ...parsed.data,
             coverImage: parsed.data.coverImage || undefined,
             readingTime: parsed.data.readingTime || calculateReadingTime(parsed.data.body),
-            editorType: (parsed.data.editorType || 'markdown') as EditorType,
-            content: parsed.data.content as YooptaContent | undefined,
             html: parsed.data.html,
             tableOfContents: parsed.data.tableOfContents as IArticle['tableOfContents'],
             published: false,
@@ -242,8 +233,6 @@ export const updateArticle = async (
         const updateData: Partial<IArticle> & { updatedAt: Date } = {
             ...parsed.data,
             coverImage: parsed.data.coverImage || undefined,
-            editorType: parsed.data.editorType as EditorType | undefined,
-            content: parsed.data.content as YooptaContent | undefined,
             tableOfContents: parsed.data.tableOfContents as IArticle['tableOfContents'],
             updatedAt: new Date(),
         };

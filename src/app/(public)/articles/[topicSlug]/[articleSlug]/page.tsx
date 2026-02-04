@@ -7,7 +7,6 @@ import { getSubtopic } from '@/server/queries/subtopics';
 import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
 import { ArticleHeader } from '@/components/content/ArticleHeader';
 import { ArticleBody } from '@/components/content/ArticleBody';
-import { YooptaRenderer } from '@/components/common/YooptaRenderer';
 import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
@@ -20,7 +19,6 @@ import {
     generateOrganizationSchema,
 } from '@/lib/seo';
 import { SITE_CONFIG } from '@/constants';
-import type { YooptaContentValue } from '@yoopta/editor';
 
 // Static generation
 export const revalidate = false;
@@ -225,15 +223,9 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
         organizationSchema
     );
 
-    // Determine how to render content based on editor type
-    const isYooptaContent = article.editorType === 'yoopta';
-    const yooptaContent = article.content as YooptaContentValue | undefined;
+    // Use pre-rendered HTML content
     const htmlContent = article.html || '';
-
-    // Check if we have renderable content
-    const hasContent = isYooptaContent 
-        ? (yooptaContent && Object.keys(yooptaContent).length > 0)
-        : htmlContent.length > 0;
+    const hasContent = htmlContent.length > 0;
 
     return (
         <>
@@ -265,13 +257,8 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
                 {/* Article Body - Animated */}
                 <FadeIn delay={0.3}>
                     {hasContent ? (
-                        isYooptaContent && yooptaContent ? (
-                            // Render Yoopta content directly for rich editor content
-                            <YooptaRenderer content={yooptaContent} />
-                        ) : (
-                            // Render pre-generated HTML for markdown content
-                            <ArticleBody html={htmlContent} />
-                        )
+                        // Render pre-generated HTML for markdown content
+                        <ArticleBody html={htmlContent} />
                     ) : (
                         <div className="prose max-w-none text-[var(--fg-muted)]">
                             <p>This article content is being prepared. Check back soon.</p>

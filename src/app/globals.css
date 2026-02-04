@@ -1,68 +1,8 @@
 /* ===== TAILWIND IMPORT ===== */
 @import "tailwindcss";
 
-/* ===== LIST STYLE RESTORATION ===== */
-/* 
- * Yoopta lists render as individual <ul>/<ol> blocks, each with ONE <li>
- * We need to restore browser default list styles for content, but not for navigation
- */
-
-/* Apply list styles to Yoopta editor and rendered content */
-.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]),
-.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]),
-.yoopta-rendered-content ul:not([role]),
-.yoopta-rendered-content ol:not([role]),
-article ul.list-disc,
-article ol.list-decimal,
-.prose ul,
-.prose ol {
-    list-style-position: inside;
-    margin: 0.25rem 0;
-    padding: 0;
-}
-
-.yoopta-editor-container ul:not([role]):not([class*="menu"]):not([class*="toolbar"]),
-.yoopta-rendered-content ul:not([role]),
-article ul.list-disc,
-.prose ul {
-    list-style-type: disc;
-}
-
-.yoopta-editor-container ol:not([role]):not([class*="menu"]):not([class*="toolbar"]),
-.yoopta-rendered-content ol:not([role]),
-article ol.list-decimal,
-.prose ol {
-    list-style-type: decimal;
-}
-
-.yoopta-editor-container ul:not([role]) li,
-.yoopta-editor-container ol:not([role]) li,
-.yoopta-rendered-content li,
-article ul.list-disc li,
-article ol.list-decimal li,
-.prose ul li,
-.prose ol li {
-    display: list-item;
-}
-
-/* Explicitly remove list styles from navigation/menus */
-nav ul,
-nav ol,
-nav li,
-aside ul,
-aside ol,
-aside li,
-[role="navigation"] ul,
-[role="navigation"] ol,
-[role="navigation"] li,
-[role="menu"] ul,
-[role="menu"] ol,
-[role="menu"] li {
-    list-style: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    display: block !important;
-}
+/* ===== MDX EDITOR STYLES ===== */
+@import "../styles/mdx-editor.css";
 
 /* ===== CUSTOM VARIANTS ===== */
 @custom-variant dark (&:is(.dark *));
@@ -1397,107 +1337,356 @@ aside li,
         --tw-prose-pre-bg: var(--surface);
         color: var(--fg);
         line-height: 1.75;
+        max-width: none;
     }
 
-    .prose h1, .prose h2, .prose h3, .prose h4 {
+    /* Headings */
+    .prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
         color: var(--fg);
         font-weight: 600;
         letter-spacing: -0.02em;
+        scroll-margin-top: 2rem;
     }
 
     .prose h1 {
         font-size: var(--font-size-h1);
         margin-top: 2.5em;
         margin-bottom: 0.75em;
+        line-height: 1.2;
     }
 
     .prose h2 {
         font-size: var(--font-size-h2);
         margin-top: 2em;
         margin-bottom: 0.75em;
+        line-height: 1.25;
     }
 
     .prose h3 {
         font-size: var(--font-size-h3);
         margin-top: 1.75em;
         margin-bottom: 0.5em;
+        line-height: 1.3;
     }
 
+    .prose h4 {
+        font-size: var(--font-size-h4);
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+        line-height: 1.4;
+    }
+
+    .prose h5 {
+        font-size: var(--font-size-h5);
+        margin-top: 1.25em;
+        margin-bottom: 0.5em;
+        line-height: 1.4;
+    }
+
+    .prose h6 {
+        font-size: var(--font-size-h6);
+        margin-top: 1.25em;
+        margin-bottom: 0.5em;
+        line-height: 1.4;
+    }
+
+    /* Paragraphs */
     .prose p {
         margin-bottom: 1.25em;
+        margin-top: 1.25em;
     }
 
+    .prose p:first-child {
+        margin-top: 0;
+    }
+
+    .prose p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Links */
     .prose a {
         color: var(--accent);
         text-decoration: underline;
         text-underline-offset: 3px;
+        text-decoration-thickness: 1px;
         transition: color var(--transition-fast);
     }
 
     .prose a:hover {
         color: var(--accent-hover);
+        text-decoration-thickness: 2px;
     }
 
+    /* Code Blocks */
     .prose pre {
         @apply rounded-xl overflow-x-auto;
         background: var(--surface);
         border: 1px solid var(--border-color);
         padding: 1.25rem;
+        margin: 1.5em 0;
+        line-height: 1.6;
+        font-size: 0.875rem;
     }
 
+    /* Inline Code */
     .prose code {
         @apply px-1.5 py-0.5 rounded-md font-mono text-sm;
         background: var(--surface);
         color: var(--accent);
+        font-weight: 500;
     }
 
     .prose pre code {
         @apply p-0 bg-transparent;
         color: var(--fg);
+        font-weight: 400;
     }
 
+    /* Images */
     .prose img {
         @apply rounded-xl;
+        margin: 2em auto;
+        max-width: 100%;
+        height: auto;
+        display: block;
     }
 
+    .prose figure {
+        margin: 2em 0;
+    }
+
+    .prose figure img {
+        margin: 0;
+    }
+
+    .prose figcaption {
+        margin-top: 0.75em;
+        text-align: center;
+        font-size: 0.875rem;
+        color: var(--fg-muted);
+        font-style: italic;
+    }
+
+    /* Blockquotes */
     .prose blockquote {
         border-left: 3px solid var(--accent);
         padding-left: 1.25rem;
+        padding-right: 1rem;
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
         font-style: italic;
         color: var(--fg-muted);
+        margin: 1.5em 0;
+        background: var(--surface);
+        border-radius: 0 var(--radius) var(--radius) 0;
     }
 
+    .prose blockquote p {
+        margin: 0;
+    }
+
+    .prose blockquote p:before {
+        content: '"';
+        color: var(--accent);
+    }
+
+    .prose blockquote p:after {
+        content: '"';
+        color: var(--accent);
+    }
+
+    /* Lists */
     .prose ul, .prose ol {
-        padding-left: 1.5rem;
+        padding-left: 1.75rem;
+        margin: 1.25em 0;
     }
 
     .prose li {
+        margin-bottom: 0.5em;
+        margin-top: 0.5em;
+    }
+
+    .prose li p {
+        margin-top: 0.5em;
         margin-bottom: 0.5em;
     }
 
     .prose li::marker {
         color: var(--accent);
+        font-weight: 600;
     }
 
+    .prose ul > li::marker {
+        content: '•';
+    }
+
+    /* Nested Lists */
+    .prose ul ul, .prose ol ul, .prose ul ol, .prose ol ol {
+        margin-top: 0.5em;
+        margin-bottom: 0.5em;
+    }
+
+    /* Horizontal Rules */
     .prose hr {
-        border-color: var(--border-color);
+        border: 0;
+        border-top: 1px solid var(--border-color);
         margin: 2.5em 0;
     }
 
+    /* Tables */
     .prose table {
         width: 100%;
         border-collapse: collapse;
+        margin: 2em 0;
+        overflow-x: auto;
+        display: block;
     }
 
-    .prose th, .prose td {
-        border: 1px solid var(--border-color);
-        padding: 0.75rem;
-        text-align: left;
+    .prose thead {
+        border-bottom: 2px solid var(--border-color);
     }
 
     .prose th {
         background: var(--surface);
         font-weight: 600;
+        text-align: left;
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        color: var(--fg);
+    }
+
+    .prose td {
+        padding: 0.75rem 1rem;
+        border: 1px solid var(--border-color);
+        text-align: left;
+    }
+
+    .prose tbody tr {
+        transition: background-color var(--transition-fast);
+    }
+
+    .prose tbody tr:hover {
+        background-color: var(--surface-hover);
+    }
+
+    .prose tbody tr:nth-child(even) {
+        background-color: var(--bg-subtle);
+    }
+
+    .prose tbody tr:nth-child(even):hover {
+        background-color: var(--surface-hover);
+    }
+
+    /* Strong & Em */
+    .prose strong {
+        font-weight: 700;
+        color: var(--fg);
+    }
+
+    .prose em {
+        font-style: italic;
+        color: var(--fg);
+    }
+
+    /* Task Lists (Checkboxes) */
+    .prose input[type="checkbox"] {
+        margin-right: 0.5em;
+        cursor: pointer;
+        accent-color: var(--accent);
+    }
+
+    .prose li input[type="checkbox"] {
+        margin-left: -1.75rem;
+        margin-right: 0.5rem;
+    }
+
+    /* Definition Lists */
+    .prose dt {
+        font-weight: 600;
+        margin-top: 1em;
+        color: var(--fg);
+    }
+
+    .prose dd {
+        margin-left: 1.75rem;
+        margin-top: 0.5em;
+        color: var(--fg-muted);
+    }
+
+    /* Keyboard Keys */
+    .prose kbd {
+        @apply px-2 py-1 rounded border font-mono text-sm;
+        background: var(--surface);
+        border-color: var(--border-color);
+        box-shadow: 0 1px 2px oklch(0 0 0 / 0.1);
+        font-size: 0.875em;
+    }
+
+    /* Marks/Highlights */
+    .prose mark {
+        background-color: oklch(0.85 0.12 75 / 0.5);
+        padding: 0.1em 0.2em;
+        border-radius: 0.25em;
+    }
+
+    .dark .prose mark {
+        background-color: oklch(0.35 0.12 75 / 0.5);
+    }
+
+    /* Details/Summary */
+    .prose details {
+        @apply rounded-lg border p-4 my-4;
+        border-color: var(--border-color);
+        background: var(--surface);
+    }
+
+    .prose summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--accent);
+        user-select: none;
+    }
+
+    .prose summary:hover {
+        color: var(--accent-hover);
+    }
+
+    .prose details[open] summary {
+        margin-bottom: 1em;
+    }
+
+    /* Subscript & Superscript */
+    .prose sub, .prose sup {
+        font-size: 0.75em;
+        line-height: 0;
+        position: relative;
+        vertical-align: baseline;
+    }
+
+    .prose sup {
+        top: -0.5em;
+    }
+
+    .prose sub {
+        bottom: -0.25em;
+    }
+
+    /* Abbreviations */
+    .prose abbr {
+        text-decoration: underline dotted;
+        cursor: help;
+        text-decoration-color: var(--accent);
+    }
+
+    /* Math (KaTeX support) */
+    .prose .katex-display {
+        overflow-x: auto;
+        margin: 1.5em 0;
+    }
+
+    .prose .katex {
+        font-size: 1.1em;
     }
 }
 

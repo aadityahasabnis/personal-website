@@ -1,18 +1,31 @@
 'use client';
 
-import { useState, useTransition, lazy, Suspense } from 'react';
+import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Loader2, Save, X, Plus } from 'lucide-react';
-
-// Lazy load the editor to avoid SSR issues with Monaco
-const HybridEditor = lazy(() => 
-    import('@/components/admin/HybridEditor').then(mod => ({ default: mod.HybridEditor }))
-);
 
 import { cn } from '@/lib/utils';
 import { createProject, updateProject } from '@/server/actions/projects';
 import type { IProject } from '@/interfaces';
+import type { MDXEditorHandle } from '@/components/admin';
+
+// Dynamically import MDXEditor with SSR disabled
+const MDXEditor = dynamic(
+    () => import('@/components/admin').then(mod => ({ default: mod.MDXEditorComponent })),
+    {
+        ssr: false,
+        loading: () => (
+            <div className="flex items-center justify-center h-96 border rounded-lg bg-muted/30">
+                <div className="text-center space-y-2">
+                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading MDX Editor...</p>
+                </div>
+            </div>
+        )
+    }
+);
 
 interface IProjectFormProps {
     project?: IProject;
@@ -35,6 +48,7 @@ export const ProjectForm = ({
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+    const editorRef = useRef<MDXEditorHandle>(null);
 
     // Form state
     const [title, setTitle] = useState(project?.title ?? '');
@@ -118,25 +132,6 @@ export const ProjectForm = ({
     };
 
     const wordCount = longDescription.trim().split(/\s+/).filter(Boolean).length;
-
-    // Editor wrapper component to handle loading state
-    const HybridEditorWrapper = ({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) => (
-        <Suspense fallback={
-            <div className="flex items-center justify-center h-[600px] border rounded-lg bg-muted/30">
-                <div className="text-center space-y-2">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-sm text-muted-foreground">Loading editor...</p>
-                </div>
-            </div>
-        }>
-            <HybridEditor
-                value={value}
-                onChange={onChange}
-                placeholder={placeholder}
-                height="600px"
-            />
-        </Suspense>
-    );
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -230,16 +225,15 @@ export const ProjectForm = ({
             {/* Long Description */}
             <div>
                 <label htmlFor="longDescription" className="block text-sm font-medium mb-2">
-                    Full Description <span className="text-destructive">*</span>
+                    Long Description
                 </label>
-                <HybridEditorWrapper
+                <MDXEditor
+                    ref={editorRef}
                     value={longDescription}
                     onChange={setLongDescription}
-                    placeholder="Write a detailed description of this project (Markdown supported)..."
+                    height="400px"
+                    placeholder="Write detailed project description in MDX format..."
                 />
-                <p className="mt-1 text-xs text-muted-foreground">
-                    {wordCount} words
-                </p>
             </div>
 
             {/* Cover Image */}

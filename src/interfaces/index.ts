@@ -45,13 +45,6 @@ export interface IHeading {
 
 // ===== CONTENT TYPES =====
 
-import type { YooptaContent } from '@/types/yoopta';
-
-/**
- * Editor type for content - determines how body/content is stored
- */
-export type EditorType = 'markdown' | 'yoopta';
-
 export interface IContent {
     _id?: ObjectId;
     type: 'article' | 'series' | 'note' | 'log' | 'page';
@@ -59,16 +52,10 @@ export interface IContent {
     title: string;
     description: string;
     
-    // Editor type determines which field is used
-    editorType?: EditorType;         // 'markdown' (default) or 'yoopta'
-    
-    // Markdown content (legacy/fallback)
+    // Markdown content
     body: string;
     
-    // Yoopta content (rich editor - JSON block structure)
-    content?: YooptaContent;
-    
-    // Pre-rendered HTML for SSR/SEO (generated from body or content)
+    // Pre-rendered HTML for SSR/SEO (generated from body)
     html?: string;
     
     tags?: string[];
@@ -201,6 +188,8 @@ export interface ISubscriber {
     confirmed: boolean;
     subscribedAt: Date;
     unsubscribedAt?: Date;
+    createdAt?: Date;
+    updatedAt?: Date;
 }
 
 // ===== MEDIA TYPES =====

@@ -36,6 +36,7 @@ interface INavItem {
 const navItems: INavItem[] = [
     { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
     { label: 'Topics', href: '/admin/topics', icon: Layers },
+    { label: 'Subtopics', href: '/admin/subtopics', icon: Layers },
     { label: 'Articles', href: '/admin/articles', icon: FileText },
     { label: 'Notes', href: '/admin/notes', icon: BookOpen },
     { label: 'Projects', href: '/admin/projects', icon: FolderKanban },

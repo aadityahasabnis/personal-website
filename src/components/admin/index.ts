@@ -6,6 +6,11 @@ export { StatusBadge } from './StatusBadge';
 export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
 
+// Editor Components
+export { MDXEditorComponent, type MDXEditorHandle } from './MDXEditor';
+export { LobeEditor, type LobeEditorHandle } from './LobeEditor';
+export { ContentPreview } from './ContentPreview';
+
 // Table Components (New Professional System)
 export { DataTable, type IDataTableColumn, type IDataTableProps } from './DataTable';
 export { TableSearch, type ITableSearchProps, type ITableFilter } from './TableSearch';
@@ -53,11 +58,9 @@ export { BulkActions, type IBulkAction } from './BulkActions';
 // Layout Components
 export { default as AdminSidebar } from './AdminSidebar';
 export { default as AdminHeader } from './AdminHeader';
+export { CommandPalette } from './CommandPalette';
+export { NotificationsPanel } from './NotificationsPanel';
 
-// ===== Editor Components =====
-// Premium content editing system with multiple modes and Cloudinary integration
-export { HybridEditor, type EditorMode } from './HybridEditor';
-export { MarkdownEditor } from './MarkdownEditor';
-export { RichTextEditor } from './RichTextEditor';
-export { ContentPreview } from './ContentPreview';
+// Image Components
 export { ImageUpload, type UploadedImage } from './ImageUpload';
+export { ImageGallery, type GalleryImage } from './ImageGallery';

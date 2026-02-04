@@ -1,0 +1,507 @@
+/* MDXEditor Custom Styling */
+/* Based on project-use-lexical with increased specificity to override @tailwindcss/typography */
+
+/* Editor container styling */
+.mdxeditor {
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+    background: #ffffff;
+}
+
+/* Toolbar styling */
+.mdxeditor .mdxeditor-toolbar,
+.mdxeditor-toolbar {
+    background: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.5rem;
+}
+
+/* Content area */
+.mdxeditor .mdxeditor-root-contenteditable,
+.mdxeditor-root-contenteditable {
+    padding: 1.5rem;
+    min-height: 500px;
+    font-size: 1rem;
+    line-height: 1.75;
+    outline: none;
+    cursor: text;
+    background: #ffffff;
+}
+
+/* Ensure content is visible */
+.mdxeditor-root-contenteditable:empty::before {
+    content: attr(aria-placeholder);
+    color: #9ca3af;
+    font-style: italic;
+    pointer-events: none;
+}
+
+/* ============================================
+   PROSE STYLING - Scoped to .mdxeditor for specificity
+   This overrides @tailwindcss/typography defaults
+   ============================================ */
+
+.mdxeditor .prose,
+.mdxeditor.prose {
+    color: #1f2937;
+    max-width: none;
+}
+
+.mdxeditor .prose h1,
+.mdxeditor.prose h1 {
+    font-size: 2.25rem;
+    font-weight: 800;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+    color: #111827;
+}
+
+.mdxeditor .prose h2,
+.mdxeditor.prose h2 {
+    font-size: 1.875rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+    color: #1f2937;
+}
+
+.mdxeditor .prose h3,
+.mdxeditor.prose h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+    color: #374151;
+}
+
+.mdxeditor .prose h4,
+.mdxeditor.prose h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+}
+
+.mdxeditor .prose h5,
+.mdxeditor.prose h5 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #6b7280;
+}
+
+.mdxeditor .prose h6,
+.mdxeditor.prose h6 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: #9ca3af;
+}
+
+.mdxeditor .prose p,
+.mdxeditor.prose p {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.mdxeditor .prose strong,
+.mdxeditor.prose strong {
+    font-weight: 600;
+    color: #111827;
+}
+
+.mdxeditor .prose em,
+.mdxeditor.prose em {
+    font-style: italic;
+}
+
+.mdxeditor .prose code,
+.mdxeditor.prose code {
+    background: #f3f4f6;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875em;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    color: #be123c;
+}
+
+.mdxeditor .prose pre,
+.mdxeditor.prose pre {
+    background: #1e293b;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+}
+
+.mdxeditor .prose pre code,
+.mdxeditor.prose pre code {
+    background: transparent;
+    padding: 0;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+}
+
+.mdxeditor .prose a,
+.mdxeditor.prose a {
+    color: #2563eb;
+    text-decoration: underline;
+    font-weight: 500;
+}
+
+.mdxeditor .prose a:hover,
+.mdxeditor.prose a:hover {
+    color: #1d4ed8;
+}
+
+.mdxeditor .prose ul,
+.mdxeditor .prose ol,
+.mdxeditor.prose ul,
+.mdxeditor.prose ol {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    padding-left: 1.625rem;
+}
+
+.mdxeditor .prose ul,
+.mdxeditor.prose ul {
+    list-style-type: disc;
+}
+
+.mdxeditor .prose ol,
+.mdxeditor.prose ol {
+    list-style-type: decimal;
+}
+
+.mdxeditor .prose li,
+.mdxeditor.prose li {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.mdxeditor .prose blockquote,
+.mdxeditor.prose blockquote {
+    border-left: 4px solid #3b82f6;
+    padding-left: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin: 1.5rem 0;
+    background: #eff6ff;
+    font-style: italic;
+    color: #1e40af;
+}
+
+.mdxeditor .prose table,
+.mdxeditor.prose table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.875rem;
+}
+
+/* MDXEditor specific table styling */
+.mdxeditor table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.mdxeditor table th,
+.mdxeditor table td {
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 0.75rem;
+    min-width: 80px;
+    position: relative;
+}
+
+.mdxeditor table th {
+    background: #f3f4f6;
+    font-weight: 600;
+    text-align: left;
+}
+
+.mdxeditor table tr:hover {
+    background: #f9fafb;
+}
+
+/* Table wrapper for better control positioning */
+.mdxeditor ._tableWrapper {
+    position: relative;
+    overflow: visible;
+    margin: 1rem 0;
+}
+
+/* Table editor controls - Column triggers */
+.mdxeditor ._tableColumnEditorTrigger {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+}
+
+/* Table editor controls - Row triggers */
+.mdxeditor ._tableRowEditorTrigger {
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+}
+
+.mdxeditor ._tableColumnEditorTrigger:hover,
+.mdxeditor ._tableRowEditorTrigger:hover {
+    background: #2563eb;
+}
+
+/* Delete table button */
+.mdxeditor ._deleteTableButton {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.mdxeditor ._deleteTableButton:hover {
+    background: #dc2626;
+}
+
+/* Table editor menu */
+.mdxeditor ._tableEditor {
+    position: relative;
+    padding: 20px;
+}
+
+.mdxeditor .prose thead,
+.mdxeditor.prose thead {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.mdxeditor .prose th,
+.mdxeditor.prose th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+}
+
+.mdxeditor .prose td,
+.mdxeditor.prose td {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+}
+
+.mdxeditor .prose tbody tr:nth-child(even),
+.mdxeditor.prose tbody tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+.mdxeditor .prose tbody tr:hover,
+.mdxeditor.prose tbody tr:hover {
+    background: #f3f4f6;
+}
+
+.mdxeditor .prose hr,
+.mdxeditor.prose hr {
+    border: 0;
+    border-top: 2px solid #e5e7eb;
+    margin: 2rem 0;
+}
+
+.mdxeditor .prose img,
+.mdxeditor.prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+/* Admonition styling */
+.mdxeditor .prose .admonition,
+.mdxeditor.prose .admonition {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    border-left: 4px solid;
+    border-radius: 0.5rem;
+}
+
+.mdxeditor .prose .admonition.note,
+.mdxeditor.prose .admonition.note {
+    background: #f8f9fa;
+    border-color: #6c757d;
+}
+
+.mdxeditor .prose .admonition.tip,
+.mdxeditor.prose .admonition.tip {
+    background: #d1ecf1;
+    border-color: #17a2b8;
+}
+
+.mdxeditor .prose .admonition.info,
+.mdxeditor.prose .admonition.info {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.mdxeditor .prose .admonition.caution,
+.mdxeditor.prose .admonition.caution {
+    background: #fff3cd;
+    border-color: #ffc107;
+}
+
+.mdxeditor .prose .admonition.danger,
+.mdxeditor.prose .admonition.danger {
+    background: #f8d7da;
+    border-color: #dc3545;
+}
+
+/* Code block language selector */
+.mdxeditor select {
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background: white;
+    font-size: 0.875rem;
+    color: #1f2937;
+}
+
+/* Popup styling */
+.mdxeditor-popup-container {
+    z-index: 1000;
+    background: white;
+}
+
+/* Source/diff view */
+.mdxeditor-source-editor,
+.mdxeditor-diff-editor {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .mdxeditor-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .mdxeditor .prose h1,
+    .mdxeditor.prose h1 {
+        font-size: 1.875rem;
+    }
+
+    .mdxeditor .prose h2,
+    .mdxeditor.prose h2 {
+        font-size: 1.5rem;
+    }
+
+    .mdxeditor .prose h3,
+    .mdxeditor.prose h3 {
+        font-size: 1.25rem;
+    }   
+}
+
+/* Focus states */
+.mdxeditor-root-contenteditable:focus {
+    outline: none;
+}
+
+/* Selection styling - scoped to editor */
+.mdxeditor ::selection {
+    background: #bfdbfe;
+    color: #1e40af;
+}
+
+/* Placeholder text */
+.mdxeditor-root-contenteditable[data-placeholder]:empty:before {
+    content: attr(data-placeholder);
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ============================================
+   TOOLBAR AND BUTTON STYLING
+   Ensure all buttons and controls are visible
+   ============================================ */
+
+.mdxeditor button {
+    color: #374151;
+}
+
+.mdxeditor button:hover {
+    background-color: #e5e7eb;
+}
+
+.mdxeditor button[data-state="on"] {
+    background-color: #d1d5db;
+}
+
+.mdxeditor svg {
+    color: #374151;
+}
+
+/* Dropdown menus */
+.mdxeditor [role="listbox"],
+.mdxeditor [role="menu"],
+[data-radix-popper-content-wrapper] {
+    background: white !important;
+    color: #1f2937 !important;
+}
+
+.mdxeditor [role="option"] {
+    color: #1f2937;
+}
+
+.mdxeditor [role="option"]:hover {
+    background: #f3f4f6;
+}
+
+/* Dialog styling */
+.mdxeditor [role="dialog"] {
+    background: white;
+    color: #1f2937;
+}
+
+.mdxeditor input {
+    background: white;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+}
+
+.mdxeditor label {
+    color: #1f2937;
+}

@@ -5,6 +5,7 @@ export { ArticleSidebar } from './ArticleSidebar';
 export { ArticleViews } from './ArticleViews';
 export { ArticleLikeButton } from './ArticleLikeButton';
 export { ArticleComments, CommentsSkeleton } from './ArticleComments';
+export { ArticleContent, TableOfContents as ArticleTableOfContents, ArticleStats } from './ArticleContent';
 export { Views } from './Views';
 export { SeriesNav } from './SeriesNav';
 export { SeriesNavWrapper } from './SeriesNavWrapper';

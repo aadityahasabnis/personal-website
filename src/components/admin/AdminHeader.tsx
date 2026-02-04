@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
@@ -17,6 +17,8 @@ import {
 import { useTheme } from 'next-themes';
 
 import { cn } from '@/lib/utils';
+import { CommandPalette } from './CommandPalette';
+import { NotificationsPanel } from './NotificationsPanel';
 
 interface IAdminHeaderProps {
     user: {
@@ -33,7 +35,22 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
     const router = useRouter();
     const { theme, setTheme } = useTheme();
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+    const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
+
+    // Command palette keyboard shortcut
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsCommandPaletteOpen(true);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const handleSignOut = async (): Promise<void> => {
         startTransition(async () => {
@@ -46,25 +63,28 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
     };
 
     return (
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-card px-6">
-            {/* Search */}
-            <div className="flex items-center gap-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className={cn(
-                            'h-9 w-64 rounded-lg border bg-background pl-9 pr-3 text-sm',
-                            'placeholder:text-muted-foreground',
-                            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
-                        )}
-                    />
-                    <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden rounded border bg-muted px-1.5 text-xs text-muted-foreground sm:inline-block">
-                        ⌘K
-                    </kbd>
+        <>
+            <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-card px-6">
+                {/* Search */}
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            onClick={() => setIsCommandPaletteOpen(true)}
+                            readOnly
+                            className={cn(
+                                'h-9 w-64 rounded-lg border bg-background pl-9 pr-3 text-sm cursor-pointer',
+                                'placeholder:text-muted-foreground',
+                                'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
+                            )}
+                        />
+                        <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden rounded border bg-muted px-1.5 text-xs text-muted-foreground sm:inline-block pointer-events-none">
+                            ⌘K
+                        </kbd>
+                    </div>
                 </div>
-            </div>
 
             {/* Actions */}
             <div className="flex items-center gap-2">
@@ -96,9 +116,11 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
 
                 {/* Notifications */}
                 <button
+                    onClick={() => setIsNotificationsPanelOpen(!isNotificationsPanelOpen)}
                     className={cn(
                         'relative flex h-9 w-9 items-center justify-center rounded-lg',
-                        'text-muted-foreground hover:bg-muted hover:text-foreground transition-colors'
+                        'text-muted-foreground hover:bg-muted hover:text-foreground transition-colors',
+                        isNotificationsPanelOpen && 'bg-muted'
                     )}
                     aria-label="Notifications"
                 >
@@ -167,6 +189,19 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
                 </div>
             </div>
         </header>
+
+        {/* Command Palette */}
+        <CommandPalette 
+            isOpen={isCommandPaletteOpen} 
+            onClose={() => setIsCommandPaletteOpen(false)} 
+        />
+
+        {/* Notifications Panel */}
+        <NotificationsPanel
+            isOpen={isNotificationsPanelOpen}
+            onClose={() => setIsNotificationsPanelOpen(false)}
+        />
+    </>
     );
 };
 

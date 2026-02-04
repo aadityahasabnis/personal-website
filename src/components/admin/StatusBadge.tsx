@@ -4,10 +4,12 @@ import { cn } from '@/lib/utils';
 type StatusType = 'published' | 'draft' | 'archived';
 type FeaturedType = 'featured' | 'not-featured';
 type ProjectStatusType = 'active' | 'archived' | 'wip';
+type SubscriberStatusType = 'confirmed' | 'pending' | 'unsubscribed';
 
 interface IStatusBadgeProps {
-    variant: 'published' | 'featured' | 'status';
-    value: boolean | StatusType | ProjectStatusType;
+    variant?: 'published' | 'featured' | 'status';
+    status?: SubscriberStatusType;
+    value?: boolean | StatusType | ProjectStatusType;
     className?: string;
 }
 
@@ -18,14 +20,53 @@ interface IStatusBadgeProps {
  * - Published/Draft status
  * - Featured/Not Featured status
  * - Project status (Active/WIP/Archived)
+ * - Subscriber status (Confirmed/Pending/Unsubscribed)
  * 
  * @example
  * <StatusBadge variant="published" value={true} />
  * <StatusBadge variant="published" value={false} />
  * <StatusBadge variant="featured" value={true} />
  * <StatusBadge variant="status" value="active" />
+ * <StatusBadge status="confirmed" />
  */
-export const StatusBadge = ({ variant, value, className }: IStatusBadgeProps): React.ReactElement | null => {
+export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeProps): React.ReactElement | null => {
+    // Subscriber Status Badge (new)
+    if (status) {
+        const statusConfig = {
+            confirmed: {
+                icon: CheckCircle2,
+                label: 'Confirmed',
+                className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+            },
+            pending: {
+                icon: Clock,
+                label: 'Pending',
+                className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+            },
+            unsubscribed: {
+                icon: XCircle,
+                label: 'Unsubscribed',
+                className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+            },
+        };
+
+        const config = statusConfig[status];
+        const Icon = config.icon;
+
+        return (
+            <span
+                className={cn(
+                    'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                    config.className,
+                    className
+                )}
+            >
+                <Icon className="h-3 w-3" />
+                {config.label}
+            </span>
+        );
+    }
+
     // Published/Draft Badge
     if (variant === 'published') {
         const isPublished = value === true || value === 'published';
