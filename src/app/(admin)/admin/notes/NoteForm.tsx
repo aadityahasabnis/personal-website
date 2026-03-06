@@ -1,31 +1,13 @@
 'use client';
 
-import { useState, useTransition, useRef } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import dynamic from 'next/dynamic';
 import { Loader2, Save, X, Plus } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { createNote, updateNote } from '@/server/actions/notes';
 import type { INote } from '@/interfaces';
-import type { MDXEditorHandle } from '@/components/admin';
-
-// Dynamically import MDXEditor with SSR disabled
-const MDXEditor = dynamic(
-    () => import('@/components/admin').then(mod => ({ default: mod.MDXEditorComponent })),
-    {
-        ssr: false,
-        loading: () => (
-            <div className="flex items-center justify-center h-96 border rounded-lg bg-muted/30">
-                <div className="text-center space-y-2">
-                    <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-                    <p className="text-sm text-muted-foreground">Loading MDX Editor...</p>
-                </div>
-            </div>
-        )
-    }
-);
 
 interface INoteFormProps {
     note?: INote;
@@ -48,7 +30,6 @@ export const NoteForm = ({
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
-    const editorRef = useRef<MDXEditorHandle>(null);
 
     // Form state
     const [title, setTitle] = useState(note?.title ?? '');
@@ -206,12 +187,18 @@ export const NoteForm = ({
                 <label htmlFor="body" className="block text-sm font-medium mb-2">
                     Content <span className="text-destructive">*</span>
                 </label>
-                <MDXEditor
-                    ref={editorRef}
+                <textarea
+                    id="body"
                     value={body}
-                    onChange={setBody}
-                    height="400px"
-                    placeholder="Write your note content in MDX format..."
+                    onChange={(e) => setBody(e.target.value)}
+                    placeholder="Write your note content in markdown format..."
+                    rows={15}
+                    className={cn(
+                        'w-full rounded-lg border border-border bg-background px-4 py-2.5',
+                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
+                        'placeholder:text-muted-foreground font-mono text-sm transition-colors'
+                    )}
+                    required
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                     {wordCount} words · {readingTime} min read

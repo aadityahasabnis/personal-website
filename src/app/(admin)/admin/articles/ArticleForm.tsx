@@ -1,18 +1,13 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, Save } from "lucide-react";
-import { type MDXEditorMethods } from "@mdxeditor/editor";
 
 import { cn } from "@/lib/utils";
 import { createArticle, updateArticle } from "@/server/actions/articles";
 import type { IArticle, ITopic, ISubtopic } from "@/interfaces";
-import { ForwardRefEditor } from "@/components/mdx/ForwardRefEditor";
-
-// Import MDX editor CSS like project-use-lexical
-import "@/styles/mdx-editor.css";
 
 interface IArticleFormProps {
   article?: IArticle;
@@ -45,7 +40,6 @@ export const ArticleForm = ({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const mdxEditorRef = useRef<MDXEditorMethods>(null);
 
   // Form state
   const [title, setTitle] = useState(article?.title ?? "");
@@ -457,12 +451,12 @@ export const ArticleForm = ({
             </div>
           </div>
 
-          <ForwardRefEditor
-            ref={mdxEditorRef}
-            markdown={markdownBody}
-            onChange={setMarkdownBody}
-            placeholder="Start writing your article in MDX format..."
-            contentEditableClassName="prose prose-slate max-w-none"
+          <textarea
+            value={markdownBody}
+            onChange={(e) => setMarkdownBody(e.target.value)}
+            placeholder="Start writing your article in markdown format..."
+            className="w-full min-h-[500px] px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
+            required
           />
         </div>
 

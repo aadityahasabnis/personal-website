@@ -6,9 +6,7 @@ export { StatusBadge } from './StatusBadge';
 export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
 
-// Editor Components
-export { MDXEditorComponent, type MDXEditorHandle } from './MDXEditor';
-export { LobeEditor, type LobeEditorHandle } from './LobeEditor';
+// Content Preview
 export { ContentPreview } from './ContentPreview';
 
 // Table Components (New Professional System)

@@ -1,9 +1,6 @@
 /* ===== TAILWIND IMPORT ===== */
 @import "tailwindcss";
 
-/* ===== MDX EDITOR STYLES ===== */
-@import "../styles/mdx-editor.css";
-
 /* ===== CUSTOM VARIANTS ===== */
 @custom-variant dark (&:is(.dark *));
 
