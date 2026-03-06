@@ -7,6 +7,7 @@ import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
 import type { ISubtopic } from '@/interfaces';
+import { serializeDocuments } from '@/lib/utils';
 
 async function getFormData() {
     const topics = await getAllTopics();
@@ -20,8 +21,8 @@ async function getFormData() {
 
     // Serialize data for client component (convert ObjectId to string)
     return { 
-        topics: JSON.parse(JSON.stringify(topics)), 
-        allSubtopics: JSON.parse(JSON.stringify(allSubtopics))
+        topics: serializeDocuments(topics), 
+        allSubtopics: serializeDocuments(allSubtopics)
     };
 }
 

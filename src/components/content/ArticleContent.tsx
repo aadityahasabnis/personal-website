@@ -1,64 +1,34 @@
 /**
  * ArticleContent Component
- * 
- * Renders article content with proper styling and formatting
- * Supports both markdown and lobe-editor rich content
- * Server-rendered for SEO and performance
+ *
+ * Renders article content. Supports two formats:
+ *  - HTML (from Authorly Editor): detected by leading `<` character — rendered
+ *    directly via AuthorlyRenderer for correct styling of callouts, code, etc.
+ *  - Markdown (legacy): parsed to HTML via remark/rehype pipeline first.
+ *
+ * Server-rendered for SEO and performance.
  */
 
 import { parseMarkdown } from '@/lib/markdown/parse';
 import { cn } from '@/lib/utils';
 import '@/app/globals.css';
+import { RichTextRenderer } from '@/components/content/RichTextRenderer';
 
 interface ArticleContentProps {
     content: string;
     className?: string;
 }
 
+const isHtml = (content: string) => content.trimStart().startsWith('<');
+
 export const ArticleContent = async ({ content, className }: ArticleContentProps) => {
-    // Parse markdown to HTML
-    const html = await parseMarkdown(content);
+    // Authorly content is already HTML — skip the markdown pipeline
+    const html = isHtml(content) ? content : await parseMarkdown(content);
 
     return (
-        <article
-            className={cn(
-                'prose prose-lg dark:prose-invert max-w-none',
-                // Headings
-                'prose-headings:font-bold prose-headings:tracking-tight',
-                'prose-h1:text-4xl prose-h1:mb-6',
-                'prose-h2:text-3xl prose-h2:mt-12 prose-h2:mb-4',
-                'prose-h3:text-2xl prose-h3:mt-8 prose-h3:mb-3',
-                // Links
-                'prose-a:text-primary prose-a:no-underline hover:prose-a:underline',
-                // Code
-                'prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-sm',
-                'prose-code:before:content-none prose-code:after:content-none',
-                // Code blocks
-                'prose-pre:bg-muted prose-pre:border prose-pre:border-border',
-                'prose-pre:rounded-lg prose-pre:p-4',
-                // Blockquotes
-                'prose-blockquote:border-l-primary prose-blockquote:bg-muted/50',
-                'prose-blockquote:py-2 prose-blockquote:px-4 prose-blockquote:rounded-r',
-                'prose-blockquote:not-italic',
-                // Lists
-                'prose-li:marker:text-primary',
-                'prose-ul:list-disc prose-ol:list-decimal',
-                // Tables
-                'prose-table:border prose-table:border-border',
-                'prose-th:bg-muted prose-th:font-semibold prose-th:p-3',
-                'prose-td:p-3 prose-td:border prose-td:border-border',
-                // Images
-                'prose-img:rounded-lg prose-img:shadow-md',
-                'prose-img:mx-auto prose-img:my-8',
-                // Horizontal rules
-                'prose-hr:border-border prose-hr:my-8',
-                // Strong and emphasis
-                'prose-strong:font-bold prose-strong:text-foreground',
-                'prose-em:italic',
-                className
-            )}
-            dangerouslySetInnerHTML={{ __html: html }}
-        />
+        <div className={cn('max-w-none px-6 lg:px-0', className)}>
+            <RichTextRenderer html={html} />
+        </div>
     );
 };
 

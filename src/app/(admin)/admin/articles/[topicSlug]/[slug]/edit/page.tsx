@@ -8,6 +8,7 @@ import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
 import type { ISubtopic } from '@/interfaces';
+import { serializeDocument, serializeDocuments } from '@/lib/utils';
 
 interface EditArticlePageProps {
     params: Promise<{
@@ -35,9 +36,9 @@ async function getFormData(topicSlug: string, slug: string) {
 
     // Serialize data for client component (convert ObjectId to string)
     return { 
-        article: JSON.parse(JSON.stringify(article)),
-        topics: JSON.parse(JSON.stringify(topics)), 
-        allSubtopics: JSON.parse(JSON.stringify(allSubtopics))
+        article: serializeDocument(article),
+        topics: serializeDocuments(topics), 
+        allSubtopics: serializeDocuments(allSubtopics)
     };
 }
 

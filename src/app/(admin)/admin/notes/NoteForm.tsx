@@ -8,6 +8,7 @@ import { Loader2, Save, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createNote, updateNote } from '@/server/actions/notes';
 import type { INote } from '@/interfaces';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 
 interface INoteFormProps {
     note?: INote;
@@ -187,18 +188,12 @@ export const NoteForm = ({
                 <label htmlFor="body" className="block text-sm font-medium mb-2">
                     Content <span className="text-destructive">*</span>
                 </label>
-                <textarea
-                    id="body"
+                <RichTextEditor
                     value={body}
-                    onChange={(e) => setBody(e.target.value)}
-                    placeholder="Write your note content in markdown format..."
-                    rows={15}
-                    className={cn(
-                        'w-full rounded-lg border border-border bg-background px-4 py-2.5',
-                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
-                        'placeholder:text-muted-foreground font-mono text-sm transition-colors'
-                    )}
-                    required
+                    onChange={setBody}
+                    onSave={(html) => setBody(html)}
+                    placeholder="Write your note… press '/' for commands"
+                    minHeight="400px"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                     {wordCount} words · {readingTime} min read

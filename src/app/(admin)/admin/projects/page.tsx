@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/admin';
 import { getAllProjectsForAdmin } from '@/server/queries/admin';
 import { ProjectsTable } from './ProjectsTable';
+import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Projects Management Page
@@ -21,7 +22,7 @@ import { ProjectsTable } from './ProjectsTable';
 const ProjectsTableWrapper = async (): Promise<React.ReactElement> => {
     const projects = await getAllProjectsForAdmin();
 
-    return <ProjectsTable projects={projects} />;
+    return <ProjectsTable projects={serializeDocuments(projects)} />;
 };
 
 const ProjectsPage = (): React.ReactElement => {

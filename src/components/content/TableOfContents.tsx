@@ -28,41 +28,80 @@ const TableOfContents = ({ headings: precomputedHeadings, className }: ITableOfC
     // Scan DOM for headings if not pre-computed
     useEffect(() => {
         if (precomputedHeadings && precomputedHeadings.length > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setHeadings(precomputedHeadings);
             return;
         }
 
-        // Get all headings from the article
+        const scanHeadings = () => {
+            // Get all headings from the article
+            const article = document.querySelector('article');
+            if (!article) return [];
+
+            const elements = article.querySelectorAll('h1, h2, h3, h4');
+            const items: ITocItem[] = [];
+
+            elements.forEach((element) => {
+                let id = element.id;
+                
+                // Generate id from text content if not present
+                if (!id && element.textContent) {
+                    id = element.textContent
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .trim();
+                    element.id = id;
+                }
+                
+                if (!id) return;
+
+                items.push({
+                    id,
+                    text: element.textContent ?? '',
+                    level: parseInt(element.tagName[1], 10),
+                });
+            });
+
+            return items;
+        };
+
+        // Initial scan
+        const initialHeadings = scanHeadings();
+        if (initialHeadings.length > 0) {
+            setHeadings(initialHeadings);
+        }
+
+        // Watch for DOM changes (Authorly renders client-side, so headings appear after mount)
         const article = document.querySelector('article');
         if (!article) return;
 
-        const elements = article.querySelectorAll('h1, h2, h3, h4');
-        const items: ITocItem[] = [];
-
-        elements.forEach((element) => {
-            let id = element.id;
-            
-            // Generate id from text content if not present
-            if (!id && element.textContent) {
-                id = element.textContent
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s-]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .trim();
-                element.id = id;
+        const observer = new MutationObserver(() => {
+            const newHeadings = scanHeadings();
+            if (newHeadings.length > 0) {
+                setHeadings(newHeadings);
             }
-            
-            if (!id) return;
-
-            items.push({
-                id,
-                text: element.textContent ?? '',
-                level: parseInt(element.tagName[1], 10),
-            });
         });
 
-        setHeadings(items);
+        observer.observe(article, {
+            childList: true,
+            subtree: true,
+        });
+
+        // Also scan after a delay to catch any late-rendering content
+        const timeoutId = setTimeout(() => {
+            const delayedHeadings = scanHeadings();
+            if (delayedHeadings.length > 0) {
+                setHeadings(delayedHeadings);
+            }
+        }, 500);
+
+        // Cleanup
+        return () => {
+            observer.disconnect();
+            clearTimeout(timeoutId);
+        };
     }, [precomputedHeadings]);
 
     useEffect(() => {

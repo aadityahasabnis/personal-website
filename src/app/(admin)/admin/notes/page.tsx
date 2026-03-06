@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/admin';
 import { getAllNotesForAdmin } from '@/server/queries/admin';
 import { NotesTable } from './NotesTable';
+import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Notes Management Page
@@ -18,7 +19,7 @@ import { NotesTable } from './NotesTable';
 const NotesTableWrapper = async (): Promise<React.ReactElement> => {
     const notes = await getAllNotesForAdmin();
 
-    return <NotesTable notes={notes} />;
+    return <NotesTable notes={serializeDocuments(notes)} />;
 };
 
 const NotesPage = (): React.ReactElement => {

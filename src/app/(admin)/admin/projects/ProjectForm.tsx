@@ -8,6 +8,7 @@ import { Loader2, Save, X, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { createProject, updateProject } from '@/server/actions/projects';
 import type { IProject } from '@/interfaces';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
 
 interface IProjectFormProps {
     project?: IProject;
@@ -208,17 +209,12 @@ export const ProjectForm = ({
                 <label htmlFor="longDescription" className="block text-sm font-medium mb-2">
                     Long Description
                 </label>
-                <textarea
-                    id="longDescription"
+                <RichTextEditor
                     value={longDescription}
-                    onChange={(e) => setLongDescription(e.target.value)}
-                    placeholder="Write detailed project description in markdown format..."
-                    rows={15}
-                    className={cn(
-                        'w-full rounded-lg border border-border bg-background px-4 py-2.5',
-                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
-                        'placeholder:text-muted-foreground font-mono text-sm transition-colors'
-                    )}
+                    onChange={setLongDescription}
+                    onSave={(html) => setLongDescription(html)}
+                    placeholder="Write detailed project description… press '/' for commands"
+                    minHeight="400px"
                 />
                 <p className="mt-1 text-xs text-muted-foreground">
                     {wordCount} words

@@ -7,6 +7,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/admin';
 import { getAllTopics } from '@/server/queries/topics';
 import { TopicsTable } from './TopicsTable';
+import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Topics Management Page
@@ -18,7 +19,7 @@ import { TopicsTable } from './TopicsTable';
 const TopicsTableWrapper = async (): Promise<React.ReactElement> => {
     const topics = await getAllTopics();
 
-    return <TopicsTable topics={topics} />;
+    return <TopicsTable topics={serializeDocuments(topics)} />;
 };
 
 const TopicsPage = (): React.ReactElement => {

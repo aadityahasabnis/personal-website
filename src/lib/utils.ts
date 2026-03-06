@@ -107,3 +107,32 @@ export const isServer = typeof window === 'undefined';
  * Check if we're on the client
  */
 export const isClient = typeof window !== 'undefined';
+
+/**
+ * Serialize MongoDB documents for passing from Server to Client Components
+ * Converts ObjectId to string and handles Date objects
+ */
+export const serializeDocument = <T extends Record<string, any>>(doc: T): T => {
+  if (!doc) return doc;
+  
+  return JSON.parse(
+    JSON.stringify(doc, (key, value) => {
+      // Convert ObjectId to string
+      if (value && typeof value === 'object' && value._bsontype === 'ObjectId') {
+        return value.toString();
+      }
+      // Convert Date to ISO string
+      if (value instanceof Date) {
+        return value.toISOString();
+      }
+      return value;
+    })
+  );
+};
+
+/**
+ * Serialize an array of MongoDB documents
+ */
+export const serializeDocuments = <T extends Record<string, any>>(docs: T[]): T[] => {
+  return docs.map(doc => serializeDocument(doc));
+};

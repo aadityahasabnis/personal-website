@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/admin';
 import { getAllSubtopicsForAdmin } from '@/server/queries/admin';
 import { getAllTopics } from '@/server/queries/topics';
 import { SubtopicsTable } from './SubtopicsTable';
+import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Subtopics Management Page
@@ -22,7 +23,7 @@ const SubtopicsTableWrapper = async (): Promise<React.ReactElement> => {
         getAllTopics(),
     ]);
 
-    return <SubtopicsTable subtopics={subtopics} topics={topics} />;
+    return <SubtopicsTable subtopics={serializeDocuments(subtopics)} topics={serializeDocuments(topics)} />;
 };
 
 const SubtopicsPage = (): React.ReactElement => {

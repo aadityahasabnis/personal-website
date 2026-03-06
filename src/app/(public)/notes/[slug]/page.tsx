@@ -4,10 +4,9 @@ import type { Metadata } from 'next';
 
 import { getNote, getAllNoteSlugs } from '@/server/queries/content';
 import { getPageStats, getArticleCommentCount } from '@/server/queries/stats';
-import { parseMarkdown } from '@/lib/markdown';
 import { calculateReadingTime } from '@/lib/utils';
 import { NoteHeader } from '@/components/content/NoteHeader';
-import { ArticleBody } from '@/components/content/ArticleBody';
+import { ArticleContent } from '@/components/content/ArticleContent';
 import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
@@ -153,8 +152,8 @@ const NotePage = async ({ params }: INotePageProps) => {
         notFound();
     }
 
-    // Parse markdown to HTML
-    const htmlContent = note.html ?? (await parseMarkdown(note.body));
+    // Get content (ArticleContent will handle markdown parsing if needed)
+    const content = note.body || note.html || '';
 
     // Build breadcrumbs for SEO
     const breadcrumbs = [
@@ -218,8 +217,8 @@ const NotePage = async ({ params }: INotePageProps) => {
                 <div className="max-w-4xl mx-auto px-6 lg:px-8 pb-12 md:pb-16">
                     {/* Note Body - Animated */}
                     <FadeIn delay={0.3}>
-                        {htmlContent ? (
-                            <ArticleBody html={htmlContent} />
+                        {content ? (
+                            <ArticleContent content={content} />
                         ) : (
                             <div className="prose max-w-none text-[var(--fg-muted)]">
                                 <p>This note content is being prepared. Check back soon.</p>

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useMemo } from 'react';
 import { ArrowUpRight, FileText } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
@@ -39,7 +40,7 @@ function getIconComponent(iconName?: string): React.ComponentType<{ className?: 
  * Shows topic icon, title, description, and article count.
  */
 const TopicCard = ({ topic, index = 0, className }: ITopicCardProps) => {
-    const Icon = getIconComponent(topic.icon);
+    const Icon = useMemo(() => getIconComponent(topic.icon), [topic.icon]);
     
     return (
         <motion.article

@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/admin';
 import { getAllArticlesForAdmin } from '@/server/queries/admin';
 import { getAllTopics } from '@/server/queries/topics';
 import { ArticlesTable } from './ArticlesTable';
+import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Articles Management Page
@@ -22,7 +23,11 @@ const ArticlesTableWrapper = async (): Promise<React.ReactElement> => {
         getAllTopics(),
     ]);
 
-    return <ArticlesTable articles={articles} topics={topics} />;
+    // Serialize MongoDB documents before passing to client component
+    const serializedArticles = serializeDocuments(articles);
+    const serializedTopics = serializeDocuments(topics);
+
+    return <ArticlesTable articles={serializedArticles} topics={serializedTopics} />;
 };
 
 const ArticlesPage = (): React.ReactElement => {

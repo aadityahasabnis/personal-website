@@ -14,6 +14,7 @@ const ParticleFieldInner = ({ count = 2000, color = '#8b5cf6' }: IParticleFieldI
   const ref = useRef<THREE.Points>(null);
 
   // Generate random positions
+  // eslint-disable-next-line react-hooks/purity
   const positions = useMemo(() => {
     const positions = new Float32Array(count * 3);
     for (let i = 0; i < count; i++) {

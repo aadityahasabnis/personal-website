@@ -6,7 +6,7 @@ import { getTopic } from '@/server/queries/topics';
 import { getSubtopic } from '@/server/queries/subtopics';
 import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
 import { ArticleHeader } from '@/components/content/ArticleHeader';
-import { ArticleBody } from '@/components/content/ArticleBody';
+import { ArticleContent } from '@/components/content/ArticleContent';
 import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
@@ -223,9 +223,10 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
         organizationSchema
     );
 
-    // Use pre-rendered HTML content
-    const htmlContent = article.html || '';
-    const hasContent = htmlContent.length > 0;
+    // Use body content (HTML from Authorly or markdown)
+    // ArticleContent component handles both HTML and markdown rendering
+    const content = article.body || article.html || '';
+    const hasContent = content.length > 0;
 
     return (
         <>
@@ -257,8 +258,8 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
                 {/* Article Body - Animated */}
                 <FadeIn delay={0.3}>
                     {hasContent ? (
-                        // Render pre-generated HTML for markdown content
-                        <ArticleBody html={htmlContent} />
+                        // ArticleContent handles both Authorly HTML and legacy markdown
+                        <ArticleContent content={content} />
                     ) : (
                         <div className="prose max-w-none text-[var(--fg-muted)]">
                             <p>This article content is being prepared. Check back soon.</p>

@@ -52,19 +52,20 @@ export async function generateMetadata({
 }
 
 /**
- * Get Lucide icon component by name
+ * Get Lucide icon component by name (returns JSX element, not component)
  */
-function getIconComponent(iconName?: string): React.ComponentType<{ className?: string }> {
-    if (!iconName) return FileText;
+function renderIcon(iconName?: string, className?: string) {
+    if (!iconName) return <FileText className={className} />;
     
+    // Convert kebab-case or lowercase to PascalCase
     const pascalCase = iconName
         .split(/[-_]/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('');
     
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const Icon = (LucideIcons as any)[pascalCase];
-    return Icon || FileText;
+    const IconComponent = (LucideIcons as any)[pascalCase] || FileText;
+    return <IconComponent className={className} />;
 }
 
 /**
@@ -112,7 +113,6 @@ export default async function TopicPage({ params }: ITopicPageProps) {
         notFound();
     }
 
-    const Icon = getIconComponent(topic.icon);
     const transformedSubtopics = subtopics.map(transformSubtopic);
     const transformedArticles = articles.map(transformArticle);
 
@@ -135,7 +135,7 @@ export default async function TopicPage({ params }: ITopicPageProps) {
             <FadeIn as="header" delay={0.2} className="mb-12">
                 {/* Icon */}
                 <div className="mb-6 inline-flex items-center justify-center size-16 rounded-2xl bg-[var(--accent-subtle)] text-[var(--accent)]">
-                    <Icon className="size-8" />
+                    {renderIcon(topic.icon, "size-8")}
                 </div>
 
                 {/* Title */}

@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createArticle, updateArticle } from "@/server/actions/articles";
 import type { IArticle, ITopic, ISubtopic } from "@/interfaces";
+import { RichTextEditor } from "@/components/admin/RichTextEditor";
 
 interface IArticleFormProps {
   article?: IArticle;
@@ -451,12 +452,12 @@ export const ArticleForm = ({
             </div>
           </div>
 
-          <textarea
+          <RichTextEditor
             value={markdownBody}
-            onChange={(e) => setMarkdownBody(e.target.value)}
-            placeholder="Start writing your article in markdown format..."
-            className="w-full min-h-[500px] px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring font-mono text-sm"
-            required
+            onChange={setMarkdownBody}
+            onSave={(html) => setMarkdownBody(html)}
+            placeholder="Start writing your article… press '/' for commands"
+            minHeight="500px"
           />
         </div>
 
