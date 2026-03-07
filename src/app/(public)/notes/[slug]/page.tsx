@@ -220,7 +220,7 @@ const NotePage = async ({ params }: INotePageProps) => {
                         {content ? (
                             <ArticleContent content={content} />
                         ) : (
-                            <div className="prose max-w-none text-[var(--fg-muted)]">
+                            <div className="text-[var(--fg-muted)] leading-7">
                                 <p>This note content is being prepared. Check back soon.</p>
                             </div>
                         )}

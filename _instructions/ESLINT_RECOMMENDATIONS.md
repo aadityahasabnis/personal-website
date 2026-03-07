@@ -1,4 +1,4 @@
-# ESLint Rules Recommendations for AadityaHasabnis.site
+# ESLint Rules Recommendations for aadityahasabnis.com
 
 ## Executive Summary
 Comprehensive ESLint configuration for a content-first personal portfolio built with Next.js 16, React 19, and TypeScript.
@@ -363,4 +363,4 @@ export const likePost = async (slug: string): Promise<number> => {
 ---
 
 *Generated: 2026-01-31*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

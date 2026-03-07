@@ -4,7 +4,7 @@ description: Start development server and run the project locally
 
 # Development Workflow
 
-Start the local development environment for AadityaHasabnis.site.
+Start the local development environment for aadityahasabnis.com.
 
 ## Prerequisites
 

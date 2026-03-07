@@ -1,6 +1,6 @@
 # Server & Data Patterns
 
-> Complete server-side data management for AadityaHasabnis.site
+> Complete server-side data management for aadityahasabnis.com
 
 ---
 
@@ -704,4 +704,4 @@ server/
 ---
 
 *Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

@@ -7,17 +7,36 @@ import { TopicGrid } from '@/components/content/TopicGrid';
 import { FadeIn } from '@/components/animation/FadeIn';
 import type { ITopic } from '@/interfaces';
 
+const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
+
 export const metadata: Metadata = {
     title: 'Articles',
-    description: `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`,
+    description,
+    keywords: ['articles', 'tutorials', 'software development', 'web development', 'DSA', SITE_CONFIG.author.name].join(', '),
+    alternates: {
+        canonical: `${SITE_CONFIG.url}/articles`,
+    },
     openGraph: {
-        title: 'Articles',
-        description: `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`,
+        title: `Articles | ${SITE_CONFIG.name}`,
+        description,
+        url: `${SITE_CONFIG.url}/articles`,
+        siteName: SITE_CONFIG.name,
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Articles' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: `Articles | ${SITE_CONFIG.name}`,
+        description,
+        creator: SITE_CONFIG.seo.twitterHandle,
+        site: SITE_CONFIG.seo.twitterHandle,
+        images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
     },
 };
 
-// Static generation - revalidate only on publish
-export const revalidate = false;
+// ISR: articles listing regenerates every 10 minutes; on-demand via /api/revalidate
+export const revalidate = 600;
 
 /**
  * Transform MongoDB topic to plain object for client components

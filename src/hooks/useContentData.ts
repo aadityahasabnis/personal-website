@@ -191,8 +191,13 @@ async function upvoteComment(
  * - Caches for 5 minutes (longer to prevent re-fetches)
  * - Does NOT refetch on mount (uses cache)
  * - Returns cached data immediately
+ * - Supports `enabled` option to prevent SSR execution
  */
-export function usePageStats(slug: string, contentType: ContentType) {
+export function usePageStats(
+    slug: string,
+    contentType: ContentType,
+    options?: { enabled?: boolean }
+) {
     return useQuery({
         queryKey: ['stats', contentType, slug],
         queryFn: () => fetchPageStats(slug, contentType),
@@ -201,6 +206,7 @@ export function usePageStats(slug: string, contentType: ContentType) {
         refetchOnMount: false, // IMPORTANT: Don't refetch on mount
         refetchOnWindowFocus: false, // Don't refetch on focus
         retry: 1,
+        enabled: options?.enabled ?? true, // Allow disabling during SSR
     });
 }
 

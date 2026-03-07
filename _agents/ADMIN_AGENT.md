@@ -444,4 +444,4 @@ export const ADMIN_NAV = [
 ---
 
 *Agent Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

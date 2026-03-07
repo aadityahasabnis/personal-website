@@ -67,6 +67,7 @@ const revalidateArticlePaths = (topicSlug: string, articleSlug?: string): void =
     revalidatePath('/articles');
     revalidatePath('/admin/articles'); // Admin list page
     revalidatePath(`/articles/${topicSlug}`);
+    revalidatePath('/sitemap.xml');
     if (articleSlug) {
         revalidatePath(`/articles/${topicSlug}/${articleSlug}`);
         revalidatePath(`/admin/articles/${topicSlug}/${articleSlug}/edit`);

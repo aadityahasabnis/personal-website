@@ -1,4 +1,4 @@
-# AadityaHasabnis.site Documentation
+# aadityahasabnis.com Documentation
 
 > Complete documentation index for the personal website project
 
@@ -202,5 +202,5 @@ When updating documentation:
 
 ---
 
-*AadityaHasabnis.site - Personal Website Documentation*  
+*aadityahasabnis.com - Personal Website Documentation*  
 *Last Updated: January 31, 2026*

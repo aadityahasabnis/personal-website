@@ -5,17 +5,36 @@ import { SITE_CONFIG } from '@/constants';
 import { NotesClient } from '@/components/content/NotesClient';
 import type { INote } from '@/interfaces';
 
+const description = `Quick notes, atomic knowledge, and learning snippets by ${SITE_CONFIG.author.name}.`;
+
 export const metadata: Metadata = {
     title: 'Notes',
-    description: `Quick notes, atomic knowledge, and learning snippets by ${SITE_CONFIG.author.name}.`,
+    description,
+    keywords: ['notes', 'atomic knowledge', 'learning', 'snippets', SITE_CONFIG.author.name].join(', '),
+    alternates: {
+        canonical: `${SITE_CONFIG.url}/notes`,
+    },
     openGraph: {
         title: `Notes | ${SITE_CONFIG.name}`,
-        description: `Quick notes, atomic knowledge, and learning snippets by ${SITE_CONFIG.author.name}.`,
+        description,
+        url: `${SITE_CONFIG.url}/notes`,
+        siteName: SITE_CONFIG.name,
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Notes' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: `Notes | ${SITE_CONFIG.name}`,
+        description,
+        creator: SITE_CONFIG.seo.twitterHandle,
+        site: SITE_CONFIG.seo.twitterHandle,
+        images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
     },
 };
 
-// Static generation - revalidate only on publish
-export const revalidate = false;
+// ISR: notes listing regenerates every 10 minutes; on-demand via /api/revalidate
+export const revalidate = 600;
 
 /**
  * Helper to transform MongoDB notes to plain objects

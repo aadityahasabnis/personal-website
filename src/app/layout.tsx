@@ -66,6 +66,11 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
   },
   manifest: "/site.webmanifest",
+  alternates: {
+    types: {
+      "application/rss+xml": `${SITE_CONFIG.url}/rss.xml`,
+    },
+  },
 };
 
 export const viewport: Viewport = {

@@ -1,4 +1,4 @@
-# Copilot Instructions: AadityaHasabnis.site
+# Copilot Instructions: aadityahasabnis.com
 
 > **CRITICAL**: Follow ESLint rules and `tsconfig.json` (strict mode) — NO EXCEPTIONS.
 > **Reference**: See `ARCHITECTURE_PHILOSOPHY.md` for detailed patterns and code examples.
@@ -437,4 +437,4 @@ Before submitting code, verify:
 ---
 
 *Last Updated: 2026-01-31*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

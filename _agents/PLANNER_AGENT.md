@@ -130,4 +130,4 @@ pnpm plan:validate
 ---
 
 *Agent Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

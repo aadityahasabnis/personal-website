@@ -9,10 +9,12 @@ import { SubtopicAccordion } from '@/components/content/SubtopicAccordion';
 import { FadeIn } from '@/components/animation/FadeIn';
 import { BeamLine } from '@/components/common/BeamLine';
 import { formatDate } from '@/lib/utils';
+import { SITE_CONFIG } from '@/constants';
+import { JsonLd, generateTopicSchema, generateArticleListSchema, generateBreadcrumbSchema, combineSchemas } from '@/lib/seo';
 import type { ISubtopic, IArticle } from '@/interfaces';
 
-// Static generation
-export const revalidate = false;
+// ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
+export const revalidate = 3600;
 
 interface ITopicPageProps {
     params: Promise<{ topicSlug: string }>;
@@ -36,17 +38,36 @@ export async function generateMetadata({
     const { topic } = await getTopicWithContent(topicSlug);
 
     if (!topic) {
-        return {
-            title: 'Topic Not Found',
-        };
+        return { title: 'Topic Not Found' };
     }
+
+    const url = `${SITE_CONFIG.url}/articles/${topicSlug}`;
+    const ogImage = topic.coverImage || `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
+    const keywords = [topic.title, 'articles', 'tutorials', 'guide', SITE_CONFIG.author.name];
 
     return {
         title: topic.title,
         description: topic.description,
+        keywords: keywords.join(', '),
+        alternates: {
+            canonical: url,
+        },
         openGraph: {
             title: topic.title,
             description: topic.description,
+            url,
+            siteName: SITE_CONFIG.name,
+            locale: 'en_US',
+            type: 'website',
+            images: [{ url: ogImage, width: 1200, height: 630, alt: topic.title }],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: topic.title,
+            description: topic.description,
+            creator: SITE_CONFIG.seo.twitterHandle,
+            site: SITE_CONFIG.seo.twitterHandle,
+            images: [ogImage],
         },
     };
 }
@@ -116,8 +137,25 @@ export default async function TopicPage({ params }: ITopicPageProps) {
     const transformedSubtopics = subtopics.map(transformSubtopic);
     const transformedArticles = articles.map(transformArticle);
 
+    // JSON-LD structured data for topic hub page
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: 'Articles', url: `${SITE_CONFIG.url}/articles` },
+        { name: topic.title, url: `${SITE_CONFIG.url}/articles/${topicSlug}` },
+    ]);
+    const topicSchema = generateTopicSchema(topic, topic.metadata.articleCount);
+    const articleListSchema = generateArticleListSchema(
+        articles.map((a) => ({ slug: a.slug, title: a.title, description: a.description })),
+        topicSlug,
+        topic.title
+    );
+    const combinedSchema = combineSchemas(topicSchema, articleListSchema, breadcrumbSchema);
+
     return (
-        <div className="max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32">
+        <>
+            {/* JSON-LD Structured Data */}
+            <JsonLd data={combinedSchema} />
+
+            <div className="max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32">
             {/* Breadcrumb */}
             <FadeIn delay={0.1}>
                 <nav className="mb-8">
@@ -174,5 +212,6 @@ export default async function TopicPage({ params }: ITopicPageProps) {
                 />
             </FadeIn>
         </div>
+        </>
     );
 }

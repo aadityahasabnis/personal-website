@@ -1,5 +1,4 @@
 export { ArticleCard } from './ArticleCard';
-export { ArticleBody } from './ArticleBody';
 export { ArticleHeader } from './ArticleHeader';
 export { ArticleSidebar } from './ArticleSidebar';
 export { ArticleViews } from './ArticleViews';
@@ -16,7 +15,6 @@ export { TopicGrid } from './TopicGrid';
 export { SubtopicAccordion } from './SubtopicAccordion';
 
 export type { IArticleCardProps } from './ArticleCard';
-export type { IArticleBodyProps } from './ArticleBody';
 export type { IArticleHeaderProps, IBreadcrumb } from './ArticleHeader';
 export type { IArticleSidebarProps } from './ArticleSidebar';
 export type { IArticleViewsProps } from './ArticleViews';

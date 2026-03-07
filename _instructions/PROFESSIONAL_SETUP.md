@@ -594,7 +594,7 @@ CLOUDINARY_URL=cloudinary://api_key:api_secret@cloud_name
 ANALYTICS_ID=G-XXXXXXXXXX
 
 # Public
-NEXT_PUBLIC_SITE_URL=https://aadityahasabnis.site
+NEXT_PUBLIC_SITE_URL=https://aadityahasabnis.com
 ```
 
 ---
@@ -747,4 +747,4 @@ export const formatRelativeTime = (date: Date | string): string => {
 ---
 
 *Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

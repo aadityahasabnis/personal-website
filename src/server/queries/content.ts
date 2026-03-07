@@ -487,3 +487,46 @@ export const getAllContentSlugs = async (): Promise<
         return [];
     }
 };
+
+/**
+ * Get all published articles with topicSlug for sitemap generation.
+ * Returns the minimal fields needed to construct correct article URLs.
+ */
+export const getAllArticlesForSitemap = async (): Promise<
+    { topicSlug: string; slug: string; updatedAt: Date }[]
+> => {
+    try {
+        const collection = await getCollection<IArticle>(COLLECTIONS.content);
+
+        const articles = await collection
+            .find({ type: 'article', published: true })
+            .project({ topicSlug: 1, slug: 1, updatedAt: 1, _id: 0 })
+            .toArray();
+
+        return articles as { topicSlug: string; slug: string; updatedAt: Date }[];
+    } catch (error) {
+        console.error('Failed to fetch articles for sitemap', error);
+        return [];
+    }
+};
+
+/**
+ * Get all published notes for sitemap generation.
+ */
+export const getAllNotesForSitemap = async (): Promise<
+    { slug: string; updatedAt: Date }[]
+> => {
+    try {
+        const collection = await getCollection<INote>(COLLECTIONS.content);
+
+        const notes = await collection
+            .find({ type: 'note', published: true })
+            .project({ slug: 1, updatedAt: 1, _id: 0 })
+            .toArray();
+
+        return notes as { slug: string; updatedAt: Date }[];
+    } catch (error) {
+        console.error('Failed to fetch notes for sitemap', error);
+        return [];
+    }
+};

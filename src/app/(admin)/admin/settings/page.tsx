@@ -400,7 +400,7 @@ function SocialSettings() {
     const [github, setGithub] = useState('https://github.com/aadityahasabnis');
     const [twitter, setTwitter] = useState('https://twitter.com/aadityahasabnis');
     const [linkedin, setLinkedin] = useState('https://linkedin.com/in/aadityahasabnis');
-    const [email, setEmail] = useState('mailto:hello@aadityahasabnis.site');
+    const [email, setEmail] = useState('mailto:hello@aadityahasabnis.com');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();

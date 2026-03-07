@@ -20,8 +20,8 @@ import {
 } from '@/lib/seo';
 import { SITE_CONFIG } from '@/constants';
 
-// Static generation
-export const revalidate = false;
+// ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
+export const revalidate = 3600;
 
 interface IArticlePageProps {
     params: Promise<{ topicSlug: string; articleSlug: string }>;
@@ -261,7 +261,7 @@ export default async function ArticlePage({ params }: IArticlePageProps) {
                         // ArticleContent handles both Authorly HTML and legacy markdown
                         <ArticleContent content={content} />
                     ) : (
-                        <div className="prose max-w-none text-[var(--fg-muted)]">
+                        <div className="text-[var(--fg-muted)] leading-7">
                             <p>This article content is being prepared. Check back soon.</p>
                         </div>
                     )}

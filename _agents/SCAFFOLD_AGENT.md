@@ -227,4 +227,4 @@ pnpm type-check && pnpm lint && pnpm build
 ---
 
 *Agent Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

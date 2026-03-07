@@ -1,6 +1,6 @@
 # Constants Organization
 
-> Centralized constants management for AadityaHasabnis.site
+> Centralized constants management for aadityahasabnis.com
 
 ---
 
@@ -26,12 +26,12 @@ export const SITE_CONFIG = {
     name: 'Aaditya Hasabnis',
     title: 'Aaditya Hasabnis | Developer & Writer',
     description: 'Personal site for articles, notes, and projects',
-    url: 'https://aadityahasabnis.site',
+    url: 'https://aadityahasabnis.com',
     locale: 'en-US',
     
     author: {
         name: 'Aaditya Hasabnis',
-        email: 'hello@aadityahasabnis.site',
+        email: 'hello@aadityahasabnis.com',
         bio: 'Developer, writer, and lifelong learner.'
     },
     

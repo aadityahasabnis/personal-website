@@ -1,8 +1,8 @@
-# Personal website — AadityaHasabnis.site
+# Personal website — aadityahasabnis.com
 
 **Version:** 1.0
 
-**Purpose:** A single-author, production-ready playbook of autonomous and semi-autonomous agents (scripts, CLI helpers, GitHub Actions, and developer roles) to build, ship, and operate `aadityahasabnis.site` — a fast, minimal, SEO-first personal knowledge & presence system powered by Next.js 16 (App Router) and MongoDB. The playbook emphasizes: static-first content, ISR, Partial Prerendering for dynamic islands, server-side counters (views/likes), and a lightweight admin with a markdown editor for initial content.
+**Purpose:** A single-author, production-ready playbook of autonomous and semi-autonomous agents (scripts, CLI helpers, GitHub Actions, and developer roles) to build, ship, and operate `aadityahasabnis.com` — a fast, minimal, SEO-first personal knowledge & presence system powered by Next.js 16 (App Router) and MongoDB. The playbook emphasizes: static-first content, ISR, Partial Prerendering for dynamic islands, server-side counters (views/likes), and a lightweight admin with a markdown editor for initial content.
 
 ---
 
@@ -24,7 +24,7 @@
 
 # 1. Project summary & vision
 
-**Product name:** AadityaHasabnis.site — Personal Knowledge & Presence System
+**Product name:** aadityahasabnis.com — Personal Knowledge & Presence System
 
 **Vision:** A minimal, professional personal site where Aaditya publishes long-form articles, series, timeless pages, atomic knowledge notes, and learning logs. Content is static-first for instant load and SEO; small dynamic islands (views, likes, recommendations) are served as server-side streamed components. The admin is a controlled editor (markdown now, richer editor later) backed by MongoDB.
 
@@ -564,7 +564,7 @@ async function incrementView(slug: string, sessionId?: string){
 
 # Final notes & next actions for the owner
 
-The `agents.md` above is a full playbook to implement `aadityahasabnis.site` the right way: content-first, static-first, with server-streamed dynamic islands for views & likes. It includes agent definitions that turn repetitive work into reproducible scripts and PRs.
+The `agents.md` above is a full playbook to implement `aadityahasabnis.com` the right way: content-first, static-first, with server-streamed dynamic islands for views & likes. It includes agent definitions that turn repetitive work into reproducible scripts and PRs.
 
 **Suggested immediate next steps (pick one):**
 

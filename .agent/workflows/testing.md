@@ -4,7 +4,7 @@ description: Run tests and verify code quality
 
 # Testing Workflow
 
-Run the test suite for AadityaHasabnis.site.
+Run the test suite for aadityahasabnis.com.
 
 ## Test Types
 

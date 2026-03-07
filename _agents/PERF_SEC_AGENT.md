@@ -243,7 +243,7 @@ export default withBundleAnalyzer(nextConfig);
 pnpm audit
 
 # Lighthouse audit
-npx lighthouse https://aadityahasabnis.site --view
+npx lighthouse https://aadityahasabnis.com --view
 
 # Bundle analysis
 ANALYZE=true pnpm build

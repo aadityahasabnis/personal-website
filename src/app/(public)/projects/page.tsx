@@ -9,12 +9,31 @@ import { ProjectCard } from '@/components/content/ProjectCard';
 import { FadeIn, FadeInStagger, StaggerItem } from '@/components/animation/FadeIn';
 import type { IProject } from '@/interfaces';
 
+const description = `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`;
+
 export const metadata: Metadata = {
   title: 'Projects',
-  description: `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`,
+  description,
+  keywords: ['projects', 'open source', 'side projects', 'web development', SITE_CONFIG.author.name].join(', '),
+  alternates: {
+    canonical: `${SITE_CONFIG.url}/projects`,
+  },
   openGraph: {
     title: `Projects | ${SITE_CONFIG.name}`,
-    description: `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`,
+    description,
+    url: `${SITE_CONFIG.url}/projects`,
+    siteName: SITE_CONFIG.name,
+    locale: 'en_US',
+    type: 'website',
+    images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Projects' }],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `Projects | ${SITE_CONFIG.name}`,
+    description,
+    creator: SITE_CONFIG.seo.twitterHandle,
+    site: SITE_CONFIG.seo.twitterHandle,
+    images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
   },
 };
 

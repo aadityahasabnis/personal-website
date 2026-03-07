@@ -10,6 +10,7 @@
  */
 
 import { parseMarkdown } from '@/lib/markdown/parse';
+import { stampHeadingIds } from '@/lib/markdown/toc';
 import { cn } from '@/lib/utils';
 import '@/app/globals.css';
 import { RichTextRenderer } from '@/components/content/RichTextRenderer';
@@ -23,7 +24,12 @@ const isHtml = (content: string) => content.trimStart().startsWith('<');
 
 export const ArticleContent = async ({ content, className }: ArticleContentProps) => {
     // Authorly content is already HTML — skip the markdown pipeline
-    const html = isHtml(content) ? content : await parseMarkdown(content);
+    const rawHtml = isHtml(content) ? content : await parseMarkdown(content);
+
+    // Stamp heading IDs server-side so they exist in the initial HTML payload.
+    // This eliminates the timing race where the TOC observer was set up before
+    // AuthorlyRenderer ran client-side and stamped the IDs itself.
+    const html = stampHeadingIds(rawHtml);
 
     return (
         <div className={cn('max-w-none px-6 lg:px-0', className)}>

@@ -133,3 +133,24 @@ export const getAllTopicSlugs = async (): Promise<string[]> => {
         return [];
     }
 };
+
+/**
+ * Get all published topics for sitemap generation.
+ */
+export const getAllTopicsForSitemap = async (): Promise<
+    { slug: string; updatedAt: Date }[]
+> => {
+    try {
+        const collection = await getCollection<ITopic>(COLLECTIONS.topics);
+
+        const topics = await collection
+            .find({ published: true })
+            .project({ slug: 1, updatedAt: 1, _id: 0 })
+            .toArray();
+
+        return topics as { slug: string; updatedAt: Date }[];
+    } catch (error) {
+        console.error('Failed to fetch topics for sitemap', error);
+        return [];
+    }
+};

@@ -1,7 +1,8 @@
-import { getArticleSidebarData } from '@/server/queries/content';
+import { getArticleSidebarData, getArticleByTopicSlug } from '@/server/queries/content';
 import { getTopic } from '@/server/queries/topics';
 import { ArticleSidebar } from '@/components/content/ArticleSidebar';
 import { TableOfContents } from '@/components/content/TableOfContents';
+import { extractHeadingsFromAuthorlyHtml, stampHeadingIds } from '@/lib/markdown/toc';
 import type { ISubtopic, IArticle } from '@/interfaces';
 
 interface IArticleLayoutProps {
@@ -55,15 +56,22 @@ export default async function ArticleLayout({
 }: IArticleLayoutProps) {
     const { topicSlug, articleSlug } = await params;
 
-    // Fetch sidebar data
-    const [topic, sidebarData] = await Promise.all([
+    // Fetch sidebar data + article body for TOC in parallel
+    const [topic, sidebarData, article] = await Promise.all([
         getTopic(topicSlug),
         getArticleSidebarData(topicSlug),
+        getArticleByTopicSlug(topicSlug, articleSlug),
     ]);
 
     const topicTitle = topic?.title || 'Articles';
     const transformedSubtopics = sidebarData.subtopics.map(transformSubtopic);
     const transformedArticles = sidebarData.articles.map(transformArticle);
+
+    // Stamp heading IDs server-side (same logic as ArticleContent) then extract
+    // headings so the TOC receives the same IDs that will be in the rendered HTML.
+    const rawHtml = article?.body || article?.html || '';
+    const stampedHtml = stampHeadingIds(rawHtml);
+    const tocHeadings = extractHeadingsFromAuthorlyHtml(stampedHtml);
 
     return (
         <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 md:py-16">
@@ -89,7 +97,7 @@ export default async function ArticleLayout({
                 {/* Right Sidebar - Table of Contents */}
                 <aside className="hidden xl:block w-56 shrink-0">
                     <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pl-4 pb-8">
-                        <TableOfContents />
+                        <TableOfContents headings={tocHeadings} />
                     </div>
                 </aside>
             </div>

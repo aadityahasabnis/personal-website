@@ -4,7 +4,7 @@ description: Build the production bundle and verify output
 
 # Build Workflow
 
-Build and verify the production bundle for AadityaHasabnis.site.
+Build and verify the production bundle for aadityahasabnis.com.
 
 ## Steps
 

@@ -1,6 +1,6 @@
 # Rendering Rules
 
-> Static, ISR, and streaming patterns for AadityaHasabnis.site
+> Static, ISR, and streaming patterns for aadityahasabnis.com
 
 ---
 

@@ -1,180 +1,249 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { cn } from '@/lib/utils';
 
-interface ITocItem {
+export interface ITocItem {
     id: string;
     text: string;
     level: number;
 }
 
-interface ITableOfContentsProps {
-    /** Pre-computed headings (SSR optimization) - if not provided, scans DOM */
-    headings?: ITocItem[];
+export interface ITableOfContentsProps {
+    headings: ITocItem[];
     className?: string;
+    /**
+     * Distance (px) from the top of the viewport that counts as the "reading
+     * line". Should equal the navbar height so a heading is considered active
+     * once it scrolls just below the nav bar.
+     * Default: 80  (matches `h-20` navbar)
+     */
+    topOffset?: number;
 }
 
-/**
- * TableOfContents - Client Component that displays TOC navigation
- * 
- * Can receive pre-computed headings from server or scan the DOM for h2-h4 elements.
- * Highlights the current section based on scroll position.
- */
-const TableOfContents = ({ headings: precomputedHeadings, className }: ITableOfContentsProps) => {
-    const [headings, setHeadings] = useState<ITocItem[]>(precomputedHeadings || []);
+// ─── helpers ──────────────────────────────────────────────────────────────────
+
+/** Indent per heading level: h2 = 0, h3 = 0.75rem, h4 = 1.5rem */
+const indent = (level: number) => `${(level - 2) * 0.75}rem`;
+
+// ─── component ────────────────────────────────────────────────────────────────
+
+export const TableOfContents = ({
+    headings,
+    className,
+    topOffset = 80,
+}: ITableOfContentsProps) => {
     const [activeId, setActiveId] = useState<string>('');
+    const [indicatorY, setIndicatorY] = useState(0);
+    const [indicatorH, setIndicatorH] = useState(0);
 
-    // Scan DOM for headings if not pre-computed
-    useEffect(() => {
-        if (precomputedHeadings && precomputedHeadings.length > 0) {
-            // eslint-disable-next-line react-hooks/set-state-in-effect
-            setHeadings(precomputedHeadings);
-            return;
-        }
+    // rAF handle — coalesces scroll events into one paint
+    const rafRef = useRef<number | null>(null);
+    // When true, scroll-driven active detection is paused (click in progress)
+    const isClickingRef = useRef(false);
+    // The target heading id that a programmatic scroll is heading toward
+    const clickTargetRef = useRef<string>('');
+    // Idle timer used as `scrollend` fallback for browsers that don't support it
+    const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-        const scanHeadings = () => {
-            // Get all headings from the article
-            const article = document.querySelector('article');
-            if (!article) return [];
+    const listRef = useRef<HTMLUListElement>(null);
+    const itemRefs = useRef<Map<string, HTMLLIElement>>(new Map());
 
-            const elements = article.querySelectorAll('h1, h2, h3, h4');
-            const items: ITocItem[] = [];
+    // ── indicator position ────────────────────────────────────────────────────
+    const moveIndicator = useCallback((id: string) => {
+        const li = itemRefs.current.get(id);
+        if (!li) return;
+        setIndicatorY(li.offsetTop);
+        setIndicatorH(li.offsetHeight);
+    }, []);
 
-            elements.forEach((element) => {
-                let id = element.id;
-                
-                // Generate id from text content if not present
-                if (!id && element.textContent) {
-                    id = element.textContent
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\s-]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/-+/g, '-')
-                        .trim();
-                    element.id = id;
-                }
-                
-                if (!id) return;
-
-                items.push({
-                    id,
-                    text: element.textContent ?? '',
-                    level: parseInt(element.tagName[1], 10),
-                });
-            });
-
-            return items;
-        };
-
-        // Initial scan
-        const initialHeadings = scanHeadings();
-        if (initialHeadings.length > 0) {
-            setHeadings(initialHeadings);
-        }
-
-        // Watch for DOM changes (Authorly renders client-side, so headings appear after mount)
-        const article = document.querySelector('article');
-        if (!article) return;
-
-        const observer = new MutationObserver(() => {
-            const newHeadings = scanHeadings();
-            if (newHeadings.length > 0) {
-                setHeadings(newHeadings);
+    // ── active heading (reading-line algorithm) ───────────────────────────────
+    //
+    // The active heading is the LAST one whose top edge has scrolled at or
+    // above the reading line (topOffset + a small 8 px buffer).
+    // This is the same algorithm GitHub, MDN, and Stripe use — there is no
+    // ambiguous window; the transition is a single pixel.
+    const computeActive = useCallback((): string => {
+        const line = topOffset + 100;
+        let active = headings[0]?.id ?? '';
+        for (const { id } of headings) {
+            const el = document.getElementById(id);
+            if (!el) continue;
+            if (el.getBoundingClientRect().top <= line) {
+                active = id;
+            } else {
+                break; // DOM order — everything below is also below the line
             }
-        });
+        }
+        return active;
+    }, [headings, topOffset]);
 
-        observer.observe(article, {
-            childList: true,
-            subtree: true,
-        });
+    // ── unlock: called when scrolling is truly finished ───────────────────────
+    //
+    // We use `scrollend` (Chrome 109+, Firefox 109+) when available, and fall
+    // back to a 150 ms idle timer on older browsers.  Either way the lock
+    // releases exactly when the scroll animation is over — not after a fixed
+    // guess — so there is no race condition.
+    const unlock = useCallback(() => {
+        if (!isClickingRef.current) return;
+        isClickingRef.current = false;
+        clickTargetRef.current = '';
+        // Re-sync to real scroll position now that we've landed
+        const id = computeActive();
+        setActiveId(id);
+        moveIndicator(id);
+    }, [computeActive, moveIndicator]);
 
-        // Also scan after a delay to catch any late-rendering content
-        const timeoutId = setTimeout(() => {
-            const delayedHeadings = scanHeadings();
-            if (delayedHeadings.length > 0) {
-                setHeadings(delayedHeadings);
-            }
-        }, 500);
-
-        // Cleanup
-        return () => {
-            observer.disconnect();
-            clearTimeout(timeoutId);
-        };
-    }, [precomputedHeadings]);
-
+    // ── scroll listener ───────────────────────────────────────────────────────
     useEffect(() => {
         if (headings.length === 0) return;
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setActiveId(entry.target.id);
-                    }
-                });
-            },
-            {
-                rootMargin: '-20% 0% -35% 0%',
-                threshold: 0,
+        const tick = () => {
+            rafRef.current = null;
+
+            if (isClickingRef.current) {
+                // Scroll is in flight from a click.
+                // Only update the indicator if the real scroll position has
+                // already crossed the target heading — this gives a natural
+                // "pill follows the page" feel without any jumping.
+                const realActive = computeActive();
+                if (realActive === clickTargetRef.current) {
+                    // We've arrived — unlock immediately instead of waiting
+                    isClickingRef.current = false;
+                    clickTargetRef.current = '';
+                    setActiveId(realActive);
+                    moveIndicator(realActive);
+                }
+                // Otherwise stay silent — don't touch activeId
+                return;
             }
-        );
 
-        headings.forEach(({ id }) => {
-            const element = document.getElementById(id);
-            if (element) observer.observe(element);
-        });
+            const id = computeActive();
+            setActiveId(id);
+            moveIndicator(id);
+        };
 
-        return () => observer.disconnect();
-    }, [headings]);
+        // Initial highlight on mount
+        const id = computeActive();
+        setActiveId(id);
+        moveIndicator(id);
+
+        const onScroll = () => {
+            if (rafRef.current !== null) return;
+            rafRef.current = requestAnimationFrame(tick);
+
+            // ── scrollend fallback (fires ~150 ms after last scroll event) ──
+            if (idleRef.current !== null) clearTimeout(idleRef.current);
+            idleRef.current = setTimeout(unlock, 150);
+        };
+
+        window.addEventListener('scroll', onScroll, { passive: true });
+        // `scrollend` is the authoritative signal on modern browsers
+        window.addEventListener('scrollend', unlock);
+
+        return () => {
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('scrollend', unlock);
+            if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+            if (idleRef.current !== null) clearTimeout(idleRef.current);
+        };
+    }, [headings, computeActive, moveIndicator, unlock]);
+
+    // ── click handler ─────────────────────────────────────────────────────────
+    const scrollTo = useCallback((id: string) => (e: React.MouseEvent) => {
+        e.preventDefault();
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        // Target scroll position: heading top minus navbar height minus a small gap
+        const y = el.getBoundingClientRect().top + window.scrollY - topOffset - 8;
+
+        // Mark that a programmatic scroll is in flight and remember the target.
+        // The scroll listener will silently wait until we've arrived there.
+        isClickingRef.current = true;
+        clickTargetRef.current = id;
+        // Clear any previous idle timer so it doesn't fire early
+        if (idleRef.current !== null) { clearTimeout(idleRef.current); idleRef.current = null; }
+
+        window.scrollTo({ top: y, behavior: 'smooth' });
+
+        // Move the pill immediately — no waiting, instant visual feedback
+        setActiveId(id);
+        moveIndicator(id);
+    }, [topOffset, moveIndicator]);
 
     if (headings.length === 0) return null;
 
     return (
-        <nav
-            className={cn('', className)}
-            aria-label="Table of contents"
-        >
-            <h4 className="mb-4 text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)]">
+        <nav className={cn('select-none', className)} aria-label="On this page">
+
+            {/* ── title ─────────────────────────────────────────────────────── */}
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--fg-subtle)]">
                 On this page
-            </h4>
-            <ul className="space-y-2 border-l border-[var(--border-color)]">
-                {headings.map(({ id, text, level }) => (
-                    <li
-                        key={id}
-                        style={{ paddingLeft: `${(level - 2) * 0.75 + 1}rem` }}
-                        className="relative"
-                    >
-                        {/* Active indicator */}
-                        {activeId === id && (
-                            <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--accent)] -translate-x-[1px]" />
-                        )}
-                        <a
-                            href={`#${id}`}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                document.getElementById(id)?.scrollIntoView({
-                                    behavior: 'smooth',
-                                });
-                                setActiveId(id);
-                            }}
-                            className={cn(
-                                'block text-sm transition-colors py-1',
-                                'hover:text-[var(--fg)]',
-                                activeId === id
-                                    ? 'font-medium text-[var(--accent)]'
-                                    : 'text-[var(--fg-muted)]'
-                            )}
-                        >
-                            {text}
-                        </a>
-                    </li>
-                ))}
-            </ul>
+            </p>
+
+            {/* ── list + track ─────────────────────────────────────────────── */}
+            <div className="relative flex gap-3">
+
+                {/* ── left spine track ─────────────────────────────────────── */}
+                <div className="relative flex-none w-px self-stretch">
+                    {/* gradient base track */}
+                    <div
+                        className="absolute inset-0 rounded-full"
+                        style={{
+                            background:
+                                'linear-gradient(to bottom, var(--border-color) 0%, transparent 100%)',
+                        }}
+                    />
+                    {/* glowing active pill */}
+                    <div
+                        aria-hidden
+                        className="absolute left-1/2 -translate-x-1/2 w-[3px] rounded-full transition-[top,height] duration-300 ease-out"
+                        style={{
+                            top: indicatorY,
+                            height: indicatorH || 24,
+                            background:
+                                'linear-gradient(to bottom, var(--accent), oklch(from var(--accent) l c h / 0.4))',
+                            boxShadow: '0 0 6px 1px oklch(from var(--accent) l c h / 0.35)',
+                        }}
+                    />
+                </div>
+
+                {/* ── heading list ─────────────────────────────────────────── */}
+                <ul ref={listRef} className="flex-1 flex flex-col gap-0.5 min-w-0">
+                    {headings.map(({ id, text, level }) => {
+                        const isActive = activeId === id;
+                        return (
+                            <li
+                                key={id}
+                                ref={(el) => {
+                                    if (el) itemRefs.current.set(id, el);
+                                    else itemRefs.current.delete(id);
+                                }}
+                                style={{ paddingLeft: indent(level) }}
+                            >
+                                <a
+                                    href={`#${id}`}
+                                    onClick={scrollTo(id)}
+                                    title={text}
+                                    className={cn(
+                                        'block py-[3px] text-[11.5px] leading-snug truncate',
+                                        'transition-colors duration-200',
+                                        !isActive && 'text-[var(--fg-subtle)] hover:text-[var(--fg-muted)]',
+                                        isActive && 'text-[var(--accent)] font-medium',
+                                        level === 2 && 'font-[450]',
+                                        level >= 3 && 'font-normal',
+                                    )}
+                                >
+                                    {text}
+                                </a>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </div>
         </nav>
     );
 };
 
-export { TableOfContents };
-export type { ITableOfContentsProps, ITocItem };
+export default TableOfContents;

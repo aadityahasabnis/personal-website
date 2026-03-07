@@ -5,12 +5,31 @@ import { Mail, MapPin, Clock, MessageSquare, ArrowUpRight } from 'lucide-react';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants';
 import { ContactForm } from '@/components/sections/ContactForm';
 
+const description = `Get in touch with ${SITE_CONFIG.author.name}. I am open to collaboration, job opportunities, and general inquiries.`;
+
 export const metadata: Metadata = {
     title: 'Contact',
-    description: `Get in touch with ${SITE_CONFIG.author.name}. I am open to collaboration, job opportunities, and general inquiries.`,
+    description,
+    keywords: ['contact', SITE_CONFIG.author.name, 'hire', 'collaboration', 'freelance'].join(', '),
+    alternates: {
+        canonical: `${SITE_CONFIG.url}/contact`,
+    },
     openGraph: {
         title: `Contact | ${SITE_CONFIG.name}`,
-        description: `Get in touch with ${SITE_CONFIG.author.name}. I am open to collaboration, job opportunities, and general inquiries.`,
+        description,
+        url: `${SITE_CONFIG.url}/contact`,
+        siteName: SITE_CONFIG.name,
+        locale: 'en_US',
+        type: 'website',
+        images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Contact' }],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: `Contact | ${SITE_CONFIG.name}`,
+        description,
+        creator: SITE_CONFIG.seo.twitterHandle,
+        site: SITE_CONFIG.seo.twitterHandle,
+        images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
     },
 };
 

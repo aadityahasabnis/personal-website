@@ -4,7 +4,7 @@ description: Create, edit, and publish content through the admin panel
 
 # Content Publishing Workflow
 
-Publish content on AadityaHasabnis.site through the admin panel.
+Publish content on aadityahasabnis.com through the admin panel.
 
 ## Content Types
 

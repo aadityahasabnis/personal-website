@@ -1,6 +1,6 @@
 # Architecture Philosophy & Codebase Documentation
 
-> **AadityaHasabnis.site** — A minimal, professional personal knowledge & presence system built with Next.js 16, React 19, and TypeScript
+> **aadityahasabnis.com** — A minimal, professional personal knowledge & presence system built with Next.js 16, React 19, and TypeScript
 
 ---
 
@@ -721,4 +721,4 @@ interface ISEO {
 ---
 
 *Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

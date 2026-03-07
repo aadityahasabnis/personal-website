@@ -4,13 +4,13 @@ export const SITE_CONFIG = {
     shortName: 'AH',
     title: 'Aaditya Hasabnis | Developer & Writer',
     description: 'Personal site for articles, notes, and projects',
-    url: 'https://aadityahasabnis.site',
+    url: 'https://aadityahasabnis.com',
     locale: 'en-US',
-    email: 'hello@aadityahasabnis.site',
+    email: 'hello@aadityahasabnis.com',
 
     author: {
         name: 'Aaditya Hasabnis',
-        email: 'hello@aadityahasabnis.site',
+        email: 'hello@aadityahasabnis.com',
         bio: 'Developer, writer, and lifelong learner.',
     },
 
@@ -36,7 +36,7 @@ export const SOCIAL_LINKS: readonly ISocialLink[] = [
     { platform: 'github', url: 'https://github.com/aadityahasabnis' },
     { platform: 'twitter', url: 'https://twitter.com/aadityahasabnis' },
     { platform: 'linkedin', url: 'https://linkedin.com/in/aadityahasabnis' },
-    { platform: 'email', url: 'mailto:hello@aadityahasabnis.site' },
+    { platform: 'email', url: 'mailto:hello@aadityahasabnis.com' },
 ] as const;
 
 // Navigation Links

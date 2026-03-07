@@ -1,6 +1,6 @@
 # Database Schema
 
-> MongoDB schema documentation for AadityaHasabnis.site
+> MongoDB schema documentation for aadityahasabnis.com
 
 ---
 

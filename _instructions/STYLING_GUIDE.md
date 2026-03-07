@@ -1,6 +1,6 @@
 # Styling Guide
 
-> CSS architecture and design system for AadityaHasabnis.site
+> CSS architecture and design system for aadityahasabnis.com
 
 ---
 
@@ -506,4 +506,4 @@ All `bg-background`, `text-foreground`, etc. will automatically adapt.
 ---
 
 *Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

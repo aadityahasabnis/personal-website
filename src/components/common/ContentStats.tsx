@@ -26,6 +26,7 @@ interface IContentStatsProps {
  * - localStorage is ALWAYS checked (not just on initial mount)
  * - Button properly disabled if already liked
  * - No more accidental multiple likes
+ * - Fixed SSR hydration issue with React Query
  */
 export function ContentStats({
     slug,
@@ -35,9 +36,15 @@ export function ContentStats({
     className,
 }: IContentStatsProps) {
     const [hasIncrementedView, setHasIncrementedView] = useState(false);
+    const [mounted, setMounted] = useState(false);
 
-    // Fetch stats from API (with caching)
-    const { data: stats } = usePageStats(slug, contentType);
+    // Only run React Query hooks after client mount
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    // Fetch stats from API (with caching) - only on client
+    const { data: stats } = usePageStats(slug, contentType, { enabled: mounted });
     const likeMutation = useLikeToggle(slug, contentType);
 
     // CRITICAL FIX: Use useState with effect to sync with localStorage

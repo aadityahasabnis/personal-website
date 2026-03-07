@@ -349,4 +349,4 @@ AUTH_SECRET=your-auth-secret
 ---
 
 *Agent Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

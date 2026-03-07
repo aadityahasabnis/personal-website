@@ -1,6 +1,6 @@
 # Component Patterns
 
-> Reusable component patterns for AadityaHasabnis.site
+> Reusable component patterns for aadityahasabnis.com
 
 ---
 

@@ -125,13 +125,15 @@ export const ContentPreview = ({ markdown, className }: ContentPreviewProps) => 
                         </div>
                     ) : html ? (
                         <article
-                            className="prose prose-sm max-w-none dark:prose-invert
-                                prose-headings:scroll-mt-20
-                                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                                prose-code:text-sm prose-code:bg-muted prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded
-                                prose-pre:bg-muted prose-pre:border
-                                prose-img:rounded-lg prose-img:shadow-md
-                                prose-table:border prose-th:border prose-td:border"
+                            className="max-w-none text-sm leading-7
+                                [&_h1]:text-2xl [&_h1]:font-semibold [&_h1]:mb-4 [&_h1]:mt-8 [&_h1]:scroll-mt-20
+                                [&_h2]:text-xl [&_h2]:font-semibold [&_h2]:mb-3 [&_h2]:mt-6 [&_h2]:scroll-mt-20
+                                [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:mb-2 [&_h3]:mt-4 [&_h3]:scroll-mt-20
+                                [&_a]:text-primary [&_a]:no-underline hover:[&_a]:underline
+                                [&_code]:text-sm [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:font-mono
+                                [&_pre]:bg-muted [&_pre]:border [&_pre]:p-4 [&_pre]:rounded-lg [&_pre]:overflow-x-auto
+                                [&_img]:rounded-lg [&_img]:shadow-md
+                                [&_table]:border [&_th]:border [&_td]:border [&_table]:border-collapse"
                             dangerouslySetInnerHTML={{ __html: html }}
                         />
                     ) : (

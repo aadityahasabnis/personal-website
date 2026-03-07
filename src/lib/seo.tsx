@@ -51,8 +51,9 @@ export function generateOrganizationSchema() {
 }
 
 /**
- * Website Schema with SearchAction
- * Enables site search in search results
+ * Website Schema
+ * Describes the overall site to search engines.
+ * SearchAction is omitted — no /search route exists.
  */
 export function generateWebSiteSchema() {
     return {
@@ -64,14 +65,6 @@ export function generateWebSiteSchema() {
         description: SITE_CONFIG.description,
         publisher: {
             '@id': `${SITE_CONFIG.url}/#person`,
-        },
-        potentialAction: {
-            '@type': 'SearchAction',
-            target: {
-                '@type': 'EntryPoint',
-                urlTemplate: `${SITE_CONFIG.url}/search?q={search_term_string}`,
-            },
-            'query-input': 'required name=search_term_string',
         },
     };
 }

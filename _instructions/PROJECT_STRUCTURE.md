@@ -1,13 +1,13 @@
 # Project Structure Documentation
 
-> Complete file and folder structure for AadityaHasabnis.site
+> Complete file and folder structure for aadityahasabnis.com
 
 ---
 
 ## Root Directory
 
 ```
-aadityahasabnis.site/
+aadityahasabnis.com/
 ├── .github/                    # GitHub configuration
 │   ├── workflows/             # CI/CD workflows
 │   │   ├── ci.yml            # Lint, type-check, build
@@ -330,7 +330,7 @@ CLOUDINARY_URL=cloudinary://...
 RESEND_API_KEY=re_...
 
 # Analytics (optional)
-PLAUSIBLE_DOMAIN=aadityahasabnis.site
+PLAUSIBLE_DOMAIN=aadityahasabnis.com
 
 # Environment
 NODE_ENV=development
@@ -339,4 +339,4 @@ NODE_ENV=development
 ---
 
 *Version: 1.0*  
-*Project: AadityaHasabnis.site*
+*Project: aadityahasabnis.com*

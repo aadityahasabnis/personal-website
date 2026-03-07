@@ -43,7 +43,7 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => (
         <head>
             <Script
                 defer
-                data-domain="aadityahasabnis.site"
+                data-domain="aadityahasabnis.com"
                 src="https://plausible.io/js/script.js"
             />
         </head>

@@ -1,6 +1,6 @@
 # API Patterns
 
-> Server actions and API route patterns for AadityaHasabnis.site
+> Server actions and API route patterns for aadityahasabnis.com
 
 ---
 

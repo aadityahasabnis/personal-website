@@ -1,6 +1,6 @@
 # Project Progress Tracker
 
-> Real-time progress tracking for AadityaHasabnis.site development
+> Real-time progress tracking for aadityahasabnis.com development
 
 **Last Updated:** January 31, 2026 (Session 2)
 

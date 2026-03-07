@@ -4,7 +4,7 @@ description: Deploy to staging or production on Vercel
 
 # Deploy Workflow
 
-Deploy AadityaHasabnis.site to Vercel.
+Deploy aadityahasabnis.com to Vercel.
 
 ## Prerequisites
 

@@ -1067,7 +1067,7 @@ const SAMPLE_PROJECTS = [
         longDescription: 'This website showcases my work and writing. Built with Next.js 16 App Router, featuring Server Components, ISR, and streaming for optimal performance.',
         tags: ['Next.js', 'TypeScript', 'MongoDB', 'Tailwind CSS'],
         github: 'https://github.com/aadityahasabnis/portfolio',
-        live: 'https://aadityahasabnis.site',
+        live: 'https://aadityahasabnis.com',
         featured: true,
         status: 'active',
         order: 1,
