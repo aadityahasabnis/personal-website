@@ -53,8 +53,6 @@ export const QUERY_KEYS = {
 
     // ===== STATS =====
     STATS: {
-        ARTICLE: (slug: string) => ['stats', 'article', slug] as const,
-        page: (slug: string) => ['stats', 'page', slug] as const,
         PAGE: (slug: string) => ['stats', 'page', slug] as const,
         VIEWS: (slug: string) => ['stats', 'views', slug] as const,
         LIKES: (slug: string) => ['stats', 'likes', slug] as const,
@@ -64,7 +62,7 @@ export const QUERY_KEYS = {
     COMMENTS: {
         BY_ARTICLE: (slug: string) => ['comments', 'article', slug] as const,
         BY_ID: (commentId: string) => ['comments', commentId] as const,
-        list: (slug: string, limit?: number, offset?: number) => 
+        LIST: (slug: string, limit?: number, offset?: number) =>
             ['comments', 'article', slug, { limit, offset }] as const,
     },
 

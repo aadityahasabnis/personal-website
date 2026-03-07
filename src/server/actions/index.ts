@@ -1,6 +1,15 @@
 // Like actions
 export { likePost } from './like';
 
+// Stats actions
+export { incrementViews, getContentStats } from './stats';
+
+// Comment actions
+export { getComments, postComment, upvoteComment } from './comments';
+
+// Revalidation actions
+export { revalidateContent, revalidateContentList, revalidateHome, revalidateAll } from './revalidate';
+
 // Subscribe actions
 export { subscribe, unsubscribe } from './subscribe';
 

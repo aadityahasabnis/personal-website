@@ -6,3 +6,13 @@ export { useStepper } from './useStepper';
 export { useScrollPosition } from './useScrollPosition';
 export { useOutsideClick } from './useOutsideClick';
 export { useMediaQuery } from './useMediaQuery';
+export {
+    usePageStats,
+    useLikeToggle,
+    useComments,
+    usePostComment,
+    useUpvoteComment,
+    type IPageStats,
+    type ICommentsResult,
+    type ContentType,
+} from './useContentData';

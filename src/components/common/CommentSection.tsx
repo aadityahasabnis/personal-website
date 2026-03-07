@@ -13,7 +13,9 @@ import {
   usePostComment,
   useUpvoteComment,
   type ContentType,
+  type ICommentsResult,
 } from "@/hooks/useContentData";
+import type { ISanitizedComment } from "@/server/actions/comments";
 import {
   MessageSquare,
   Send,
@@ -33,20 +35,7 @@ interface ICommentSectionProps {
   slug: string;
   contentType: ContentType;
   className?: string;
-}
-
-interface IComment {
-  _id: string;
-  author: {
-    name: string;
-    avatar?: string;
-    isAuthor?: boolean;
-  };
-  content: string;
-  likes: number;
-  upvotes: number;
-  replies?: IComment[];
-  createdAt: string;
+  initialComments?: ICommentsResult;
 }
 
 /**
@@ -66,12 +55,13 @@ export function CommentSection({
   slug,
   contentType,
   className,
+  initialComments,
 }: ICommentSectionProps) {
   const {
     data: commentsData,
     isLoading,
     refetch,
-  } = useComments(slug, contentType);
+  } = useComments(slug, contentType, 20, 0, { initialData: initialComments });
   const postMutation = usePostComment(slug, contentType);
 
   const [showForm, setShowForm] = useState(false);
@@ -404,7 +394,7 @@ export function CommentSection({
 
 // Comment Card Component
 interface ICommentCardProps {
-  comment: IComment;
+  comment: ISanitizedComment;
   slug: string;
   contentType: ContentType;
   onReply: (commentId: string, authorName: string) => void;
@@ -424,7 +414,7 @@ interface ICommentCardProps {
   setSelectedAvatar: (avatar: string) => void;
   handleSubmit: (e: FormEvent) => void;
   handleCancel: () => void;
-  postMutation: any;
+  postMutation: ReturnType<typeof usePostComment>;
 }
 
 function CommentCard({
@@ -470,32 +460,18 @@ function CommentCard({
   }, [comment.upvotes]);
 
   const handleUpvote = () => {
-    // Check localStorage before upvoting
     const alreadyUpvoted = siteStorage.hasUpvotedComment(comment._id);
 
-    if (alreadyUpvoted) {
-      console.log("❌ Already upvoted this comment");
-      return;
-    }
-
-    // Prevent multiple clicks while loading
-    if (upvoteMutation.isPending) {
-      console.log("⏳ Upvote pending, please wait");
-      return;
-    }
-
-    console.log("✅ Upvoting comment...");
+    if (alreadyUpvoted || upvoteMutation.isPending) return;
 
     // Optimistic update
     setUserHasUpvoted(true);
     setUpvoteCount((prev) => prev + 1);
     siteStorage.setCommentUpvoted(comment._id);
 
-    // Call API to increment upvote count in DB
     upvoteMutation.mutate(comment._id, {
       onError: (error) => {
         console.error("Failed to upvote:", error);
-        // Rollback on error
         setUserHasUpvoted(false);
         setUpvoteCount((prev) => prev - 1);
         siteStorage.removeCommentUpvote(comment._id);
@@ -729,7 +705,7 @@ function CommentCard({
           {comment.replies.map((reply) => (
             <CommentCard
               key={reply._id}
-              comment={reply}
+              comment={reply as ISanitizedComment}
               slug={slug}
               contentType={contentType}
               onReply={onReply}

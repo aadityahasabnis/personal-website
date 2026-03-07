@@ -1,10 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
-import { FadeIn } from '@/components/motion';
 import { SITE_CONFIG } from '@/constants';
 
 /**
@@ -16,7 +13,7 @@ export const AboutPreview = () => {
       <div className="container-wide">
         <div className="grid gap-12 lg:grid-cols-2 items-center">
           {/* Image */}
-          <FadeIn direction="left" className="relative">
+          <div className="relative">
             <div className="relative aspect-square max-w-md mx-auto lg:mx-0">
               {/* Decorative Elements */}
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] opacity-20 blur-2xl" />
@@ -29,10 +26,10 @@ export const AboutPreview = () => {
                 </span>
               </div>
             </div>
-          </FadeIn>
+          </div>
 
           {/* Content */}
-          <FadeIn direction="right" delay={0.1}>
+          <div>
             <span className="label text-[var(--accent)] mb-4 block">About Me</span>
             <h2 className="heading-2 text-[var(--fg)] mb-6">
               Crafting Digital Experiences with Passion
@@ -71,7 +68,7 @@ export const AboutPreview = () => {
               More About Me
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
-          </FadeIn>
+          </div>
         </div>
       </div>
     </section>

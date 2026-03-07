@@ -5,8 +5,6 @@ const MONGODB_URI = env.MONGODB_URI;
 const DB_NAME = 'portfolio';
 
 const options = {
-    // Atlas free tier (M0) allows 500 connections total shared across all clients.
-    // Keep this small so multiple serverless instances don't exhaust the limit.
     maxPoolSize: 5,
     minPoolSize: 1,
     maxIdleTimeMS: 60000,
@@ -17,63 +15,46 @@ const options = {
     tlsAllowInvalidCertificates: false,
 };
 
-// ---------------------------------------------------------------------------
 // Global singleton — survives Next.js HMR in dev and module-level re-imports.
-//
-// The critical fix vs. the previous implementation:
-//   BEFORE: cached the resolved client/db — so 6 parallel awaits all saw
-//           `cachedDb = null` simultaneously and each opened a new connection.
-//   AFTER:  cache the *in-flight Promise* — all parallel callers await the
-//           exact same promise, so MongoClient.connect() is called exactly once
-//           no matter how many concurrent queries fire at startup.
-// ---------------------------------------------------------------------------
-
+// Caches the in-flight Promise so concurrent callers share one connection attempt.
 declare global {
     // eslint-disable-next-line no-var
     var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-function createClientPromise(): Promise<MongoClient> {
-    if (!MONGODB_URI) {
-        throw new Error('MONGODB_URI environment variable is not defined');
-    }
+const createClientPromise = (): Promise<MongoClient> => {
+    if (!MONGODB_URI) throw new Error('MONGODB_URI environment variable is not defined');
     const client = new MongoClient(MONGODB_URI, options);
-    return client.connect().then((c) => {
-        console.log('✅ Connected to MongoDB');
-        return c;
-    });
-}
+    return client.connect()
+        .then((c) => {
+            console.log('✅ Connected to MongoDB');
+            // Reset the global when the connection pool closes so the next
+            // request creates a fresh connection instead of reusing a dead one.
+            c.on('close', () => { global._mongoClientPromise = undefined; });
+            return c;
+        })
+        .catch((err) => {
+            // Clear the cached promise so the next request retries rather than
+            // awaiting a permanently-rejected promise.
+            global._mongoClientPromise = undefined;
+            throw err;
+        });
+};
 
-// Reuse the global promise across HMR reloads in dev.
-// In production the module is loaded once per process so global is the same object.
 if (!global._mongoClientPromise) {
     global._mongoClientPromise = createClientPromise();
 }
 
 const clientPromise: Promise<MongoClient> = global._mongoClientPromise;
 
-/**
- * Connect to MongoDB and return the database instance.
- *
- * All concurrent callers share the same Promise so MongoClient.connect()
- * is only ever called once per process.
- */
 export const connectDB = async (): Promise<Db> => {
     const client = await clientPromise;
     return client.db(DB_NAME);
 };
 
-/**
- * Get a typed collection from the database.
- */
-export const getCollection = async <T extends object>(
-    collectionName: string
-) => {
+export const getCollection = async <T extends object>(collectionName: string) => {
     const db = await connectDB();
     return db.collection<T>(collectionName);
 };
 
-/**
- * Expose the raw client promise for adapters (e.g. NextAuth) that need it.
- */
 export { clientPromise };

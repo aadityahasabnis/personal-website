@@ -104,9 +104,8 @@ export const COLLECTIONS = {
     content: 'content',
     topics: 'topics',
     subtopics: 'subtopics',
-    articleStats: 'article_stats',
+    articleStats: 'article_stats', // unified stats collection for all content types
     comments: 'comments',
-    pageStats: 'pageStats',
     subscribers: 'subscribers',
     users: 'users',
     media: 'media',

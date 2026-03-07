@@ -1,4 +1,4 @@
-import { getAndIncrementViews } from '@/server/queries/stats';
+import { getArticleStats } from '@/server/queries/stats';
 
 interface IViewsProps {
     slug: string;
@@ -7,19 +7,18 @@ interface IViewsProps {
 
 /**
  * Views - Server Component that streams view count
- * 
- * This component:
- * 1. Increments view count atomically in MongoDB
- * 2. Returns the updated count
- * 3. Streams into the page via Suspense (doesn't block initial HTML)
- * 
+ *
+ * Reads the current view count from articleStats without incrementing.
+ * View incrementing is handled via `after(() => incrementViews(slug))` in the page.
+ *
  * Usage:
  * <Suspense fallback={<Skeleton className="h-4 w-16" />}>
  *   <Views slug={article.slug} />
  * </Suspense>
  */
 const Views = async ({ slug, className }: IViewsProps) => {
-    const count = await getAndIncrementViews(slug);
+    const stats = await getArticleStats(slug);
+    const count = stats?.views ?? 0;
 
     return (
         <span className={className ?? 'text-sm text-muted-foreground'}>

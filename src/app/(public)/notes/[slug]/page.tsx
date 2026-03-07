@@ -1,71 +1,51 @@
-import { Suspense } from 'react';
+import { after } from 'next/server';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 
 import { getNote, getAllNoteSlugs } from '@/server/queries/content';
-import { getPageStats, getArticleCommentCount } from '@/server/queries/stats';
+import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
+import { incrementViews } from '@/server/actions/stats';
 import { calculateReadingTime } from '@/lib/utils';
 import { NoteHeader } from '@/components/content/NoteHeader';
 import { ArticleContent } from '@/components/content/ArticleContent';
 import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { FadeIn } from '@/components/animation/FadeIn';
-import {
-    JsonLd,
-    generateArticleSchema,
-    generateBreadcrumbSchema,
-    generateOrganizationSchema,
-    combineSchemas,
-} from '@/lib/seo';
+import { JsonLd, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema, combineSchemas } from '@/lib/seo';
 import { SITE_CONFIG } from '@/constants';
+
+export const revalidate = false;
 
 interface INotePageProps {
     params: Promise<{ slug: string }>;
 }
 
-// Generate static params for all notes at build time
 export const generateStaticParams = async (): Promise<{ slug: string }[]> => {
     const slugs = await getAllNoteSlugs();
     return slugs.map((slug) => ({ slug }));
 };
 
-// Static generation
-export const revalidate = false;
-
-// Generate metadata for SEO
 export const generateMetadata = async ({ params }: INotePageProps): Promise<Metadata> => {
     const { slug } = await params;
     const note = await getNote(slug);
-
-    if (!note) {
-        return { title: 'Note Not Found' };
-    }
+    if (!note) return { title: 'Note Not Found' };
 
     const url = `${SITE_CONFIG.url}/notes/${slug}`;
-    const seoTitle = note.title;
-    const seoDescription = note.description;
     const imageUrl = `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
-
-    // Calculate reading time if not present
-    const readingTime = note.readingTime || calculateReadingTime(note.body || '');
-
-    // Build keywords
-    const keywords = [...(note.tags || []), SITE_CONFIG.author.name, 'notes', 'learning', 'knowledge'];
+    const readingTime = note.readingTime ?? calculateReadingTime(note.body ?? '');
+    const keywords = [...(note.tags ?? []), SITE_CONFIG.author.name, 'notes', 'learning', 'knowledge'];
 
     return {
-        title: seoTitle,
-        description: seoDescription,
+        title: note.title,
+        description: note.description,
         keywords: keywords.join(', '),
         authors: [{ name: SITE_CONFIG.author.name, url: SITE_CONFIG.url }],
         creator: SITE_CONFIG.author.name,
         publisher: SITE_CONFIG.author.name,
-        alternates: {
-            canonical: url,
-        },
+        alternates: { canonical: url },
         openGraph: {
-            title: seoTitle,
-            description: seoDescription,
+            title: note.title,
+            description: note.description,
             type: 'article',
             url,
             siteName: SITE_CONFIG.name,
@@ -74,19 +54,12 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
             modifiedTime: note.updatedAt?.toISOString(),
             authors: [SITE_CONFIG.author.name],
             tags: keywords,
-            images: [
-                {
-                    url: imageUrl,
-                    width: 1200,
-                    height: 630,
-                    alt: seoTitle,
-                },
-            ],
+            images: [{ url: imageUrl, width: 1200, height: 630, alt: note.title }],
         },
         twitter: {
             card: 'summary_large_image',
-            title: seoTitle,
-            description: seoDescription,
+            title: note.title,
+            description: note.description,
             creator: SITE_CONFIG.seo.twitterHandle,
             site: SITE_CONFIG.seo.twitterHandle,
             images: [imageUrl],
@@ -94,16 +67,8 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
         robots: {
             index: true,
             follow: true,
-            nocache: false,
-            googleBot: {
-                index: true,
-                follow: true,
-                'max-video-preview': -1,
-                'max-image-preview': 'large',
-                'max-snippet': -1,
-            },
+            googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
         },
-        // Enhanced metadata with reading time and timestamps
         other: {
             'article:author': SITE_CONFIG.author.name,
             'article:section': 'Notes',
@@ -118,124 +83,63 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
     };
 };
 
-/**
- * Note Page - Professional Layout Matching Article Page Quality
- * 
- * Features:
- * - Static HTML content served instantly (SSG)
- * - Fade-in animations for smooth UX
- * - Comprehensive JSON-LD structured data
- * - Semantic HTML for AI scraping
- * - Optimistic UI updates for likes/views
- * - Cached comments with TanStack Query
- * - Professional NoteHeader component
- * - Consistent styling with Articles
- * 
- * SEO Strategy:
- * 1. JSON-LD schemas (Article, Breadcrumb, Organization)
- * 2. Semantic HTML5 tags (article, section, header, footer)
- * 3. Microdata attributes (itemscope, itemprop)
- * 4. Enhanced meta tags (OG, Twitter, keywords)
- * 5. Structured content hierarchy
- */
 const NotePage = async ({ params }: INotePageProps) => {
     const { slug } = await params;
 
-    // Fetch note, stats, and comment count in parallel
+    after(() => incrementViews(slug));
+
     const [note, stats, commentCount] = await Promise.all([
         getNote(slug),
-        getPageStats(slug),
+        getArticleStats(slug),
         getArticleCommentCount(slug),
     ]);
 
-    if (!note) {
-        notFound();
-    }
+    if (!note) notFound();
 
-    // Get content (ArticleContent will handle markdown parsing if needed)
-    const content = note.body || note.html || '';
-
-    // Build breadcrumbs for SEO
+    const readingTime = note.readingTime ?? calculateReadingTime(note.body ?? '');
+    const content = note.html ?? note.body ?? '';
     const breadcrumbs = [
         { label: 'Notes', href: '/notes' },
         { label: note.title, href: `/notes/${slug}` },
     ];
 
-    // Calculate reading time if not present
-    const readingTime = note.readingTime || calculateReadingTime(note.body || '');
-
-    // Generate JSON-LD schemas for SEO with comment count
-    const articleSchema = generateArticleSchema({
-        article: {
-            ...note,
+    const combinedSchemas = combineSchemas(
+        generateArticleSchema({
+            article: { ...note, type: 'article' as const, topicSlug: 'notes', subtopicSlug: note.tags?.[0], readingTime, order: 0 } as Parameters<typeof generateArticleSchema>[0]['article'],
             topicSlug: 'notes',
-            subtopicSlug: note.tags?.[0] || undefined,
-            readingTime,
-        } as any,
-        topicSlug: 'notes',
-        articleSlug: slug,
-        topicTitle: 'Notes',
-        subtopicTitle: note.tags?.[0],
-        commentCount,
-    });
-
-    const breadcrumbSchema = generateBreadcrumbSchema(
-        breadcrumbs.map((b) => ({ name: b.label, url: `${SITE_CONFIG.url}${b.href}` }))
+            articleSlug: slug,
+            topicTitle: 'Notes',
+            subtopicTitle: note.tags?.[0],
+            commentCount,
+        }),
+        generateBreadcrumbSchema(breadcrumbs.map((b) => ({ name: b.label, url: `${SITE_CONFIG.url}${b.href}` }))),
+        generateOrganizationSchema(),
     );
-
-    const organizationSchema = generateOrganizationSchema();
-
-    const combinedSchemas = combineSchemas(articleSchema, breadcrumbSchema, organizationSchema);
 
     return (
         <>
-            {/* JSON-LD Structured Data */}
             <JsonLd data={combinedSchemas} />
-
-            {/* Scroll to Top Button */}
             <ScrollToTop />
-
-            {/* Article Container with Semantic HTML */}
-            <article 
-                className="article-content"
-                itemScope
-                itemType="https://schema.org/TechArticle"
-            >
-                {/* Note Header - Animated */}
-                <FadeIn delay={0.1}>
-                    <NoteHeader
-                        title={note.title}
-                        description={note.description}
-                        tags={note.tags}
-                        publishedAt={note.publishedAt}
-                        updatedAt={note.updatedAt}
-                        readingTime={readingTime}
-                    />
-                </FadeIn>
-
-                {/* Content Section with Consistent Padding */}
+            <article className="article-content" itemScope itemType="https://schema.org/TechArticle">
+                <NoteHeader
+                    title={note.title}
+                    description={note.description}
+                    tags={note.tags}
+                    publishedAt={note.publishedAt}
+                    updatedAt={note.updatedAt}
+                    readingTime={readingTime}
+                />
                 <div className="max-w-4xl mx-auto px-6 lg:px-8 pb-12 md:pb-16">
-                    {/* Note Body - Animated */}
-                    <FadeIn delay={0.3}>
-                        {content ? (
-                            <ArticleContent content={content} />
-                        ) : (
-                            <div className="text-[var(--fg-muted)] leading-7">
-                                <p>This note content is being prepared. Check back soon.</p>
-                            </div>
-                        )}
-                    </FadeIn>
-
-                    {/* Note Footer - Stats & Engagement - Animated */}
-                    <FadeIn 
-                        as="footer" 
-                        delay={0.5}
-                        className="mt-12 pt-8 border-t border-[var(--border-color)]"
-                    >
+                    {content ? (
+                        <ArticleContent content={content} />
+                    ) : (
+                        <div className="text-[var(--fg-muted)] leading-7">
+                            <p>This note is being prepared. Check back soon.</p>
+                        </div>
+                    )}
+                    <footer className="mt-12 pt-8 border-t border-[var(--border-color)]">
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                            <p className="text-[var(--fg-muted)]">
-                                Found this note helpful? Show some love!
-                            </p>
+                            <p className="text-[var(--fg-muted)]">Found this note helpful? Show some love!</p>
                             <ContentStats
                                 slug={slug}
                                 contentType="notes"
@@ -243,15 +147,8 @@ const NotePage = async ({ params }: INotePageProps) => {
                                 initialLikes={stats?.likes ?? 0}
                             />
                         </div>
-                    </FadeIn>
-
-                    {/* Comments Section - Animated & Lazy Loaded */}
-                    <FadeIn delay={0.7}>
-                        <CommentSection 
-                            slug={slug} 
-                            contentType="notes"
-                        />
-                    </FadeIn>
+                    </footer>
+                    <CommentSection slug={slug} contentType="notes" />
                 </div>
             </article>
         </>

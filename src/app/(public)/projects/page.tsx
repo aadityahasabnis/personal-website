@@ -6,7 +6,6 @@ import { getProjects } from '@/server/queries/projects';
 import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProjectCard } from '@/components/content/ProjectCard';
-import { FadeIn, FadeInStagger, StaggerItem } from '@/components/animation/FadeIn';
 import type { IProject } from '@/interfaces';
 
 const description = `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`;
@@ -95,13 +94,11 @@ export default async function ProjectsPage() {
 
       {/* Empty State */}
       {!hasProjects && (
-        <FadeIn delay={0.3}>
-          <div className="text-center py-20">
-            <p className="text-[var(--fg-muted)] text-lg">
-              Projects coming soon.
-            </p>
-          </div>
-        </FadeIn>
+        <div className="text-center py-20">
+          <p className="text-[var(--fg-muted)] text-lg">
+            Projects coming soon.
+          </p>
+        </div>
       )}
 
       {/* Projects Sections */}
@@ -109,62 +106,58 @@ export default async function ProjectsPage() {
         <div className="space-y-20">
           {/* Featured Projects */}
           {featuredProjects.length > 0 && (
-            <FadeIn as="section" delay={0.3}>
+            <section>
               <h2 className="text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8">
                 Featured Work
               </h2>
-              <FadeInStagger className="grid gap-8 md:grid-cols-2">
+              <div className="grid gap-8 md:grid-cols-2">
                 {featuredProjects.map((project, i) => (
-                  <StaggerItem key={project.slug}>
-                    <ProjectCard
-                      project={project}
-                      index={i}
-                      featured
-                    />
-                  </StaggerItem>
+                  <ProjectCard
+                    key={project.slug}
+                    project={project}
+                    index={i}
+                    featured
+                  />
                 ))}
-              </FadeInStagger>
-            </FadeIn>
+              </div>
+            </section>
           )}
 
           {/* Other Projects */}
           {otherProjects.length > 0 && (
-            <FadeIn as="section" delay={featuredProjects.length > 0 ? 0.5 : 0.3}>
+            <section>
               <h2 className="text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8">
                 More Projects
               </h2>
-              <FadeInStagger className="grid gap-8 md:grid-cols-2">
+              <div className="grid gap-8 md:grid-cols-2">
                 {otherProjects.map((project, i) => (
-                  <StaggerItem key={project.slug}>
-                    <ProjectCard
-                      project={project}
-                      index={i}
-                    />
-                  </StaggerItem>
+                  <ProjectCard
+                    key={project.slug}
+                    project={project}
+                    index={i}
+                  />
                 ))}
-              </FadeInStagger>
-            </FadeIn>
+              </div>
+            </section>
           )}
         </div>
       )}
 
       {/* GitHub CTA */}
-      <FadeIn delay={hasProjects ? 0.7 : 0.5}>
-        <div className="mt-20 text-center">
-          <p className="text-[var(--fg-muted)] mb-6">
-            Want to see more? Check out my GitHub for additional projects.
-          </p>
-          <Link
-            href={githubUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[var(--fg)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
-          >
-            <ArrowUpRight className="size-5" />
-            View on GitHub
-          </Link>
-        </div>
-      </FadeIn>
+      <div className="mt-20 text-center">
+        <p className="text-[var(--fg-muted)] mb-6">
+          Want to see more? Check out my GitHub for additional projects.
+        </p>
+        <Link
+          href={githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-8 py-4 rounded-full bg-[var(--fg)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity"
+        >
+          <ArrowUpRight className="size-5" />
+          View on GitHub
+        </Link>
+      </div>
     </div>
   );
 }

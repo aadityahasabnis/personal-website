@@ -3,7 +3,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, Loader2 } from 'lucide-react';
-import { FadeIn } from '@/components/motion';
 import { subscribe } from '@/server/actions/subscribe';
 
 /**
@@ -54,8 +53,7 @@ export const NewsletterSection = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[var(--accent-subtle)]/30 to-transparent pointer-events-none" />
       
       <div className="container-narrow relative">
-        <FadeIn>
-          <div className="glass-card rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
+        <div className="glass-card rounded-3xl p-8 md:p-12 text-center relative overflow-hidden">
             {/* Decorative Gradient */}
             <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-[var(--sphere-1)] blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-[var(--sphere-2)] blur-3xl translate-y-1/2 -translate-x-1/2" />
@@ -123,7 +121,6 @@ export const NewsletterSection = () => {
               </p>
             </div>
           </div>
-        </FadeIn>
       </div>
     </section>
   );

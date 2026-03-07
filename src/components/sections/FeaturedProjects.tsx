@@ -4,7 +4,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, ExternalLink, Github } from 'lucide-react';
-import { FadeIn, StaggerChildren } from '@/components/motion';
 import type { IProject } from '@/interfaces';
 
 interface IFeaturedProjectsProps {
@@ -21,7 +20,7 @@ export const FeaturedProjects = ({ projects }: IFeaturedProjectsProps) => {
     <section className="py-24 relative bg-[var(--bg-subtle)]">
       <div className="container-wide">
         {/* Section Header */}
-        <FadeIn className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
           <div>
             <span className="label text-[var(--accent)] mb-2 block">Portfolio</span>
             <h2 className="heading-2 text-[var(--fg)]">
@@ -35,14 +34,14 @@ export const FeaturedProjects = ({ projects }: IFeaturedProjectsProps) => {
             View all projects
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
-        </FadeIn>
+        </div>
 
         {/* Projects Grid */}
-        <StaggerChildren className="grid gap-8 md:grid-cols-2">
+        <div className="grid gap-8 md:grid-cols-2">
           {projects.slice(0, 4).map((project) => (
             <ProjectCard key={project._id?.toString() ?? project.slug} project={project} />
           ))}
-        </StaggerChildren>
+        </div>
       </div>
     </section>
   );

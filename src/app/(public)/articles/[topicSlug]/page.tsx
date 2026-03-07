@@ -6,7 +6,6 @@ import * as LucideIcons from 'lucide-react';
 
 import { getTopicWithContent, getAllTopicSlugs } from '@/server/queries/topics';
 import { SubtopicAccordion } from '@/components/content/SubtopicAccordion';
-import { FadeIn } from '@/components/animation/FadeIn';
 import { BeamLine } from '@/components/common/BeamLine';
 import { formatDate } from '@/lib/utils';
 import { SITE_CONFIG } from '@/constants';
@@ -157,20 +156,18 @@ export default async function TopicPage({ params }: ITopicPageProps) {
 
             <div className="max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32">
             {/* Breadcrumb */}
-            <FadeIn delay={0.1}>
-                <nav className="mb-8">
-                    <Link
-                        href="/articles"
-                        className="inline-flex items-center gap-1 text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] transition-colors"
-                    >
-                        <ChevronLeft className="size-4" />
-                        All Topics
-                    </Link>
-                </nav>
-            </FadeIn>
+            <nav className="mb-8">
+                <Link
+                    href="/articles"
+                    className="inline-flex items-center gap-1 text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] transition-colors"
+                >
+                    <ChevronLeft className="size-4" />
+                    All Topics
+                </Link>
+            </nav>
 
             {/* Topic Header */}
-            <FadeIn as="header" delay={0.2} className="mb-12">
+            <header className="mb-12">
                 {/* Icon */}
                 <div className="mb-6 inline-flex items-center justify-center size-16 rounded-2xl bg-[var(--accent-subtle)] text-[var(--accent)]">
                     {renderIcon(topic.icon, "size-8")}
@@ -201,16 +198,14 @@ export default async function TopicPage({ params }: ITopicPageProps) {
 
                 {/* Decorative animated beam line */}
                 <BeamLine />
-            </FadeIn>
+            </header>
 
             {/* Subtopics Accordion */}
-            <FadeIn delay={0.4}>
-                <SubtopicAccordion
-                    topicSlug={topicSlug}
-                    subtopics={transformedSubtopics}
-                    articles={transformedArticles}
-                />
-            </FadeIn>
+            <SubtopicAccordion
+                topicSlug={topicSlug}
+                subtopics={transformedSubtopics}
+                articles={transformedArticles}
+            />
         </div>
         </>
     );

@@ -197,7 +197,7 @@ export const deleteNote = async (slug: string): Promise<IApiResponse<void>> => {
         await collection.deleteOne({ type: 'note', slug });
 
         // Also delete associated stats
-        const statsCollection = await getCollection(COLLECTIONS.pageStats);
+        const statsCollection = await getCollection(COLLECTIONS.articleStats);
         await statsCollection.deleteOne({ slug: `notes/${slug}` });
 
         revalidateNotePaths(slug);

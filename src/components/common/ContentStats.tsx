@@ -4,7 +4,7 @@ import { usePageStats, useLikeToggle, type ContentType } from '@/hooks/useConten
 import { Eye, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { siteStorage } from '@/lib/storage';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 
 interface IContentStatsProps {
     /** Content slug (e.g., "dsa/sliding-window" or "note-slug") */
@@ -18,103 +18,54 @@ interface IContentStatsProps {
     className?: string;
 }
 
-/**
- * ContentStats - Fixed like button bug
- * 
- * BUG FIXES:
- * - Like button now shows colored state on refresh
- * - localStorage is ALWAYS checked (not just on initial mount)
- * - Button properly disabled if already liked
- * - No more accidental multiple likes
- * - Fixed SSR hydration issue with React Query
- */
-export function ContentStats({
+export const ContentStats = ({
     slug,
     contentType,
     initialViews,
     initialLikes,
     className,
-}: IContentStatsProps) {
-    const [hasIncrementedView, setHasIncrementedView] = useState(false);
+}: IContentStatsProps) => {
     const [mounted, setMounted] = useState(false);
 
-    // Only run React Query hooks after client mount
     useEffect(() => {
         setMounted(true);
     }, []);
 
-    // Fetch stats from API (with caching) - only on client
-    const { data: stats } = usePageStats(slug, contentType, { enabled: mounted });
+    // Wire initialData so TanStack Query never fires an extra network call on mount
+    const { data: stats } = usePageStats(slug, contentType, {
+        enabled: mounted,
+        initialData: {
+            views: initialViews,
+            likes: initialLikes,
+            userHasLiked: false,
+        },
+    });
+
     const likeMutation = useLikeToggle(slug, contentType);
 
-    // CRITICAL FIX: Use useState with effect to sync with localStorage
-    // This ensures the button shows correct state on refresh AND reacts to changes
+    // Sync liked state with localStorage — handles refresh correctly
     const [userHasLiked, setUserHasLiked] = useState(false);
-    
-    // Sync with localStorage on mount and when slug changes
+
     useEffect(() => {
         setUserHasLiked(siteStorage.hasLiked(slug));
     }, [slug]);
-    
-    // Update when like mutation succeeds
+
     useEffect(() => {
-        if (likeMutation.isSuccess) {
-            setUserHasLiked(true);
-        }
+        if (likeMutation.isSuccess) setUserHasLiked(true);
     }, [likeMutation.isSuccess]);
 
-    // Increment views on mount (with deduplication)
-    useEffect(() => {
-        if (hasIncrementedView) return;
-
-        const incrementView = async () => {
-            // Check if user viewed recently (1 hour dedup)
-            if (siteStorage.hasViewedRecently(slug, 1)) {
-                setHasIncrementedView(true);
-                return;
-            }
-
-            try {
-                await fetch(`/api/${contentType}/${encodeURIComponent(slug)}/views`, {
-                    method: 'POST',
-                });
-                siteStorage.setViewed(slug);
-                setHasIncrementedView(true);
-            } catch (error) {
-                console.error('Failed to increment view:', error);
-            }
-        };
-
-        incrementView();
-    }, [slug, contentType, hasIncrementedView]);
-
     const handleLike = () => {
-        // CRITICAL: Check localStorage BEFORE mutation
-        const alreadyLiked = siteStorage.hasLiked(slug);
-        
-        if (alreadyLiked) {
-            console.log('❌ Already liked (localStorage check)');
-            return;
-        }
-
-        // Prevent multiple clicks while loading
-        if (likeMutation.isPending) {
-            console.log('⏳ Like pending, please wait');
-            return;
-        }
-
-        console.log('✅ Liking content...');
+        if (siteStorage.hasLiked(slug) || likeMutation.isPending) return;
         likeMutation.mutate();
     };
 
-    // Use API data if available, otherwise use initial values
     const views = stats?.views ?? initialViews;
     const likes = stats?.likes ?? initialLikes;
 
     return (
         <div className={cn('flex items-center gap-3 md:gap-4', className)}>
             {/* Views Counter */}
-            <div 
+            <div
                 className="flex items-center gap-1.5 text-sm text-[var(--fg-muted)]"
                 aria-live="polite"
             >
@@ -135,13 +86,11 @@ export function ContentStats({
                     'font-medium text-sm',
                     userHasLiked
                         ? [
-                            // Liked state - Lavender filled (DISABLED)
                             'bg-[var(--accent)] border-[var(--accent)] text-white',
                             'cursor-not-allowed',
                             'shadow-lg shadow-[var(--glow-color)]',
                         ]
                         : [
-                            // Unliked state - Interactive
                             'bg-transparent border-[var(--border-color)] text-[var(--fg-muted)]',
                             'hover:border-[var(--accent)] hover:text-[var(--accent)] hover:bg-[var(--accent)]/5',
                             'hover:scale-105 active:scale-95',
@@ -150,14 +99,14 @@ export function ContentStats({
                         ]
                 )}
             >
-                <Heart 
+                <Heart
                     className={cn(
                         'size-4 transition-all duration-300',
                         userHasLiked && 'fill-current scale-110'
-                    )} 
+                    )}
                 />
                 <span>{likes.toLocaleString()}</span>
             </button>
         </div>
     );
-}
+};

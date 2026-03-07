@@ -1,7 +1,6 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, MapPin, Mail, Briefcase } from 'lucide-react';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants';
@@ -92,16 +91,8 @@ export default function AboutPageClient() {
             className="shrink-0"
           >
             <div className="relative size-40 md:size-48 rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border-color)]">
-              <Image
-                src="/avatar.jpg"
-                alt={SITE_CONFIG.author.name}
-                fill
-                className="object-cover"
-                priority
-                sizes="192px"
-              />
-              {/* Fallback initial */}
-              <div className="absolute inset-0 flex items-center justify-center text-5xl font-light text-[var(--fg-subtle)] -z-10">
+              {/* Placeholder — replace src with actual avatar image when available */}
+              <div className="absolute inset-0 flex items-center justify-center text-5xl font-light text-[var(--fg-subtle)]">
                 {SITE_CONFIG.author.name.charAt(0)}
               </div>
             </div>

@@ -4,7 +4,6 @@ import { getAllTopics, getFeaturedTopics } from '@/server/queries/topics';
 import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TopicGrid } from '@/components/content/TopicGrid';
-import { FadeIn } from '@/components/animation/FadeIn';
 import type { ITopic } from '@/interfaces';
 
 const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
@@ -87,16 +86,16 @@ export default async function ArticlesPage() {
 
             {/* Featured Topics */}
             {transformedFeatured.length > 0 && (
-                <FadeIn delay={0.3} as="section" className="mb-16">
+                <section className="mb-16">
                     <h2 className="text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6">
                         Featured Topics
                     </h2>
                     <TopicGrid topics={transformedFeatured} />
-                </FadeIn>
+                </section>
             )}
 
             {/* All Topics Grid */}
-            <FadeIn delay={0.4} as="section">
+            <section>
                 {transformedAll.length === 0 ? (
                     <div className="text-center py-20">
                         <p className="text-[var(--fg-muted)] text-lg">
@@ -111,7 +110,7 @@ export default async function ArticlesPage() {
                         <TopicGrid topics={transformedAll} />
                     </>
                 )}
-            </FadeIn>
+            </section>
         </div>
     );
 }

@@ -51,6 +51,13 @@ interface IFadeInProps extends HTMLMotionProps<'div'> {
     once?: boolean;
     /** HTML element to render as */
     as?: 'div' | 'section' | 'article' | 'header' | 'footer' | 'aside' | 'main';
+    /**
+     * When true, animates on mount (animate prop) instead of waiting for the
+     * element to enter the viewport (whileInView). Use this for content that
+     * is visible on page load — headers, article bodies, hero sections.
+     * When false (default), uses whileInView — better for below-fold content.
+     */
+    onMount?: boolean;
 }
 
 /**
@@ -68,6 +75,7 @@ export const FadeIn = ({
     className,
     once = true,
     as = 'div',
+    onMount = false,
     ...props
 }: IFadeInProps) => {
     const getInitialPosition = () => {
@@ -81,17 +89,31 @@ export const FadeIn = ({
     };
 
     const Component = motion[as];
+    const initial = { opacity: 0, ...getInitialPosition() };
+    const visible = { opacity: 1, x: 0, y: 0 };
+    const transition = { duration, delay, ease: [0.25, 0.46, 0.45, 0.94] as const };
+
+    if (onMount) {
+        // Animate immediately on mount — never hidden while in viewport
+        return (
+            <Component
+                initial={initial}
+                animate={visible}
+                transition={transition}
+                className={className}
+                {...props}
+            >
+                {children}
+            </Component>
+        );
+    }
 
     return (
         <Component
-            initial={{ opacity: 0, ...getInitialPosition() }}
-            whileInView={{ opacity: 1, x: 0, y: 0 }}
+            initial={initial}
+            whileInView={visible}
             viewport={{ once, margin: '-50px' }}
-            transition={{
-                duration,
-                delay,
-                ease: [0.25, 0.46, 0.45, 0.94],
-            }}
+            transition={transition}
             className={className}
             {...props}
         >

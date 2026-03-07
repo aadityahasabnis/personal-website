@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticle, INote, IProject, IArticleStats, IPageStats, IComment, ISubscriber } from '@/interfaces';
+import type { IArticle, INote, IProject, IArticleStats, IComment, ISubscriber } from '@/interfaces';
 
 /**
  * Analytics Queries for Admin Dashboard
@@ -99,9 +99,8 @@ export const getAnalyticsDashboardData = async (): Promise<IAnalyticsDashboardDa
  */
 async function getTotalStats() {
     try {
-        const [articleStatsCollection, pageStatsCollection, commentsCollection, subscribersCollection] = await Promise.all([
+        const [articleStatsCollection, commentsCollection, subscribersCollection] = await Promise.all([
             getCollection<IArticleStats>(COLLECTIONS.articleStats),
-            getCollection<IPageStats>(COLLECTIONS.pageStats),
             getCollection<IComment>(COLLECTIONS.comments),
             getCollection<ISubscriber>(COLLECTIONS.subscribers),
         ]);
@@ -119,28 +118,14 @@ async function getTotalStats() {
             ])
             .toArray();
 
-        // Aggregate page stats
-        const pageStatsAgg = await pageStatsCollection
-            .aggregate([
-                {
-                    $group: {
-                        _id: null,
-                        totalViews: { $sum: '$views' },
-                        totalLikes: { $sum: '$likes' },
-                    },
-                },
-            ])
-            .toArray();
-
         const articleStats = articleStatsAgg[0] || { totalViews: 0, totalLikes: 0 };
-        const pageStats = pageStatsAgg[0] || { totalViews: 0, totalLikes: 0 };
 
         const totalComments = await commentsCollection.countDocuments({ approved: true });
         const totalSubscribers = await subscribersCollection.countDocuments({ confirmed: true });
 
         return {
-            totalViews: (articleStats.totalViews || 0) + (pageStats.totalViews || 0),
-            totalLikes: (articleStats.totalLikes || 0) + (pageStats.totalLikes || 0),
+            totalViews: articleStats.totalViews || 0,
+            totalLikes: articleStats.totalLikes || 0,
             totalComments,
             totalSubscribers,
         };
@@ -202,26 +187,10 @@ async function getTopArticles(limit: number) {
 
 /**
  * Get top pages by views
+ * Note: pageStats collection removed; notes/articles all use articleStats.
  */
-async function getTopPages(limit: number) {
-    try {
-        const pageStatsCollection = await getCollection<IPageStats>(COLLECTIONS.pageStats);
-
-        const topPages = await pageStatsCollection
-            .find({})
-            .sort({ views: -1 })
-            .limit(limit)
-            .toArray();
-
-        return topPages.map((page) => ({
-            slug: page.slug,
-            views: page.views || 0,
-            likes: page.likes || 0,
-        }));
-    } catch (error) {
-        console.error('Failed to fetch top pages', error);
-        return [];
-    }
+async function getTopPages(_limit: number) {
+    return [];
 }
 
 /**

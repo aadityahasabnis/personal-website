@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ContentCard } from '@/components/content/ContentCard';
-import { FadeIn, FadeInStagger, StaggerItem } from '@/components/animation/FadeIn';
 import { Filter } from 'lucide-react';
 import type { INote } from '@/interfaces';
 
@@ -43,85 +42,81 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
     return (
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24 md:py-32">
             {/* Page Header */}
-            <FadeIn delay={0.1}>
-                <PageHeader
-                    label="Knowledge"
-                    title="Notes"
-                    description="Quick snippets, learnings, and atomic knowledge. Short-form content that captures ideas, discoveries, and things I learn along the way."
-                />
-            </FadeIn>
+            <PageHeader
+                label="Knowledge"
+                title="Notes"
+                description="Quick snippets, learnings, and atomic knowledge. Short-form content that captures ideas, discoveries, and things I learn along the way."
+            />
 
             {/* Tag Filter */}
             {allTags.length > 0 && (
-                <FadeIn delay={0.3}>
-                    <div className="mb-8 md:mb-12">
-                        {/* Filter Header */}
-                        <div className="flex items-center gap-2 mb-4 md:mb-6">
-                            <div className="size-8 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
-                                <Filter className="size-4 text-[var(--accent)]" />
-                            </div>
-                            <h2 className="text-base md:text-lg font-semibold text-[var(--fg)]">
-                                Filter by Tag
-                            </h2>
-                            {selectedTag && (
-                                <span className="text-sm text-[var(--fg-subtle)]">
-                                    ({filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'})
-                                </span>
-                            )}
-                            {!selectedTag && (
-                                <span className="text-sm text-[var(--fg-subtle)]">
-                                    (Showing all {filteredNotes.length} notes)
-                                </span>
-                            )}
+                <div className="mb-8 md:mb-12">
+                    {/* Filter Header */}
+                    <div className="flex items-center gap-2 mb-4 md:mb-6">
+                        <div className="size-8 rounded-full bg-[var(--accent)]/10 flex items-center justify-center">
+                            <Filter className="size-4 text-[var(--accent)]" />
                         </div>
-
-                        {/* Tag Pills - Toggle functionality */}
-                        <div className="flex flex-wrap gap-2 md:gap-3">
-                            {/* "All" Tag - Always shows all notes */}
-                            <button
-                                onClick={() => setSelectedTag(null)}
-                                className={`
-                                    inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-                                    transition-all duration-200
-                                    ${
-                                        !selectedTag
-                                            ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
-                                            : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                                    }
-                                `}
-                            >
-                                All Notes
-                            </button>
-
-                            {/* Individual Tags - Click to toggle */}
-                            {allTags.map((tag) => {
-                                const isActive = selectedTag === tag;
-                                
-                                return (
-                                    <button
-                                        key={tag}
-                                        onClick={() => handleTagClick(tag)}
-                                        className={`
-                                            inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-                                            transition-all duration-200
-                                            ${
-                                                isActive
-                                                    ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
-                                                    : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
-                                            }
-                                        `}
-                                    >
-                                        {tag}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                        <h2 className="text-base md:text-lg font-semibold text-[var(--fg)]">
+                            Filter by Tag
+                        </h2>
+                        {selectedTag && (
+                            <span className="text-sm text-[var(--fg-subtle)]">
+                                ({filteredNotes.length} {filteredNotes.length === 1 ? 'note' : 'notes'})
+                            </span>
+                        )}
+                        {!selectedTag && (
+                            <span className="text-sm text-[var(--fg-subtle)]">
+                                (Showing all {filteredNotes.length} notes)
+                            </span>
+                        )}
                     </div>
-                </FadeIn>
+
+                    {/* Tag Pills - Toggle functionality */}
+                    <div className="flex flex-wrap gap-2 md:gap-3">
+                        {/* "All" Tag - Always shows all notes */}
+                        <button
+                            onClick={() => setSelectedTag(null)}
+                            className={`
+                                inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                                transition-all duration-200
+                                ${
+                                    !selectedTag
+                                        ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                        : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                                }
+                            `}
+                        >
+                            All Notes
+                        </button>
+
+                        {/* Individual Tags - Click to toggle */}
+                        {allTags.map((tag) => {
+                            const isActive = selectedTag === tag;
+                            
+                            return (
+                                <button
+                                    key={tag}
+                                    onClick={() => handleTagClick(tag)}
+                                    className={`
+                                        inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
+                                        transition-all duration-200
+                                        ${
+                                            isActive
+                                                ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                                : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                                        }
+                                    `}
+                                >
+                                    {tag}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
             )}
 
             {/* Notes Grid */}
-            <FadeIn delay={0.4} key={`notes-grid-${selectedTag || 'all'}`}>
+            <div key={`notes-grid-${selectedTag || 'all'}`}>
                 {filteredNotes.length === 0 ? (
                     <div className="text-center py-16 md:py-20">
                         {selectedTag ? (
@@ -143,23 +138,22 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                         )}
                     </div>
                 ) : (
-                    <FadeInStagger className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" key={`stagger-${selectedTag || 'all'}`}>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                         {filteredNotes.map((note, i) => (
-                            <StaggerItem key={note.slug}>
-                                <ContentCard
-                                    href={`/notes/${note.slug}`}
-                                    title={note.title}
-                                    description={note.description}
-                                    tags={note.tags}
-                                    date={note.publishedAt}
-                                    variant="compact"
-                                    index={i}
-                                />
-                            </StaggerItem>
+                            <ContentCard
+                                key={note.slug}
+                                href={`/notes/${note.slug}`}
+                                title={note.title}
+                                description={note.description}
+                                tags={note.tags}
+                                date={note.publishedAt}
+                                variant="compact"
+                                index={i}
+                            />
                         ))}
-                    </FadeInStagger>
+                    </div>
                 )}
-            </FadeIn>
+            </div>
         </div>
     );
 }

@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { ArrowRight, Calendar, Clock, Eye } from 'lucide-react';
-import { FadeIn, StaggerChildren } from '@/components/motion';
+import { ArrowRight, Calendar, Clock } from 'lucide-react';
 import type { IContent } from '@/interfaces';
 
 interface IFeaturedArticlesProps {
@@ -20,7 +19,7 @@ export const FeaturedArticles = ({ articles }: IFeaturedArticlesProps) => {
     <section className="py-24 relative">
       <div className="container-wide">
         {/* Section Header */}
-        <FadeIn className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-12">
           <div>
             <span className="label text-[var(--accent)] mb-2 block">Latest Articles</span>
             <h2 className="heading-2 text-[var(--fg)]">
@@ -34,14 +33,14 @@ export const FeaturedArticles = ({ articles }: IFeaturedArticlesProps) => {
             View all articles
             <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
           </Link>
-        </FadeIn>
+        </div>
 
         {/* Articles Grid */}
-        <StaggerChildren className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {articles.slice(0, 3).map((article) => (
             <ArticleCard key={article._id?.toString() ?? article.slug} article={article} />
           ))}
-        </StaggerChildren>
+        </div>
       </div>
     </section>
   );
