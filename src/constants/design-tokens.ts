@@ -1,12 +1,12 @@
+import { cn } from '@/lib/utils';
+
 /**
  * Design Tokens & Color System
- * 
- * This file documents all CSS variables and provides TypeScript constants
- * for use in components. All colors are defined in globals.css and should
- * be referenced via CSS variables for proper theme support.
- * 
- * **DO NOT hardcode hex colors in components!**
- * Always use: `var(--accent)` or the constants below.
+ *
+ * Documents all CSS variables and provides TypeScript constants for use in
+ * components. All colors are defined in globals.css for proper theme support.
+ *
+ * DO NOT hardcode hex colors in components — use `var(--accent)` or constants.
  */
 
 // ===== COLOR SYSTEM =====
@@ -186,13 +186,6 @@ export const ANIMATION_DELAYS = {
 // ===== UTILITY CLASS HELPERS =====
 
 /**
- * Helper to combine design token classes with custom classes
- */
-export function cn(...classes: (string | undefined | false)[]): string {
-  return classes.filter(Boolean).join(' ');
-}
-
-/**
  * Get max-width + padding combo for page containers
  */
 export function getContainerClasses(variant: keyof typeof MAX_WIDTH = 'default'): string {
@@ -208,52 +201,3 @@ export const ACCENT_CLASSES = {
   border: 'border-[var(--accent)] hover:border-[var(--accent-hover)]',
   ring: 'ring-[var(--accent)] focus:ring-[var(--accent)]',
 } as const;
-
-// ===== USAGE EXAMPLES =====
-
-/**
- * Example: Using colors in inline styles
- * 
- * ```tsx
- * <div style={{ background: COLORS.accent }}>...</div>
- * ```
- * 
- * Example: Using colors in className
- * 
- * ```tsx
- * <div className="bg-[var(--accent)] text-[var(--accent-fg)]">...</div>
- * ```
- * 
- * Example: Using utility classes
- * 
- * ```tsx
- * <button className="btn-primary">Click me</button>
- * <input className="input-base" />
- * <span className="badge-primary">New</span>
- * ```
- * 
- * Example: Using container helper
- * 
- * ```tsx
- * <div className={getContainerClasses('wide')}>...</div>
- * // Outputs: "max-w-6xl mx-auto px-6 lg:px-8 py-24 md:py-32"
- * ```
- */
-
-// ===== MIGRATION GUIDE =====
-
-/**
- * MIGRATION: Replacing hardcoded hex colors
- * 
- * Old (hardcoded):
- * - bg-[#9b87f5]           → bg-[var(--accent)]
- * - text-[#9b87f5]         → text-[var(--accent)]
- * - border-[#9b87f5]       → border-[var(--accent)]
- * - hover:bg-[#8b77e5]     → hover:bg-[var(--accent-hover)]
- * - shadow-[#9b87f5]/30    → shadow-[var(--glow-color)]
- * - bg-[#9b87f5]/10        → bg-[var(--accent-subtle)]
- * - bg-[#9b87f5]/20        → badge-accent-subtle (use utility class)
- * 
- * New (CSS variables):
- * Use the CSS variable directly or the exported constants above.
- */

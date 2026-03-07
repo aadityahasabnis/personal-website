@@ -2,12 +2,10 @@ import * as React from 'react';
 
 import { cn } from '@/lib/utils';
 
+// Table wrapper - simplified to allow parent containers to control scrolling
+// When used standalone, add scroll classes to the wrapper className
 const Table = React.forwardRef<HTMLTableElement, React.HTMLAttributes<HTMLTableElement> & { tableClassName?: string }>(({ className, tableClassName, ...props }, ref) => (
-    <div className={`relative w-full overflow-auto border max-h-dvh bg-card
-        [&::-webkit-scrollbar:vertical]:w-0
-      [&::-webkit-scrollbar:horizontal]:h-3
-      [&::-webkit-scrollbar-track]:bg-transparent
-    [&::-webkit-scrollbar-thumb:horizontal]:bg-muted-foreground ${className}`}>
+    <div className={cn('relative w-full', className)}>
         <table ref={ref} className={cn('min-w-full w-full text-sm', tableClassName)} {...props} />
     </div>
 ));

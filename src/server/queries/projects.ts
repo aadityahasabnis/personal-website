@@ -1,7 +1,8 @@
 import { getCollection } from '@/lib/db/connect';
+import { COLLECTIONS } from '@/constants';
 import type { IProject } from '@/interfaces';
 
-const COLLECTION_NAME = 'projects';
+const COLLECTION_NAME = COLLECTIONS.projects;
 
 /**
  * Get all projects, sorted by order

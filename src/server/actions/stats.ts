@@ -51,3 +51,28 @@ export const getContentStats = async (slug: string): Promise<IContentStats> => {
         return { views: 0, likes: 0 };
     }
 };
+
+/**
+ * Get stats for multiple slugs in a single query
+ */
+export const getBulkContentStats = async (slugs: string[]): Promise<Map<string, IContentStats>> => {
+    const result = new Map<string, IContentStats>();
+    if (slugs.length === 0) return result;
+
+    try {
+        const collection = await getCollection<IArticleStats>(COLLECTIONS.articleStats);
+        const stats = await collection.find({ slug: { $in: slugs } }).toArray();
+        
+        for (const stat of stats) {
+            result.set(stat.slug, { views: stat.views ?? 0, likes: stat.likes ?? 0 });
+        }
+        // Fill in missing slugs with zeros
+        for (const slug of slugs) {
+            if (!result.has(slug)) result.set(slug, { views: 0, likes: 0 });
+        }
+    } catch (error) {
+        console.error('Failed to fetch bulk stats', error);
+        for (const slug of slugs) result.set(slug, { views: 0, likes: 0 });
+    }
+    return result;
+};

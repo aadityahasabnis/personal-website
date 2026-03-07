@@ -4,6 +4,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 // ===== TYPES =====
 
@@ -104,29 +111,29 @@ export function TableSearch({
                 )}
             </div>
 
-            {/* Inline Filter Dropdowns - Minimal Design */}
+            {/* Inline Filter Dropdowns - Using Radix Select for proper theming */}
             {filters.length > 0 && (
                 <>
                     {filters.map((filter) => (
                         <div key={filter.id} className="min-w-[160px]">
-                            {filter.type === 'select' && (
-                                <select
-                                    value={filterValues[filter.id] || ''}
-                                    onChange={(e) =>
-                                        handleFilterValueChange(filter.id, e.target.value)
+                            {filter.type === 'select' && filter.options && (
+                                <Select
+                                    value={filterValues[filter.id] || filter.options[0]?.value || ''}
+                                    onValueChange={(value) =>
+                                        handleFilterValueChange(filter.id, value)
                                     }
-                                    className={cn(
-                                        'h-9 w-full rounded-md border border-border bg-background px-3 py-1 text-sm',
-                                        'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
-                                        'transition-colors'
-                                    )}
                                 >
-                                    {filter.options?.map((option) => (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    ))}
-                                </select>
+                                    <SelectTrigger className="h-9 w-full">
+                                        <SelectValue placeholder={filter.label} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {filter.options.map((option) => (
+                                            <SelectItem key={option.value} value={option.value || '_all'}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             )}
                         </div>
                     ))}

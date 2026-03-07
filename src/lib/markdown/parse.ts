@@ -38,14 +38,9 @@ export const parseMarkdown = async (markdown: string): Promise<string> => {
     return String(result);
 };
 
-/**
- * Calculate reading time in minutes
- */
-export const calculateReadingTime = (text: string): number => {
-    const wordsPerMinute = 200;
-    const words = text.trim().split(/\s+/).length;
-    return Math.ceil(words / wordsPerMinute);
-};
+import { calculateReadingTime } from '@/lib/utils';
+
+export { calculateReadingTime };
 
 /**
  * Strip markdown to plain text (for excerpts)

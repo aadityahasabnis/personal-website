@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Send, CheckCircle, Loader2 } from 'lucide-react';
-import { subscribe } from '@/server/actions/subscribe';
+import { subscribe } from '@/server/actions/subscribers';
 
 /**
  * Newsletter Section for homepage
@@ -21,11 +21,7 @@ export const NewsletterSection = () => {
     setStatus('loading');
     
     try {
-      // Create FormData from form
-      const formData = new FormData();
-      formData.append('email', email);
-      
-      const result = await subscribe(formData);
+      const result = await subscribe({ email });
       
       if (result.success) {
         setStatus('success');

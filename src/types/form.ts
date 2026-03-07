@@ -1,5 +1,4 @@
 // Type utilities for form handling
-// Adapted from refer-2 genericInterfaces.ts
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -36,18 +35,10 @@ export type DeepPartial<T> = T extends object
     ? { [P in keyof T]?: DeepPartial<T[P]> }
     : T;
 
-// API response types
-export interface IApiResponse<T = unknown> {
-    success: boolean;
-    status: number;
-    data?: T;
-    message?: string;
-    error?: string;
-}
+// Re-export IApiResponse from canonical source (interfaces/index.ts)
+export type { IApiResponse, IFormData } from '@/interfaces';
 
-// Form data base type
-export type IFormData<T = Record<string, any>> = T;
-
+// Form data base type (kept for legacy compatibility — prefer IFormData from @/interfaces)
 // Handle change event type
 export interface IHandleChangeEvent {
     target: {
@@ -57,3 +48,4 @@ export interface IHandleChangeEvent {
 }
 
 export type IHandleChange = (e: IHandleChangeEvent) => void;
+

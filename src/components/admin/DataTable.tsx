@@ -86,10 +86,16 @@ export function DataTable<TData>({
     // Refs
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const isLoadingMore = useRef(false);
+    const prevDataRef = useRef<TData[]>(data);
 
-    // Sync local data with props
+    // Sync local data with props - only when data prop actually changes
+    // Using a ref comparison to prevent infinite loops
     useEffect(() => {
-        setLocalData(data);
+        // Only update if the data reference has actually changed
+        if (prevDataRef.current !== data) {
+            prevDataRef.current = data;
+            setLocalData(data);
+        }
     }, [data]);
 
     // ===== SELECTION HANDLERS =====
@@ -238,8 +244,8 @@ export function DataTable<TData>({
     }
 
     return (
-        <div className={cn('rounded-xl border bg-card overflow-hidden', className)}>
-            <div className="overflow-x-auto">
+        <div className={cn('rounded-xl border bg-card', className)}>
+            <div className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
                 <Table>
                     <TableHeader>
                         <TableRow className="hover:bg-transparent">

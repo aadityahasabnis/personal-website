@@ -1,591 +1,291 @@
-"use client";
+'use client';
 
-import { useState, useTransition, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Loader2, Save } from "lucide-react";
+import { useState, useTransition, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeft, Loader2, Save } from 'lucide-react';
 
-import { cn } from "@/lib/utils";
-import { createArticle, updateArticle } from "@/server/actions/articles";
-import type { IArticle, ITopic, ISubtopic } from "@/interfaces";
-import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { calculateReadingTime, slugify } from '@/lib/utils';
+import { createArticle, updateArticle } from '@/server/actions/articles';
+import type { IArticle, ITopic, ISubtopic } from '@/interfaces';
+import { RichTextEditor } from '@/components/admin/RichTextEditor';
+import {
+    FormInput,
+    FormTextarea,
+    FormSelect,
+    FormCheckbox,
+    TagInput,
+    FormSection,
+    FormActions,
+    FormError,
+} from '@/components/admin/form';
 
 interface IArticleFormProps {
-  article?: IArticle;
-  topics: ITopic[];
-  allSubtopics: ISubtopic[];
-  isEditing?: boolean;
+    article?: IArticle;
+    topics: ITopic[];
+    allSubtopics: ISubtopic[];
+    isEditing?: boolean;
 }
 
-const generateSlug = (title: string): string => {
-  return title
-    .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .trim();
-};
+export const ArticleForm = ({ article, topics, allSubtopics, isEditing = false }: IArticleFormProps): React.ReactElement => {
+    const router = useRouter();
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
 
-const calculateReadingTime = (text: string): number => {
-  const wordsPerMinute = 200;
-  const wordCount = text.trim().split(/\s+/).length;
-  return Math.max(1, Math.ceil(wordCount / wordsPerMinute));
-};
+    // Form state
+    const [title, setTitle] = useState(article?.title ?? '');
+    const [slug, setSlug] = useState(article?.slug ?? '');
+    const [topicSlug, setTopicSlug] = useState(article?.topicSlug ?? '');
+    const [subtopicSlug, setSubtopicSlug] = useState(article?.subtopicSlug ?? '');
+    const [description, setDescription] = useState(article?.description ?? '');
+    const [markdownBody, setMarkdownBody] = useState(article?.body ?? '');
+    const [tags, setTags] = useState<string[]>(article?.tags ?? []);
+    const [coverImage, setCoverImage] = useState(article?.coverImage ?? '');
+    const [order, setOrder] = useState(article?.order ?? 0);
+    const [published, setPublished] = useState(article?.published ?? false);
+    const [featured, setFeatured] = useState(article?.featured ?? false);
 
-export const ArticleForm = ({
-  article,
-  topics,
-  allSubtopics,
-  isEditing = false,
-}: IArticleFormProps): React.ReactElement => {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+    // SEO state
+    const [seoTitle, setSeoTitle] = useState(article?.seo?.title ?? '');
+    const [seoDescription, setSeoDescription] = useState(article?.seo?.description ?? '');
+    const [seoKeywords, setSeoKeywords] = useState<string[]>(article?.seo?.keywords ?? []);
+    const [ogImage, setOgImage] = useState(article?.seo?.ogImage ?? '');
 
-  // Form state
-  const [title, setTitle] = useState(article?.title ?? "");
-  const [slug, setSlug] = useState(article?.slug ?? "");
-  const [topicSlug, setTopicSlug] = useState(article?.topicSlug ?? "");
-  const [subtopicSlug, setSubtopicSlug] = useState(article?.subtopicSlug ?? "");
-  const [description, setDescription] = useState(article?.description ?? "");
-  const [markdownBody, setMarkdownBody] = useState(article?.body ?? "");
+    const [autoSlug, setAutoSlug] = useState(!isEditing);
 
-  const [tags, setTags] = useState<string[]>(article?.tags ?? []);
-  const [tagInput, setTagInput] = useState("");
-  const [coverImage, setCoverImage] = useState(article?.coverImage ?? "");
-  const [order, setOrder] = useState(article?.order ?? 0);
-  const [published, setPublished] = useState(article?.published ?? false);
-  const [featured, setFeatured] = useState(article?.featured ?? false);
+    // Computed values
+    const availableSubtopics = useMemo(() => 
+        allSubtopics.filter((st) => st.topicSlug === topicSlug), 
+        [allSubtopics, topicSlug]
+    );
 
-  // SEO fields
-  const [seoTitle, setSeoTitle] = useState(article?.seo?.title ?? "");
-  const [seoDescription, setSeoDescription] = useState(
-    article?.seo?.description ?? "",
-  );
-  const [seoKeywords, setSeoKeywords] = useState<string[]>(
-    article?.seo?.keywords ?? [],
-  );
-  const [seoKeywordInput, setSeoKeywordInput] = useState("");
-  const [ogImage, setOgImage] = useState(article?.seo?.ogImage ?? "");
+    const topicOptions = useMemo(() => 
+        topics.map((t) => ({ value: t.slug, label: t.title })), 
+        [topics]
+    );
 
-  const [autoSlug, setAutoSlug] = useState(!isEditing);
+    const subtopicOptions = useMemo(() => 
+        availableSubtopics.map((st) => ({ value: st.slug, label: st.title })), 
+        [availableSubtopics]
+    );
 
-  // Filter subtopics based on selected topic
-  const availableSubtopics = allSubtopics.filter(
-    (st) => st.topicSlug === topicSlug,
-  );
+    const stats = useMemo(() => ({
+        wordCount: markdownBody.trim().split(/\s+/).filter(Boolean).length,
+        readingTime: calculateReadingTime(markdownBody),
+    }), [markdownBody]);
 
-  // Calculate stats
-  const stats = {
-    wordCount: markdownBody.trim().split(/\s+/).filter(Boolean).length,
-    readingTime: calculateReadingTime(markdownBody),
-  };
-
-  // Reset subtopic if topic changes
-  useEffect(() => {
-    if (topicSlug) {
-      const hasValidSubtopic = availableSubtopics.find(
-        (st) => st.slug === subtopicSlug,
-      );
-      if (!hasValidSubtopic && subtopicSlug) {
-        setSubtopicSlug("");
-      }
-    }
-  }, [topicSlug]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (autoSlug && title) {
-      const newSlug = generateSlug(title);
-      if (newSlug !== slug) {
-        setSlug(newSlug);
-      }
-    }
-  }, [title, autoSlug]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Handle submit
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    // Validation
-    if (!title.trim()) {
-      setError("Title is required");
-      return;
-    }
-    if (!slug.trim()) {
-      setError("Slug is required");
-      return;
-    }
-    if (!description.trim()) {
-      setError("Description is required");
-      return;
-    }
-    if (!topicSlug) {
-      setError("Topic is required");
-      return;
-    }
-    if (!markdownBody.trim()) {
-      setError("Article content is required");
-      return;
-    }
-
-    startTransition(async () => {
-      const data = {
-        title,
-        slug,
-        description,
-        topicSlug,
-        subtopicSlug: subtopicSlug || undefined,
-        body: markdownBody,
-        tags,
-        coverImage: coverImage || undefined,
-        order,
-        readingTime: stats.readingTime,
-        seo: {
-          title: seoTitle || undefined,
-          description: seoDescription || undefined,
-          keywords: seoKeywords.length > 0 ? seoKeywords : undefined,
-          ogImage: ogImage || undefined,
-        },
-      };
-
-      try {
-        let result;
-        if (isEditing && article) {
-          result = await updateArticle(article.topicSlug, article.slug, data);
-        } else {
-          result = await createArticle(data);
+    // Reset subtopic when topic changes
+    useEffect(() => {
+        if (topicSlug && subtopicSlug) {
+            const hasValid = availableSubtopics.some((st) => st.slug === subtopicSlug);
+            if (!hasValid) setSubtopicSlug('');
         }
+    }, [topicSlug, subtopicSlug, availableSubtopics]);
 
-        if (result.success) {
-          router.push("/admin/articles");
-          router.refresh();
-        } else {
-          setError(result.error ?? "Failed to save article");
-        }
-      } catch (err) {
-        console.error("Error saving article:", err);
-        setError("An unexpected error occurred");
-      }
-    });
-  };
+    // Auto-generate slug from title
+    useEffect(() => {
+        if (autoSlug && title) setSlug(slugify(title));
+    }, [title, autoSlug]);
 
-  // Tag handlers
-  const handleAddTag = () => {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
-    }
-  };
+    // Form submission
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
 
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter((tag) => tag !== tagToRemove));
-  };
+        // Validation
+        if (!title.trim()) return setError('Title is required');
+        if (!slug.trim()) return setError('Slug is required');
+        if (!description.trim()) return setError('Description is required');
+        if (!topicSlug) return setError('Topic is required');
+        if (!markdownBody.trim()) return setError('Article content is required');
 
-  // SEO Keyword handlers
-  const handleAddKeyword = () => {
-    if (
-      seoKeywordInput.trim() &&
-      !seoKeywords.includes(seoKeywordInput.trim())
-    ) {
-      setSeoKeywords([...seoKeywords, seoKeywordInput.trim()]);
-      setSeoKeywordInput("");
-    }
-  };
+        startTransition(async () => {
+            const data = {
+                title,
+                slug,
+                description,
+                topicSlug,
+                subtopicSlug: subtopicSlug || undefined,
+                body: markdownBody,
+                tags,
+                coverImage: coverImage || undefined,
+                order,
+                readingTime: stats.readingTime,
+                seo: {
+                    title: seoTitle || undefined,
+                    description: seoDescription || undefined,
+                    keywords: seoKeywords.length ? seoKeywords : undefined,
+                    ogImage: ogImage || undefined,
+                },
+            };
 
-  const handleRemoveKeyword = (keywordToRemove: string) => {
-    setSeoKeywords(seoKeywords.filter((kw) => kw !== keywordToRemove));
-  };
+            try {
+                const result = isEditing && article
+                    ? await updateArticle(article.topicSlug, article.slug, data)
+                    : await createArticle(data);
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/admin/articles"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Articles
-          </Link>
-          <h1 className="text-2xl font-bold">
-            {isEditing ? "Edit Article" : "Create New Article"}
-          </h1>
-        </div>
-      </div>
+                if (result.success) {
+                    router.push('/admin/articles');
+                    router.refresh();
+                } else {
+                    setError(result.error ?? 'Failed to save article');
+                }
+            } catch {
+                setError('An unexpected error occurred');
+            }
+        });
+    };
 
-      {/* Error Display */}
-      {error && (
-        <div className="p-4 bg-destructive/10 border border-destructive rounded-lg text-destructive text-sm">
-          {error}
-        </div>
-      )}
+    return (
+        <div className="space-y-8">
+            {/* Header */}
+            <div className="flex items-center gap-4">
+                <Link
+                    href="/admin/articles"
+                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Articles
+                </Link>
+                <h1 className="text-2xl font-bold">{isEditing ? 'Edit Article' : 'Create New Article'}</h1>
+            </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic Info */}
-        <div className="space-y-6 p-6 border rounded-lg bg-card">
-          <h2 className="text-lg font-semibold">Basic Information</h2>
+            <FormError message={error} />
 
-          {/* Title */}
-          <div className="space-y-2">
-            <label htmlFor="title" className="text-sm font-medium">
-              Title <span className="text-destructive">*</span>
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Enter article title"
-              required
-            />
-          </div>
+            <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Basic Info */}
+                <FormSection title="Basic Information">
+                    <FormInput
+                        label="Title"
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Enter article title"
+                        required
+                    />
 
-          {/* Slug */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="slug" className="text-sm font-medium">
-                Slug <span className="text-destructive">*</span>
-              </label>
-              <label className="flex items-center gap-2 text-sm text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={autoSlug}
-                  onChange={(e) => setAutoSlug(e.target.checked)}
-                  className="rounded"
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                            <label className="text-sm font-medium">
+                                Slug <span className="text-destructive">*</span>
+                            </label>
+                            <FormCheckbox
+                                label="Auto-generate"
+                                checked={autoSlug}
+                                onChange={(e) => setAutoSlug(e.target.checked)}
+                            />
+                        </div>
+                        <input
+                            type="text"
+                            value={slug}
+                            onChange={(e) => setSlug(e.target.value)}
+                            disabled={autoSlug}
+                            placeholder="article-slug"
+                            required
+                            className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                    </div>
+
+                    <FormTextarea
+                        label="Description"
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Brief description of the article"
+                        showCount
+                        required
+                    />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormSelect
+                            label="Topic"
+                            value={topicSlug}
+                            onChange={setTopicSlug}
+                            options={topicOptions}
+                            placeholder="Select a topic"
+                            required
+                        />
+                        <FormSelect
+                            label="Subtopic"
+                            value={subtopicSlug}
+                            onChange={setSubtopicSlug}
+                            options={subtopicOptions}
+                            placeholder="No subtopic"
+                            disabled={!topicSlug || !availableSubtopics.length}
+                        />
+                    </div>
+
+                    <FormInput
+                        label="Order"
+                        type="number"
+                        value={order}
+                        onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
+                        hint="Display order within topic/subtopic"
+                        min={0}
+                    />
+
+                    <TagInput label="Tags" tags={tags} onChange={setTags} placeholder="Add a tag" />
+
+                    <FormInput
+                        label="Cover Image URL"
+                        type="url"
+                        value={coverImage}
+                        onChange={(e) => setCoverImage(e.target.value)}
+                        placeholder="https://example.com/image.jpg"
+                    />
+
+                    <div className="flex gap-6">
+                        <FormCheckbox label="Published" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+                        <FormCheckbox label="Featured" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+                    </div>
+                </FormSection>
+
+                {/* Content Editor */}
+                <FormSection title="Content">
+                    <div className="flex items-center justify-between -mt-2 mb-4">
+                        <span className="text-sm text-muted-foreground">
+                            {stats.wordCount} words · {stats.readingTime} min read
+                        </span>
+                    </div>
+                    <RichTextEditor
+                        value={markdownBody}
+                        onChange={setMarkdownBody}
+                        onSave={(html) => setMarkdownBody(html)}
+                        placeholder="Start writing your article… press '/' for commands"
+                        minHeight="500px"
+                    />
+                </FormSection>
+
+                {/* SEO Section */}
+                <FormSection title="SEO Settings">
+                    <FormInput
+                        label="SEO Title"
+                        value={seoTitle}
+                        onChange={(e) => setSeoTitle(e.target.value)}
+                        placeholder="Leave empty to use article title"
+                    />
+                    <FormTextarea
+                        label="SEO Description"
+                        value={seoDescription}
+                        onChange={(e) => setSeoDescription(e.target.value)}
+                        placeholder="Leave empty to use article description"
+                    />
+                    <TagInput label="SEO Keywords" tags={seoKeywords} onChange={setSeoKeywords} placeholder="Add a keyword" />
+                    <FormInput
+                        label="Open Graph Image URL"
+                        type="url"
+                        value={ogImage}
+                        onChange={(e) => setOgImage(e.target.value)}
+                        placeholder="https://example.com/og-image.jpg"
+                    />
+                </FormSection>
+
+                {/* Actions */}
+                <FormActions
+                    cancelHref="/admin/articles"
+                    submitLabel={isEditing ? 'Update Article' : 'Create Article'}
+                    isPending={isPending}
+                    submitIcon={isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 />
-                Auto-generate
-              </label>
-            </div>
-            <input
-              id="slug"
-              type="text"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-              disabled={autoSlug}
-              className={cn(
-                "w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring",
-                autoSlug && "opacity-50 cursor-not-allowed",
-              )}
-              placeholder="article-slug"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium">
-              Description <span className="text-destructive">*</span>
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring min-h-25"
-              placeholder="Brief description of the article"
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              {description.length} characters
-            </p>
-          </div>
-
-          {/* Topic & Subtopic */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="topic" className="text-sm font-medium">
-                Topic <span className="text-destructive">*</span>
-              </label>
-              <select
-                id="topic"
-                value={topicSlug}
-                onChange={(e) => setTopicSlug(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                required
-              >
-                <option value="">Select a topic</option>
-                {topics.map((topic) => (
-                  <option key={topic.slug} value={topic.slug}>
-                    {topic.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="subtopic" className="text-sm font-medium">
-                Subtopic
-              </label>
-              <select
-                id="subtopic"
-                value={subtopicSlug}
-                onChange={(e) => setSubtopicSlug(e.target.value)}
-                disabled={!topicSlug || availableSubtopics.length === 0}
-                className={cn(
-                  "w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring",
-                  (!topicSlug || availableSubtopics.length === 0) &&
-                    "opacity-50 cursor-not-allowed",
-                )}
-              >
-                <option value="">No subtopic</option>
-                {availableSubtopics.map((subtopic) => (
-                  <option key={subtopic.slug} value={subtopic.slug}>
-                    {subtopic.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Order */}
-          <div className="space-y-2">
-            <label htmlFor="order" className="text-sm font-medium">
-              Order
-            </label>
-            <input
-              id="order"
-              type="number"
-              value={order}
-              onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              min="0"
-            />
-            <p className="text-xs text-muted-foreground">
-              Display order within topic/subtopic
-            </p>
-          </div>
-
-          {/* Tags */}
-          <div className="space-y-2">
-            <label htmlFor="tag-input" className="text-sm font-medium">
-              Tags
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="tag-input"
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), handleAddTag())
-                }
-                className="flex-1 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Add a tag"
-              />
-              <button
-                type="button"
-                onClick={handleAddTag}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Cover Image */}
-          <div className="space-y-2">
-            <label htmlFor="coverImage" className="text-sm font-medium">
-              Cover Image URL
-            </label>
-            <input
-              id="coverImage"
-              type="url"
-              value={coverImage}
-              onChange={(e) => setCoverImage(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="https://example.com/image.jpg"
-            />
-          </div>
-
-          {/* Flags */}
-          <div className="flex gap-6">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={published}
-                onChange={(e) => setPublished(e.target.checked)}
-                className="rounded"
-              />
-              Published
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={featured}
-                onChange={(e) => setFeatured(e.target.checked)}
-                className="rounded"
-              />
-              Featured
-            </label>
-          </div>
+            </form>
         </div>
-
-        {/* Content Editor */}
-        <div className="space-y-4 p-6 border rounded-lg bg-card">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Content</h2>
-            <div className="text-sm text-muted-foreground">
-              {stats.wordCount} words · {stats.readingTime} min read
-            </div>
-          </div>
-
-          <RichTextEditor
-            value={markdownBody}
-            onChange={setMarkdownBody}
-            onSave={(html) => setMarkdownBody(html)}
-            placeholder="Start writing your article… press '/' for commands"
-            minHeight="500px"
-          />
-        </div>
-
-        {/* SEO Section */}
-        <div className="space-y-6 p-6 border rounded-lg bg-card">
-          <h2 className="text-lg font-semibold">SEO Settings</h2>
-
-          {/* SEO Title */}
-          <div className="space-y-2">
-            <label htmlFor="seoTitle" className="text-sm font-medium">
-              SEO Title
-            </label>
-            <input
-              id="seoTitle"
-              type="text"
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="Leave empty to use article title"
-            />
-          </div>
-
-          {/* SEO Description */}
-          <div className="space-y-2">
-            <label htmlFor="seoDescription" className="text-sm font-medium">
-              SEO Description
-            </label>
-            <textarea
-              id="seoDescription"
-              value={seoDescription}
-              onChange={(e) => setSeoDescription(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring min-h-20"
-              placeholder="Leave empty to use article description"
-            />
-          </div>
-
-          {/* SEO Keywords */}
-          <div className="space-y-2">
-            <label htmlFor="keyword-input" className="text-sm font-medium">
-              SEO Keywords
-            </label>
-            <div className="flex gap-2">
-              <input
-                id="keyword-input"
-                type="text"
-                value={seoKeywordInput}
-                onChange={(e) => setSeoKeywordInput(e.target.value)}
-                onKeyPress={(e) =>
-                  e.key === "Enter" && (e.preventDefault(), handleAddKeyword())
-                }
-                className="flex-1 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                placeholder="Add a keyword"
-              />
-              <button
-                type="button"
-                onClick={handleAddKeyword}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-              >
-                Add
-              </button>
-            </div>
-            {seoKeywords.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {seoKeywords.map((kw) => (
-                  <span
-                    key={kw}
-                    className="inline-flex items-center gap-1 px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"
-                  >
-                    {kw}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveKeyword(kw)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* OG Image */}
-          <div className="space-y-2">
-            <label htmlFor="ogImage" className="text-sm font-medium">
-              Open Graph Image URL
-            </label>
-            <input
-              id="ogImage"
-              type="url"
-              value={ogImage}
-              onChange={(e) => setOgImage(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-              placeholder="https://example.com/og-image.jpg"
-            />
-          </div>
-        </div>
-
-        {/* Submit Button */}
-        <div className="flex justify-end gap-4">
-          <Link
-            href="/admin/articles"
-            className="px-6 py-2 border rounded-lg hover:bg-accent transition-colors"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={isPending}
-            className={cn(
-              "inline-flex items-center gap-2 px-6 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors",
-              isPending && "opacity-50 cursor-not-allowed",
-            )}
-          >
-            {isPending ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4" />
-                {isEditing ? "Update Article" : "Create Article"}
-              </>
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+    );
 };

@@ -5,8 +5,9 @@ import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS, VALIDATION } from '@/constants';
 import type { INote, IApiResponse } from '@/interfaces';
+import { createErrorResponse, createSuccessResponse, notFoundError, duplicateError } from '@/server/lib/action-utils';
 
-// ===== VALIDATION SCHEMAS =====
+// ===== SCHEMAS =====
 
 const noteInputSchema = z.object({
     title: z.string().min(VALIDATION.title.min).max(VALIDATION.title.max),
@@ -18,54 +19,35 @@ const noteInputSchema = z.object({
     featured: z.boolean().default(false),
 });
 
-const noteUpdateSchema = noteInputSchema.partial().extend({
-    slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern).optional(),
-});
+const noteUpdateSchema = noteInputSchema.partial();
 
 type NoteInput = z.infer<typeof noteInputSchema>;
 type NoteUpdate = z.infer<typeof noteUpdateSchema>;
 
-// ===== HELPER FUNCTIONS =====
+// ===== HELPERS =====
+
+const getNotesCollection = () => getCollection<INote>(COLLECTIONS.content);
 
 const revalidateNotePaths = (slug?: string): void => {
-    revalidatePath('/notes');
-    revalidatePath('/admin/notes'); // Admin list page
+    ['/notes', '/admin/notes', '/'].forEach(p => revalidatePath(p));
     if (slug) {
         revalidatePath(`/notes/${slug}`);
         revalidatePath(`/admin/notes/${slug}/edit`);
     }
-    revalidatePath('/'); // Homepage might show featured notes
 };
+
+const findNote = async (slug: string) => (await getNotesCollection()).findOne({ type: 'note', slug });
 
 // ===== SERVER ACTIONS =====
 
-/**
- * Create a new note
- */
 export const createNote = async (data: NoteInput): Promise<IApiResponse<string>> => {
     try {
         const parsed = noteInputSchema.safeParse(data);
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
+        if (!parsed.success) return createErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid input');
 
-        const collection = await getCollection<INote>(COLLECTIONS.content);
-
-        // Check if slug already exists
-        const existing = await collection.findOne({ 
-            type: 'note',
-            slug: parsed.data.slug 
-        });
-        if (existing) {
-            return {
-                success: false,
-                status: 409,
-                error: 'A note with this slug already exists',
-            };
+        const collection = await getNotesCollection();
+        if (await collection.findOne({ type: 'note', slug: parsed.data.slug })) {
+            return duplicateError('A note with this slug');
         }
 
         const now = new Date();
@@ -79,230 +61,92 @@ export const createNote = async (data: NoteInput): Promise<IApiResponse<string>>
         };
 
         const result = await collection.insertOne(note as INote);
-
         revalidateNotePaths(parsed.data.slug);
 
-        return {
-            success: true,
-            status: 201,
-            data: result.insertedId.toString(),
-            message: 'Note created successfully',
-        };
+        return { success: true, status: 201, data: result.insertedId.toString(), message: 'Note created successfully' };
     } catch (error) {
         console.error('Failed to create note:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to create note. Please try again.',
-        };
+        return createErrorResponse('Failed to create note. Please try again.', 500);
     }
 };
 
-/**
- * Update an existing note
- */
-export const updateNote = async (
-    slug: string, 
-    data: NoteUpdate
-): Promise<IApiResponse<void>> => {
+export const updateNote = async (slug: string, data: NoteUpdate): Promise<IApiResponse<void>> => {
     try {
         const parsed = noteUpdateSchema.safeParse(data);
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
+        if (!parsed.success) return createErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid input');
 
-        const collection = await getCollection<INote>(COLLECTIONS.content);
+        const collection = await getNotesCollection();
+        if (!(await findNote(slug))) return notFoundError('Note');
 
-        // Check if note exists
-        const existing = await collection.findOne({ type: 'note', slug });
-        if (!existing) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Note not found',
-            };
-        }
-
-        // If changing slug, check for conflicts
         if (parsed.data.slug && parsed.data.slug !== slug) {
-            const slugConflict = await collection.findOne({ 
-                type: 'note',
-                slug: parsed.data.slug 
-            });
-            if (slugConflict) {
-                return {
-                    success: false,
-                    status: 409,
-                    error: 'A note with this slug already exists',
-                };
+            if (await collection.findOne({ type: 'note', slug: parsed.data.slug })) {
+                return duplicateError('A note with this slug');
             }
         }
 
-        const updateData = {
-            ...parsed.data,
-            coverImage: parsed.data.coverImage || undefined,
-            updatedAt: new Date(),
-        };
-
-        // Remove undefined values
-        Object.keys(updateData).forEach(key => {
-            if (updateData[key as keyof typeof updateData] === undefined) {
-                delete updateData[key as keyof typeof updateData];
-            }
-        });
+        const updateData = { ...parsed.data, coverImage: parsed.data.coverImage || undefined, updatedAt: new Date() };
+        Object.keys(updateData).forEach(k => updateData[k as keyof typeof updateData] === undefined && delete updateData[k as keyof typeof updateData]);
 
         await collection.updateOne({ type: 'note', slug }, { $set: updateData });
-
         revalidateNotePaths(slug);
-        if (parsed.data.slug && parsed.data.slug !== slug) {
-            revalidateNotePaths(parsed.data.slug);
-        }
+        if (parsed.data.slug && parsed.data.slug !== slug) revalidateNotePaths(parsed.data.slug);
 
-        return {
-            success: true,
-            status: 200,
-            message: 'Note updated successfully',
-        };
+        return createSuccessResponse(undefined, 'Note updated successfully');
     } catch (error) {
         console.error('Failed to update note:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update note. Please try again.',
-        };
+        return createErrorResponse('Failed to update note. Please try again.', 500);
     }
 };
 
-/**
- * Delete a note
- */
 export const deleteNote = async (slug: string): Promise<IApiResponse<void>> => {
     try {
-        const collection = await getCollection<INote>(COLLECTIONS.content);
-
-        // Check if note exists
-        const note = await collection.findOne({ type: 'note', slug });
-        if (!note) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Note not found',
-            };
-        }
+        const collection = await getNotesCollection();
+        if (!(await findNote(slug))) return notFoundError('Note');
 
         await collection.deleteOne({ type: 'note', slug });
-
-        // Also delete associated stats
-        const statsCollection = await getCollection(COLLECTIONS.articleStats);
-        await statsCollection.deleteOne({ slug: `notes/${slug}` });
-
+        await (await getCollection(COLLECTIONS.articleStats)).deleteOne({ slug: `notes/${slug}` });
         revalidateNotePaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            message: 'Note deleted successfully',
-        };
+        return createSuccessResponse(undefined, 'Note deleted successfully');
     } catch (error) {
         console.error('Failed to delete note:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to delete note. Please try again.',
-        };
+        return createErrorResponse('Failed to delete note. Please try again.', 500);
     }
 };
 
-/**
- * Toggle note published status
- */
 export const toggleNotePublished = async (slug: string): Promise<IApiResponse<boolean>> => {
     try {
-        const collection = await getCollection<INote>(COLLECTIONS.content);
-
-        const note = await collection.findOne({ type: 'note', slug });
-        if (!note) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Note not found',
-            };
-        }
+        const collection = await getNotesCollection();
+        const note = await findNote(slug);
+        if (!note) return notFoundError('Note');
 
         const newPublished = !note.published;
-        const updateData: Partial<INote> & { updatedAt: Date } = {
-            published: newPublished,
-            updatedAt: new Date(),
-        };
+        const updateData: Partial<INote> = { published: newPublished, updatedAt: new Date() };
+        if (newPublished && !note.publishedAt) updateData.publishedAt = new Date();
 
-        // Set publishedAt date when publishing for the first time
-        if (newPublished && !note.publishedAt) {
-            updateData.publishedAt = new Date();
-        }
-
-        await collection.updateOne(
-            { type: 'note', slug },
-            { $set: updateData }
-        );
-
+        await collection.updateOne({ type: 'note', slug }, { $set: updateData });
         revalidateNotePaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            data: newPublished,
-            message: newPublished ? 'Note published' : 'Note unpublished',
-        };
+        return createSuccessResponse(newPublished, newPublished ? 'Note published' : 'Note unpublished');
     } catch (error) {
         console.error('Failed to toggle note published:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update note. Please try again.',
-        };
+        return createErrorResponse('Failed to update note. Please try again.', 500);
     }
 };
 
-/**
- * Toggle note featured status
- */
 export const toggleNoteFeatured = async (slug: string): Promise<IApiResponse<boolean>> => {
     try {
-        const collection = await getCollection<INote>(COLLECTIONS.content);
-
-        const note = await collection.findOne({ type: 'note', slug });
-        if (!note) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Note not found',
-            };
-        }
+        const collection = await getNotesCollection();
+        const note = await findNote(slug);
+        if (!note) return notFoundError('Note');
 
         const newFeatured = !note.featured;
-        await collection.updateOne(
-            { type: 'note', slug },
-            { $set: { featured: newFeatured, updatedAt: new Date() } }
-        );
-
+        await collection.updateOne({ type: 'note', slug }, { $set: { featured: newFeatured, updatedAt: new Date() } });
         revalidateNotePaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            data: newFeatured,
-            message: newFeatured ? 'Note featured' : 'Note unfeatured',
-        };
+        return createSuccessResponse(newFeatured, newFeatured ? 'Note featured' : 'Note unfeatured');
     } catch (error) {
         console.error('Failed to toggle note featured:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update note. Please try again.',
-        };
+        return createErrorResponse('Failed to update note. Please try again.', 500);
     }
 };

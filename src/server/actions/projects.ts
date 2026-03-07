@@ -3,10 +3,11 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { VALIDATION } from '@/constants';
+import { COLLECTIONS, VALIDATION } from '@/constants';
 import type { IProject, IApiResponse } from '@/interfaces';
+import { createErrorResponse, createSuccessResponse, notFoundError, duplicateError } from '@/server/lib/action-utils';
 
-// ===== VALIDATION SCHEMAS =====
+// ===== SCHEMAS =====
 
 const projectInputSchema = z.object({
     title: z.string().min(VALIDATION.title.min).max(VALIDATION.title.max),
@@ -23,52 +24,34 @@ const projectInputSchema = z.object({
     order: z.number().int().min(0).default(0),
 });
 
-const projectUpdateSchema = projectInputSchema.partial().extend({
-    slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern).optional(),
-});
+const projectUpdateSchema = projectInputSchema.partial();
 
 type ProjectInput = z.infer<typeof projectInputSchema>;
 type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
 
-// ===== HELPER FUNCTIONS =====
+// ===== HELPERS =====
+
+const getProjectsCollection = () => getCollection<IProject>(COLLECTIONS.projects);
 
 const revalidateProjectPaths = (slug?: string): void => {
-    revalidatePath('/projects');
-    revalidatePath('/admin/projects'); // Admin list page
+    ['/projects', '/admin/projects', '/'].forEach(p => revalidatePath(p));
     if (slug) {
         revalidatePath(`/projects/${slug}`);
         revalidatePath(`/admin/projects/${slug}/edit`);
     }
-    revalidatePath('/'); // Homepage shows featured projects
 };
+
+const findProject = async (slug: string) => (await getProjectsCollection()).findOne({ slug });
 
 // ===== SERVER ACTIONS =====
 
-/**
- * Create a new project
- */
 export const createProject = async (data: ProjectInput): Promise<IApiResponse<string>> => {
     try {
         const parsed = projectInputSchema.safeParse(data);
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
+        if (!parsed.success) return createErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid input');
 
-        const collection = await getCollection<IProject>('projects');
-
-        // Check if slug already exists
-        const existing = await collection.findOne({ slug: parsed.data.slug });
-        if (existing) {
-            return {
-                success: false,
-                status: 409,
-                error: 'A project with this slug already exists',
-            };
-        }
+        const collection = await getProjectsCollection();
+        if (await collection.findOne({ slug: parsed.data.slug })) return duplicateError('A project with this slug');
 
         const now = new Date();
         const project: Omit<IProject, '_id'> = {
@@ -81,64 +64,25 @@ export const createProject = async (data: ProjectInput): Promise<IApiResponse<st
         };
 
         const result = await collection.insertOne(project as IProject);
-
         revalidateProjectPaths(parsed.data.slug);
 
-        return {
-            success: true,
-            status: 201,
-            data: result.insertedId.toString(),
-            message: 'Project created successfully',
-        };
+        return { success: true, status: 201, data: result.insertedId.toString(), message: 'Project created successfully' };
     } catch (error) {
         console.error('Failed to create project:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to create project. Please try again.',
-        };
+        return createErrorResponse('Failed to create project. Please try again.', 500);
     }
 };
 
-/**
- * Update an existing project
- */
-export const updateProject = async (
-    slug: string,
-    data: ProjectUpdate
-): Promise<IApiResponse<void>> => {
+export const updateProject = async (slug: string, data: ProjectUpdate): Promise<IApiResponse<void>> => {
     try {
         const parsed = projectUpdateSchema.safeParse(data);
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
+        if (!parsed.success) return createErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid input');
 
-        const collection = await getCollection<IProject>('projects');
+        const collection = await getProjectsCollection();
+        if (!(await findProject(slug))) return notFoundError('Project');
 
-        // Check if project exists
-        const existing = await collection.findOne({ slug });
-        if (!existing) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Project not found',
-            };
-        }
-
-        // If changing slug, check for conflicts
         if (parsed.data.slug && parsed.data.slug !== slug) {
-            const slugConflict = await collection.findOne({ slug: parsed.data.slug });
-            if (slugConflict) {
-                return {
-                    success: false,
-                    status: 409,
-                    error: 'A project with this slug already exists',
-                };
-            }
+            if (await collection.findOne({ slug: parsed.data.slug })) return duplicateError('A project with this slug');
         }
 
         const updateData = {
@@ -148,195 +92,80 @@ export const updateProject = async (
             liveUrl: parsed.data.liveUrl || undefined,
             updatedAt: new Date(),
         };
-
-        // Remove undefined values
-        Object.keys(updateData).forEach(key => {
-            if (updateData[key as keyof typeof updateData] === undefined) {
-                delete updateData[key as keyof typeof updateData];
-            }
-        });
+        Object.keys(updateData).forEach(k => updateData[k as keyof typeof updateData] === undefined && delete updateData[k as keyof typeof updateData]);
 
         await collection.updateOne({ slug }, { $set: updateData });
-
         revalidateProjectPaths(slug);
-        if (parsed.data.slug && parsed.data.slug !== slug) {
-            revalidateProjectPaths(parsed.data.slug);
-        }
+        if (parsed.data.slug && parsed.data.slug !== slug) revalidateProjectPaths(parsed.data.slug);
 
-        return {
-            success: true,
-            status: 200,
-            message: 'Project updated successfully',
-        };
+        return createSuccessResponse(undefined, 'Project updated successfully');
     } catch (error) {
         console.error('Failed to update project:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update project. Please try again.',
-        };
+        return createErrorResponse('Failed to update project. Please try again.', 500);
     }
 };
 
-/**
- * Delete a project
- */
 export const deleteProject = async (slug: string): Promise<IApiResponse<void>> => {
     try {
-        const collection = await getCollection<IProject>('projects');
-
-        // Check if project exists
-        const project = await collection.findOne({ slug });
-        if (!project) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Project not found',
-            };
-        }
+        const collection = await getProjectsCollection();
+        if (!(await findProject(slug))) return notFoundError('Project');
 
         await collection.deleteOne({ slug });
-
-        // Also delete associated stats if they exist
-        const statsCollection = await getCollection('pageStats');
-        await statsCollection.deleteOne({ slug: `projects/${slug}` });
-
+        await (await getCollection(COLLECTIONS.articleStats)).deleteOne({ slug: `projects/${slug}` });
         revalidateProjectPaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            message: 'Project deleted successfully',
-        };
+        return createSuccessResponse(undefined, 'Project deleted successfully');
     } catch (error) {
         console.error('Failed to delete project:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to delete project. Please try again.',
-        };
+        return createErrorResponse('Failed to delete project. Please try again.', 500);
     }
 };
 
-/**
- * Toggle project featured status
- */
 export const toggleProjectFeatured = async (slug: string): Promise<IApiResponse<boolean>> => {
     try {
-        const collection = await getCollection<IProject>('projects');
-
-        const project = await collection.findOne({ slug });
-        if (!project) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Project not found',
-            };
-        }
+        const collection = await getProjectsCollection();
+        const project = await findProject(slug);
+        if (!project) return notFoundError('Project');
 
         const newFeatured = !project.featured;
-        await collection.updateOne(
-            { slug },
-            { $set: { featured: newFeatured, updatedAt: new Date() } }
-        );
-
+        await collection.updateOne({ slug }, { $set: { featured: newFeatured, updatedAt: new Date() } });
         revalidateProjectPaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            data: newFeatured,
-            message: newFeatured ? 'Project featured' : 'Project unfeatured',
-        };
+        return createSuccessResponse(newFeatured, newFeatured ? 'Project featured' : 'Project unfeatured');
     } catch (error) {
         console.error('Failed to toggle project featured:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update project. Please try again.',
-        };
+        return createErrorResponse('Failed to update project. Please try again.', 500);
     }
 };
 
-/**
- * Update project status
- */
-export const updateProjectStatus = async (
-    slug: string,
-    status: 'active' | 'wip' | 'archived'
-): Promise<IApiResponse<void>> => {
+export const updateProjectStatus = async (slug: string, status: 'active' | 'wip' | 'archived'): Promise<IApiResponse<void>> => {
     try {
-        const collection = await getCollection<IProject>('projects');
+        const collection = await getProjectsCollection();
+        if (!(await findProject(slug))) return notFoundError('Project');
 
-        const project = await collection.findOne({ slug });
-        if (!project) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Project not found',
-            };
-        }
-
-        await collection.updateOne(
-            { slug },
-            { $set: { status, updatedAt: new Date() } }
-        );
-
+        await collection.updateOne({ slug }, { $set: { status, updatedAt: new Date() } });
         revalidateProjectPaths(slug);
 
-        return {
-            success: true,
-            status: 200,
-            message: `Project status updated to ${status}`,
-        };
+        return createSuccessResponse(undefined, `Project status updated to ${status}`);
     } catch (error) {
         console.error('Failed to update project status:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to update project status. Please try again.',
-        };
+        return createErrorResponse('Failed to update project status. Please try again.', 500);
     }
 };
 
-/**
- * Reorder projects
- */
 export const reorderProjects = async (slugs: string[]): Promise<IApiResponse<void>> => {
     try {
-        if (!Array.isArray(slugs) || slugs.length === 0) {
-            return {
-                success: false,
-                status: 400,
-                error: 'Invalid slugs array',
-            };
-        }
+        if (!Array.isArray(slugs) || slugs.length === 0) return createErrorResponse('Invalid slugs array');
 
-        const collection = await getCollection<IProject>('projects');
-
-        // Update order for each project
-        const updatePromises = slugs.map((slug, index) =>
-            collection.updateOne(
-                { slug },
-                { $set: { order: index, updatedAt: new Date() } }
-            )
-        );
-
-        await Promise.all(updatePromises);
+        const collection = await getProjectsCollection();
+        await Promise.all(slugs.map((slug, index) => 
+            collection.updateOne({ slug }, { $set: { order: index, updatedAt: new Date() } })
+        ));
 
         revalidatePath('/projects');
-
-        return {
-            success: true,
-            status: 200,
-            message: 'Projects reordered successfully',
-        };
+        return createSuccessResponse(undefined, 'Projects reordered successfully');
     } catch (error) {
         console.error('Failed to reorder projects:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to reorder projects. Please try again.',
-        };
+        return createErrorResponse('Failed to reorder projects. Please try again.', 500);
     }
 };

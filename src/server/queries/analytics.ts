@@ -362,18 +362,37 @@ async function getEngagementMetrics() {
 
 /**
  * Get trend data (percentage change from last month)
+ * Calculates based on createdAt timestamps for subscribers and comments
  */
 async function getTrendData() {
     try {
-        // For now, return placeholder trends
-        // TODO: Implement actual month-over-month calculation
-        // This would require storing historical data or using timestamps
+        const now = new Date();
+        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+        const [commentsCollection, subscribersCollection] = await Promise.all([
+            getCollection<IComment>(COLLECTIONS.comments),
+            getCollection<ISubscriber>(COLLECTIONS.subscribers),
+        ]);
+
+        // Get comment counts for this month and last month
+        const [commentsThisMonth, commentsLastMonth, subscribersThisMonth, subscribersLastMonth] = await Promise.all([
+            commentsCollection.countDocuments({ createdAt: { $gte: thisMonthStart } }),
+            commentsCollection.countDocuments({ createdAt: { $gte: lastMonthStart, $lt: thisMonthStart } }),
+            subscribersCollection.countDocuments({ createdAt: { $gte: thisMonthStart } }),
+            subscribersCollection.countDocuments({ createdAt: { $gte: lastMonthStart, $lt: thisMonthStart } }),
+        ]);
+
+        const calcTrend = (current: number, previous: number): number => {
+            if (previous === 0) return current > 0 ? 100 : 0;
+            return Math.round(((current - previous) / previous) * 100);
+        };
 
         return {
-            viewsTrend: 0,
-            likesTrend: 0,
-            commentsTrend: 0,
-            subscribersTrend: 0,
+            viewsTrend: 0, // Would need historical view snapshots
+            likesTrend: 0, // Would need historical like snapshots
+            commentsTrend: calcTrend(commentsThisMonth, commentsLastMonth),
+            subscribersTrend: calcTrend(subscribersThisMonth, subscribersLastMonth),
         };
     } catch (error) {
         console.error('Failed to fetch trend data', error);

@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { Mail, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { subscribe } from '@/server/actions/subscribe';
+import { subscribe } from '@/server/actions/subscribers';
 
 interface ISubscribeFormProps {
     variant?: 'default' | 'compact' | 'inline';
@@ -39,7 +39,9 @@ const SubscribeForm = ({
         startTransition(async () => {
             setStatus('loading');
 
-            const result = await subscribe(formData);
+            const email = formData.get('email') as string;
+            const name = formData.get('name') as string | undefined;
+            const result = await subscribe({ email, name: name || undefined });
 
             if (result.success) {
                 setStatus('success');

@@ -125,7 +125,7 @@ export const getNoteForEdit = async (slug: string): Promise<INote | null> => {
  */
 export const getAllProjectsForAdmin = async (): Promise<IProject[]> => {
     try {
-        const collection = await getCollection<IProject>('projects');
+        const collection = await getCollection<IProject>(COLLECTIONS.projects);
 
         const projects = await collection
             .find({})
@@ -144,7 +144,7 @@ export const getAllProjectsForAdmin = async (): Promise<IProject[]> => {
  */
 export const getProjectForEdit = async (slug: string): Promise<IProject | null> => {
     try {
-        const collection = await getCollection<IProject>('projects');
+        const collection = await getCollection<IProject>(COLLECTIONS.projects);
 
         const project = await collection.findOne({ slug });
 

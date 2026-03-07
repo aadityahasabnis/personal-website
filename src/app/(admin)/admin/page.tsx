@@ -13,10 +13,11 @@ import {
 
 import type { LucideIcon } from 'lucide-react';
 
-import { cn } from '@/lib/utils';
+import { cn, formatDate, formatNumber } from '@/lib/utils';
 import { getRecentArticles } from '@/server/queries/content';
 import { getProjects } from '@/server/queries/projects';
-import { formatDate, formatNumber } from '@/lib/utils';
+import { getAnalyticsDashboardData } from '@/server/queries/analytics';
+import { getBulkContentStats } from '@/server/actions/stats';
 
 /**
  * Admin Dashboard
@@ -56,9 +57,10 @@ const StatCard = ({ title, value, icon: Icon, trend, trendUp }: IStatCardProps):
 );
 
 const DashboardStats = async (): Promise<React.ReactElement> => {
-    const [articles, projects] = await Promise.all([
+    const [articles, projects, analytics] = await Promise.all([
         getRecentArticles(100),
         getProjects(),
+        getAnalyticsDashboardData(),
     ]);
 
     const publishedArticles = articles.filter(a => a.published).length;
@@ -79,15 +81,17 @@ const DashboardStats = async (): Promise<React.ReactElement> => {
             />
             <StatCard
                 title="Total Views"
-                value="—"
+                value={formatNumber(analytics.totalViews)}
                 icon={Eye}
-                trend="Coming soon"
+                trend={analytics.viewsTrend > 0 ? `+${analytics.viewsTrend}% this month` : undefined}
+                trendUp={analytics.viewsTrend > 0}
             />
             <StatCard
                 title="Total Likes"
-                value="—"
+                value={formatNumber(analytics.totalLikes)}
                 icon={Heart}
-                trend="Coming soon"
+                trend={analytics.likesTrend > 0 ? `+${analytics.likesTrend}% this month` : undefined}
+                trendUp={analytics.likesTrend > 0}
             />
         </div>
     );
@@ -95,6 +99,8 @@ const DashboardStats = async (): Promise<React.ReactElement> => {
 
 const RecentContent = async (): Promise<React.ReactElement> => {
     const articles = await getRecentArticles(5);
+    const slugs = articles.map(a => `${a.topicSlug}/${a.slug}`);
+    const statsMap = await getBulkContentStats(slugs);
 
     return (
         <div className="rounded-xl border bg-card">
@@ -121,34 +127,37 @@ const RecentContent = async (): Promise<React.ReactElement> => {
                         </Link>
                     </div>
                 ) : (
-                    articles.map((article) => (
-                        <Link
-                            key={article.slug}
-                            href={`/admin/articles/${article.slug}/edit`}
-                            className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
-                        >
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate font-medium">{article.title}</p>
-                                <p className="text-sm text-muted-foreground">
-                                    {article.published ? (
-                                        <>Published {formatDate(article.publishedAt)}</>
-                                    ) : (
-                                        <span className="text-amber-600 dark:text-amber-400">Draft</span>
-                                    )}
-                                </p>
-                            </div>
-                            <div className="ml-4 flex items-center gap-4 text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                    <Eye className="h-4 w-4" />
-                                    —
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Heart className="h-4 w-4" />
-                                    —
-                                </span>
-                            </div>
-                        </Link>
-                    ))
+                    articles.map((article) => {
+                        const stats = statsMap.get(`${article.topicSlug}/${article.slug}`) ?? { views: 0, likes: 0 };
+                        return (
+                            <Link
+                                key={article.slug}
+                                href={`/admin/articles/${article.topicSlug}/${article.slug}/edit`}
+                                className="flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate font-medium">{article.title}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {article.published ? (
+                                            <>Published {formatDate(article.publishedAt)}</>
+                                        ) : (
+                                            <span className="text-amber-600 dark:text-amber-400">Draft</span>
+                                        )}
+                                    </p>
+                                </div>
+                                <div className="ml-4 flex items-center gap-4 text-sm text-muted-foreground">
+                                    <span className="flex items-center gap-1">
+                                        <Eye className="h-4 w-4" />
+                                        {formatNumber(stats.views)}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                        <Heart className="h-4 w-4" />
+                                        {formatNumber(stats.likes)}
+                                    </span>
+                                </div>
+                            </Link>
+                        );
+                    })
                 )}
             </div>
         </div>

@@ -4,20 +4,18 @@ import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
 /**
- * ScrollToTop - Ensures page scrolls to top on navigation
- * 
+ * ScrollReset - Scrolls to top on route navigation.
  * Next.js App Router should handle this automatically, but this
- * component ensures consistent behavior across all navigations.
+ * ensures consistent behavior across all navigations.
  */
-export const ScrollToTop = () => {
+export const ScrollReset = () => {
     const pathname = usePathname();
 
     useEffect(() => {
-        // Scroll to top when pathname changes
         window.scrollTo({ top: 0, behavior: 'instant' });
     }, [pathname]);
 
     return null;
 };
 
-export default ScrollToTop;
+export default ScrollReset;

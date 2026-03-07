@@ -1,13 +1,24 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { Settings as SettingsIcon, Save, User, Globe, Mail, Image, Code } from 'lucide-react';
+import { useState, useTransition, useEffect } from 'react';
+import { Settings as SettingsIcon, Save, Globe, Mail, Code, Lock, Eye, EyeOff, Check } from 'lucide-react';
 import { PageHeader } from '@/components/admin';
-import { updateSiteSettings, updateSeoSettings, updateSocialSettings } from '@/server/actions/settings';
+import {
+    updateSiteSettings,
+    updateSeoSettings,
+    updateSocialSettings,
+    changePassword,
+    getSiteSettings,
+    getSeoSettings,
+    getSocialSettings,
+    type SiteSettings as ISiteSettings,
+    type SeoSettings as ISeoSettings,
+    type SocialSettings as ISocialSettings,
+} from '@/server/admin/settings';
 import { SITE_CONFIG } from '@/constants';
 import { cn } from '@/lib/utils';
 
-type SettingsTab = 'general' | 'seo' | 'social' | 'appearance';
+type SettingsTab = 'general' | 'seo' | 'social' | 'security';
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
@@ -16,7 +27,7 @@ export default function SettingsPage() {
         { id: 'general' as const, label: 'General', icon: Globe },
         { id: 'seo' as const, label: 'SEO & Meta', icon: Code },
         { id: 'social' as const, label: 'Social Links', icon: Mail },
-        { id: 'appearance' as const, label: 'Appearance', icon: Image },
+        { id: 'security' as const, label: 'Security', icon: Lock },
     ];
 
     return (
@@ -56,18 +67,58 @@ export default function SettingsPage() {
                 {activeTab === 'general' && <GeneralSettings />}
                 {activeTab === 'seo' && <SeoSettings />}
                 {activeTab === 'social' && <SocialSettings />}
-                {activeTab === 'appearance' && <AppearanceSettings />}
+                {activeTab === 'security' && <SecuritySettings />}
             </div>
         </div>
     );
 }
 
+// ===== FEEDBACK COMPONENTS =====
+
+function SuccessMessage({ message }: { message: string }) {
+    return (
+        <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 text-sm text-green-600 flex items-center gap-2">
+            <Check className="h-4 w-4" />
+            {message}
+        </div>
+    );
+}
+
+function ErrorMessage({ message }: { message: string }) {
+    return (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+            {message}
+        </div>
+    );
+}
+
+function SaveButton({ isPending, label = 'Save Changes' }: { isPending: boolean; label?: string }) {
+    return (
+        <button
+            type="submit"
+            disabled={isPending}
+            className={cn(
+                'inline-flex items-center gap-2 px-6 py-2.5 rounded-lg',
+                'bg-primary text-primary-foreground font-medium',
+                'hover:bg-primary/90 transition-colors',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+        >
+            <Save className="h-4 w-4" />
+            {isPending ? 'Saving...' : label}
+        </button>
+    );
+}
+
+// ===== GENERAL SETTINGS =====
+
 function GeneralSettings() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    // Form state
+    // Form state with defaults from config (explicitly typed as string)
     const [siteName, setSiteName] = useState<string>(SITE_CONFIG.name);
     const [siteTitle, setSiteTitle] = useState<string>(SITE_CONFIG.title);
     const [siteDescription, setSiteDescription] = useState<string>(SITE_CONFIG.description);
@@ -75,6 +126,22 @@ function GeneralSettings() {
     const [contactEmail, setContactEmail] = useState<string>(SITE_CONFIG.email);
     const [authorName, setAuthorName] = useState<string>(SITE_CONFIG.author.name);
     const [authorBio, setAuthorBio] = useState<string>(SITE_CONFIG.author.bio);
+
+    // Load saved settings on mount
+    useEffect(() => {
+        getSiteSettings().then((result) => {
+            if (result.success && result.data) {
+                setSiteName(result.data.name);
+                setSiteTitle(result.data.title);
+                setSiteDescription(result.data.description);
+                setSiteUrl(result.data.url);
+                setContactEmail(result.data.email);
+                setAuthorName(result.data.author.name);
+                setAuthorBio(result.data.author.bio ?? '');
+            }
+            setIsLoaded(true);
+        });
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -104,19 +171,14 @@ function GeneralSettings() {
         });
     };
 
+    if (!isLoaded) {
+        return <div className="animate-pulse h-96 bg-muted rounded-lg" />;
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 text-sm text-green-600">
-                    Settings saved successfully!
-                </div>
-            )}
+            {error && <ErrorMessage message={error} />}
+            {success && <SuccessMessage message="Settings saved successfully!" />}
 
             <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Site Information</h3>
@@ -251,32 +313,35 @@ function GeneralSettings() {
             </div>
 
             <div className="flex items-center gap-4 pt-4 border-t">
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className={cn(
-                        'inline-flex items-center gap-2 px-6 py-2.5 rounded-lg',
-                        'bg-primary text-primary-foreground font-medium',
-                        'hover:bg-primary/90 transition-colors',
-                        'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                >
-                    <Save className="h-4 w-4" />
-                    {isPending ? 'Saving...' : 'Save Changes'}
-                </button>
+                <SaveButton isPending={isPending} />
             </div>
         </form>
     );
 }
 
+// ===== SEO SETTINGS =====
+
 function SeoSettings() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
     const [twitterHandle, setTwitterHandle] = useState<string>(SITE_CONFIG.seo.twitterHandle);
     const [ogImage, setOgImage] = useState<string>(SITE_CONFIG.seo.ogImage);
-    const [keywords, setKeywords] = useState<string>('');
+    const [keywords, setKeywords] = useState('');
+
+    // Load saved settings on mount
+    useEffect(() => {
+        getSeoSettings().then((result) => {
+            if (result.success && result.data) {
+                setTwitterHandle(result.data.twitterHandle ?? '');
+                setOgImage(result.data.ogImage ?? '');
+                setKeywords(result.data.keywords?.join(', ') ?? '');
+            }
+            setIsLoaded(true);
+        });
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -299,19 +364,14 @@ function SeoSettings() {
         });
     };
 
+    if (!isLoaded) {
+        return <div className="animate-pulse h-64 bg-muted rounded-lg" />;
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 text-sm text-green-600">
-                    SEO settings saved successfully!
-                </div>
-            )}
+            {error && <ErrorMessage message={error} />}
+            {success && <SuccessMessage message="SEO settings saved successfully!" />}
 
             <div>
                 <label htmlFor="twitterHandle" className="block text-sm font-medium mb-2">
@@ -374,33 +434,37 @@ function SeoSettings() {
             </div>
 
             <div className="flex items-center gap-4 pt-4 border-t">
-                <button
-                    type="submit"
-                    disabled={isPending}
-                    className={cn(
-                        'inline-flex items-center gap-2 px-6 py-2.5 rounded-lg',
-                        'bg-primary text-primary-foreground font-medium',
-                        'hover:bg-primary/90 transition-colors',
-                        'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                >
-                    <Save className="h-4 w-4" />
-                    {isPending ? 'Saving...' : 'Save Changes'}
-                </button>
+                <SaveButton isPending={isPending} />
             </div>
         </form>
     );
 }
 
+// ===== SOCIAL SETTINGS =====
+
 function SocialSettings() {
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [isLoaded, setIsLoaded] = useState(false);
 
-    const [github, setGithub] = useState('https://github.com/aadityahasabnis');
-    const [twitter, setTwitter] = useState('https://twitter.com/aadityahasabnis');
-    const [linkedin, setLinkedin] = useState('https://linkedin.com/in/aadityahasabnis');
-    const [email, setEmail] = useState('mailto:hello@aadityahasabnis.com');
+    const [github, setGithub] = useState('');
+    const [twitter, setTwitter] = useState('');
+    const [linkedin, setLinkedin] = useState('');
+    const [email, setEmail] = useState('');
+
+    // Load saved settings on mount
+    useEffect(() => {
+        getSocialSettings().then((result) => {
+            if (result.success && result.data) {
+                setGithub(result.data.github ?? '');
+                setTwitter(result.data.twitter ?? '');
+                setLinkedin(result.data.linkedin ?? '');
+                setEmail(result.data.email ?? '');
+            }
+            setIsLoaded(true);
+        });
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -424,19 +488,14 @@ function SocialSettings() {
         });
     };
 
+    if (!isLoaded) {
+        return <div className="animate-pulse h-64 bg-muted rounded-lg" />;
+    }
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="rounded-lg border border-green-500/50 bg-green-500/10 p-4 text-sm text-green-600">
-                    Social links saved successfully!
-                </div>
-            )}
+            {error && <ErrorMessage message={error} />}
+            {success && <SuccessMessage message="Social links saved successfully!" />}
 
             <div>
                 <label htmlFor="github" className="block text-sm font-medium mb-2">
@@ -447,6 +506,7 @@ function SocialSettings() {
                     type="url"
                     value={github}
                     onChange={(e) => setGithub(e.target.value)}
+                    placeholder="https://github.com/username"
                     className={cn(
                         'w-full rounded-lg border bg-background px-4 py-2.5',
                         'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -463,6 +523,7 @@ function SocialSettings() {
                     type="url"
                     value={twitter}
                     onChange={(e) => setTwitter(e.target.value)}
+                    placeholder="https://twitter.com/username"
                     className={cn(
                         'w-full rounded-lg border bg-background px-4 py-2.5',
                         'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -479,6 +540,7 @@ function SocialSettings() {
                     type="url"
                     value={linkedin}
                     onChange={(e) => setLinkedin(e.target.value)}
+                    placeholder="https://linkedin.com/in/username"
                     className={cn(
                         'w-full rounded-lg border bg-background px-4 py-2.5',
                         'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -487,14 +549,15 @@ function SocialSettings() {
             </div>
 
             <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-2">
+                <label htmlFor="socialEmail" className="block text-sm font-medium mb-2">
                     Contact Email
                 </label>
                 <input
-                    id="email"
+                    id="socialEmail"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    placeholder="hello@example.com"
                     className={cn(
                         'w-full rounded-lg border bg-background px-4 py-2.5',
                         'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
@@ -503,9 +566,187 @@ function SocialSettings() {
             </div>
 
             <div className="flex items-center gap-4 pt-4 border-t">
+                <SaveButton isPending={isPending} />
+            </div>
+        </form>
+    );
+}
+
+// ===== SECURITY SETTINGS (Change Password) =====
+
+function SecuritySettings() {
+    const [isPending, startTransition] = useTransition();
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+
+    const [currentPassword, setCurrentPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    // Password strength indicators
+    const passwordChecks = {
+        length: newPassword.length >= 8,
+        uppercase: /[A-Z]/.test(newPassword),
+        lowercase: /[a-z]/.test(newPassword),
+        number: /[0-9]/.test(newPassword),
+    };
+
+    const allChecksPassed = Object.values(passwordChecks).every(Boolean);
+    const passwordsMatch = newPassword === confirmPassword && confirmPassword.length > 0;
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError(null);
+        setSuccess(false);
+
+        if (!allChecksPassed) {
+            setError('Please ensure your password meets all requirements');
+            return;
+        }
+
+        if (!passwordsMatch) {
+            setError('Passwords do not match');
+            return;
+        }
+
+        startTransition(async () => {
+            const result = await changePassword({
+                currentPassword,
+                newPassword,
+                confirmPassword,
+            });
+
+            if (result.success) {
+                setSuccess(true);
+                setCurrentPassword('');
+                setNewPassword('');
+                setConfirmPassword('');
+                setTimeout(() => setSuccess(false), 5000);
+            } else {
+                setError(result.error || 'Failed to change password');
+            }
+        });
+    };
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+                <h3 className="text-lg font-semibold">Change Password</h3>
+                <p className="text-sm text-muted-foreground">
+                    Update your password to keep your account secure
+                </p>
+            </div>
+
+            {error && <ErrorMessage message={error} />}
+            {success && <SuccessMessage message="Password changed successfully!" />}
+
+            <div>
+                <label htmlFor="currentPassword" className="block text-sm font-medium mb-2">
+                    Current Password
+                </label>
+                <div className="relative">
+                    <input
+                        id="currentPassword"
+                        type={showCurrentPassword ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className={cn(
+                            'w-full rounded-lg border bg-background px-4 py-2.5 pr-10',
+                            'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+                        )}
+                        required
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                        {showCurrentPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label htmlFor="newPassword" className="block text-sm font-medium mb-2">
+                    New Password
+                </label>
+                <div className="relative">
+                    <input
+                        id="newPassword"
+                        type={showNewPassword ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className={cn(
+                            'w-full rounded-lg border bg-background px-4 py-2.5 pr-10',
+                            'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary'
+                        )}
+                        required
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowNewPassword(!showNewPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                        {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                </div>
+
+                {/* Password Requirements */}
+                {newPassword.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                        <p className="text-xs font-medium text-muted-foreground">Password requirements:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                            <PasswordCheck label="At least 8 characters" passed={passwordChecks.length} />
+                            <PasswordCheck label="One uppercase letter" passed={passwordChecks.uppercase} />
+                            <PasswordCheck label="One lowercase letter" passed={passwordChecks.lowercase} />
+                            <PasswordCheck label="One number" passed={passwordChecks.number} />
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-2">
+                    Confirm New Password
+                </label>
+                <div className="relative">
+                    <input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className={cn(
+                            'w-full rounded-lg border bg-background px-4 py-2.5 pr-10',
+                            'focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary',
+                            confirmPassword.length > 0 && !passwordsMatch && 'border-destructive'
+                        )}
+                        required
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                </div>
+                {confirmPassword.length > 0 && !passwordsMatch && (
+                    <p className="mt-1 text-xs text-destructive">Passwords do not match</p>
+                )}
+                {passwordsMatch && (
+                    <p className="mt-1 text-xs text-green-600 flex items-center gap-1">
+                        <Check className="h-3 w-3" /> Passwords match
+                    </p>
+                )}
+            </div>
+
+            <div className="flex items-center gap-4 pt-4 border-t">
                 <button
                     type="submit"
-                    disabled={isPending}
+                    disabled={isPending || !allChecksPassed || !passwordsMatch}
                     className={cn(
                         'inline-flex items-center gap-2 px-6 py-2.5 rounded-lg',
                         'bg-primary text-primary-foreground font-medium',
@@ -513,20 +754,29 @@ function SocialSettings() {
                         'disabled:opacity-50 disabled:cursor-not-allowed'
                     )}
                 >
-                    <Save className="h-4 w-4" />
-                    {isPending ? 'Saving...' : 'Save Changes'}
+                    <Lock className="h-4 w-4" />
+                    {isPending ? 'Changing...' : 'Change Password'}
                 </button>
             </div>
         </form>
     );
 }
 
-function AppearanceSettings() {
+// ===== PASSWORD CHECK COMPONENT =====
+
+function PasswordCheck({ label, passed }: { label: string; passed: boolean }) {
     return (
-        <div className="rounded-lg border bg-card p-6">
-            <p className="text-muted-foreground">
-                Appearance settings (theme customization, color schemes) coming soon...
-            </p>
+        <div className={cn(
+            'flex items-center gap-2 text-xs',
+            passed ? 'text-green-600' : 'text-muted-foreground'
+        )}>
+            <div className={cn(
+                'h-4 w-4 rounded-full flex items-center justify-center',
+                passed ? 'bg-green-500/20' : 'bg-muted'
+            )}>
+                {passed && <Check className="h-3 w-3" />}
+            </div>
+            {label}
         </div>
     );
 }

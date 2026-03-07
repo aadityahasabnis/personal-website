@@ -62,6 +62,7 @@ export interface IContent {
     coverImage?: string;
     published: boolean;
     publishedAt?: Date;
+    scheduledAt?: Date;              // For scheduled publishing
     featured?: boolean;
     readingTime?: number;            // Estimated reading time in minutes
     seriesSlug?: string;
@@ -205,6 +206,25 @@ export interface IMedia {
     height?: number;
     alt?: string;
     uploadedBy: ObjectId;
+    createdAt: Date;
+}
+
+// ===== ACTIVITY LOG TYPES =====
+
+export type ActivityAction = 'create' | 'update' | 'delete' | 'publish' | 'unpublish' | 'login' | 'export' | 'reorder';
+export type ActivityEntity = 'article' | 'note' | 'project' | 'topic' | 'subtopic' | 'comment' | 'subscriber' | 'media' | 'settings' | 'user' | 'message';
+
+export interface IActivityLog {
+    _id?: ObjectId;
+    action: ActivityAction;
+    entity: ActivityEntity;
+    entityId?: string;
+    entityTitle?: string;
+    userId?: ObjectId;
+    userEmail?: string;
+    details?: Record<string, unknown>;
+    ipAddress?: string;
+    userAgent?: string;
     createdAt: Date;
 }
 

@@ -6,286 +6,128 @@ import { ObjectId } from 'mongodb';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
 import type { ISubscriber, IApiResponse } from '@/interfaces';
+import { createErrorResponse, createSuccessResponse, notFoundError } from '@/server/lib/action-utils';
 
-// ===== VALIDATION SCHEMAS =====
+// ===== SCHEMAS =====
 
-const subscribeSchema = z.object({
-    email: z.string().email('Invalid email address'),
-    name: z.string().optional(),
-});
-
-const confirmSchema = z.object({
-    id: z.string(),
-});
-
-const deleteSchema = z.object({
-    id: z.string(),
-});
+const subscribeSchema = z.object({ email: z.string().email('Invalid email address'), name: z.string().optional() });
 
 type SubscribeInput = z.infer<typeof subscribeSchema>;
 
-// ===== HELPER FUNCTIONS =====
+// ===== HELPERS =====
 
-const revalidateSubscriberPaths = (): void => {
-    revalidatePath('/admin/subscribers');
-    revalidatePath('/admin'); // Dashboard shows subscriber count
-};
+const getSubscribersCollection = () => getCollection<ISubscriber>(COLLECTIONS.subscribers);
+const revalidate = () => { revalidatePath('/admin/subscribers'); revalidatePath('/admin'); };
 
-// ===== SERVER ACTIONS =====
+// ===== PUBLIC ACTIONS =====
 
-/**
- * Subscribe to newsletter (public action)
- */
 export const subscribe = async (data: SubscribeInput): Promise<IApiResponse<void>> => {
     try {
         const parsed = subscribeSchema.safeParse(data);
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
+        if (!parsed.success) return createErrorResponse(parsed.error.issues[0]?.message ?? 'Invalid input');
 
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
-
-        // Check if already subscribed
+        const collection = await getSubscribersCollection();
         const existing = await collection.findOne({ email: parsed.data.email });
 
         if (existing) {
-            // If previously unsubscribed, resubscribe
             if (existing.unsubscribedAt) {
                 await collection.updateOne(
                     { email: parsed.data.email },
-                    {
-                        $set: {
-                            confirmed: false,
-                            updatedAt: new Date(),
-                        },
-                        $unset: { unsubscribedAt: '' },
-                    }
+                    { $set: { confirmed: false, updatedAt: new Date() }, $unset: { unsubscribedAt: '' } }
                 );
-
-                revalidateSubscriberPaths();
-
-                return {
-                    success: true,
-                    status: 200,
-                    message: 'Please check your email to confirm your subscription.',
-                };
+                revalidate();
+                return createSuccessResponse(undefined, 'Please check your email to confirm your subscription.');
             }
-
-            return {
-                success: false,
-                status: 409,
-                error: 'This email is already subscribed.',
-            };
+            return { success: false, status: 409, error: 'This email is already subscribed.' };
         }
 
-        // Create new subscriber
         const now = new Date();
-        const newSubscriber: Omit<ISubscriber, '_id'> = {
+        await collection.insertOne({
             email: parsed.data.email,
             name: parsed.data.name,
             confirmed: false,
             subscribedAt: now,
             createdAt: now,
             updatedAt: now,
-        };
+        } as ISubscriber);
 
-        await collection.insertOne(newSubscriber as ISubscriber);
-
-        // TODO: Send confirmation email
-
-        revalidateSubscriberPaths();
-
-        return {
-            success: true,
-            status: 201,
-            message: 'Please check your email to confirm your subscription.',
-        };
+        revalidate();
+        return { success: true, status: 201, message: 'Please check your email to confirm your subscription.' };
     } catch (error) {
         console.error('Subscribe error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to subscribe. Please try again later.',
-        };
+        return createErrorResponse('Failed to subscribe. Please try again later.', 500);
     }
 };
 
-/**
- * Confirm subscriber (admin action)
- */
-export const confirmSubscriber = async (id: string): Promise<IApiResponse<void>> => {
-    try {
-        const parsed = confirmSchema.safeParse({ id });
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
-
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
-
-        const result = await collection.updateOne(
-            { _id: new ObjectId(parsed.data.id) },
-            {
-                $set: {
-                    confirmed: true,
-                    updatedAt: new Date(),
-                },
-            }
-        );
-
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Subscriber not found',
-            };
-        }
-
-        revalidateSubscriberPaths();
-
-        return {
-            success: true,
-            status: 200,
-            message: 'Subscriber confirmed successfully',
-        };
-    } catch (error) {
-        console.error('Confirm subscriber error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to confirm subscriber',
-        };
-    }
-};
-
-/**
- * Delete subscriber (admin action)
- */
-export const deleteSubscriber = async (id: string): Promise<IApiResponse<void>> => {
-    try {
-        const parsed = deleteSchema.safeParse({ id });
-        if (!parsed.success) {
-            return {
-                success: false,
-                status: 400,
-                error: parsed.error.issues[0]?.message ?? 'Invalid input',
-            };
-        }
-
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
-
-        const result = await collection.deleteOne({
-            _id: new ObjectId(parsed.data.id),
-        });
-
-        if (result.deletedCount === 0) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Subscriber not found',
-            };
-        }
-
-        revalidateSubscriberPaths();
-
-        return {
-            success: true,
-            status: 200,
-            message: 'Subscriber deleted successfully',
-        };
-    } catch (error) {
-        console.error('Delete subscriber error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to delete subscriber',
-        };
-    }
-};
-
-/**
- * Unsubscribe from newsletter (public action)
- */
 export const unsubscribe = async (email: string): Promise<IApiResponse<void>> => {
     try {
         const validated = z.string().email().safeParse(email);
-        if (!validated.success) {
-            return {
-                success: false,
-                status: 400,
-                error: 'Invalid email address',
-            };
-        }
+        if (!validated.success) return createErrorResponse('Invalid email address');
 
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
-
+        const collection = await getSubscribersCollection();
         const result = await collection.updateOne(
             { email: validated.data },
-            {
-                $set: {
-                    unsubscribedAt: new Date(),
-                    updatedAt: new Date(),
-                },
-            }
+            { $set: { unsubscribedAt: new Date(), updatedAt: new Date() } }
         );
 
-        if (result.matchedCount === 0) {
-            return {
-                success: false,
-                status: 404,
-                error: 'Email not found in our subscriber list',
-            };
-        }
+        if (result.matchedCount === 0) return notFoundError('Email not found in our subscriber list');
 
-        revalidateSubscriberPaths();
-
-        return {
-            success: true,
-            status: 200,
-            message: 'You have been unsubscribed successfully',
-        };
+        revalidate();
+        return createSuccessResponse(undefined, 'You have been unsubscribed successfully');
     } catch (error) {
         console.error('Unsubscribe error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to unsubscribe',
-        };
+        return createErrorResponse('Failed to unsubscribe', 500);
     }
 };
 
-/**
- * Export subscribers as CSV (admin action)
- */
+// ===== ADMIN ACTIONS =====
+
+export const confirmSubscriber = async (id: string): Promise<IApiResponse<void>> => {
+    try {
+        const collection = await getSubscribersCollection();
+        const result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { confirmed: true, updatedAt: new Date() } }
+        );
+
+        if (result.matchedCount === 0) return notFoundError('Subscriber');
+        revalidate();
+        return createSuccessResponse(undefined, 'Subscriber confirmed successfully');
+    } catch (error) {
+        console.error('Confirm subscriber error:', error);
+        return createErrorResponse('Failed to confirm subscriber', 500);
+    }
+};
+
+export const deleteSubscriber = async (id: string): Promise<IApiResponse<void>> => {
+    try {
+        const collection = await getSubscribersCollection();
+        const result = await collection.deleteOne({ _id: new ObjectId(id) });
+
+        if (result.deletedCount === 0) return notFoundError('Subscriber');
+        revalidate();
+        return createSuccessResponse(undefined, 'Subscriber deleted successfully');
+    } catch (error) {
+        console.error('Delete subscriber error:', error);
+        return createErrorResponse('Failed to delete subscriber', 500);
+    }
+};
+
 export const exportSubscribers = async (
     filter: 'all' | 'confirmed' | 'pending' | 'unsubscribed' = 'all'
 ): Promise<IApiResponse<string>> => {
     try {
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
+        const collection = await getSubscribersCollection();
 
-        // Build filter query
-        let query: any = {};
-
-        if (filter === 'confirmed') {
-            query = { confirmed: true, unsubscribedAt: { $exists: false } };
-        } else if (filter === 'pending') {
-            query = { confirmed: false };
-        } else if (filter === 'unsubscribed') {
-            query = { unsubscribedAt: { $exists: true } };
-        }
+        const query: Record<string, unknown> = filter === 'confirmed' ? { confirmed: true, unsubscribedAt: { $exists: false } }
+            : filter === 'pending' ? { confirmed: false }
+            : filter === 'unsubscribed' ? { unsubscribedAt: { $exists: true } }
+            : {};
 
         const subscribers = await collection.find(query).sort({ subscribedAt: -1 }).toArray();
 
-        // Generate CSV
         const headers = ['Email', 'Name', 'Status', 'Subscribed Date', 'Confirmed'];
-        const rows = subscribers.map((sub) => [
+        const rows = subscribers.map(sub => [
             sub.email,
             sub.name || '',
             sub.unsubscribedAt ? 'Unsubscribed' : sub.confirmed ? 'Confirmed' : 'Pending',
@@ -293,53 +135,23 @@ export const exportSubscribers = async (
             sub.confirmed ? 'Yes' : 'No',
         ]);
 
-        const csv = [
-            headers.join(','),
-            ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-        ].join('\n');
-
-        return {
-            success: true,
-            status: 200,
-            data: csv,
-        };
+        const csv = [headers.join(','), ...rows.map(row => row.map(cell => `"${cell}"`).join(','))].join('\n');
+        return createSuccessResponse(csv);
     } catch (error) {
         console.error('Export subscribers error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to export subscribers',
-        };
+        return createErrorResponse('Failed to export subscribers', 500);
     }
 };
 
-/**
- * Bulk delete subscribers (admin action)
- */
 export const bulkDeleteSubscribers = async (ids: string[]): Promise<IApiResponse<number>> => {
     try {
-        const collection = await getCollection<ISubscriber>(COLLECTIONS.subscribers);
+        const collection = await getSubscribersCollection();
+        const result = await collection.deleteMany({ _id: { $in: ids.map(id => new ObjectId(id)) } });
 
-        const objectIds = ids.map((id) => new ObjectId(id));
-
-        const result = await collection.deleteMany({
-            _id: { $in: objectIds },
-        });
-
-        revalidateSubscriberPaths();
-
-        return {
-            success: true,
-            status: 200,
-            data: result.deletedCount,
-            message: `Deleted ${result.deletedCount} subscribers`,
-        };
+        revalidate();
+        return createSuccessResponse(result.deletedCount, `Deleted ${result.deletedCount} subscribers`);
     } catch (error) {
         console.error('Bulk delete subscribers error:', error);
-        return {
-            success: false,
-            status: 500,
-            error: 'Failed to delete subscribers',
-        };
+        return createErrorResponse('Failed to delete subscribers', 500);
     }
 };

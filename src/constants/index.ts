@@ -104,11 +104,14 @@ export const COLLECTIONS = {
     content: 'content',
     topics: 'topics',
     subtopics: 'subtopics',
-    articleStats: 'article_stats', // unified stats collection for all content types
+    projects: 'projects',
+    articleStats: 'article_stats',
     comments: 'comments',
     subscribers: 'subscribers',
     users: 'users',
     media: 'media',
+    settings: 'settings',
+    activityLogs: 'activity_logs',
 } as const;
 
 // Validation Rules

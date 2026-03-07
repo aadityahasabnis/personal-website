@@ -10,8 +10,15 @@ export { getComments, postComment, upvoteComment } from './comments';
 // Revalidation actions
 export { revalidateContent, revalidateContentList, revalidateHome, revalidateAll } from './revalidate';
 
-// Subscribe actions
-export { subscribe, unsubscribe } from './subscribe';
+// Subscribe / subscriber actions (public + admin)
+export {
+    subscribe,
+    unsubscribe,
+    confirmSubscriber,
+    deleteSubscriber,
+    bulkDeleteSubscribers,
+    exportSubscribers,
+} from './subscribers';
 
 // Topic actions
 export {
@@ -64,3 +71,4 @@ export {
     updateProjectStatus,
     reorderProjects,
 } from './projects';
+

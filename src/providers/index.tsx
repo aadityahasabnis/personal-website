@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { QueryProvider } from "./QueryProvider";
 import { ThemeProvider } from "./ThemeProvider";
+import { LenisProvider } from "./LenisProvider";
 import { Toaster } from "sonner";
 
 interface IProvidersProps {
@@ -10,30 +11,29 @@ interface IProvidersProps {
 }
 
 /**
- * Root providers wrapper - combines all app providers
- * Order matters: outer providers wrap inner providers
- * 
- * Provider hierarchy:
- * 1. QueryProvider - React Query for data fetching
- * 2. ThemeProvider - Theme context (light/dark mode)
+ * Root providers wrapper
+ *
+ * Hierarchy: QueryProvider → ThemeProvider → LenisProvider → children
  */
 export const Providers = ({ children }: IProvidersProps) => {
   return (
     <QueryProvider>
       <ThemeProvider>
-        {children}
-        <Toaster
-          position="bottom-right"
-          toastOptions={{
-            classNames: {
-              toast: "bg-background border border-border shadow-lg",
-              title: "text-foreground font-semibold",
-              description: "text-muted-foreground",
-              actionButton: "bg-primary text-primary-foreground",
-              cancelButton: "bg-muted text-muted-foreground",
-            },
-          }}
-        />
+        <LenisProvider>
+          {children}
+          <Toaster
+            position="bottom-right"
+            toastOptions={{
+              classNames: {
+                toast: "bg-background border border-border shadow-lg",
+                title: "text-foreground font-semibold",
+                description: "text-muted-foreground",
+                actionButton: "bg-primary text-primary-foreground",
+                cancelButton: "bg-muted text-muted-foreground",
+              },
+            }}
+          />
+        </LenisProvider>
       </ThemeProvider>
     </QueryProvider>
   );
