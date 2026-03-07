@@ -28,9 +28,9 @@ export type { ICommentsResult };
  * Hook to fetch and cache page stats (views + likes)
  *
  * Strategy:
- * - initialData from SSR means no network call on first render
- * - staleTime: Infinity prevents re-fetching on mount
- * - Falls back to fetching if initialData is not provided
+ * - initialData from SSR provides instant display (no layout shift)
+ * - Always refetch on mount to get fresh data (ISR pages have stale initialData)
+ * - Short staleTime so tabs that stay open still get fresh counts
  */
 export const usePageStats = (
     slug: string,
@@ -47,9 +47,11 @@ export const usePageStats = (
                 userHasLiked: siteStorage.hasLiked(slug),
             };
         },
-        staleTime: options?.initialData ? Infinity : QUERY_CONFIG.statsStaleTime,
+        // Treat initialData as stale immediately so we refetch fresh counts
+        staleTime: 0,
         gcTime: 30 * 60 * 1000,
-        refetchOnMount: !options?.initialData,
+        // Always refetch on mount — ISR pages have stale initialData baked in
+        refetchOnMount: 'always',
         refetchOnWindowFocus: false,
         retry: 1,
         enabled: options?.enabled ?? true,

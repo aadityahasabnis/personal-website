@@ -11,8 +11,12 @@
 
 import { parseMarkdown } from '@/lib/markdown/parse';
 import { stampHeadingIds } from '@/lib/markdown/toc';
+import { processHtmlServer } from '@/lib/markdown/processHtmlServer';
 import { cn } from '@/lib/utils';
-import '@/app/globals.css';
+
+// Import authorly-editor's renderer CSS for .cbr-content styling
+import 'authorly-editor/styles/renderer.css';
+
 import { RichTextRenderer } from '@/components/content/RichTextRenderer';
 
 interface ArticleContentProps {
@@ -29,7 +33,11 @@ export const ArticleContent = async ({ content, className }: ArticleContentProps
     // Stamp heading IDs server-side so they exist in the initial HTML payload.
     // This eliminates the timing race where the TOC observer was set up before
     // AuthorlyRenderer ran client-side and stamped the IDs itself.
-    const html = stampHeadingIds(rawHtml);
+    const withHeadingIds = stampHeadingIds(rawHtml);
+
+    // Process HTML server-side: wrap code blocks, style checklists, add link attrs.
+    // This eliminates the FOUC caused by client-side processing in useEffect.
+    const html = processHtmlServer(withHeadingIds);
 
     return (
         <div className={cn('max-w-none px-6 lg:px-0', className)}>
