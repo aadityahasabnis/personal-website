@@ -1,64 +1,26 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS, VALIDATION } from '@/constants';
+import { COLLECTIONS } from '@/constants';
 import { calculateReadingTime } from '@/lib/utils';
 import type { IArticle } from '@/interfaces';
 import type { ActionResponse } from '../utils';
 import { success, notFound, duplicate, error, handleError, logUpdate } from '../utils';
 import { updateTopicArticleCount } from '../topics/updateTopicArticleCount';
 import { updateSubtopicArticleCount } from '../subtopics/updateSubtopicArticleCount';
+import { articleUpdateSchema, type ArticleUpdateInput } from '@/server/schemas';
 
-// ===== REQUEST/RESPONSE TYPES =====
+// ==============================================================
+// Types
+// ==============================================================
 
-export interface UpdateArticleRequest {
-    title?: string;
-    slug?: string;
-    description?: string;
-    body?: string;
-    html?: string;
-    tableOfContents?: Array<{ id: string; text: string; level: number }>;
-    topicSlug?: string;
-    subtopicSlug?: string;
-    tags?: string[];
-    coverImage?: string;
-    order?: number;
-    readingTime?: number;
-    seo?: { title?: string; description?: string; keywords?: string[]; ogImage?: string };
-}
-
+export type UpdateArticleRequest = ArticleUpdateInput;
 export interface UpdateArticleResponse extends ActionResponse<void> {}
 
-// ===== SCHEMA =====
-
-const tocSchema = z.array(z.object({ id: z.string(), text: z.string(), level: z.number() }));
-
-const seoSchema = z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    keywords: z.array(z.string()).optional(),
-    ogImage: z.string().url().optional().or(z.literal('')),
-});
-
-const schema = z.object({
-    title: z.string().min(VALIDATION.title.min).max(VALIDATION.title.max).optional(),
-    slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern, 'Slug must be lowercase letters, numbers, and hyphens only').optional(),
-    description: z.string().max(VALIDATION.description.max).optional(),
-    body: z.string().optional(),
-    html: z.string().optional(),
-    tableOfContents: tocSchema.optional(),
-    topicSlug: z.string().optional(),
-    subtopicSlug: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    coverImage: z.string().url().optional().or(z.literal('')),
-    order: z.number().int().min(0).optional(),
-    readingTime: z.number().int().min(1).optional(),
-    seo: seoSchema.optional(),
-});
-
-// ===== HELPERS =====
+// ==============================================================
+// Helpers
+// ==============================================================
 
 const getContentCollection = () => getCollection<IArticle>(COLLECTIONS.content);
 
@@ -78,7 +40,9 @@ const verifyTopicExists = async (topicSlug: string): Promise<boolean> => {
     return !!topic;
 };
 
-// ===== SERVER ACTION =====
+// ==============================================================
+// Server Action
+// ==============================================================
 
 export const updateArticle = async (
     topicSlug: string, 
@@ -86,7 +50,7 @@ export const updateArticle = async (
     data: UpdateArticleRequest
 ): Promise<UpdateArticleResponse> => {
     try {
-        const parsed = schema.safeParse(data);
+        const parsed = articleUpdateSchema.safeParse(data);
         if (!parsed.success) return error(parsed.error.issues[0]?.message ?? 'Invalid input');
 
         const collection = await getContentCollection();

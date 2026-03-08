@@ -1,51 +1,18 @@
 'use server';
 
-import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS, VALIDATION } from '@/constants';
+import { COLLECTIONS } from '@/constants';
 import { calculateReadingTime } from '@/lib/utils';
 import type { IArticle, IApiResponse } from '@/interfaces';
 import { updateTopicArticleCount } from './topics';
 import { updateSubtopicArticleCount } from './subtopics';
 import { createAction, createErrorResponse, createSuccessResponse, notFoundError, duplicateError } from '@/server/lib/action-utils';
+import { articleCreateSchema, articleUpdateSchema, type ArticleCreateInput, type ArticleUpdateInput } from '@/server/schemas';
 
-// ===== SCHEMAS =====
-
-const tocSchema = z.array(z.object({ id: z.string(), text: z.string(), level: z.number() }));
-
-const seoSchema = z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    keywords: z.array(z.string()).optional(),
-    ogImage: z.string().url().optional().or(z.literal('')),
-});
-
-const articleInputSchema = z.object({
-    title: z.string().min(VALIDATION.title.min).max(VALIDATION.title.max),
-    slug: z.string().min(VALIDATION.slug.min).max(VALIDATION.slug.max).regex(VALIDATION.slug.pattern, 'Slug must be lowercase letters, numbers, and hyphens only'),
-    description: z.string().max(VALIDATION.description.max),
-    body: z.string().min(1, 'Article body is required'),
-    html: z.string().optional(),
-    tableOfContents: tocSchema.optional(),
-    topicSlug: z.string().min(1, 'Topic is required'),
-    subtopicSlug: z.string().optional(),
-    tags: z.array(z.string()).optional(),
-    coverImage: z.string().url().optional().or(z.literal('')),
-    order: z.number().int().min(0).default(0),
-    readingTime: z.number().int().min(1).optional(),
-    seo: seoSchema.optional(),
-});
-
-const articleUpdateSchema = articleInputSchema.partial().extend({
-    body: z.string().optional(),
-    tableOfContents: tocSchema.optional(),
-});
-
-type ArticleInput = z.infer<typeof articleInputSchema>;
-type ArticleUpdate = z.infer<typeof articleUpdateSchema>;
-
-// ===== HELPERS =====
+// ==============================================================
+// Helpers
+// ==============================================================
 
 const getContentCollection = () => getCollection<IArticle>(COLLECTIONS.content);
 
@@ -75,10 +42,12 @@ const updateArticleCounts = async (topicSlug: string, subtopicSlug: string | und
     if (subtopicSlug) await updateSubtopicArticleCount(topicSlug, subtopicSlug, delta);
 };
 
-// ===== SERVER ACTIONS =====
+// ==============================================================
+// Server Actions
+// ==============================================================
 
-export const createArticle = createAction<ArticleInput, string>({
-    schema: articleInputSchema,
+export const createArticle = createAction<ArticleCreateInput, string>({
+    schema: articleCreateSchema,
     handler: async (data) => {
         const collection = await getContentCollection();
         
@@ -120,7 +89,7 @@ export const createArticle = createAction<ArticleInput, string>({
 export const updateArticle = async (
     topicSlug: string, 
     slug: string, 
-    data: ArticleUpdate
+    data: ArticleUpdateInput
 ): Promise<IApiResponse<void>> => {
     try {
         const parsed = articleUpdateSchema.safeParse(data);
