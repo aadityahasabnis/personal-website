@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getAllTopics, getFeaturedTopics } from '@/server/queries/topics';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TopicGrid } from '@/components/content/TopicGrid';
 import type { ITopic } from '@/interfaces/schema';

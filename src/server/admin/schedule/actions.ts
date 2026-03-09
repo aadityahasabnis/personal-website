@@ -10,7 +10,7 @@ import { z } from 'zod';
 import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IContent } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils/types';
 import { success, error, notFound } from '../utils/response';

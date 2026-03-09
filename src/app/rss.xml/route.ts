@@ -1,5 +1,5 @@
 import { getRecentArticles } from '@/server/queries/content';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600; // 1 hour

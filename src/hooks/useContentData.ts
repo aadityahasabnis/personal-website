@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS, QUERY_CONFIG } from '@/constants';
+import { QUERY_KEYS, QUERY_CONFIG } from '@/constants/siteConstants';
 import { siteStorage } from '@/lib/storage';
 import { getContentStats } from '@/server/actions/stats';
 import { likePost } from '@/server/actions/like';

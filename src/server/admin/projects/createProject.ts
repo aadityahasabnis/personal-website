@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS, VALIDATION } from '@/constants';
+import { COLLECTIONS, VALIDATION } from '@/constants/siteConstants';
 import type { IProject } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils';
 import { success, duplicate, error, handleError, logCreate } from '../utils';

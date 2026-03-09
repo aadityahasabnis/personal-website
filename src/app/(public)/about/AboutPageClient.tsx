@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { ArrowUpRight, MapPin, Mail, Briefcase } from 'lucide-react';
-import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants';
+import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 
 // ===== DATA =====
 
@@ -107,7 +107,7 @@ export default function AboutPageClient() {
             >
               About
             </motion.p>
-            
+
             <motion.h1
               {...fadeIn}
               transition={{ delay: 0.2 }}
@@ -115,13 +115,13 @@ export default function AboutPageClient() {
             >
               {SITE_CONFIG.author.name}
             </motion.h1>
-            
+
             <motion.p
               {...fadeIn}
               transition={{ delay: 0.3 }}
               className="text-lg text-[var(--fg-muted)] leading-relaxed mb-6"
             >
-              I&apos;m a software engineer passionate about building products that make a difference. 
+              I&apos;m a software engineer passionate about building products that make a difference.
               I write about web development, software architecture, and the craft of programming.
             </motion.p>
 
@@ -207,7 +207,7 @@ export default function AboutPageClient() {
           <Briefcase className="size-4" />
           Experience
         </h2>
-        <motion.div 
+        <motion.div
           className="space-y-8"
           variants={staggerContainer}
           initial="initial"
@@ -222,7 +222,7 @@ export default function AboutPageClient() {
             >
               {/* Timeline dot */}
               <div className={`absolute -left-[5px] top-1.5 size-2 rounded-full ${exp.current ? 'bg-[var(--accent)]' : 'bg-[var(--fg-subtle)]'}`} />
-              
+
               <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 mb-2">
                 <h3 className="font-medium text-[var(--fg)]">{exp.title}</h3>
                 <span className="text-sm text-[var(--fg-subtle)]">{exp.period}</span>

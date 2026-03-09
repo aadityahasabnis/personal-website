@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 
 import { getProjects } from '@/server/queries/projects';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProjectCard } from '@/components/content/ProjectCard';
 import type { IProject } from '@/interfaces/schema';

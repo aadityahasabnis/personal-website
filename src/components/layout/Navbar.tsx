@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useScrollPosition } from "@/hooks";
-import { NAV_LINKS } from "@/constants";
+import { NAV_LINKS } from "@/constants/siteConstants";
 import ThemeToggle from "./ThemeToggle";
 
 /**

@@ -1,5 +1,5 @@
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IMedia } from '@/interfaces/schema';
 
 /**

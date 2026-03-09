@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 /**
  * Robots.txt Generation

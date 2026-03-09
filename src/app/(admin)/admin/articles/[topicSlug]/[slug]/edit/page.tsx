@@ -6,7 +6,7 @@ import { ArticleForm } from '../../../ArticleForm';
 import { getArticleForEdit } from '@/server/queries/admin';
 import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { ISubtopic } from '@/interfaces/schema';
 import { serializeDocument, serializeDocuments } from '@/lib/utils';
 

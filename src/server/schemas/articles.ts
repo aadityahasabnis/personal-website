@@ -3,7 +3,7 @@
 // ==============================================================
 
 import { z } from 'zod';
-import { VALIDATION } from '@/constants';
+import { VALIDATION } from '@/constants/siteConstants';
 
 // ==============================================================
 // Base Schemas

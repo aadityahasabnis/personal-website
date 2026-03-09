@@ -7,7 +7,7 @@
 'use server';
 
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { ActionResponse } from '../utils/types';
 import { success } from '../utils/response';
 import { handleError } from '../utils/errorHandler';

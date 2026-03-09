@@ -3,7 +3,7 @@ export const SITE_CONFIG = {
     name: 'Aaditya Hasabnis',
     shortName: 'AH',
     title: 'Aaditya Hasabnis | Developer & Writer',
-    description: 'Personal site for articles, notes, and projects',
+    description: 'Personal site for articles, blogs, and projects',
     url: 'https://aadityahasabnis.com',
     locale: 'en-US',
     email: 'aaditya.hasabnis@gmail.com',
@@ -50,7 +50,7 @@ export interface INavLink {
 
 export const NAV_LINKS: readonly INavLink[] = [
     { label: 'Articles', href: '/articles' },
-    { label: 'Notes', href: '/notes' },
+    { label: 'Blogs', href: '/blogs' },
     { label: 'Projects', href: '/projects' },
     { label: 'About', href: '/about' },
 ] as const;
@@ -59,6 +59,7 @@ export const FOOTER_LINKS = {
     main: [
         { label: 'Home', href: '/' },
         { label: 'Articles', href: '/articles' },
+        { label: 'Blogs', href: '/blogs' },
         { label: 'About', href: '/about' },
     ],
     legal: [
@@ -66,62 +67,3 @@ export const FOOTER_LINKS = {
         { label: 'Terms', href: '/terms' },
     ],
 } as const;
-
-// Content Types
-export const CONTENT_TYPES = {
-    ARTICLE: 'article',
-    SERIES: 'series',
-    NOTE: 'note',
-    LOG: 'log',
-    PAGE: 'page',
-} as const;
-
-export type ContentType = (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES];
-
-export const CONTENT_STATUS = {
-    DRAFT: 'draft',
-    PUBLISHED: 'published',
-    ARCHIVED: 'archived',
-} as const;
-
-export type ContentStatus = (typeof CONTENT_STATUS)[keyof typeof CONTENT_STATUS];
-
-// React Query Config
-export const QUERY_CONFIG = {
-    defaultStaleTime: 60_000,
-    defaultGcTime: 300_000,
-    defaultRetry: 1,
-    contentStaleTime: 300_000,
-    contentGcTime: 600_000,
-    statsStaleTime: 30_000,
-    statsGcTime: 120_000,
-    defaultPageSize: 10,
-    maxPageSize: 50,
-} as const;
-
-// Database Collections
-export const COLLECTIONS = {
-    content: 'content',
-    topics: 'topics',
-    subtopics: 'subtopics',
-    projects: 'projects',
-    articleStats: 'article_stats',
-    comments: 'comments',
-    subscribers: 'subscribers',
-    users: 'users',
-    media: 'media',
-    settings: 'settings',
-    activityLogs: 'activity_logs',
-} as const;
-
-// Validation Rules
-export const VALIDATION = {
-    title: { min: 3, max: 100 },
-    slug: { min: 3, max: 100, pattern: /^[a-z0-9-]+$/ },
-    description: { max: 160 },
-    body: { min: 100 },
-    email: { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-} as const;
-
-// Query Keys - Re-export from dedicated file
-export { QUERY_KEYS } from './query-keys';

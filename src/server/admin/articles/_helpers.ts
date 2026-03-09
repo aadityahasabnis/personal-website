@@ -6,7 +6,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IArticle, ISubtopic } from '@/interfaces/schema';
 
 // ==============================================================

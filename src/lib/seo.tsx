@@ -1,4 +1,4 @@
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import type { IArticle, ITopic } from '@/interfaces/schema';
 
 /**

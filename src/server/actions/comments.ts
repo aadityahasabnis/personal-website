@@ -3,7 +3,7 @@
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IComment, ICommentReply, ISubscriber } from '@/interfaces/schema';
 
 // ===== TYPES =====

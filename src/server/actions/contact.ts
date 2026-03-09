@@ -3,7 +3,7 @@
 import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { VALIDATION } from '@/constants';
+import { VALIDATION } from '@/constants/siteConstants';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse } from '@/server/lib/action-utils';
 

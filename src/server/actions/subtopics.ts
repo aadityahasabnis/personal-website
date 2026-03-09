@@ -3,7 +3,7 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS, VALIDATION } from '@/constants';
+import { COLLECTIONS, VALIDATION } from '@/constants/siteConstants';
 import type { ISubtopic } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse, notFoundError, duplicateError } from '@/server/lib/action-utils';

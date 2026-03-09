@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Github, Linkedin, Twitter, Mail } from "lucide-react";
-import { SITE_CONFIG, NAV_LINKS, SOCIAL_LINKS } from "@/constants";
+import { SITE_CONFIG, NAV_LINKS, SOCIAL_LINKS } from "@/constants/siteConstants";
 
 const iconMap: Record<string, React.ReactNode> = {
   github: <Github className="size-5" />,

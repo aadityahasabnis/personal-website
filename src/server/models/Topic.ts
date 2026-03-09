@@ -1,5 +1,4 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { ITopic } from '@/interfaces/schema';
 import type { ITopicDocument } from './types';
 
 // ============================================================

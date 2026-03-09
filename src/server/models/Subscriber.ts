@@ -1,5 +1,4 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { ISubscriber } from '@/interfaces/schema';
 import type { ISubscriberDocument } from './types';
 
 // ============================================================

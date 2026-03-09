@@ -6,7 +6,7 @@ import { signIn } from 'next-auth/react';
 import { LogIn, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 /**
  * Admin Login Form Component

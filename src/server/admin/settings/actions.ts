@@ -11,7 +11,7 @@ import bcrypt from 'bcryptjs';
 import { ObjectId } from 'mongodb';
 
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IUser } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils/types';
 import { success, error, validationError } from '../utils/response';

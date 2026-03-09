@@ -13,7 +13,7 @@ import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { JsonLd, generateArticleSchema, generateBreadcrumbSchema, combineSchemas, generateOrganizationSchema } from '@/lib/seo';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 export const revalidate = 3600;
 

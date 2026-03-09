@@ -15,7 +15,7 @@ import {
     type SeoSettings as ISeoSettings,
     type SocialSettings as ISocialSettings,
 } from '@/server/admin/settings';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { cn } from '@/lib/utils';
 
 type SettingsTab = 'general' | 'seo' | 'social' | 'security';

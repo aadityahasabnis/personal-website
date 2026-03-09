@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 /**
  * About Preview Section for homepage
@@ -18,7 +18,7 @@ export const AboutPreview = () => {
               {/* Decorative Elements */}
               <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-[var(--gradient-start)] to-[var(--gradient-end)] opacity-20 blur-2xl" />
               <div className="absolute inset-0 rounded-3xl gradient-border" />
-              
+
               {/* Placeholder for profile image */}
               <div className="relative aspect-square rounded-2xl overflow-hidden bg-[var(--surface)] flex items-center justify-center">
                 <span className="heading-display gradient-text">
@@ -36,15 +36,15 @@ export const AboutPreview = () => {
             </h2>
             <div className="space-y-4 text-[var(--fg-muted)] body-base mb-8">
               <p>
-                I&apos;m a full-stack developer with a passion for creating beautiful, 
-                functional, and user-centric digital experiences. With over 5 years of 
-                experience in the industry, I&apos;ve had the privilege of working on 
+                I&apos;m a full-stack developer with a passion for creating beautiful,
+                functional, and user-centric digital experiences. With over 5 years of
+                experience in the industry, I&apos;ve had the privilege of working on
                 diverse projects ranging from startups to enterprise applications.
               </p>
               <p>
-                Beyond coding, I enjoy writing about technology, sharing knowledge 
-                through articles, and contributing to open-source projects. I believe 
-                in continuous learning and staying updated with the latest trends in 
+                Beyond coding, I enjoy writing about technology, sharing knowledge
+                through articles, and contributing to open-source projects. I believe
+                in continuous learning and staying updated with the latest trends in
                 web development.
               </p>
             </div>

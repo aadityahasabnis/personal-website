@@ -1,5 +1,4 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { ISubtopic } from '@/interfaces/schema';
 import type { ISubtopicDocument } from './types';
 
 // ============================================================

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { IComment } from '@/interfaces/schema';
 import type { ICommentDocument } from './types';
 
 // ============================================================

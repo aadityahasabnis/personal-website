@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import AboutPageClient from './AboutPageClient';
 
 const description = `Learn more about ${SITE_CONFIG.author.name} - software engineer, writer, and creator. Discover my experience, skills, and what I believe in.`;

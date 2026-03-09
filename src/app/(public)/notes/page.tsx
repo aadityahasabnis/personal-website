@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 import { getRecentNotes, getAllNoteTags } from '@/server/queries/content';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { NotesClient } from '@/components/content/NotesClient';
 import type { INote } from '@/interfaces/schema';
 

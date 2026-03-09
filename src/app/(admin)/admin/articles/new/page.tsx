@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/admin';
 import { ArticleForm } from '../ArticleForm';
 import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { ISubtopic } from '@/interfaces/schema';
 import { serializeDocuments } from '@/lib/utils';
 

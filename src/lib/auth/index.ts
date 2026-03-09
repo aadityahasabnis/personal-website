@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs';
 
 import clientPromise from '@/lib/db/client';
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IUser } from '@/interfaces/schema';
 
 /**

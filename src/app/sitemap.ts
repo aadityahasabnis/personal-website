@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 
 import { getAllArticlesForSitemap, getAllNotesForSitemap } from '@/server/queries/content';
 import { getAllTopicsForSitemap } from '@/server/queries/topics';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 /**
  * Dynamic Sitemap Generation

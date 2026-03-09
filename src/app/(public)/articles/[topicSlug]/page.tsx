@@ -8,7 +8,7 @@ import { getTopicWithContent, getAllTopicSlugs } from '@/server/queries/topics';
 import { SubtopicAccordion } from '@/components/content/SubtopicAccordion';
 import { BeamLine } from '@/components/common/BeamLine';
 import { formatDate } from '@/lib/utils';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { JsonLd, generateTopicSchema, generateArticleListSchema, generateBreadcrumbSchema, combineSchemas } from '@/lib/seo';
 import type { ISubtopic, IArticle } from '@/interfaces/schema';
 

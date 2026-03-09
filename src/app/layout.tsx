@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/providers";
-import { SITE_CONFIG } from "@/constants";
+import { SITE_CONFIG } from "@/constants/siteConstants";
 import "./globals.css";
 import 'authorly-editor/styles.css';
 

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { IUser } from '@/interfaces/schema';
 import { USER_ROLES } from '@/interfaces/schema';
 import type { IUserDocument } from './types';
 

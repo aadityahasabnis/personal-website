@@ -4,7 +4,7 @@ import { useRef, Suspense } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 // Lazy load Three.js components
 import dynamic from 'next/dynamic';
@@ -123,7 +123,7 @@ export const HeroSection = () => {
       </motion.div>
 
       {/* Gradient Overlay at Bottom - smoother transition */}
-      <div 
+      <div
         className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none"
         style={{
           background: 'linear-gradient(to top, var(--bg) 0%, transparent 100%)',

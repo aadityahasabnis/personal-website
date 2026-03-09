@@ -7,7 +7,7 @@
  */
 
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IComment } from '@/interfaces/schema';
 import type { ActionResponse, PaginatedResponse } from '../utils/types';
 import { success, paginated } from '../utils/response';

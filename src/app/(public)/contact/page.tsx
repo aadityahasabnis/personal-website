@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Mail, MapPin, Clock, MessageSquare, ArrowUpRight } from 'lucide-react';
 
-import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants';
+import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 import { ContactForm } from '@/components/sections/ContactForm';
 
 const description = `Get in touch with ${SITE_CONFIG.author.name}. I am open to collaboration, job opportunities, and general inquiries.`;

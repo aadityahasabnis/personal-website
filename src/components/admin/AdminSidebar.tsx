@@ -8,7 +8,7 @@ import {
     Mail, BarChart3, Layers, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Database, Activity, Clock, type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 
 interface IAdminSidebarProps {
     user: { name: string; email: string; role: string };
@@ -61,7 +61,7 @@ const AdminSidebar = ({ user }: IAdminSidebarProps): React.ReactElement => {
         localStorage.setItem(SIDEBAR_STORAGE_KEY, String(newState));
     };
 
-    const isActive = (href: string): boolean => 
+    const isActive = (href: string): boolean =>
         href === '/admin' ? pathname === '/admin' : pathname.startsWith(href);
 
     const NavLink = ({ item }: { item: INavItem }) => {

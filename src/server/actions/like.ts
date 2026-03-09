@@ -1,7 +1,7 @@
 'use server';
 
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { IArticleStats } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 

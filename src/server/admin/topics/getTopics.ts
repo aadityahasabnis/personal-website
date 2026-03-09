@@ -1,7 +1,7 @@
 'use server';
 
 import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants';
+import { COLLECTIONS } from '@/constants/siteConstants';
 import type { ITopic } from '@/interfaces/schema';
 
 // ===== SERIALIZED TYPES =====
