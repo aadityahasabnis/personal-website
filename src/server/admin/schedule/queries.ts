@@ -8,7 +8,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IContent } from '@/interfaces';
+import type { IContent } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils/types';
 import { success } from '../utils/response';
 import { handleError } from '../utils/errorHandler';

@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticle, INote, ISeries, IProject, ISubtopic } from '@/interfaces';
+import type { IArticle, INote, ISeries, IProject, ISubtopic } from '@/interfaces/schema';
 
 /**
  * Admin Content Queries

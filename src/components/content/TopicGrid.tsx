@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { TopicCard } from './TopicCard';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 
 interface ITopicGridProps {
     topics: ITopic[];

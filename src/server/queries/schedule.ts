@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IContent } from '@/interfaces';
+import type { IContent } from '@/interfaces/schema';
 
 /**
  * Get all scheduled content for admin

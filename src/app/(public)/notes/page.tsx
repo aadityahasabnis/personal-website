@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { getRecentNotes, getAllNoteTags } from '@/server/queries/content';
 import { SITE_CONFIG } from '@/constants';
 import { NotesClient } from '@/components/content/NotesClient';
-import type { INote } from '@/interfaces';
+import type { INote } from '@/interfaces/schema';
 
 const description = `Quick notes, atomic knowledge, and learning snippets by ${SITE_CONFIG.author.name}.`;
 
@@ -80,9 +80,9 @@ export default async function NotesPage() {
     const transformedNotes = notes.map(transformNote);
 
     return (
-        <NotesClient 
-            notes={transformedNotes} 
-            allTags={allTags} 
+        <NotesClient
+            notes={transformedNotes}
+            allTags={allTags}
         />
     );
 }

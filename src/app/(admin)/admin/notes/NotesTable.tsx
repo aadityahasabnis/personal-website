@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { BookText, Calendar } from 'lucide-react';
 
 import { formatDate } from '@/lib/utils';
-import type { INote } from '@/interfaces';
+import type { INote } from '@/interfaces/schema';
 import { useAdminTable } from '@/hooks';
 import {
     DataTable,

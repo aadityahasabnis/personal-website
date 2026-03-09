@@ -3,7 +3,7 @@ import { getTopic } from '@/server/queries/topics';
 import { ArticleSidebar } from '@/components/content/ArticleSidebar';
 import { TableOfContents } from '@/components/content/TableOfContents';
 import { extractHeadingsFromAuthorlyHtml, stampHeadingIds } from '@/lib/markdown/toc';
-import type { ISubtopic, IArticle } from '@/interfaces';
+import type { ISubtopic, IArticle } from '@/interfaces/schema';
 
 interface IArticleLayoutProps {
     children: React.ReactNode;

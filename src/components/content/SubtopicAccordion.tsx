@@ -9,7 +9,7 @@ import {
     AccordionTrigger,
 } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import type { ISubtopic, IArticle } from '@/interfaces';
+import type { ISubtopic, IArticle } from '@/interfaces/schema';
 
 interface IArticleItem {
     slug: string;
@@ -97,7 +97,7 @@ const SubtopicAccordion = ({
                 >
                     {subtopics.map((subtopic) => {
                         const subtopicArticles = articlesBySubtopic[subtopic.slug] || [];
-                        
+
                         return (
                             <AccordionItem
                                 key={subtopic.slug}

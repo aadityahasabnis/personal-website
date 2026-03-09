@@ -2,7 +2,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticleStats } from '@/interfaces';
+import type { IArticleStats } from '@/interfaces/schema';
 
 // ===== TYPES =====
 

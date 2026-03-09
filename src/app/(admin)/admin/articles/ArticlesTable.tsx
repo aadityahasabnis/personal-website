@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { FileText, Calendar, Clock } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { useAdminTable } from '@/hooks';
-import type { IArticle, ITopic } from '@/interfaces';
+import type { IArticle, ITopic } from '@/interfaces/schema';
 import {
     DataTable, TableSearch, BulkActionsBar, StatusBadge, DataTableActions,
     createEditAction, createDeleteAction, createTogglePublishedAction, createToggleFeaturedAction,

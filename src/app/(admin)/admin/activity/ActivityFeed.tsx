@@ -8,7 +8,7 @@ import {
     type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ActivityAction, ActivityEntity } from '@/interfaces';
+import type { ActivityAction, ActivityEntity } from '@/interfaces/schema';
 import {
     Select,
     SelectContent,

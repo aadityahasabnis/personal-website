@@ -36,7 +36,7 @@ export type DeepPartial<T> = T extends object
     : T;
 
 // Re-export IApiResponse from canonical source (interfaces/index.ts)
-export type { IApiResponse, IFormData } from '@/interfaces';
+export type { IApiResponse, IFormData } from '@/interfaces/schema';
 
 // Form data base type (kept for legacy compatibility — prefer IFormData from @/interfaces)
 // Handle change event type

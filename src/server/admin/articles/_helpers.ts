@@ -7,7 +7,7 @@
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticle, ISubtopic } from '@/interfaces';
+import type { IArticle, ISubtopic } from '@/interfaces/schema';
 
 // ==============================================================
 // Collection Helpers

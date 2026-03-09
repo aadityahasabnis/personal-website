@@ -2,7 +2,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { INote } from '@/interfaces';
+import type { INote } from '@/interfaces/schema';
 
 // ===== SERIALIZED TYPES =====
 

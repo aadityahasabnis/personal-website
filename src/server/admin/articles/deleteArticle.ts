@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticle } from '@/interfaces';
+import type { IArticle } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils';
 import { success, notFound, handleError, logDelete } from '../utils';
 import { updateTopicArticleCount } from '../topics/updateTopicArticleCount';

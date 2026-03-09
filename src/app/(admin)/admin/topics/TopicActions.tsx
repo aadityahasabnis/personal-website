@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 import {
     toggleTopicPublished,
     toggleTopicFeatured,
@@ -80,11 +80,11 @@ export const TopicActions = ({ topic }: ITopicActionsProps): React.ReactElement 
             {isOpen && (
                 <>
                     {/* Backdrop */}
-                    <div 
-                        className="fixed inset-0 z-40" 
-                        onClick={() => setIsOpen(false)} 
+                    <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setIsOpen(false)}
                     />
-                    
+
                     <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-lg border bg-popover p-1 shadow-lg">
                         {/* Edit */}
                         <Link

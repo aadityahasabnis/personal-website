@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubtopic, IArticle } from '@/interfaces';
+import type { ISubtopic, IArticle } from '@/interfaces/schema';
 
 // ===== SUBTOPIC QUERIES =====
 

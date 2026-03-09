@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { ISubtopic, IArticle } from '@/interfaces';
+import type { ISubtopic, IArticle } from '@/interfaces/schema';
 
 interface IArticleItem {
     slug: string;

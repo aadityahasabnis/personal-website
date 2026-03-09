@@ -4,7 +4,7 @@ import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { VALIDATION } from '@/constants';
-import type { IApiResponse } from '@/interfaces';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse } from '@/server/lib/action-utils';
 
 // ===== TYPES =====

@@ -4,7 +4,7 @@ import { getAllTopics, getFeaturedTopics } from '@/server/queries/topics';
 import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { TopicGrid } from '@/components/content/TopicGrid';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 
 const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
 

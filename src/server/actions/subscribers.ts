@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { ObjectId } from 'mongodb';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubscriber, IApiResponse } from '@/interfaces';
+import type { ISubscriber } from '@/interfaces/schema';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse, notFoundError } from '@/server/lib/action-utils';
 
 // ===== SCHEMAS =====

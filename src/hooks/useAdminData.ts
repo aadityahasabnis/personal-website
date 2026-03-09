@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient, type QueryKey, type UseQueryOptions } from '@tanstack/react-query';
-import type { IApiResponse } from '@/interfaces';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 
 // ===== TYPES =====
 

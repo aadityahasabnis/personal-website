@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticle, INote, IProject, IArticleStats, IComment, ISubscriber } from '@/interfaces';
+import type { IArticle, INote, IProject, IArticleStats, IComment, ISubscriber } from '@/interfaces/schema';
 
 /**
  * Analytics Queries for Admin Dashboard

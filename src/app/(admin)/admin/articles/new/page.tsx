@@ -6,12 +6,12 @@ import { ArticleForm } from '../ArticleForm';
 import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubtopic } from '@/interfaces';
+import type { ISubtopic } from '@/interfaces/schema';
 import { serializeDocuments } from '@/lib/utils';
 
 async function getFormData() {
     const topics = await getAllTopics();
-    
+
     // Get all subtopics (not filtered by published for admin)
     const subtopicsCollection = await getCollection<ISubtopic>(COLLECTIONS.subtopics);
     const allSubtopics = await subtopicsCollection
@@ -20,8 +20,8 @@ async function getFormData() {
         .toArray();
 
     // Serialize data for client component (convert ObjectId to string)
-    return { 
-        topics: serializeDocuments(topics), 
+    return {
+        topics: serializeDocuments(topics),
         allSubtopics: serializeDocuments(allSubtopics)
     };
 }
@@ -48,8 +48,8 @@ export default async function NewArticlePage() {
             </div>
 
             {/* Form - Full Width */}
-            <ArticleForm 
-                topics={topics} 
+            <ArticleForm
+                topics={topics}
                 allSubtopics={allSubtopics}
             />
         </div>

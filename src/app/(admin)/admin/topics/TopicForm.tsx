@@ -6,7 +6,7 @@ import { Loader2, Save } from 'lucide-react';
 
 import { slugify } from '@/lib/utils';
 import { createTopic, updateTopic } from '@/server/actions/topics';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 import {
     FormInput,
     FormTextarea,
@@ -130,11 +130,10 @@ export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps): React.
                                 key={iconName}
                                 type="button"
                                 onClick={() => setIcon(iconName)}
-                                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${
-                                    icon === iconName
+                                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${icon === iconName
                                         ? 'border-primary bg-primary/10 text-primary'
                                         : 'hover:border-primary/50 hover:bg-muted'
-                                }`}
+                                    }`}
                             >
                                 {iconName}
                             </button>

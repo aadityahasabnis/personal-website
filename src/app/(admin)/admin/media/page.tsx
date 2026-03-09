@@ -3,7 +3,7 @@ import { ImageIcon, Film, FileText, HardDrive } from 'lucide-react';
 import { PageHeader } from '@/components/admin';
 import { MediaLibrary } from './MediaLibrary';
 import { getAllMediaForAdmin, getTotalStorageUsed } from '@/server/queries/media';
-import type { IMedia } from '@/interfaces';
+import type { IMedia } from '@/interfaces/schema';
 
 export const metadata = {
     title: 'Media Library | Admin Dashboard',

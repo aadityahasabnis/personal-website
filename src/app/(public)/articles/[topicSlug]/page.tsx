@@ -10,7 +10,7 @@ import { BeamLine } from '@/components/common/BeamLine';
 import { formatDate } from '@/lib/utils';
 import { SITE_CONFIG } from '@/constants';
 import { JsonLd, generateTopicSchema, generateArticleListSchema, generateBreadcrumbSchema, combineSchemas } from '@/lib/seo';
-import type { ISubtopic, IArticle } from '@/interfaces';
+import type { ISubtopic, IArticle } from '@/interfaces/schema';
 
 // ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
 export const revalidate = 3600;
@@ -76,13 +76,13 @@ export async function generateMetadata({
  */
 function renderIcon(iconName?: string, className?: string) {
     if (!iconName) return <FileText className={className} />;
-    
+
     // Convert kebab-case or lowercase to PascalCase
     const pascalCase = iconName
         .split(/[-_]/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('');
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const IconComponent = (LucideIcons as any)[pascalCase] || FileText;
     return <IconComponent className={className} />;
@@ -155,58 +155,58 @@ export default async function TopicPage({ params }: ITopicPageProps) {
             <JsonLd data={combinedSchema} />
 
             <div className="max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32">
-            {/* Breadcrumb */}
-            <nav className="mb-8">
-                <Link
-                    href="/articles"
-                    className="inline-flex items-center gap-1 text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] transition-colors"
-                >
-                    <ChevronLeft className="size-4" />
-                    All Topics
-                </Link>
-            </nav>
+                {/* Breadcrumb */}
+                <nav className="mb-8">
+                    <Link
+                        href="/articles"
+                        className="inline-flex items-center gap-1 text-sm text-[var(--fg-muted)] hover:text-[var(--accent)] transition-colors"
+                    >
+                        <ChevronLeft className="size-4" />
+                        All Topics
+                    </Link>
+                </nav>
 
-            {/* Topic Header */}
-            <header className="mb-12">
-                {/* Icon */}
-                <div className="mb-6 inline-flex items-center justify-center size-16 rounded-2xl bg-[var(--accent-subtle)] text-[var(--accent)]">
-                    {renderIcon(topic.icon, "size-8")}
-                </div>
+                {/* Topic Header */}
+                <header className="mb-12">
+                    {/* Icon */}
+                    <div className="mb-6 inline-flex items-center justify-center size-16 rounded-2xl bg-[var(--accent-subtle)] text-[var(--accent)]">
+                        {renderIcon(topic.icon, "size-8")}
+                    </div>
 
-                {/* Title */}
-                <h1 className="text-3xl md:text-4xl font-semibold text-[var(--fg)] mb-4">
-                    {topic.title}
-                </h1>
+                    {/* Title */}
+                    <h1 className="text-3xl md:text-4xl font-semibold text-[var(--fg)] mb-4">
+                        {topic.title}
+                    </h1>
 
-                {/* Description */}
-                <p className="text-lg text-[var(--fg-muted)] max-w-2xl">
-                    {topic.description}
-                </p>
+                    {/* Description */}
+                    <p className="text-lg text-[var(--fg-muted)] max-w-2xl">
+                        {topic.description}
+                    </p>
 
-                {/* Meta */}
-                <div className="flex items-center gap-4 mt-6 text-sm text-[var(--fg-subtle)]">
-                    <span className="flex items-center gap-1.5">
-                        <FileText className="size-4" />
-                        {topic.metadata.articleCount} article{topic.metadata.articleCount !== 1 ? 's' : ''}
-                    </span>
-                    {topic.metadata.lastUpdated && (
-                        <span>
-                            Last updated {formatDate(topic.metadata.lastUpdated)}
+                    {/* Meta */}
+                    <div className="flex items-center gap-4 mt-6 text-sm text-[var(--fg-subtle)]">
+                        <span className="flex items-center gap-1.5">
+                            <FileText className="size-4" />
+                            {topic.metadata.articleCount} article{topic.metadata.articleCount !== 1 ? 's' : ''}
                         </span>
-                    )}
-                </div>
+                        {topic.metadata.lastUpdated && (
+                            <span>
+                                Last updated {formatDate(topic.metadata.lastUpdated)}
+                            </span>
+                        )}
+                    </div>
 
-                {/* Decorative animated beam line */}
-                <BeamLine />
-            </header>
+                    {/* Decorative animated beam line */}
+                    <BeamLine />
+                </header>
 
-            {/* Subtopics Accordion */}
-            <SubtopicAccordion
-                topicSlug={topicSlug}
-                subtopics={transformedSubtopics}
-                articles={transformedArticles}
-            />
-        </div>
+                {/* Subtopics Accordion */}
+                <SubtopicAccordion
+                    topicSlug={topicSlug}
+                    subtopics={transformedSubtopics}
+                    articles={transformedArticles}
+                />
+            </div>
         </>
     );
 }

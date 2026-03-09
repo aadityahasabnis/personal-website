@@ -3,7 +3,7 @@ import { Activity, Calendar, TrendingUp, Clock } from 'lucide-react';
 import { PageHeader } from '@/components/admin';
 import { ActivityFeed } from './ActivityFeed';
 import { getAllActivityForAdmin, getActivityStats } from '@/server/queries/activity';
-import type { IActivityLog } from '@/interfaces';
+import type { IActivityLog } from '@/interfaces/schema';
 
 export const metadata = {
     title: 'Activity Log | Admin Dashboard',

@@ -4,7 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { ObjectId } from 'mongodb';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IActivityLog, ActivityAction, ActivityEntity, IApiResponse } from '@/interfaces';
+import type { IActivityLog, ActivityAction, ActivityEntity } from '@/interfaces/schema';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse } from '@/server/lib/action-utils';
 
 // ===== HELPERS =====

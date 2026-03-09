@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { ArrowRight, ExternalLink, Github } from 'lucide-react';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 
 interface IFeaturedProjectsProps {
   projects: IProject[];

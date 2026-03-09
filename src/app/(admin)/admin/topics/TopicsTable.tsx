@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Layers } from 'lucide-react';
 
 import { formatDate } from '@/lib/utils';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 import { useAdminTable } from '@/hooks';
 import {
     DataTable,

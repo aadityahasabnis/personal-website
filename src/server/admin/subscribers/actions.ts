@@ -11,7 +11,7 @@ import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubscriber } from '@/interfaces';
+import type { ISubscriber } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils/types';
 import { success, error, notFound } from '../utils/response';
 import { handleError } from '../utils/errorHandler';

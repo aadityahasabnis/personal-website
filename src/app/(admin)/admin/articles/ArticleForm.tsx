@@ -7,7 +7,7 @@ import { ArrowLeft, Loader2, Save } from 'lucide-react';
 
 import { calculateReadingTime, slugify } from '@/lib/utils';
 import { createArticle, updateArticle } from '@/server/actions/articles';
-import type { IArticle, ITopic, ISubtopic } from '@/interfaces';
+import type { IArticle, ITopic, ISubtopic } from '@/interfaces/schema';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import {
     FormInput,
@@ -54,18 +54,18 @@ export const ArticleForm = ({ article, topics, allSubtopics, isEditing = false }
     const [autoSlug, setAutoSlug] = useState(!isEditing);
 
     // Computed values
-    const availableSubtopics = useMemo(() => 
-        allSubtopics.filter((st) => st.topicSlug === topicSlug), 
+    const availableSubtopics = useMemo(() =>
+        allSubtopics.filter((st) => st.topicSlug === topicSlug),
         [allSubtopics, topicSlug]
     );
 
-    const topicOptions = useMemo(() => 
-        topics.map((t) => ({ value: t.slug, label: t.title })), 
+    const topicOptions = useMemo(() =>
+        topics.map((t) => ({ value: t.slug, label: t.title })),
         [topics]
     );
 
-    const subtopicOptions = useMemo(() => 
-        availableSubtopics.map((st) => ({ value: st.slug, label: st.title })), 
+    const subtopicOptions = useMemo(() =>
+        availableSubtopics.map((st) => ({ value: st.slug, label: st.title })),
         [availableSubtopics]
     );
 

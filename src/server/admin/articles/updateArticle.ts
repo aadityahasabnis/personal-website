@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
 import { calculateReadingTime } from '@/lib/utils';
-import type { IArticle } from '@/interfaces';
+import type { IArticle } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils';
 import { success, notFound, duplicate, error, handleError, logUpdate } from '../utils';
 import { updateTopicArticleCount } from '../topics/updateTopicArticleCount';

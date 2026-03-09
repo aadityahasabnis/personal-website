@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Calendar, Clock } from 'lucide-react';
-import type { IContent } from '@/interfaces';
+import type { IContent } from '@/interfaces/schema';
 
 interface IFeaturedArticlesProps {
   articles: IContent[];
@@ -53,10 +53,10 @@ interface IArticleCardProps {
 const ArticleCard = ({ article }: IArticleCardProps) => {
   const formattedDate = article.publishedAt
     ? new Date(article.publishedAt).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-      })
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
     : '';
 
   return (

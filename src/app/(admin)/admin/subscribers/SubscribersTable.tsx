@@ -4,7 +4,7 @@ import { useCallback } from 'react';
 import { Mail, Calendar, Download } from 'lucide-react';
 
 import { formatDate } from '@/lib/utils';
-import type { ISubscriber } from '@/interfaces';
+import type { ISubscriber } from '@/interfaces/schema';
 import { useAdminTable } from '@/hooks';
 import {
     DataTable,
@@ -77,7 +77,7 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
     const handleExport = useCallback(async () => {
         const statusFilter = table.filters.status as 'all' | 'confirmed' | 'pending' | 'unsubscribed' | undefined;
         const result = await exportSubscribers(statusFilter && statusFilter !== 'all' ? statusFilter : 'all');
-        
+
         if (result.success && result.data) {
             const blob = new Blob([result.data], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);

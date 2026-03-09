@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IActivityLog, ActivityEntity } from '@/interfaces';
+import type { IActivityLog, ActivityEntity } from '@/interfaces/schema';
 
 /**
  * Get all activity logs for admin

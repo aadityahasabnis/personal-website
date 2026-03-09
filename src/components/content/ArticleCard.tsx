@@ -4,7 +4,7 @@ import { Calendar, Clock, ArrowRight } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { type IArticle } from '@/interfaces';
+import { type IArticle } from '@/interfaces/schema';
 
 interface IArticleCardProps {
     article: IArticle;

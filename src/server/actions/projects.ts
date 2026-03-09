@@ -4,7 +4,8 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS, VALIDATION } from '@/constants';
-import type { IProject, IApiResponse } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse, notFoundError, duplicateError } from '@/server/lib/action-utils';
 
 // ===== SCHEMAS =====

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Github, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 
 interface IProjectCardProps {
   project: IProject;
@@ -52,10 +52,10 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
               </div>
             </div>
           )}
-          
+
           {/* Overlay gradient */}
           <div className="absolute inset-0 bg-gradient-to-t from-[var(--card-bg)] via-transparent to-transparent opacity-60" />
-          
+
           {/* Status badge */}
           {project.status === 'wip' && (
             <div className="absolute top-4 left-4">
@@ -64,7 +64,7 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
               </span>
             </div>
           )}
-          
+
           {/* Featured badge */}
           {featured && (
             <div className="absolute top-4 right-4">

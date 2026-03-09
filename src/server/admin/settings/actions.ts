@@ -12,7 +12,7 @@ import { ObjectId } from 'mongodb';
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IUser } from '@/interfaces';
+import type { IUser } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils/types';
 import { success, error, validationError } from '../utils/response';
 import { requireAuth, type AuthUser } from '../utils/authGuard';

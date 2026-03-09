@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IMedia } from '@/interfaces';
+import type { IMedia } from '@/interfaces/schema';
 
 /**
  * Get all media for admin

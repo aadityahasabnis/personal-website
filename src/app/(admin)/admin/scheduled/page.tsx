@@ -3,7 +3,7 @@ import { Clock, Calendar, FileText, BookOpen } from 'lucide-react';
 import { PageHeader } from '@/components/admin';
 import { ScheduledList } from './ScheduledList';
 import { getScheduledContentForAdmin, getScheduledCount } from '@/server/queries/schedule';
-import type { IContent } from '@/interfaces';
+import type { IContent } from '@/interfaces/schema';
 
 export const metadata = {
     title: 'Scheduled Content | Admin Dashboard',

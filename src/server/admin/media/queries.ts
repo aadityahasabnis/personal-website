@@ -9,7 +9,7 @@
 import { ObjectId } from 'mongodb';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IMedia } from '@/interfaces';
+import type { IMedia } from '@/interfaces/schema';
 import type { ActionResponse, PaginatedResponse } from '../utils/types';
 import { success, paginated } from '../utils/response';
 import { handleError } from '../utils/errorHandler';

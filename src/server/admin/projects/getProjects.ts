@@ -2,7 +2,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 
 // ===== SERIALIZED TYPES =====
 

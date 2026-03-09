@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ContentCard } from '@/components/content/ContentCard';
 import { Filter } from 'lucide-react';
-import type { INote } from '@/interfaces';
+import type { INote } from '@/interfaces/schema';
 
 interface INotesClientProps {
     notes: INote[];
@@ -79,10 +79,9 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                             className={`
                                 inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
                                 transition-all duration-200
-                                ${
-                                    !selectedTag
-                                        ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
-                                        : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                                ${!selectedTag
+                                    ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                    : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                                 }
                             `}
                         >
@@ -92,7 +91,7 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                         {/* Individual Tags - Click to toggle */}
                         {allTags.map((tag) => {
                             const isActive = selectedTag === tag;
-                            
+
                             return (
                                 <button
                                     key={tag}
@@ -100,10 +99,9 @@ export function NotesClient({ notes, allTags }: INotesClientProps) {
                                     className={`
                                         inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
                                         transition-all duration-200
-                                        ${
-                                            isActive
-                                                ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
-                                                : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
+                                        ${isActive
+                                            ? 'bg-[var(--accent)] text-white shadow-lg shadow-[var(--glow-color)]'
+                                            : 'bg-[var(--surface)] text-[var(--fg-muted)] border-2 border-[var(--border-color)] hover:border-[var(--accent)] hover:text-[var(--accent)]'
                                         }
                                     `}
                                 >

@@ -1,0 +1,93 @@
+import mongoose, { Schema, Model } from 'mongoose';
+import type { ISubtopic } from '@/interfaces/schema';
+import type { ISubtopicDocument } from './types';
+
+// ============================================================
+// Subtopic Schema
+// ============================================================
+
+const SubtopicSchema = new Schema<ISubtopicDocument>(
+    {
+        topicSlug: {
+            type: String,
+            required: [true, 'Topic slug is required'],
+            trim: true,
+            lowercase: true,
+            index: true,
+        },
+        slug: {
+            type: String,
+            required: [true, 'Slug is required'],
+            trim: true,
+            lowercase: true,
+            match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'],
+        },
+        title: {
+            type: String,
+            required: [true, 'Title is required'],
+            trim: true,
+            minlength: [2, 'Title must be at least 2 characters'],
+            maxlength: [100, 'Title cannot exceed 100 characters'],
+        },
+        description: {
+            type: String,
+            default: null,
+            trim: true,
+            maxlength: [500, 'Description cannot exceed 500 characters'],
+        },
+        order: {
+            type: Number,
+            required: true,
+            default: 0,
+            min: [0, 'Order cannot be negative'],
+        },
+        published: {
+            type: Boolean,
+            default: false,
+            index: true,
+        },
+        contentCount: {
+            type: Number,
+            default: 0,
+            min: [0, 'Content count cannot be negative'],
+        },
+    },
+    {
+        timestamps: true,
+        collection: 'subtopics',
+    }
+);
+
+// ============================================================
+// Indexes
+// ============================================================
+
+SubtopicSchema.index({ topicSlug: 1, slug: 1 }, { unique: true });
+SubtopicSchema.index({ topicSlug: 1, order: 1 });
+SubtopicSchema.index({ topicSlug: 1, published: 1 });
+
+// ============================================================
+// Instance Methods
+// ============================================================
+
+SubtopicSchema.methods.incrementContentCount = async function (this: ISubtopicDocument) {
+    this.contentCount += 1;
+    return this.save();
+};
+
+SubtopicSchema.methods.decrementContentCount = async function (this: ISubtopicDocument) {
+    if (this.contentCount > 0) {
+        this.contentCount -= 1;
+        return this.save();
+    }
+    return this;
+};
+
+// ============================================================
+// Model Export
+// ============================================================
+
+const Subtopic: Model<ISubtopicDocument> =
+    mongoose.models.Subtopic || mongoose.model<ISubtopicDocument>('Subtopic', SubtopicSchema);
+
+export default Subtopic;

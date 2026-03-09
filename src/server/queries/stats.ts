@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticleStats, IComment } from '@/interfaces';
+import type { IArticleStats, IComment } from '@/interfaces/schema';
 
 /**
  * Get stats (views, likes) for any content slug

@@ -1,6 +1,6 @@
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubscriber } from '@/interfaces';
+import type { ISubscriber } from '@/interfaces/schema';
 
 /**
  * Get all subscribers for admin

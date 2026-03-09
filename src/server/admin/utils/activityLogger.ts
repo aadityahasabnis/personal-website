@@ -6,7 +6,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IActivityLog } from '@/interfaces';
+import type { IActivityLog } from '@/interfaces/schema';
 import type { ActivityAction, ActivityEntity, ActivityLogOptions } from './types';
 import { getAuthUser } from './authGuard';
 

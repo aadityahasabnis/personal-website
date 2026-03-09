@@ -6,7 +6,7 @@ import { Loader2, Save } from 'lucide-react';
 
 import { slugify } from '@/lib/utils';
 import { createSubtopic, updateSubtopic } from '@/server/actions/subtopics';
-import type { ISubtopic, ITopic } from '@/interfaces';
+import type { ISubtopic, ITopic } from '@/interfaces/schema';
 import {
     FormInput,
     FormTextarea,

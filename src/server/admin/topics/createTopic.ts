@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS, VALIDATION } from '@/constants';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils';
 import { success, duplicate, error, handleError, logCreate } from '../utils';
 

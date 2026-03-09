@@ -3,7 +3,7 @@ import { Users, UserPlus, Mail, Download, Trash2 } from 'lucide-react';
 import { PageHeader } from '@/components/admin';
 import { SubscribersTable } from './SubscribersTable';
 import { getAllSubscribersForAdmin } from '@/server/queries/subscribers';
-import type { ISubscriber } from '@/interfaces';
+import type { ISubscriber } from '@/interfaces/schema';
 
 export const metadata = {
     title: 'Subscribers | Admin Dashboard',

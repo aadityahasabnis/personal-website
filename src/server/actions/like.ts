@@ -2,7 +2,8 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IArticleStats, IApiResponse } from '@/interfaces';
+import type { IArticleStats } from '@/interfaces/schema';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 
 /**
  * Like a post - increments like count (one-time, no unlike)

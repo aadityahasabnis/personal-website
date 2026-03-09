@@ -6,7 +6,7 @@ import { useMemo } from 'react';
 import { ArrowUpRight, FileText } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
-import type { ITopic } from '@/interfaces';
+import type { ITopic } from '@/interfaces/schema';
 
 interface ITopicCardProps {
     topic: ITopic;
@@ -21,13 +21,13 @@ interface ITopicCardProps {
  */
 function getIconComponent(iconName?: string): React.ComponentType<{ className?: string }> {
     if (!iconName) return FileText;
-    
+
     // Convert kebab-case or lowercase to PascalCase
     const pascalCase = iconName
         .split(/[-_]/)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
         .join('');
-    
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Icon = (LucideIcons as any)[pascalCase];
     return Icon || FileText;
@@ -41,7 +41,7 @@ function getIconComponent(iconName?: string): React.ComponentType<{ className?: 
  */
 const TopicCard = ({ topic, index = 0, className }: ITopicCardProps) => {
     const Icon = useMemo(() => getIconComponent(topic.icon), [topic.icon]);
-    
+
     return (
         <motion.article
             initial={{ opacity: 0, y: 20 }}

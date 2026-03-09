@@ -2,7 +2,7 @@
 
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubtopic } from '@/interfaces';
+import type { ISubtopic } from '@/interfaces/schema';
 import type { ActionResponse } from '../utils';
 import { handleError } from '../utils';
 

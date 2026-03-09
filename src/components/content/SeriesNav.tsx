@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { type IArticle } from '@/interfaces';
+import { type IArticle } from '@/interfaces/schema';
 
 interface ISeriesNavProps {
     seriesTitle: string;

@@ -1,5 +1,5 @@
 import { SITE_CONFIG } from '@/constants';
-import type { IArticle, ITopic } from '@/interfaces';
+import type { IArticle, ITopic } from '@/interfaces/schema';
 
 /**
  * SEO Utilities for Enhanced Search Engine Optimization
@@ -96,7 +96,7 @@ export function generateArticleSchema({
     relatedArticles = [],
 }: IArticleSchemaProps) {
     const url = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
-    
+
     const keywords = [
         topicTitle,
         ...(subtopicTitle ? [subtopicTitle] : []),

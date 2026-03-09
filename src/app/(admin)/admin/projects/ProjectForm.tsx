@@ -6,7 +6,7 @@ import { Loader2, Save } from 'lucide-react';
 
 import { slugify } from '@/lib/utils';
 import { createProject, updateProject } from '@/server/actions/projects';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import {
     FormInput,
@@ -55,8 +55,8 @@ export const ProjectForm = ({ project, isEditing = false }: IProjectFormProps): 
     }, [title, autoSlug]);
 
     // Word count
-    const wordCount = useMemo(() => 
-        longDescription.trim().split(/\s+/).filter(Boolean).length, 
+    const wordCount = useMemo(() =>
+        longDescription.trim().split(/\s+/).filter(Boolean).length,
         [longDescription]
     );
 

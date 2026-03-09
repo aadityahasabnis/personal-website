@@ -7,7 +7,7 @@ import { getArticleForEdit } from '@/server/queries/admin';
 import { getAllTopics } from '@/server/queries/topics';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { ISubtopic } from '@/interfaces';
+import type { ISubtopic } from '@/interfaces/schema';
 import { serializeDocument, serializeDocuments } from '@/lib/utils';
 
 interface EditArticlePageProps {
@@ -35,9 +35,9 @@ async function getFormData(topicSlug: string, slug: string) {
         .toArray();
 
     // Serialize data for client component (convert ObjectId to string)
-    return { 
+    return {
         article: serializeDocument(article),
-        topics: serializeDocuments(topics), 
+        topics: serializeDocuments(topics),
         allSubtopics: serializeDocuments(allSubtopics)
     };
 }
@@ -67,9 +67,9 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
             </div>
 
             {/* Form - Full Width */}
-            <ArticleForm 
+            <ArticleForm
                 article={article}
-                topics={topics} 
+                topics={topics}
                 allSubtopics={allSubtopics}
                 isEditing
             />

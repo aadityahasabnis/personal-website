@@ -1,6 +1,6 @@
 import { z, type ZodSchema } from 'zod';
 import { revalidatePath } from 'next/cache';
-import type { IApiResponse } from '@/interfaces';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 
 // ===== TYPES =====
 

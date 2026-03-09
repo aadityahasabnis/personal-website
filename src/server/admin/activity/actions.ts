@@ -9,7 +9,7 @@
 import { revalidatePath } from 'next/cache';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
-import type { IActivityLog } from '@/interfaces';
+import type { IActivityLog } from '@/interfaces/schema';
 import type { ActionResponse, ActivityAction, ActivityEntity } from '../utils/types';
 import { success, error } from '../utils/response';
 import { handleError } from '../utils/errorHandler';

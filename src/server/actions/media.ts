@@ -6,7 +6,8 @@ import { ObjectId } from 'mongodb';
 import { getCollection } from '@/lib/db/connect';
 import { COLLECTIONS } from '@/constants';
 import { uploadToCloudinary, deleteFromCloudinary } from '@/lib/cloudinary';
-import type { IMedia, IApiResponse } from '@/interfaces';
+import type { IMedia } from '@/interfaces/schema';
+import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { createErrorResponse, createSuccessResponse, notFoundError } from '@/server/lib/action-utils';
 
 // ===== SCHEMAS =====

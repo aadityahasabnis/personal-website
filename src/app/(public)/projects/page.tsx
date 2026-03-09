@@ -6,7 +6,7 @@ import { getProjects } from '@/server/queries/projects';
 import { SITE_CONFIG } from '@/constants';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { ProjectCard } from '@/components/content/ProjectCard';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 
 const description = `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`;
 

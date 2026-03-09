@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { FolderKanban, Calendar, ExternalLink, Github } from 'lucide-react';
 
 import { formatDate } from '@/lib/utils';
-import type { IProject } from '@/interfaces';
+import type { IProject } from '@/interfaces/schema';
 import { useAdminTable } from '@/hooks';
 import {
     DataTable,
@@ -49,7 +49,7 @@ export function ProjectsTable({ projects }: IProjectsTableProps): React.ReactEle
     // Local items for drag-and-drop reordering
     const [localItems, setLocalItems] = useState(projects);
     const prevFilteredItemsRef = useRef(table.filteredItems);
-    
+
     // Sync localItems when filteredItems change - use ref comparison to prevent loops
     useEffect(() => {
         if (prevFilteredItemsRef.current !== table.filteredItems) {

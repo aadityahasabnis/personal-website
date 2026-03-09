@@ -6,7 +6,7 @@ import { Loader2, Save } from 'lucide-react';
 
 import { slugify } from '@/lib/utils';
 import { createNote, updateNote } from '@/server/actions/notes';
-import type { INote } from '@/interfaces';
+import type { INote } from '@/interfaces/schema';
 import { RichTextEditor } from '@/components/admin/RichTextEditor';
 import {
     FormInput,
