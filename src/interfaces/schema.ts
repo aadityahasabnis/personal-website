@@ -277,6 +277,23 @@ export function isProject(content: IContent): content is IProject {
 // Utility Types
 // ============================================================
 
+/**
+ * Recursively serialize a type for JSON transport:
+ *   - ObjectId  -> string
+ *   - Date      -> string
+ *   - null stays null, arrays & nested objects are walked recursively
+ *
+ * Usage:
+ *   Serialized<IArticle>      — full article, JSON-safe
+ *   Serialized<ISeoMetadata>  — SEO block, JSON-safe
+ */
+export type Serialized<T> =
+    T extends ObjectId ? string :
+    T extends Date ? string :
+    T extends (infer U)[] ? Serialized<U>[] :
+    T extends Record<string, unknown> ? { [K in keyof T]: Serialized<T[K]> } :
+    T;
+
 // Extract specific content type: ContentByType<'article'> => IArticle
 export type ContentByType<T extends ContentType> = 
     T extends 'article' ? IArticle :

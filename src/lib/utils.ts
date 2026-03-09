@@ -55,7 +55,7 @@ export const slugify = (text: string): string => {
  * Calculate reading time in minutes
  */
 export const calculateReadingTime = (text: string): number => {
-  const wordsPerMinute = 200;
+  const wordsPerMinute = 120;
   const words = text.trim().split(/\s+/).length;
   return Math.ceil(words / wordsPerMinute);
 };
