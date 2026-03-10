@@ -8,8 +8,9 @@
 
 import { MongoClient } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { env } from '@/env';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://aadityahasabnis:Password123@personal-site.mkduq9g.mongodb.net/portfolio?appName=personal-site';
+const MONGODB_URI = process.env.MONGODB_URI || env.MONGODB_URI;
 const DB_NAME = 'portfolio';
 
 interface IAdminUser {
