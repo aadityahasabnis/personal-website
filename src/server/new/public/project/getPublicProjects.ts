@@ -9,9 +9,9 @@
 
 import type { IProject, ProjectStatus } from '@/interfaces/schema';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findPublishedProject,
     notFoundError,
     ok,
@@ -102,23 +102,22 @@ export async function getPublicProjects(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicProjectCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.projects();
-        const filter: Filter<IProject> = { type: 'project', published: true };
+        const filter = { type: 'project' as const, published: true };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0, gallery: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body -gallery')
+                .lean<IProject[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IProject[]).map(serializeProjectCard),
+            docs.map(serializeProjectCard),
             count,
             offset,
             limit,
@@ -135,19 +134,18 @@ export async function getPublicFeaturedProjects(
     limit = 3,
 ): Promise<IApiResponse<PublicProjectCard[]>> {
     try {
-        const col = await collections.projects();
-        const docs = await col
-            .find({
-                type: 'project',
-                published: true,
-                featured: true,
-            } as Filter<IProject>)
+        await ensureConnection();
+        const docs = await Content.find({
+            type: 'project',
+            published: true,
+            featured: true,
+        })
             .sort({ order: 1 })
             .limit(limit)
-            .project({ body: 0, gallery: 0 })
-            .toArray();
+            .select('-body -gallery')
+            .lean<IProject[]>();
 
-        return ok((docs as unknown as IProject[]).map(serializeProjectCard));
+        return ok(docs.map(serializeProjectCard));
     } catch (err) {
         return handleError(err, 'Failed to fetch featured projects');
     }
@@ -161,27 +159,22 @@ export async function getPublicProjectsByStatus(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicProjectCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.projects();
-        const filter: Filter<IProject> = {
-            type: 'project',
-            published: true,
-            status,
-        };
+        const filter = { type: 'project' as const, published: true, status };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0, gallery: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body -gallery')
+                .lean<IProject[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IProject[]).map(serializeProjectCard),
+            docs.map(serializeProjectCard),
             count,
             offset,
             limit,
@@ -199,27 +192,22 @@ export async function getPublicProjectsByTech(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicProjectCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.projects();
-        const filter: Filter<IProject> = {
-            type: 'project',
-            published: true,
-            techStack: tech,
-        };
+        const filter = { type: 'project' as const, published: true, techStack: tech };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0, gallery: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body -gallery')
+                .lean<IProject[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IProject[]).map(serializeProjectCard),
+            docs.map(serializeProjectCard),
             count,
             offset,
             limit,
@@ -236,13 +224,12 @@ export async function getPublicProjectSlugs(): Promise<
     Array<{ slug: string }>
 > {
     try {
-        const col = await collections.projects();
-        const docs = await col
-            .find({ type: 'project', published: true } as Filter<IProject>)
-            .project({ slug: 1, _id: 0 })
-            .toArray();
+        await ensureConnection();
+        const docs = await Content.find({ type: 'project', published: true })
+            .select('slug -_id')
+            .lean<Array<{ slug: string }>>();
 
-        return docs as Array<{ slug: string }>;
+        return docs;
     } catch (err) {
         console.error('Failed to fetch project slugs:', err);
         return [];

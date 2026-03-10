@@ -8,9 +8,9 @@ import type { IBlog } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { calculateReadingTime } from '@/lib/utils';
 import type { BlogCreateInput } from './types';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     duplicateError,
     created,
     handleError,
@@ -27,13 +27,13 @@ export async function createBlog(
     input: BlogCreateInput,
 ): Promise<IApiResponse<string>> {
     try {
-        const col = await collections.blogs();
+        await ensureConnection();
 
         // Check uniqueness
-        const existing = await col.findOne({
+        const existing = await Content.findOne({
             type: 'blog',
             slug: input.slug,
-        } as Filter<IBlog>);
+        }).lean();
         if (existing) return duplicateError('A blog post with this slug');
 
         const now = timestamps();
@@ -54,10 +54,10 @@ export async function createBlog(
             ...now,
         };
 
-        const result = await col.insertOne(blog as IBlog);
+        const doc = await Content.create(blog);
         revalidateContentPaths('blog', input.slug);
 
-        return created(result.insertedId.toString(), 'Blog post created successfully');
+        return created(doc._id.toString(), 'Blog post created successfully');
     } catch (err) {
         return handleError(err, 'Failed to create blog post');
     }

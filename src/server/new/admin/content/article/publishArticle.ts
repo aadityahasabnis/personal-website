@@ -2,14 +2,17 @@
 
 /**
  * Publish / Unpublish Article – Admin Server Actions
+ *
+ * Uses Mongoose document finders + instance methods for publish/unpublish/schedule.
+ * Uses Content model directly for toggle/featured/reorder operations.
  */
 
-import type { IArticle } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findArticle,
+    findArticleDoc,
     notFoundError,
     okVoid,
     ok,
@@ -27,7 +30,6 @@ export async function publishArticle(
     slug: string,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.articles();
         const article = await findArticle(topicSlug, slug);
         if (!article) return notFoundError('Article');
 
@@ -35,17 +37,10 @@ export async function publishArticle(
             return okVoid('Article is already published');
         }
 
-        const now = new Date();
-        await col.updateOne(
-            { type: 'article', topicSlug, slug } as Filter<IArticle>,
-            {
-                $set: {
-                    published: true,
-                    publishedAt: article.publishedAt ?? now,
-                    updatedAt: now,
-                },
-            },
-        );
+        // Use document finder + instance method
+        const doc = await findArticleDoc(topicSlug, slug);
+        if (!doc) return notFoundError('Article');
+        await doc.publish();
 
         // Increment denormalized counts
         await updateContentCounts(topicSlug, article.subtopicSlug, 1);
@@ -67,7 +62,6 @@ export async function unpublishArticle(
     slug: string,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.articles();
         const article = await findArticle(topicSlug, slug);
         if (!article) return notFoundError('Article');
 
@@ -75,10 +69,10 @@ export async function unpublishArticle(
             return okVoid('Article is already unpublished');
         }
 
-        await col.updateOne(
-            { type: 'article', topicSlug, slug } as Filter<IArticle>,
-            { $set: { published: false, updatedAt: new Date() } },
-        );
+        // Use document finder + instance method
+        const doc = await findArticleDoc(topicSlug, slug);
+        if (!doc) return notFoundError('Article');
+        await doc.unpublish();
 
         // Decrement denormalized counts
         await updateContentCounts(topicSlug, article.subtopicSlug, -1);
@@ -124,13 +118,13 @@ export async function toggleArticleFeatured(
     slug: string,
 ): Promise<IApiResponse<boolean>> {
     try {
-        const col = await collections.articles();
+        await ensureConnection();
         const article = await findArticle(topicSlug, slug);
         if (!article) return notFoundError('Article');
 
         const newFeatured = !article.featured;
-        await col.updateOne(
-            { type: 'article', topicSlug, slug } as Filter<IArticle>,
+        await Content.updateOne(
+            { type: 'article', topicSlug, slug },
             { $set: { featured: newFeatured, updatedAt: new Date() } },
         );
 
@@ -152,14 +146,10 @@ export async function scheduleArticle(
     scheduledAt: Date,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.articles();
-        const article = await findArticle(topicSlug, slug);
-        if (!article) return notFoundError('Article');
+        const doc = await findArticleDoc(topicSlug, slug);
+        if (!doc) return notFoundError('Article');
 
-        await col.updateOne(
-            { type: 'article', topicSlug, slug } as Filter<IArticle>,
-            { $set: { scheduledAt, updatedAt: new Date() } },
-        );
+        await doc.schedule(scheduledAt);
 
         revalidateContentPaths('article', slug, topicSlug);
 
@@ -181,7 +171,7 @@ export async function reorderArticles(
     try {
         if (!slugs.length) return okVoid('Nothing to reorder');
 
-        const col = await collections.articles();
+        await ensureConnection();
 
         const ops = slugs.map((s, index) => ({
             updateOne: {
@@ -190,7 +180,7 @@ export async function reorderArticles(
             },
         }));
 
-        await col.bulkWrite(ops);
+        await Content.bulkWrite(ops);
 
         revalidateContentPaths('article', undefined, topicSlug);
 

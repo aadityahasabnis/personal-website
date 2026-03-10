@@ -4,57 +4,61 @@
  * Get Project(s) – Admin Server Actions (queries)
  */
 
-import type { IProject, ProjectStatus, Serialized, ISeoMetadata } from '@/interfaces/schema';
+import type { IProject } from '@/interfaces/schema';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findProject,
     notFoundError,
     ok,
     paginatedOk,
     handleError,
-    serialize,
     normalizePagination,
     type PaginationParams,
 } from '../../../utils';
+import { ProjectStatus } from '@/constants';
 
 // ============================================================
 // Serialized Types
 // ============================================================
 
 /** Admin project list item — excludes body and gallery for performance. */
-export type SerializedProject = Pick<
-    Serialized<IProject>,
-    | '_id'
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'published'
-    | 'featured'
-    | 'publishedAt'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'tags'
-    | 'techStack'
-    | 'githubUrl'
-    | 'liveUrl'
-    | 'demoVideo'
-    | 'status'
-    | 'startDate'
-    | 'completedDate'
-    | 'order'
->;
+export interface SerializedProject {
+    _id: string;
+    slug: string;
+    title: string;
+    description: string;
+    published: boolean;
+    featured: boolean;
+    publishedAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    tags: string[];
+    techStack: string[];
+    githubUrl: string | null;
+    liveUrl: string | null;
+    demoVideo: string | null;
+    status: ProjectStatus;
+    startDate: string | null;
+    completedDate: string | null;
+    order: number;
+}
 
 /** Admin project for editing — includes body, gallery + SEO. */
-export type SerializedProjectForEdit = SerializedProject & Pick<
-    Serialized<IProject>,
-    | 'body'
-    | 'coverImage'
-    | 'gallery'
-> & {
-    seo: Serialized<ISeoMetadata> | null;
-};
+export interface SerializedProjectForEdit extends SerializedProject {
+    body: string;
+    coverImage: string | null;
+    gallery: string[];
+    seo: {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
+        ogImage: string | null;
+        canonicalUrl: string | null;
+        noIndex: boolean;
+    } | null;
+}
 
 // ============================================================
 // Serializer
@@ -91,23 +95,22 @@ export async function getProjects(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<SerializedProject>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.projects();
-        const filter: Filter<IProject> = { type: 'project' };
+        const filter = { type: 'project' as const };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0, gallery: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body -gallery')
+                .lean<IProject[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IProject[]).map(serializeProject),
+            docs.map(serializeProject),
             count,
             offset,
             limit,
@@ -129,9 +132,14 @@ export async function getProjectForEdit(
             body: project.body,
             coverImage: project.coverImage,
             gallery: project.gallery ?? [],
-            seo: project.seo
-                ? (serialize(project.seo as Record<string, unknown>) as Serialized<ISeoMetadata>)
-                : null,
+            seo: project.seo ? {
+                title: project.seo.title,
+                description: project.seo.description,
+                keywords: project.seo.keywords,
+                ogImage: project.seo.ogImage,
+                canonicalUrl: project.seo.canonicalUrl,
+                noIndex: project.seo.noIndex,
+            } : null,
         };
 
         return ok(serialized);

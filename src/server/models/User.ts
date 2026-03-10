@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { USER_ROLES } from '@/interfaces/schema';
+import { USER_ROLES, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { IUserDocument } from './types';
 
 // ============================================================
@@ -14,7 +14,7 @@ const UserSchema = new Schema<IUserDocument>(
             unique: true,
             trim: true,
             lowercase: true,
-            match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+            match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
             index: true,
         },
         name: {

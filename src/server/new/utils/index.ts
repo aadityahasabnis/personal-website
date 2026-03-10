@@ -3,6 +3,9 @@
  */
 
 export {
+    // Connection guard
+    ensureConnection,
+
     // Response builders
     ok,
     created,
@@ -18,19 +21,36 @@ export {
     serverError,
     handleError,
 
-    // Database helpers
-    collections,
+    // Database helpers — Mongoose models
+    Content,
+    Topic,
+    Subtopic,
+    PageStats,
+    Comment,
+
+    // Database helpers — typed finders (lean, plain objects)
     findArticle,
     findPublishedArticle,
     findBlog,
     findPublishedBlog,
     findProject,
     findPublishedProject,
+
+    // Database helpers — document finders (for instance methods)
+    findArticleDoc,
+    findBlogDoc,
+    findProjectDoc,
+
+    // Database helpers — reference verification
     verifyTopicExists,
     verifySubtopicExists,
+
+    // Database helpers — denormalized count updaters
     updateTopicContentCount,
     updateSubtopicContentCount,
     updateContentCounts,
+
+    // Database helpers — page stats
     incrementViews,
     incrementLikes,
     decrementLikes,
@@ -44,7 +64,6 @@ export {
     // Pagination helpers
     normalizePagination,
     buildSort,
-    paginatedQuery,
 
     // Revalidation helpers
     revalidatePaths,

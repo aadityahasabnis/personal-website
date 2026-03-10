@@ -8,9 +8,9 @@ import type { IBlog } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { calculateReadingTime } from '@/lib/utils';
 import type { BlogUpdateInput } from './types';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findBlog,
     notFoundError,
     duplicateError,
@@ -31,16 +31,16 @@ export async function updateBlog(
     input: BlogUpdateInput,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.blogs();
+        await ensureConnection();
         const existing = await findBlog(slug);
         if (!existing) return notFoundError('Blog post');
 
         // Check slug conflicts
         if (input.slug && input.slug !== slug) {
-            const conflict = await col.findOne({
+            const conflict = await Content.findOne({
                 type: 'blog',
                 slug: input.slug,
-            } as Filter<IBlog>);
+            }).lean();
             if (conflict) return duplicateError('A blog post with this slug');
         }
 
@@ -52,8 +52,8 @@ export async function updateBlog(
             ...(input.body ? { readingTime: calculateReadingTime(input.body) } : {}),
         }) as Partial<IBlog>;
 
-        await col.updateOne(
-            { type: 'blog', slug } as Filter<IBlog>,
+        await Content.updateOne(
+            { type: 'blog', slug },
             { $set: updateData },
         );
 

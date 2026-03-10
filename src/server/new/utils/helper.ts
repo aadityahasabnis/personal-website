@@ -7,7 +7,7 @@
  * Categories:
  *  1. Response builders   – typed wrappers around IApiResponse / IPaginatedResponse
  *  2. Error helpers       – domain-specific error factories
- *  3. Database helpers    – collection getters, typed finders, atomic ops
+ *  3. Database helpers    – Mongoose model wrappers, typed finders, connection guard
  *  4. Validation helpers  – ObjectId validation, cleanUndefined
  *  5. Pagination helpers  – offset/limit utilities
  *  6. Revalidation        – ISR path revalidation
@@ -15,10 +15,17 @@
  *  8. Action wrappers     – tryCatch higher-order function
  */
 
-import { ObjectId, type Filter, type Sort, type Document } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { revalidatePath } from 'next/cache';
-import { getCollection } from '@/lib/db/connect';
-import { COLLECTIONS } from '@/constants/siteConstants';
+import { connectMongoose } from '@/lib/db/mongoose';
+
+// Mongoose models — used directly for all DB operations
+import Content from '@/server/models/Content';
+import Topic from '@/server/models/Topic';
+import Subtopic from '@/server/models/Subtopic';
+import PageStats from '@/server/models/PageStats';
+import Comment from '@/server/models/Comment';
+
 import type {
     IApiResponse,
     IPaginatedResponse,
@@ -27,18 +34,23 @@ import type {
     IArticle,
     IBlog,
     IProject,
-    IContent,
-    ITopic,
-    ISubtopic,
-    IPageStats,
-    IComment,
-    ISubscriber,
-    IUser,
-    IContact,
     ISeoMetadata,
+    IPageStats,
     ContentType,
 } from '@/interfaces/schema';
 
+
+// ============================================================
+// 0. Connection Guard
+// ============================================================
+
+/**
+ * Ensure Mongoose is connected before any model operation.
+ * Safe to call multiple times — internally cached.
+ */
+export async function ensureConnection(): Promise<void> {
+    await connectMongoose();
+}
 
 
 // ============================================================
@@ -136,90 +148,102 @@ export function handleError(err: unknown, fallback?: string): IApiResponse<never
 
 
 // ============================================================
-// 3. Database Helpers
+// 3. Database Helpers (Mongoose Models)
 // ============================================================
 
-// ---- Collection Getters ----
+// Re-export models for direct use in action files
+export { Content, Topic, Subtopic, PageStats, Comment };
 
-export const collections = {
-    content: () => getCollection<IContent>(COLLECTIONS.content),
-    articles: () => getCollection<IArticle>(COLLECTIONS.content),
-    blogs: () => getCollection<IBlog>(COLLECTIONS.content),
-    projects: () => getCollection<IProject>(COLLECTIONS.content),
-    topics: () => getCollection<ITopic>(COLLECTIONS.topics),
-    subtopics: () => getCollection<ISubtopic>(COLLECTIONS.subtopics),
-    pageStats: () => getCollection<IPageStats>(COLLECTIONS.pageStats),
-    comments: () => getCollection<IComment>(COLLECTIONS.comments),
-    subscribers: () => getCollection<ISubscriber>(COLLECTIONS.subscribers),
-    users: () => getCollection<IUser>(COLLECTIONS.users),
-    contacts: () => getCollection<IContact>(COLLECTIONS.contacts),
-} as const;
-
-// ---- Typed Find Helpers ----
+// ---- Typed Find Helpers (lean — plain JS objects, not Mongoose docs) ----
 
 /**
- * Find a single article by type-discriminated query.
+ * Find a single article by topicSlug + slug.
+ * Returns a lean (plain JS object) document for read performance.
  */
 export async function findArticle(topicSlug: string, slug: string) {
-    const col = await collections.articles();
-    return col.findOne({ type: 'article', topicSlug, slug } as Filter<IArticle>);
+    await ensureConnection();
+    return Content.findOne({ type: 'article', topicSlug, slug }).lean<IArticle>();
 }
 
 export async function findPublishedArticle(topicSlug: string, slug: string) {
-    const col = await collections.articles();
-    return col.findOne({
+    await ensureConnection();
+    return Content.findOne({
         type: 'article',
         topicSlug,
         slug,
         published: true,
-    } as Filter<IArticle>);
+    }).lean<IArticle>();
 }
 
 export async function findBlog(slug: string) {
-    const col = await collections.blogs();
-    return col.findOne({ type: 'blog', slug } as Filter<IBlog>);
+    await ensureConnection();
+    return Content.findOne({ type: 'blog', slug }).lean<IBlog>();
 }
 
 export async function findPublishedBlog(slug: string) {
-    const col = await collections.blogs();
-    return col.findOne({ type: 'blog', slug, published: true } as Filter<IBlog>);
+    await ensureConnection();
+    return Content.findOne({ type: 'blog', slug, published: true }).lean<IBlog>();
 }
 
 export async function findProject(slug: string) {
-    const col = await collections.projects();
-    return col.findOne({ type: 'project', slug } as Filter<IProject>);
+    await ensureConnection();
+    return Content.findOne({ type: 'project', slug }).lean<IProject>();
 }
 
 export async function findPublishedProject(slug: string) {
-    const col = await collections.projects();
-    return col.findOne({ type: 'project', slug, published: true } as Filter<IProject>);
+    await ensureConnection();
+    return Content.findOne({ type: 'project', slug, published: true }).lean<IProject>();
+}
+
+// ---- Mongoose Document Finders (for instance methods) ----
+
+/**
+ * Find an article as a Mongoose document (not lean).
+ * Use when you need instance methods like publish(), unpublish(), schedule().
+ */
+export async function findArticleDoc(topicSlug: string, slug: string) {
+    await ensureConnection();
+    return Content.findOne({ type: 'article', topicSlug, slug });
+}
+
+export async function findBlogDoc(slug: string) {
+    await ensureConnection();
+    return Content.findOne({ type: 'blog', slug });
+}
+
+export async function findProjectDoc(slug: string) {
+    await ensureConnection();
+    return Content.findOne({ type: 'project', slug });
 }
 
 // ---- Reference Verification ----
 
 export async function verifyTopicExists(topicSlug: string): Promise<boolean> {
-    const col = await collections.topics();
-    return !!(await col.findOne({ slug: topicSlug }));
+    await ensureConnection();
+    return !!(await Topic.exists({ slug: topicSlug }));
 }
 
 export async function verifySubtopicExists(
     topicSlug: string,
     subtopicSlug: string,
 ): Promise<boolean> {
-    const col = await collections.subtopics();
-    return !!(await col.findOne({ topicSlug, slug: subtopicSlug }));
+    await ensureConnection();
+    return !!(await Subtopic.exists({ topicSlug, slug: subtopicSlug }));
 }
 
 // ---- Denormalized Count Updaters ----
 
+/**
+ * Atomically update topic content count.
+ */
 export async function updateTopicContentCount(
     topicSlug: string,
     delta: number,
 ): Promise<void> {
-    const col = await collections.topics();
-    await col.updateOne(
+    await ensureConnection();
+    await Topic.updateOne(
         { slug: topicSlug },
-        { $inc: { contentCount: delta }, $set: { updatedAt: new Date() } },
+        { $inc: { contentCount: delta } },
     );
 }
 
@@ -228,83 +252,63 @@ export async function updateSubtopicContentCount(
     subtopicSlug: string,
     delta: number,
 ): Promise<void> {
-    const col = await collections.subtopics();
-    await col.updateOne(
+    await ensureConnection();
+    await Subtopic.updateOne(
         { topicSlug, slug: subtopicSlug },
-        { $inc: { contentCount: delta }, $set: { updatedAt: new Date() } },
+        { $inc: { contentCount: delta } },
     );
 }
 
 /**
- * Update both topic + subtopic counts atomically (if subtopic exists).
+ * Update both topic + subtopic counts in parallel.
  */
 export async function updateContentCounts(
     topicSlug: string,
     subtopicSlug: string | null | undefined,
     delta: number,
 ): Promise<void> {
-    await updateTopicContentCount(topicSlug, delta);
+    const promises: Promise<unknown>[] = [
+        updateTopicContentCount(topicSlug, delta),
+    ];
     if (subtopicSlug) {
-        await updateSubtopicContentCount(topicSlug, subtopicSlug, delta);
+        promises.push(updateSubtopicContentCount(topicSlug, subtopicSlug, delta));
     }
+    await Promise.all(promises);
 }
 
-// ---- PageStats Atomic Ops ----
+// ---- PageStats Helpers (use Mongoose static methods) ----
 
 /**
- * Atomically increment views for a slug. Creates the document if it doesn't exist.
+ * Atomically increment views for a slug.
+ * Uses the PageStats model's static method (upsert-safe).
  */
 export async function incrementViews(slug: string): Promise<IPageStats | null> {
-    const col = await collections.pageStats();
-    const result = await col.findOneAndUpdate(
-        { slug },
-        {
-            $inc: { views: 1 },
-            $set: { lastViewedAt: new Date(), updatedAt: new Date() },
-            $setOnInsert: { likes: 0, createdAt: new Date() },
-        },
-        { upsert: true, returnDocument: 'after' },
-    );
-    return result;
+    await ensureConnection();
+    return PageStats.incrementViews(slug);
 }
 
 /**
  * Atomically increment likes for a slug.
  */
 export async function incrementLikes(slug: string): Promise<IPageStats | null> {
-    const col = await collections.pageStats();
-    const result = await col.findOneAndUpdate(
-        { slug },
-        {
-            $inc: { likes: 1 },
-            $set: { updatedAt: new Date() },
-            $setOnInsert: { views: 0, lastViewedAt: null, createdAt: new Date() },
-        },
-        { upsert: true, returnDocument: 'after' },
-    );
-    return result;
+    await ensureConnection();
+    return PageStats.incrementLikes(slug);
 }
 
 /**
  * Atomically decrement likes (floor at 0).
  */
 export async function decrementLikes(slug: string): Promise<IPageStats | null> {
-    const col = await collections.pageStats();
-    // First ensure we don't go below 0
-    const result = await col.findOneAndUpdate(
-        { slug, likes: { $gt: 0 } },
-        { $inc: { likes: -1 }, $set: { updatedAt: new Date() } },
-        { returnDocument: 'after' },
-    );
-    return result;
+    await ensureConnection();
+    return PageStats.decrementLikes(slug);
 }
 
 /**
  * Get page stats for a slug (returns zero-stats if not found).
  */
 export async function getStats(slug: string): Promise<{ views: number; likes: number }> {
-    const col = await collections.pageStats();
-    const doc = await col.findOne({ slug });
+    await ensureConnection();
+    const doc = await PageStats.findOne({ slug }).lean<IPageStats>();
     return { views: doc?.views ?? 0, likes: doc?.likes ?? 0 };
 }
 
@@ -372,35 +376,14 @@ export function normalizePagination(params?: PaginationParams): {
 }
 
 /**
- * Build a MongoDB sort object from SortParams.
+ * Build a Mongoose sort object from SortParams.
  */
 export function buildSort(
     params?: SortParams,
-    defaults: Sort = { createdAt: -1 },
-): Sort {
+    defaults: Record<string, 1 | -1> = { createdAt: -1 },
+): Record<string, 1 | -1> {
     if (!params?.sortBy) return defaults;
     return { [params.sortBy]: params.sortOrder === 'asc' ? 1 : -1 };
-}
-
-/**
- * Generic paginated query helper.
- * Performs both count + find in parallel for efficiency.
- */
-export async function paginatedQuery<T extends Document>(
-    collectionName: string,
-    filter: Filter<T>,
-    pagination?: PaginationParams,
-    sort?: Sort,
-): Promise<{ data: T[]; count: number; offset: number; limit: number }> {
-    const { offset, limit } = normalizePagination(pagination);
-    const col = await getCollection<T>(collectionName);
-
-    const [data, count] = await Promise.all([
-        col.find(filter).sort(sort ?? { createdAt: -1 }).skip(offset).limit(limit).toArray(),
-        col.countDocuments(filter),
-    ]);
-
-    return { data: data as T[], count, offset, limit };
 }
 
 
@@ -463,7 +446,7 @@ export function revalidateContentPaths(
 // ============================================================
 
 /**
- * Serialize a MongoDB document for JSON transport to client components.
+ * Serialize a MongoDB/Mongoose document for JSON transport to client components.
  * Converts ObjectId → string, Date → ISO string.
  */
 export function serialize<T extends Record<string, unknown>>(doc: T): T {

@@ -7,17 +7,17 @@
  * They return serialized (JSON-safe) data for client components.
  */
 
-import type { IArticle, Serialized, ISeoMetadata } from '@/interfaces/schema';
+import type { IArticle } from '@/interfaces/schema';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
+    Subtopic,
     findArticle,
     notFoundError,
     ok,
     paginatedOk,
     handleError,
-    serialize,
     normalizePagination,
     type PaginationParams,
 } from '../../../utils';
@@ -27,33 +27,37 @@ import {
 // ============================================================
 
 /** Admin article list item — excludes body for performance. */
-export type SerializedArticle = Pick<
-    Serialized<IArticle>,
-    | '_id'
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'topicSlug'
-    | 'subtopicSlug'
-    | 'published'
-    | 'featured'
-    | 'publishedAt'
-    | 'scheduledAt'
-    | 'createdAt'
-    | 'updatedAt'
-    | 'readingTime'
-    | 'tags'
-    | 'order'
->;
+export interface SerializedArticle {
+    _id: string;
+    slug: string;
+    title: string;
+    description: string;
+    topicSlug: string;
+    subtopicSlug: string | null;
+    published: boolean;
+    featured: boolean;
+    publishedAt: string | null;
+    scheduledAt: string | null;
+    createdAt: string;
+    updatedAt: string;
+    readingTime: number;
+    tags: string[];
+    order: number;
+}
 
 /** Admin article for editing — includes body + SEO. */
-export type SerializedArticleForEdit = SerializedArticle & Pick<
-    Serialized<IArticle>,
-    | 'body'
-    | 'coverImage'
-> & {
-    seo: Serialized<ISeoMetadata> | null;
-};
+export interface SerializedArticleForEdit extends SerializedArticle {
+    body: string;
+    coverImage: string | null;
+    seo: {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
+        ogImage: string | null;
+        canonicalUrl: string | null;
+        noIndex: boolean;
+    } | null;
+}
 
 export interface ArticleSidebarData {
     subtopics: Array<{ slug: string; title: string; order: number }>;
@@ -100,25 +104,22 @@ export async function getArticles(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<SerializedArticle>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.articles();
-        const filter: Filter<IArticle> = { type: 'article' };
+        const filter = { type: 'article' as const };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ updatedAt: -1 })
                 .skip(offset)
                 .limit(limit)
-                .project({
-                    body: 0, // Exclude body for list performance
-                })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IArticle[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IArticle[]).map(serializeArticle),
+            docs.map(serializeArticle),
             count,
             offset,
             limit,
@@ -136,23 +137,22 @@ export async function getArticlesByTopic(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<SerializedArticle>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.articles();
-        const filter: Filter<IArticle> = { type: 'article', topicSlug };
+        const filter = { type: 'article' as const, topicSlug };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IArticle[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IArticle[]).map(serializeArticle),
+            docs.map(serializeArticle),
             count,
             offset,
             limit,
@@ -177,7 +177,14 @@ export async function getArticleForEdit(
             ...serializeArticle(article),
             body: article.body,
             coverImage: article.coverImage,
-            seo: article.seo ? serialize(article.seo as Record<string, unknown>) as Serialized<ISeoMetadata> : null,
+            seo: article.seo ? {
+                title: article.seo.title,
+                description: article.seo.description,
+                keywords: article.seo.keywords,
+                ogImage: article.seo.ogImage,
+                canonicalUrl: article.seo.canonicalUrl,
+                noIndex: article.seo.noIndex,
+            } : null,
         };
 
         return ok(serialized);
@@ -193,33 +200,25 @@ export async function getArticleSidebarData(
     topicSlug: string,
 ): Promise<IApiResponse<ArticleSidebarData>> {
     try {
-        const [subtopicsCol, contentCol] = await Promise.all([
-            collections.subtopics(),
-            collections.articles(),
-        ]);
+        await ensureConnection();
 
         const [subtopics, articles] = await Promise.all([
-            subtopicsCol
-                .find({ topicSlug, published: true })
+            Subtopic.find({ topicSlug, published: true })
                 .sort({ order: 1 })
-                .project({ slug: 1, title: 1, order: 1, _id: 0 })
-                .toArray(),
-            contentCol
-                .find({ type: 'article', topicSlug, published: true } as Filter<IArticle>)
+                .select('slug title order -_id')
+                .lean<Array<{ slug: string; title: string; order: number }>>(),
+            Content.find({ type: 'article', topicSlug, published: true })
                 .sort({ order: 1 })
-                .project({ slug: 1, title: 1, subtopicSlug: 1, order: 1, _id: 0 })
-                .toArray(),
+                .select('slug title subtopicSlug order -_id')
+                .lean<Array<{
+                    slug: string;
+                    title: string;
+                    subtopicSlug: string | null;
+                    order: number;
+                }>>(),
         ]);
 
-        return ok({
-            subtopics: subtopics as Array<{ slug: string; title: string; order: number }>,
-            articles: articles as Array<{
-                slug: string;
-                title: string;
-                subtopicSlug: string | null;
-                order: number;
-            }>,
-        });
+        return ok({ subtopics, articles });
     } catch (err) {
         return handleError(err, 'Failed to fetch article sidebar data');
     }

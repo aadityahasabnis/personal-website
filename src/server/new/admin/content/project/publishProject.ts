@@ -2,14 +2,18 @@
 
 /**
  * Publish / Toggle / Reorder Project – Admin Server Actions
+ *
+ * Uses Mongoose document finders + instance methods for publish/unpublish.
+ * Uses Content model directly for toggle/status/reorder operations.
  */
 
-import type { IProject, ProjectStatus } from '@/interfaces/schema';
+import type { ProjectStatus } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findProject,
+    findProjectDoc,
     notFoundError,
     errorResponse,
     okVoid,
@@ -25,23 +29,14 @@ import {
 
 export async function publishProject(slug: string): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.projects();
         const project = await findProject(slug);
         if (!project) return notFoundError('Project');
 
         if (project.published) return okVoid('Project is already published');
 
-        const now = new Date();
-        await col.updateOne(
-            { type: 'project', slug } as Filter<IProject>,
-            {
-                $set: {
-                    published: true,
-                    publishedAt: project.publishedAt ?? now,
-                    updatedAt: now,
-                },
-            },
-        );
+        const doc = await findProjectDoc(slug);
+        if (!doc) return notFoundError('Project');
+        await doc.publish();
 
         revalidateContentPaths('project', slug);
 
@@ -53,16 +48,14 @@ export async function publishProject(slug: string): Promise<IApiResponse<void>> 
 
 export async function unpublishProject(slug: string): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.projects();
         const project = await findProject(slug);
         if (!project) return notFoundError('Project');
 
         if (!project.published) return okVoid('Project is already unpublished');
 
-        await col.updateOne(
-            { type: 'project', slug } as Filter<IProject>,
-            { $set: { published: false, updatedAt: new Date() } },
-        );
+        const doc = await findProjectDoc(slug);
+        if (!doc) return notFoundError('Project');
+        await doc.unpublish();
 
         revalidateContentPaths('project', slug);
 
@@ -80,13 +73,13 @@ export async function toggleProjectFeatured(
     slug: string,
 ): Promise<IApiResponse<boolean>> {
     try {
-        const col = await collections.projects();
+        await ensureConnection();
         const project = await findProject(slug);
         if (!project) return notFoundError('Project');
 
         const newFeatured = !project.featured;
-        await col.updateOne(
-            { type: 'project', slug } as Filter<IProject>,
+        await Content.updateOne(
+            { type: 'project', slug },
             { $set: { featured: newFeatured, updatedAt: new Date() } },
         );
 
@@ -107,12 +100,12 @@ export async function updateProjectStatus(
     status: ProjectStatus,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.projects();
+        await ensureConnection();
         const project = await findProject(slug);
         if (!project) return notFoundError('Project');
 
-        await col.updateOne(
-            { type: 'project', slug } as Filter<IProject>,
+        await Content.updateOne(
+            { type: 'project', slug },
             { $set: { status, updatedAt: new Date() } },
         );
 
@@ -134,7 +127,7 @@ export async function reorderProjects(
     try {
         if (!slugs.length) return errorResponse('No slugs provided');
 
-        const col = await collections.projects();
+        await ensureConnection();
 
         const ops = slugs.map((s, index) => ({
             updateOne: {
@@ -143,7 +136,7 @@ export async function reorderProjects(
             },
         }));
 
-        await col.bulkWrite(ops);
+        await Content.bulkWrite(ops);
 
         revalidatePaths(['/projects', '/admin/projects', '/']);
 

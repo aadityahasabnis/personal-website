@@ -1,15 +1,11 @@
 /**
  * Public Project – Serialized Types
  *
- * Derived from schema.ts using Pick + Serialized<T>.
+ * Explicitly defined interfaces for JSON-safe transport.
  * These serve as a security boundary and stable API contract.
  */
 
-import type {
-    IProject,
-    ISeoMetadata,
-    Serialized,
-} from '@/interfaces/schema';
+import type { ProjectStatus } from '@/interfaces/schema';
 
 // ============================================================
 // Full Project (detail page)
@@ -19,30 +15,35 @@ import type {
  * Full published project for the detail page (SSG/ISR).
  * Includes body, gallery, and complete SEO metadata.
  */
-export type PublicProject = Pick<
-    Serialized<IProject>,
-    | '_id'
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'body'
-    | 'tags'
-    | 'coverImage'
-    | 'publishedAt'
-    | 'updatedAt'
-    | 'featured'
-    | 'techStack'
-    | 'githubUrl'
-    | 'liveUrl'
-    | 'demoVideo'
-    | 'gallery'
-    | 'status'
-    | 'startDate'
-    | 'completedDate'
-    | 'order'
-> & {
-    seo: Serialized<ISeoMetadata>;
-};
+export interface PublicProject {
+    _id: string;
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    coverImage: string | null;
+    publishedAt: string;
+    updatedAt: string;
+    featured: boolean;
+    techStack: string[];
+    githubUrl: string | null;
+    liveUrl: string | null;
+    demoVideo: string | null;
+    gallery: string[];
+    status: ProjectStatus;
+    startDate: string | null;
+    completedDate: string | null;
+    order: number;
+    seo: {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
+        ogImage: string | null;
+        canonicalUrl: string | null;
+        noIndex: boolean;
+    };
+}
 
 // ============================================================
 // Project Card (listing pages)
@@ -51,17 +52,16 @@ export type PublicProject = Pick<
 /**
  * Lightweight card for listing pages — no body, no gallery.
  */
-export type PublicProjectCard = Pick<
-    Serialized<IProject>,
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'coverImage'
-    | 'tags'
-    | 'techStack'
-    | 'githubUrl'
-    | 'liveUrl'
-    | 'status'
-    | 'featured'
-    | 'order'
->;
+export interface PublicProjectCard {
+    slug: string;
+    title: string;
+    description: string;
+    coverImage: string | null;
+    tags: string[];
+    techStack: string[];
+    githubUrl: string | null;
+    liveUrl: string | null;
+    status: ProjectStatus;
+    featured: boolean;
+    order: number;
+}

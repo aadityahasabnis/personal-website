@@ -4,11 +4,12 @@
  * Delete Blog – Admin Server Action
  */
 
-import type { IBlog } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
+    PageStats,
+    Comment,
     findBlog,
     notFoundError,
     okVoid,
@@ -22,21 +23,17 @@ import {
 
 export async function deleteBlog(slug: string): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.blogs();
+        await ensureConnection();
         const blog = await findBlog(slug);
         if (!blog) return notFoundError('Blog post');
 
         // Delete content document
-        await col.deleteOne({ type: 'blog', slug } as Filter<IBlog>);
+        await Content.deleteOne({ type: 'blog', slug });
 
-        // Cleanup associated data
-        const [statsCol, commentsCol] = await Promise.all([
-            collections.pageStats(),
-            collections.comments(),
-        ]);
+        // Cleanup associated data in parallel
         await Promise.all([
-            statsCol.deleteOne({ slug }),
-            commentsCol.deleteMany({ contentSlug: slug }),
+            PageStats.deleteOne({ slug }),
+            Comment.deleteMany({ contentSlug: slug }),
         ]);
 
         revalidateContentPaths('blog', slug);

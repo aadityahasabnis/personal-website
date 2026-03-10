@@ -4,13 +4,12 @@
  * Delete Article – Admin Server Action
  */
 
-import { COLLECTIONS } from '@/constants/siteConstants';
-import { getCollection } from '@/lib/db/connect';
-import type { IArticle } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
+    PageStats,
+    Comment,
     findArticle,
     notFoundError,
     okVoid,
@@ -28,32 +27,24 @@ export async function deleteArticle(
     slug: string,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.articles();
+        await ensureConnection();
 
         // 1. Find existing
         const article = await findArticle(topicSlug, slug);
         if (!article) return notFoundError('Article');
 
         // 2. Delete content document
-        await col.deleteOne({
-            type: 'article',
-            topicSlug,
-            slug,
-        } as Filter<IArticle>);
+        await Content.deleteOne({ type: 'article', topicSlug, slug });
 
         // 3. Update denormalized counts if the article was published
         if (article.published) {
             await updateContentCounts(topicSlug, article.subtopicSlug, -1);
         }
 
-        // 4. Cleanup associated data (stats + comments)
-        const [statsCol, commentsCol] = await Promise.all([
-            collections.pageStats(),
-            collections.comments(),
-        ]);
+        // 4. Cleanup associated data (stats + comments) in parallel
         await Promise.all([
-            statsCol.deleteOne({ slug: `${topicSlug}/${slug}` }),
-            commentsCol.deleteMany({ contentSlug: `${topicSlug}/${slug}` }),
+            PageStats.deleteOne({ slug: `${topicSlug}/${slug}` }),
+            Comment.deleteMany({ contentSlug: `${topicSlug}/${slug}` }),
         ]);
 
         // 5. Revalidate

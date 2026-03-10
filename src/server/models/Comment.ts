@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
+import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { ICommentDocument } from './types';
 
 // ============================================================
@@ -12,14 +13,14 @@ const AuthorSchema = new Schema(
             required: [true, 'Author name is required'],
             trim: true,
             minlength: [2, 'Name must be at least 2 characters'],
-            maxlength: [100, 'Name cannot exceed 100 characters'],
+            maxlength: [SCHEMA_LIMITS.AUTHOR_NAME_MAX_LENGTH, 'Name cannot exceed 100 characters'],
         },
         email: {
             type: String,
             required: [true, 'Author email is required'],
             trim: true,
             lowercase: true,
-            match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+            match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
         },
         avatar: {
             type: String,
@@ -30,7 +31,7 @@ const AuthorSchema = new Schema(
             type: String,
             default: null,
             trim: true,
-            match: [/^https?:\/\/.+/, 'Website must be a valid URL'],
+            match: [VALIDATION_PATTERNS.URL, 'Website must be a valid URL'],
         },
         isOwner: {
             type: Boolean,
@@ -67,8 +68,8 @@ const CommentSchema = new Schema<ICommentDocument>(
             type: String,
             required: [true, 'Comment content is required'],
             trim: true,
-            minlength: [1, 'Comment cannot be empty'],
-            maxlength: [2000, 'Comment cannot exceed 2000 characters'],
+            minlength: [SCHEMA_LIMITS.COMMENT_MIN_LENGTH, 'Comment cannot be empty'],
+            maxlength: [SCHEMA_LIMITS.COMMENT_MAX_LENGTH, 'Comment cannot exceed 2000 characters'],
         },
         upvotes: {
             type: Number,

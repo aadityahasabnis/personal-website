@@ -1,15 +1,11 @@
 /**
  * Public Blog – Serialized Types
  *
- * Derived from schema.ts using Pick + Serialized<T>.
- * These serve as a security boundary and stable API contract.
+ * Explicitly defined interfaces for JSON-safe transport.
+ * These serve as a security boundary and stable API contract for the frontend.
  */
 
-import type {
-    IBlog,
-    ISeoMetadata,
-    Serialized,
-} from '@/interfaces/schema';
+// No imports needed - types are self-contained
 
 // ============================================================
 // Full Blog (detail page)
@@ -19,22 +15,27 @@ import type {
  * Full published blog post for the detail page (SSG/ISR).
  * Includes body and complete SEO metadata.
  */
-export type PublicBlog = Pick<
-    Serialized<IBlog>,
-    | '_id'
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'body'
-    | 'tags'
-    | 'coverImage'
-    | 'readingTime'
-    | 'publishedAt'
-    | 'updatedAt'
-    | 'featured'
-> & {
-    seo: Serialized<ISeoMetadata>;
-};
+export interface PublicBlog {
+    _id: string;
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    coverImage: string | null;
+    readingTime: number;
+    publishedAt: string;
+    updatedAt: string;
+    featured: boolean;
+    seo: {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
+        ogImage: string | null;
+        canonicalUrl: string | null;
+        noIndex: boolean;
+    };
+}
 
 // ============================================================
 // Blog Card (listing pages)
@@ -43,14 +44,13 @@ export type PublicBlog = Pick<
 /**
  * Lightweight card for listing pages — no body, no _id.
  */
-export type PublicBlogCard = Pick<
-    Serialized<IBlog>,
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'coverImage'
-    | 'readingTime'
-    | 'publishedAt'
-    | 'tags'
-    | 'featured'
->;
+export interface PublicBlogCard {
+    slug: string;
+    title: string;
+    description: string;
+    coverImage: string | null;
+    readingTime: number;
+    publishedAt: string;
+    tags: string[];
+    featured: boolean;
+}

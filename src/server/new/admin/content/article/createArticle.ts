@@ -9,7 +9,8 @@ import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { calculateReadingTime } from '@/lib/utils';
 import type { ArticleCreateInput } from './types';
 import {
-    collections,
+    ensureConnection,
+    Content,
     duplicateError,
     errorResponse,
     created,
@@ -20,7 +21,6 @@ import {
     buildSeoMetadata,
     timestamps,
 } from '../../../utils';
-import type { Filter } from 'mongodb';
 
 // ============================================================
 // Server Action
@@ -30,14 +30,14 @@ export async function createArticle(
     input: ArticleCreateInput,
 ): Promise<IApiResponse<string>> {
     try {
-        const col = await collections.articles();
+        await ensureConnection();
 
         // 1. Check uniqueness (type + topicSlug + slug)
-        const existing = await col.findOne({
+        const existing = await Content.findOne({
             type: 'article',
             topicSlug: input.topicSlug,
             slug: input.slug,
-        } as Filter<IArticle>);
+        }).lean();
         if (existing) {
             return duplicateError('An article with this slug already exists in this topic');
         }
@@ -73,12 +73,12 @@ export async function createArticle(
         };
 
         // 4. Insert
-        const result = await col.insertOne(article as IArticle);
+        const doc = await Content.create(article);
 
         // 5. Revalidate
         revalidateContentPaths('article', input.slug, input.topicSlug);
 
-        return created(result.insertedId.toString(), 'Article created successfully');
+        return created(doc._id.toString(), 'Article created successfully');
     } catch (err) {
         return handleError(err, 'Failed to create article');
     }

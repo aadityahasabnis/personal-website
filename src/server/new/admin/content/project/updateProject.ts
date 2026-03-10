@@ -7,9 +7,9 @@
 import type { IProject } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import type { ProjectUpdateInput } from './types';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findProject,
     notFoundError,
     duplicateError,
@@ -30,16 +30,16 @@ export async function updateProject(
     input: ProjectUpdateInput,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.projects();
+        await ensureConnection();
         const existing = await findProject(slug);
         if (!existing) return notFoundError('Project');
 
         // Check slug conflicts
         if (input.slug && input.slug !== slug) {
-            const conflict = await col.findOne({
+            const conflict = await Content.findOne({
                 type: 'project',
                 slug: input.slug,
-            } as Filter<IProject>);
+            }).lean();
             if (conflict) return duplicateError('A project with this slug');
         }
 
@@ -53,8 +53,8 @@ export async function updateProject(
             ...updatedNow(),
         }) as Partial<IProject>;
 
-        await col.updateOne(
-            { type: 'project', slug } as Filter<IProject>,
+        await Content.updateOne(
+            { type: 'project', slug },
             { $set: updateData },
         );
 

@@ -1,16 +1,12 @@
 /**
  * Public Article – Serialized Types
  *
- * Derived from schema.ts using Pick + Serialized<T>.
+ * Explicitly defined interfaces for JSON-safe transport.
  * These serve as a security boundary (no drafts, no internal fields)
  * and a stable API contract for the frontend.
  */
 
-import type {
-    IArticle,
-    ISeoMetadata,
-    Serialized,
-} from '@/interfaces/schema';
+// No imports needed - types are self-contained
 
 // ============================================================
 // Full Article (detail page)
@@ -20,25 +16,30 @@ import type {
  * Full published article for the detail page (SSG/ISR).
  * Includes body and complete SEO metadata.
  */
-export type PublicArticle = Pick<
-    Serialized<IArticle>,
-    | '_id'
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'body'
-    | 'tags'
-    | 'coverImage'
-    | 'readingTime'
-    | 'publishedAt'
-    | 'updatedAt'
-    | 'featured'
-    | 'topicSlug'
-    | 'subtopicSlug'
-    | 'order'
-> & {
-    seo: Serialized<ISeoMetadata>;
-};
+export interface PublicArticle {
+    _id: string;
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    coverImage: string | null;
+    readingTime: number;
+    publishedAt: string;
+    updatedAt: string;
+    featured: boolean;
+    topicSlug: string;
+    subtopicSlug: string | null;
+    order: number;
+    seo: {
+        title: string | null;
+        description: string | null;
+        keywords: string[];
+        ogImage: string | null;
+        canonicalUrl: string | null;
+        noIndex: boolean;
+    };
+}
 
 // ============================================================
 // Article Card (listing pages)
@@ -47,19 +48,18 @@ export type PublicArticle = Pick<
 /**
  * Lightweight card for listing pages — no body, no _id.
  */
-export type PublicArticleCard = Pick<
-    Serialized<IArticle>,
-    | 'slug'
-    | 'title'
-    | 'description'
-    | 'coverImage'
-    | 'readingTime'
-    | 'publishedAt'
-    | 'tags'
-    | 'topicSlug'
-    | 'subtopicSlug'
-    | 'featured'
->;
+export interface PublicArticleCard {
+    slug: string;
+    title: string;
+    description: string;
+    coverImage: string | null;
+    readingTime: number;
+    publishedAt: string;
+    tags: string[];
+    topicSlug: string;
+    subtopicSlug: string | null;
+    featured: boolean;
+}
 
 // ============================================================
 // Topic with Articles (sidebar navigation)

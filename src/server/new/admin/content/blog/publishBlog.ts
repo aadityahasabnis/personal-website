@@ -2,14 +2,17 @@
 
 /**
  * Publish / Unpublish / Toggle Blog – Admin Server Actions
+ *
+ * Uses Mongoose document finders + instance methods for publish/unpublish/schedule.
+ * Uses Content model directly for toggle/featured operations.
  */
 
-import type { IBlog } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findBlog,
+    findBlogDoc,
     notFoundError,
     okVoid,
     ok,
@@ -23,23 +26,14 @@ import {
 
 export async function publishBlog(slug: string): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.blogs();
         const blog = await findBlog(slug);
         if (!blog) return notFoundError('Blog post');
 
         if (blog.published) return okVoid('Blog post is already published');
 
-        const now = new Date();
-        await col.updateOne(
-            { type: 'blog', slug } as Filter<IBlog>,
-            {
-                $set: {
-                    published: true,
-                    publishedAt: blog.publishedAt ?? now,
-                    updatedAt: now,
-                },
-            },
-        );
+        const doc = await findBlogDoc(slug);
+        if (!doc) return notFoundError('Blog post');
+        await doc.publish();
 
         revalidateContentPaths('blog', slug);
 
@@ -55,16 +49,14 @@ export async function publishBlog(slug: string): Promise<IApiResponse<void>> {
 
 export async function unpublishBlog(slug: string): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.blogs();
         const blog = await findBlog(slug);
         if (!blog) return notFoundError('Blog post');
 
         if (!blog.published) return okVoid('Blog post is already unpublished');
 
-        await col.updateOne(
-            { type: 'blog', slug } as Filter<IBlog>,
-            { $set: { published: false, updatedAt: new Date() } },
-        );
+        const doc = await findBlogDoc(slug);
+        if (!doc) return notFoundError('Blog post');
+        await doc.unpublish();
 
         revalidateContentPaths('blog', slug);
 
@@ -105,13 +97,13 @@ export async function toggleBlogFeatured(
     slug: string,
 ): Promise<IApiResponse<boolean>> {
     try {
-        const col = await collections.blogs();
+        await ensureConnection();
         const blog = await findBlog(slug);
         if (!blog) return notFoundError('Blog post');
 
         const newFeatured = !blog.featured;
-        await col.updateOne(
-            { type: 'blog', slug } as Filter<IBlog>,
+        await Content.updateOne(
+            { type: 'blog', slug },
             { $set: { featured: newFeatured, updatedAt: new Date() } },
         );
 
@@ -132,14 +124,10 @@ export async function scheduleBlog(
     scheduledAt: Date,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.blogs();
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
+        const doc = await findBlogDoc(slug);
+        if (!doc) return notFoundError('Blog post');
 
-        await col.updateOne(
-            { type: 'blog', slug } as Filter<IBlog>,
-            { $set: { scheduledAt, updatedAt: new Date() } },
-        );
+        await doc.schedule(scheduledAt);
 
         revalidateContentPaths('blog', slug);
 

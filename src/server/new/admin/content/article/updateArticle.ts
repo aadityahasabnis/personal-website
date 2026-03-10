@@ -8,9 +8,9 @@ import type { IArticle } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { calculateReadingTime } from '@/lib/utils';
 import type { ArticleUpdateInput } from './types';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findArticle,
     notFoundError,
     duplicateError,
@@ -35,7 +35,7 @@ export async function updateArticle(
     input: ArticleUpdateInput,
 ): Promise<IApiResponse<void>> {
     try {
-        const col = await collections.articles();
+        await ensureConnection();
 
         // 1. Find existing
         const existing = await findArticle(topicSlug, slug);
@@ -43,11 +43,11 @@ export async function updateArticle(
 
         // 2. Check slug conflicts
         if (input.slug && input.slug !== slug) {
-            const conflict = await col.findOne({
+            const conflict = await Content.findOne({
                 type: 'article',
                 topicSlug: input.topicSlug ?? topicSlug,
                 slug: input.slug,
-            } as Filter<IArticle>);
+            }).lean();
             if (conflict) return duplicateError('An article with this slug');
         }
 
@@ -68,8 +68,8 @@ export async function updateArticle(
         }) as Partial<IArticle>;
 
         // 5. Update
-        await col.updateOne(
-            { type: 'article', topicSlug, slug } as Filter<IArticle>,
+        await Content.updateOne(
+            { type: 'article', topicSlug, slug },
             { $set: updateData },
         );
 

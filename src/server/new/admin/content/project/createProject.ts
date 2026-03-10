@@ -7,9 +7,9 @@
 import type { IProject } from '@/interfaces/schema';
 import type { IApiResponse } from '@/interfaces/IApiResponse';
 import type { ProjectCreateInput } from './types';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     duplicateError,
     created,
     handleError,
@@ -26,13 +26,13 @@ export async function createProject(
     input: ProjectCreateInput,
 ): Promise<IApiResponse<string>> {
     try {
-        const col = await collections.projects();
+        await ensureConnection();
 
         // Check uniqueness
-        const existing = await col.findOne({
+        const existing = await Content.findOne({
             type: 'project',
             slug: input.slug,
-        } as Filter<IProject>);
+        }).lean();
         if (existing) return duplicateError('A project with this slug');
 
         const now = timestamps();
@@ -62,10 +62,10 @@ export async function createProject(
             ...now,
         };
 
-        const result = await col.insertOne(project as IProject);
+        const doc = await Content.create(project);
         revalidateContentPaths('project', input.slug);
 
-        return created(result.insertedId.toString(), 'Project created successfully');
+        return created(doc._id.toString(), 'Project created successfully');
     } catch (err) {
         return handleError(err, 'Failed to create project');
     }

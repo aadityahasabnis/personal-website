@@ -13,9 +13,11 @@
 
 import type { IArticle } from '@/interfaces/schema';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
+    Topic,
+    Subtopic,
     findPublishedArticle,
     notFoundError,
     ok,
@@ -103,23 +105,22 @@ export async function getPublicArticles(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicArticleCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.articles();
-        const filter: Filter<IArticle> = { type: 'article', published: true };
+        const filter = { type: 'article' as const, published: true };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ publishedAt: -1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IArticle[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IArticle[]).map(serializeArticleCard),
+            docs.map(serializeArticleCard),
             count,
             offset,
             limit,
@@ -138,27 +139,22 @@ export async function getPublicArticlesByTopic(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicArticleCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.articles();
-        const filter: Filter<IArticle> = {
-            type: 'article',
-            topicSlug,
-            published: true,
-        };
+        const filter = { type: 'article' as const, topicSlug, published: true };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ order: 1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IArticle[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IArticle[]).map(serializeArticleCard),
+            docs.map(serializeArticleCard),
             count,
             offset,
             limit,
@@ -176,15 +172,18 @@ export async function getPublicFeaturedArticles(
     limit = 6,
 ): Promise<IApiResponse<PublicArticleCard[]>> {
     try {
-        const col = await collections.articles();
-        const docs = await col
-            .find({ type: 'article', published: true, featured: true } as Filter<IArticle>)
+        await ensureConnection();
+        const docs = await Content.find({
+            type: 'article',
+            published: true,
+            featured: true,
+        })
             .sort({ publishedAt: -1 })
             .limit(limit)
-            .project({ body: 0 })
-            .toArray();
+            .select('-body')
+            .lean<IArticle[]>();
 
-        return ok((docs as unknown as IArticle[]).map(serializeArticleCard));
+        return ok(docs.map(serializeArticleCard));
     } catch (err) {
         return handleError(err, 'Failed to fetch featured articles');
     }
@@ -198,28 +197,22 @@ export async function getPublicTopicWithArticles(
     topicSlug: string,
 ): Promise<IApiResponse<PublicTopicWithArticles | null>> {
     try {
-        const [topicsCol, subtopicsCol, articlesCol] = await Promise.all([
-            collections.topics(),
-            collections.subtopics(),
-            collections.articles(),
-        ]);
+        await ensureConnection();
 
-        const topic = await topicsCol.findOne({ slug: topicSlug, published: true });
+        const topic = await Topic.findOne({ slug: topicSlug, published: true }).lean();
         if (!topic) return notFoundError('Topic');
 
         const [subtopics, articles] = await Promise.all([
-            subtopicsCol
-                .find({ topicSlug, published: true })
+            Subtopic.find({ topicSlug, published: true })
                 .sort({ order: 1 })
-                .toArray(),
-            articlesCol
-                .find({ type: 'article', topicSlug, published: true } as Filter<IArticle>)
+                .lean(),
+            Content.find({ type: 'article', topicSlug, published: true })
                 .sort({ order: 1 })
-                .project({ body: 0 })
-                .toArray(),
+                .select('-body')
+                .lean<IArticle[]>(),
         ]);
 
-        const articleCards = (articles as unknown as IArticle[]).map(serializeArticleCard);
+        const articleCards = articles.map(serializeArticleCard);
 
         const subtopicData = subtopics.map((st) => ({
             slug: st.slug,
@@ -252,13 +245,12 @@ export async function getPublicArticleSlugs(): Promise<
     Array<{ topicSlug: string; slug: string }>
 > {
     try {
-        const col = await collections.articles();
-        const docs = await col
-            .find({ type: 'article', published: true } as Filter<IArticle>)
-            .project({ topicSlug: 1, slug: 1, _id: 0 })
-            .toArray();
+        await ensureConnection();
+        const docs = await Content.find({ type: 'article', published: true })
+            .select('topicSlug slug -_id')
+            .lean<Array<{ topicSlug: string; slug: string }>>();
 
-        return docs as Array<{ topicSlug: string; slug: string }>;
+        return docs;
     } catch (err) {
         console.error('Failed to fetch article slugs:', err);
         return [];
@@ -270,13 +262,12 @@ export async function getPublicArticleSlugs(): Promise<
  */
 export async function getPublicTopicSlugs(): Promise<Array<{ slug: string }>> {
     try {
-        const col = await collections.topics();
-        const docs = await col
-            .find({ published: true })
-            .project({ slug: 1, _id: 0 })
-            .toArray();
+        await ensureConnection();
+        const docs = await Topic.find({ published: true })
+            .select('slug -_id')
+            .lean<Array<{ slug: string }>>();
 
-        return docs as Array<{ slug: string }>;
+        return docs;
     } catch (err) {
         console.error('Failed to fetch topic slugs:', err);
         return [];

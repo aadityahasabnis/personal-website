@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
+import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { ISubtopicDocument } from './types';
 
 // ============================================================
@@ -19,20 +20,20 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
             required: [true, 'Slug is required'],
             trim: true,
             lowercase: true,
-            match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'],
+            match: [VALIDATION_PATTERNS.SLUG, 'Slug can only contain lowercase letters, numbers, and hyphens'],
         },
         title: {
             type: String,
             required: [true, 'Title is required'],
             trim: true,
-            minlength: [2, 'Title must be at least 2 characters'],
+            minlength: [SCHEMA_LIMITS.TITLE_MIN_LENGTH, 'Title must be at least 2 characters'],
             maxlength: [100, 'Title cannot exceed 100 characters'],
         },
         description: {
             type: String,
             default: null,
             trim: true,
-            maxlength: [500, 'Description cannot exceed 500 characters'],
+            maxlength: [SCHEMA_LIMITS.DESCRIPTION_MAX_LENGTH, 'Description cannot exceed 500 characters'],
         },
         order: {
             type: Number,

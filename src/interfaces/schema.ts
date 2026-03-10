@@ -1,4 +1,5 @@
 // Database Schema Interfaces
+import { ContentType, ProjectStatus, UserRole } from '@/constants';
 import { type ObjectId } from 'mongodb';
 
 
@@ -14,34 +15,6 @@ export interface ITimestamps {
     createdAt: Date;
     updatedAt: Date;
 }
-
-
-// ============================================================
-// Constants & Enums
-// ============================================================
-
-export const CONTENT_TYPES = {
-    ARTICLE: 'article',
-    BLOG: 'blog',
-    PROJECT: 'project',
-} as const;
-
-export type ContentType = typeof CONTENT_TYPES[keyof typeof CONTENT_TYPES];
-
-export const PROJECT_STATUS = {
-    IN_PROGRESS: 'In Progress',       // Currently working on
-    LIVE: 'Live',           // Project is live and accessible
-    ARCHIVED: 'Archived',   // No longer maintained
-} as const;
-
-export type ProjectStatus = typeof PROJECT_STATUS[keyof typeof PROJECT_STATUS];
-
-export const USER_ROLES = {
-    ADMIN: 'admin',
-    VIEWER: 'viewer',
-} as const;
-
-export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
 
 
 // ============================================================
@@ -261,15 +234,15 @@ export interface IContact extends IDocument, ITimestamps {
 // ============================================================
 
 export function isArticle(content: IContent): content is IArticle {
-    return content.type === CONTENT_TYPES.ARTICLE;
+    return content.type === 'article';
 }
 
 export function isBlog(content: IContent): content is IBlog {
-    return content.type === CONTENT_TYPES.BLOG;
+    return content.type === 'blog';
 }
 
 export function isProject(content: IContent): content is IProject {
-    return content.type === CONTENT_TYPES.PROJECT;
+    return content.type === 'project';
 }
 
 
@@ -279,7 +252,7 @@ export function isProject(content: IContent): content is IProject {
 
 /**
  * Recursively serialize a type for JSON transport:
- *   - ObjectId  -> string
+ *   - ObjecContactStatus
  *   - Date      -> string
  *   - null stays null, arrays & nested objects are walked recursively
  *

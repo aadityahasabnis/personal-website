@@ -1,4 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
+import { CONTACT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import type { ContactStatus } from '@/constants/schemaConstants';
 import type { IContactDocument } from './types';
 
 // ============================================================
@@ -12,14 +14,14 @@ const ContactSchema = new Schema<IContactDocument>(
             required: [true, 'Name is required'],
             trim: true,
             minlength: [2, 'Name must be at least 2 characters'],
-            maxlength: [100, 'Name cannot exceed 100 characters'],
+            maxlength: [SCHEMA_LIMITS.CONTACT_NAME_MAX_LENGTH, 'Name cannot exceed 100 characters'],
         },
         email: {
             type: String,
             required: [true, 'Email is required'],
             trim: true,
             lowercase: true,
-            match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+            match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
             index: true,
         },
         subject: {
@@ -27,23 +29,23 @@ const ContactSchema = new Schema<IContactDocument>(
             required: [true, 'Subject is required'],
             trim: true,
             minlength: [5, 'Subject must be at least 5 characters'],
-            maxlength: [200, 'Subject cannot exceed 200 characters'],
+            maxlength: [SCHEMA_LIMITS.CONTACT_SUBJECT_MAX_LENGTH, 'Subject cannot exceed 200 characters'],
         },
         message: {
             type: String,
             required: [true, 'Message is required'],
             trim: true,
             minlength: [10, 'Message must be at least 10 characters'],
-            maxlength: [2000, 'Message cannot exceed 2000 characters'],
+            maxlength: [SCHEMA_LIMITS.CONTACT_MESSAGE_MAX_LENGTH, 'Message cannot exceed 5000 characters'],
         },
         status: {
             type: String,
             required: true,
             enum: {
-                values: ['new', 'read', 'replied', 'archived'],
+                values: Object.values(CONTACT_STATUS),
                 message: 'Status must be one of: new, read, replied, archived',
             },
-            default: 'new',
+            default: CONTACT_STATUS.NEW,
             index: true,
         },
         ipHash: {
@@ -71,17 +73,17 @@ ContactSchema.index({ email: 1 });
 // ============================================================
 
 ContactSchema.statics.getNewMessages = async function () {
-    return this.find({ status: 'new' })
+    return this.find({ status: CONTACT_STATUS.NEW })
         .sort({ createdAt: -1 })
         .lean();
 };
 
-ContactSchema.statics.getUnreadCount = async function () {
-    return this.countDocuments({ status: 'new' });
+ContactSchema.statics.getNewMessageCount = async function () {
+    return this.countDocuments({ status: CONTACT_STATUS.NEW });
 };
 
 ContactSchema.statics.getByStatus = async function (
-    status: 'new' | 'read' | 'replied' | 'archived'
+    status: ContactStatus
 ) {
     return this.find({ status })
         .sort({ createdAt: -1 })
@@ -93,25 +95,25 @@ ContactSchema.statics.getByStatus = async function (
 // ============================================================
 
 ContactSchema.methods.markAsRead = async function (this: IContactDocument) {
-    if (this.status === 'new') {
-        this.status = 'read';
+    if (this.status === CONTACT_STATUS.NEW) {
+        this.status = CONTACT_STATUS.READ;
         return this.save();
     }
     return this;
 };
 
 ContactSchema.methods.markAsReplied = async function (this: IContactDocument) {
-    this.status = 'replied';
+    this.status = CONTACT_STATUS.REPLIED;
     return this.save();
 };
 
 ContactSchema.methods.archive = async function (this: IContactDocument) {
-    this.status = 'archived';
+    this.status = CONTACT_STATUS.ARCHIVED;
     return this.save();
 };
 
 ContactSchema.methods.unarchive = async function (this: IContactDocument) {
-    this.status = 'read';
+    this.status = CONTACT_STATUS.READ;
     return this.save();
 };
 
@@ -122,7 +124,7 @@ ContactSchema.methods.unarchive = async function (this: IContactDocument) {
 interface IContactModel extends Model<IContactDocument> {
     getNewMessages(): Promise<IContactDocument[]>;
     getUnreadCount(): Promise<number>;
-    getByStatus(status: 'new' | 'read' | 'replied' | 'archived'): Promise<IContactDocument[]>;
+    getByStatus(status: ContactStatus): Promise<IContactDocument[]>;
 }
 
 const Contact: IContactModel =

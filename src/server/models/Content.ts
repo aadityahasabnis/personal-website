@@ -1,6 +1,6 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import type { ISeoMetadata } from '@/interfaces/schema';
-import { CONTENT_TYPES, PROJECT_STATUS } from '@/interfaces/schema';
+import { CONTENT_TYPES, PROJECT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { IContentDocument } from './types';
 
 // ============================================================
@@ -13,13 +13,13 @@ const SeoMetadataSchema = new Schema<ISeoMetadata>(
             type: String,
             default: null,
             trim: true,
-            maxlength: [70, 'SEO title cannot exceed 70 characters'],
+            maxlength: [SCHEMA_LIMITS.SEO_TITLE_MAX_LENGTH, 'SEO title cannot exceed 70 characters'],
         },
         description: {
             type: String,
             default: null,
             trim: true,
-            maxlength: [160, 'SEO description cannot exceed 160 characters'],
+            maxlength: [SCHEMA_LIMITS.SEO_DESCRIPTION_MAX_LENGTH, 'SEO description cannot exceed 160 characters'],
         },
         keywords: {
             type: [String],
@@ -63,20 +63,20 @@ const ContentSchema = new Schema(
             required: [true, 'Slug is required'],
             trim: true,
             lowercase: true,
-            match: [/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'],
+            match: [VALIDATION_PATTERNS.SLUG, 'Slug can only contain lowercase letters, numbers, and hyphens'],
         },
         title: {
             type: String,
             required: [true, 'Title is required'],
             trim: true,
-            minlength: [2, 'Title must be at least 2 characters'],
-            maxlength: [200, 'Title cannot exceed 200 characters'],
+            minlength: [SCHEMA_LIMITS.TITLE_MIN_LENGTH, 'Title must be at least 2 characters'],
+            maxlength: [SCHEMA_LIMITS.TITLE_MAX_LENGTH, 'Title cannot exceed 200 characters'],
         },
         description: {
             type: String,
             required: [true, 'Description is required'],
             trim: true,
-            maxlength: [500, 'Description cannot exceed 500 characters'],
+            maxlength: [SCHEMA_LIMITS.DESCRIPTION_MAX_LENGTH, 'Description cannot exceed 500 characters'],
         },
         body: {
             type: String,
@@ -86,8 +86,8 @@ const ContentSchema = new Schema(
             type: [String],
             default: [],
             validate: {
-                validator: (tags: string[]) => tags.length <= 10,
-                message: 'Cannot have more than 10 tags',
+                validator: (tags: string[]) => tags.length <= SCHEMA_LIMITS.TAGS_MAX_COUNT,
+                message: `Cannot have more than ${SCHEMA_LIMITS.TAGS_MAX_COUNT} tags`,
             },
         },
         coverImage: {

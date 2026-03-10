@@ -9,9 +9,9 @@
 
 import type { IBlog } from '@/interfaces/schema';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
-import type { Filter } from 'mongodb';
 import {
-    collections,
+    ensureConnection,
+    Content,
     findPublishedBlog,
     notFoundError,
     ok,
@@ -91,23 +91,22 @@ export async function getPublicBlogs(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicBlogCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.blogs();
-        const filter: Filter<IBlog> = { type: 'blog', published: true };
+        const filter = { type: 'blog' as const, published: true };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ publishedAt: -1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IBlog[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IBlog[]).map(serializeBlogCard),
+            docs.map(serializeBlogCard),
             count,
             offset,
             limit,
@@ -124,15 +123,18 @@ export async function getPublicFeaturedBlogs(
     limit = 3,
 ): Promise<IApiResponse<PublicBlogCard[]>> {
     try {
-        const col = await collections.blogs();
-        const docs = await col
-            .find({ type: 'blog', published: true, featured: true } as Filter<IBlog>)
+        await ensureConnection();
+        const docs = await Content.find({
+            type: 'blog',
+            published: true,
+            featured: true,
+        })
             .sort({ publishedAt: -1 })
             .limit(limit)
-            .project({ body: 0 })
-            .toArray();
+            .select('-body')
+            .lean<IBlog[]>();
 
-        return ok((docs as unknown as IBlog[]).map(serializeBlogCard));
+        return ok(docs.map(serializeBlogCard));
     } catch (err) {
         return handleError(err, 'Failed to fetch featured blog posts');
     }
@@ -146,23 +148,22 @@ export async function getPublicBlogsByTag(
     pagination?: PaginationParams,
 ): Promise<IPaginatedResponse<PublicBlogCard>> {
     try {
+        await ensureConnection();
         const { offset, limit } = normalizePagination(pagination);
-        const col = await collections.blogs();
-        const filter: Filter<IBlog> = { type: 'blog', published: true, tags: tag };
+        const filter = { type: 'blog' as const, published: true, tags: tag };
 
         const [docs, count] = await Promise.all([
-            col
-                .find(filter)
+            Content.find(filter)
                 .sort({ publishedAt: -1 })
                 .skip(offset)
                 .limit(limit)
-                .project({ body: 0 })
-                .toArray(),
-            col.countDocuments(filter),
+                .select('-body')
+                .lean<IBlog[]>(),
+            Content.countDocuments(filter),
         ]);
 
         return paginatedOk(
-            (docs as unknown as IBlog[]).map(serializeBlogCard),
+            docs.map(serializeBlogCard),
             count,
             offset,
             limit,
@@ -177,13 +178,12 @@ export async function getPublicBlogsByTag(
  */
 export async function getPublicBlogSlugs(): Promise<Array<{ slug: string }>> {
     try {
-        const col = await collections.blogs();
-        const docs = await col
-            .find({ type: 'blog', published: true } as Filter<IBlog>)
-            .project({ slug: 1, _id: 0 })
-            .toArray();
+        await ensureConnection();
+        const docs = await Content.find({ type: 'blog', published: true })
+            .select('slug -_id')
+            .lean<Array<{ slug: string }>>();
 
-        return docs as Array<{ slug: string }>;
+        return docs;
     } catch (err) {
         console.error('Failed to fetch blog slugs:', err);
         return [];

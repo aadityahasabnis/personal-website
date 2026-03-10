@@ -1,4 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
+import { VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { ISubscriberDocument } from './types';
 
 // ============================================================
@@ -13,7 +14,7 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
             unique: true,
             trim: true,
             lowercase: true,
-            match: [/^\S+@\S+\.\S+$/, 'Please provide a valid email address'],
+            match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
             index: true,
         },
         name: {
