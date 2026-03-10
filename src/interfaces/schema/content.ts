@@ -1,6 +1,6 @@
-import { type ObjectId } from 'mongodb';
 import { type ContentType, type ProjectStatusType } from '@/constants/schemaConstants';
-import type { IDocument, ITimestamps, IAudit } from './base';
+import { type ObjectId } from 'mongodb';
+import type { IAudit, IDocument, ITimestamps } from './base';
 
 // ============================================================
 // SEO Metadata

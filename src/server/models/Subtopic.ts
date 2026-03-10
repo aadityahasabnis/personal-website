@@ -1,5 +1,5 @@
-import mongoose, { Schema, Model } from 'mongoose';
 import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import mongoose, { Model, Schema } from 'mongoose';
 import type { ISubtopicDocument } from './types';
 
 // ============================================================

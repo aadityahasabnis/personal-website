@@ -1,4 +1,3 @@
-import { type ObjectId } from 'mongodb';
 import type { IDocument, ITimestamps } from './base';
 
 // ============================================================

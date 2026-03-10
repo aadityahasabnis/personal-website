@@ -1,5 +1,5 @@
-import mongoose, { Schema, Model } from 'mongoose';
 import type { IPageStats } from '@/interfaces/schema/pageStats';
+import mongoose, { Model, Schema } from 'mongoose';
 import type { IPageStatsDocument } from './types';
 
 // ============================================================

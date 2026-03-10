@@ -1,5 +1,5 @@
-import mongoose, { Schema, Model } from 'mongoose';
-import { CONTACT_STATUS, ContactStatusType, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import { CONTACT_STATUS, type ContactStatusType, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import mongoose, { Model, Schema } from 'mongoose';
 import type { IContactDocument } from './types';
 
 // ============================================================
@@ -72,21 +72,15 @@ ContactSchema.index({ email: 1 });
 // ============================================================
 
 ContactSchema.statics.getNewMessages = async function () {
-    return this.find({ status: CONTACT_STATUS.NEW })
-        .sort({ createdAt: -1 })
-        .lean();
+    return this.find({ status: CONTACT_STATUS.NEW }).sort({ createdAt: -1 }).lean();
 };
 
 ContactSchema.statics.getNewMessageCount = async function () {
     return this.countDocuments({ status: CONTACT_STATUS.NEW });
 };
 
-ContactSchema.statics.getByStatus = async function (
-    status: ContactStatusType
-) {
-    return this.find({ status })
-        .sort({ createdAt: -1 })
-        .lean();
+ContactSchema.statics.getByStatus = async function (status: ContactStatusType) {
+    return this.find({ status }).sort({ createdAt: -1 }).lean();
 };
 
 // ============================================================
@@ -126,8 +120,6 @@ interface IContactModel extends Model<IContactDocument> {
     getByStatus(status: ContactStatusType): Promise<IContactDocument[]>;
 }
 
-const Contact: IContactModel =
-    (mongoose.models.Contact as IContactModel) || 
-    mongoose.model<IContactDocument, IContactModel>('Contact', ContactSchema);
+const Contact: IContactModel = (mongoose.models.Contact as IContactModel) || mongoose.model<IContactDocument, IContactModel>('Contact', ContactSchema);
 
 export default Contact;

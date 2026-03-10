@@ -1,6 +1,6 @@
-import mongoose, { Schema, Model } from 'mongoose';
-import type { ISeoMetadata } from '@/interfaces/schema/content';
 import { CONTENT_TYPES, PROJECT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import type { ISeoMetadata } from '@/interfaces/schema/content';
+import mongoose, { Model, Schema } from 'mongoose';
 import type { IContentDocument } from './types';
 
 // ============================================================

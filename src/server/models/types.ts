@@ -1,12 +1,12 @@
-import { Document } from 'mongoose';
-import type { ITopic } from '@/interfaces/schema/topic';
-import type { ISubtopic } from '@/interfaces/schema/subtopic';
-import type { IContent, IArticle, IBlog, IProject } from '@/interfaces/schema/content';
-import type { IPageStats } from '@/interfaces/schema/pageStats';
-import type { IComment } from '@/interfaces/schema/comment';
-import type { ISubscriber } from '@/interfaces/schema/subscriber';
 import type { IAdmin } from '@/interfaces/schema/admin';
+import type { IComment } from '@/interfaces/schema/comment';
 import type { IContact } from '@/interfaces/schema/contact';
+import type { IArticle, IBlog, IContent, IProject } from '@/interfaces/schema/content';
+import type { IPageStats } from '@/interfaces/schema/pageStats';
+import type { ISubscriber } from '@/interfaces/schema/subscriber';
+import type { ISubtopic } from '@/interfaces/schema/subtopic';
+import type { ITopic } from '@/interfaces/schema/topic';
+import { Document } from 'mongoose';
 
 // ============================================================
 // Mongoose Document Types
