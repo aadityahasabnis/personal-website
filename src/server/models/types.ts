@@ -1,23 +1,17 @@
-import { Document, Types } from 'mongoose';
-import type {
-    ITopic,
-    ISubtopic,
-    IContent,
-    IArticle,
-    IBlog,
-    IProject,
-    IPageStats,
-    IComment,
-    ISubscriber,
-    IUser,
-    IContact,
-} from '@/interfaces/schema';
+import { Document } from 'mongoose';
+import type { ITopic } from '@/interfaces/schema/topic';
+import type { ISubtopic } from '@/interfaces/schema/subtopic';
+import type { IContent, IArticle, IBlog, IProject } from '@/interfaces/schema/content';
+import type { IPageStats } from '@/interfaces/schema/pageStats';
+import type { IComment } from '@/interfaces/schema/comment';
+import type { ISubscriber } from '@/interfaces/schema/subscriber';
+import type { IAdmin } from '@/interfaces/schema/admin';
+import type { IContact } from '@/interfaces/schema/contact';
 
 // ============================================================
 // Mongoose Document Types
 // ============================================================
 
-// Extend interfaces with Mongoose Document methods (omit _id to avoid conflicts)
 export interface ITopicDocument extends Omit<ITopic, '_id'>, Document {
     incrementContentCount(): Promise<this>;
     decrementContentCount(): Promise<this>;
@@ -32,9 +26,9 @@ export interface IContentDocument extends Omit<IContent, '_id'>, Document {
     publish(): Promise<this>;
     unpublish(): Promise<this>;
     schedule(date: Date): Promise<this>;
-    isArticle(): this is IArticleDocument;
-    isBlog(): this is IBlogDocument;
-    isProject(): this is IProjectDocument;
+    isArticle(): boolean;
+    isBlog(): boolean;
+    isProject(): boolean;
 }
 
 export interface IArticleDocument extends Omit<IArticle, '_id'>, Document {
@@ -70,10 +64,8 @@ export interface ISubscriberDocument extends Omit<ISubscriber, '_id'>, Document 
     resubscribe(): Promise<this>;
 }
 
-export interface IUserDocument extends Omit<IUser, '_id'>, Document {
+export interface IAdminDocument extends Omit<IAdmin, '_id'>, Document {
     updateLastLogin(): Promise<this>;
-    isAdmin(): boolean;
-    isViewer(): boolean;
 }
 
 export interface IContactDocument extends Omit<IContact, '_id'>, Document {

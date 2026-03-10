@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { ISeoMetadata } from '@/interfaces/schema';
+import type { ISeoMetadata } from '@/interfaces/schema/content';
 import { CONTENT_TYPES, PROJECT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { IContentDocument } from './types';
 
@@ -129,17 +129,31 @@ const ContentSchema = new Schema(
             default: null,
         },
         
-        // Article-specific fields (only used when type='article')
-        topicSlug: {
-            type: String,
-            trim: true,
-            lowercase: true,
+        // Audit fields
+        createdBy: {
+            type: Schema.Types.ObjectId,
+            required: [true, 'Creator is required'],
+            ref: 'Admin',
+            index: true,
         },
-        subtopicSlug: {
-            type: String,
+        updatedBy: {
+            type: Schema.Types.ObjectId,
+            required: [true, 'Updater is required'],
+            ref: 'Admin',
+            index: true,
+        },
+        
+        // Article-specific fields (only used when type='article')
+        topicId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Topic',
+            index: true,
+        },
+        subtopicId: {
+            type: Schema.Types.ObjectId,
             default: null,
-            trim: true,
-            lowercase: true,
+            ref: 'Subtopic',
+            index: true,
         },
         
         // Project-specific fields (only used when type='project')
@@ -200,10 +214,13 @@ const ContentSchema = new Schema(
 
 ContentSchema.index({ type: 1, slug: 1 }, { unique: true });
 ContentSchema.index({ type: 1, published: 1, publishedAt: -1 });
-ContentSchema.index({ type: 1, topicSlug: 1, order: 1 }); // For articles
-ContentSchema.index({ type: 1, status: 1, order: 1 }); // For projects
+ContentSchema.index({ type: 1, topicId: 1, order: 1 });
+ContentSchema.index({ type: 1, subtopicId: 1, order: 1 });
+ContentSchema.index({ type: 1, status: 1, order: 1 });
 ContentSchema.index({ published: 1, featured: 1 });
 ContentSchema.index({ tags: 1 });
+ContentSchema.index({ createdBy: 1 });
+ContentSchema.index({ updatedBy: 1 });
 
 // ============================================================
 // Instance Methods

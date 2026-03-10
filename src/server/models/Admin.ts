@@ -1,12 +1,12 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { USER_ROLES, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
-import type { IUserDocument } from './types';
+import { VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import type { IAdminDocument } from './types';
 
 // ============================================================
-// User Schema
+// Admin Schema
 // ============================================================
 
-const UserSchema = new Schema<IUserDocument>(
+const AdminSchema = new Schema<IAdminDocument>(
     {
         email: {
             type: String,
@@ -29,20 +29,10 @@ const UserSchema = new Schema<IUserDocument>(
             default: null,
             trim: true,
         },
-        role: {
-            type: String,
-            required: true,
-            enum: {
-                values: Object.values(USER_ROLES),
-                message: 'Role must be either admin or viewer',
-            },
-            default: USER_ROLES.VIEWER,
-            index: true,
-        },
         passwordHash: {
             type: String,
             default: null,
-            select: false, // Never return password hash by default
+            select: false,
         },
         lastLoginAt: {
             type: Date,
@@ -51,7 +41,7 @@ const UserSchema = new Schema<IUserDocument>(
     },
     {
         timestamps: true,
-        collection: 'users',
+        collection: 'admins',
     }
 );
 
@@ -59,23 +49,18 @@ const UserSchema = new Schema<IUserDocument>(
 // Indexes
 // ============================================================
 
-UserSchema.index({ email: 1 }, { unique: true });
-UserSchema.index({ role: 1 });
-UserSchema.index({ lastLoginAt: -1 });
+AdminSchema.index({ email: 1 }, { unique: true });
+AdminSchema.index({ lastLoginAt: -1 });
 
 // ============================================================
 // Static Methods
 // ============================================================
 
-UserSchema.statics.findByEmail = async function (email: string) {
+AdminSchema.statics.findByEmail = async function (email: string) {
     return this.findOne({ email: email.toLowerCase() }).select('+passwordHash');
 };
 
-UserSchema.statics.getAdmins = async function () {
-    return this.find({ role: USER_ROLES.ADMIN }).lean();
-};
-
-UserSchema.statics.getUserCount = async function () {
+AdminSchema.statics.getAdminCount = async function () {
     return this.countDocuments();
 };
 
@@ -83,31 +68,22 @@ UserSchema.statics.getUserCount = async function () {
 // Instance Methods
 // ============================================================
 
-UserSchema.methods.updateLastLogin = async function (this: IUserDocument) {
+AdminSchema.methods.updateLastLogin = async function (this: IAdminDocument) {
     this.lastLoginAt = new Date();
     return this.save();
-};
-
-UserSchema.methods.isAdmin = function (this: IUserDocument) {
-    return this.role === USER_ROLES.ADMIN;
-};
-
-UserSchema.methods.isViewer = function (this: IUserDocument) {
-    return this.role === USER_ROLES.VIEWER;
 };
 
 // ============================================================
 // Model Export
 // ============================================================
 
-interface IUserModel extends Model<IUserDocument> {
-    findByEmail(email: string): Promise<IUserDocument | null>;
-    getAdmins(): Promise<IUserDocument[]>;
-    getUserCount(): Promise<number>;
+interface IAdminModel extends Model<IAdminDocument> {
+    findByEmail(email: string): Promise<IAdminDocument | null>;
+    getAdminCount(): Promise<number>;
 }
 
-const User: IUserModel =
-    (mongoose.models.User as IUserModel) || 
-    mongoose.model<IUserDocument, IUserModel>('User', UserSchema);
+const Admin: IAdminModel =
+    (mongoose.models.Admin as IAdminModel) || 
+    mongoose.model<IAdminDocument, IAdminModel>('Admin', AdminSchema);
 
-export default User;
+export default Admin;

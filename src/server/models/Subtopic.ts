@@ -8,11 +8,10 @@ import type { ISubtopicDocument } from './types';
 
 const SubtopicSchema = new Schema<ISubtopicDocument>(
     {
-        topicSlug: {
-            type: String,
-            required: [true, 'Topic slug is required'],
-            trim: true,
-            lowercase: true,
+        topicId: {
+            type: Schema.Types.ObjectId,
+            required: [true, 'Topic ID is required'],
+            ref: 'Topic',
             index: true,
         },
         slug: {
@@ -62,9 +61,9 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
 // Indexes
 // ============================================================
 
-SubtopicSchema.index({ topicSlug: 1, slug: 1 }, { unique: true });
-SubtopicSchema.index({ topicSlug: 1, order: 1 });
-SubtopicSchema.index({ topicSlug: 1, published: 1 });
+SubtopicSchema.index({ topicId: 1, slug: 1 }, { unique: true });
+SubtopicSchema.index({ topicId: 1, order: 1 });
+SubtopicSchema.index({ topicId: 1, published: 1 });
 
 // ============================================================
 // Instance Methods

@@ -1,6 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import { CONTACT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
-import type { ContactStatus } from '@/constants/schemaConstants';
+import { CONTACT_STATUS, ContactStatusType, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { IContactDocument } from './types';
 
 // ============================================================
@@ -83,7 +82,7 @@ ContactSchema.statics.getNewMessageCount = async function () {
 };
 
 ContactSchema.statics.getByStatus = async function (
-    status: ContactStatus
+    status: ContactStatusType
 ) {
     return this.find({ status })
         .sort({ createdAt: -1 })
@@ -124,7 +123,7 @@ ContactSchema.methods.unarchive = async function (this: IContactDocument) {
 interface IContactModel extends Model<IContactDocument> {
     getNewMessages(): Promise<IContactDocument[]>;
     getUnreadCount(): Promise<number>;
-    getByStatus(status: ContactStatus): Promise<IContactDocument[]>;
+    getByStatus(status: ContactStatusType): Promise<IContactDocument[]>;
 }
 
 const Contact: IContactModel =

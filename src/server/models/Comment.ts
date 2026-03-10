@@ -47,11 +47,10 @@ const AuthorSchema = new Schema(
 
 const CommentSchema = new Schema<ICommentDocument>(
     {
-        contentSlug: {
-            type: String,
-            required: [true, 'Content slug is required'],
-            trim: true,
-            lowercase: true,
+        contentId: {
+            type: Schema.Types.ObjectId,
+            required: [true, 'Content ID is required'],
+            ref: 'Content',
             index: true,
         },
         parentId: {
@@ -102,21 +101,21 @@ const CommentSchema = new Schema<ICommentDocument>(
 // Indexes
 // ============================================================
 
-CommentSchema.index({ contentSlug: 1, parentId: 1, createdAt: -1 });
+CommentSchema.index({ contentId: 1, parentId: 1, createdAt: -1 });
+CommentSchema.index({ contentId: 1, approved: 1, parentId: 1 });
 CommentSchema.index({ approved: 1, createdAt: -1 });
 CommentSchema.index({ parentId: 1, approved: 1 });
-CommentSchema.index({ contentSlug: 1, approved: 1, parentId: 1 });
 
 // ============================================================
 // Static Methods
 // ============================================================
 
 CommentSchema.statics.getTopLevelComments = async function (
-    contentSlug: string,
+    contentId: mongoose.Types.ObjectId,
     approved: boolean = true
 ) {
     return this.find({
-        contentSlug,
+        contentId,
         parentId: null,
         ...(approved && { approved: true }),
     })
@@ -137,11 +136,11 @@ CommentSchema.statics.getReplies = async function (
 };
 
 CommentSchema.statics.getCommentCount = async function (
-    contentSlug: string,
+    contentId: mongoose.Types.ObjectId,
     approved: boolean = true
 ) {
     return this.countDocuments({
-        contentSlug,
+        contentId,
         parentId: null,
         ...(approved && { approved: true }),
     });
@@ -203,9 +202,9 @@ CommentSchema.post('findOneAndDelete', async function (doc: ICommentDocument) {
 // ============================================================
 
 interface ICommentModel extends Model<ICommentDocument> {
-    getTopLevelComments(contentSlug: string, approved?: boolean): Promise<ICommentDocument[]>;
+    getTopLevelComments(contentId: mongoose.Types.ObjectId, approved?: boolean): Promise<ICommentDocument[]>;
     getReplies(commentId: mongoose.Types.ObjectId, approved?: boolean): Promise<ICommentDocument[]>;
-    getCommentCount(contentSlug: string, approved?: boolean): Promise<number>;
+    getCommentCount(contentId: mongoose.Types.ObjectId, approved?: boolean): Promise<number>;
 }
 
 const Comment: ICommentModel =

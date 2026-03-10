@@ -1,5 +1,5 @@
 import mongoose, { Schema, Model } from 'mongoose';
-import type { IPageStats } from '@/interfaces/schema';
+import type { IPageStats } from '@/interfaces/schema/pageStats';
 import type { IPageStatsDocument } from './types';
 
 // ============================================================
@@ -8,12 +8,11 @@ import type { IPageStatsDocument } from './types';
 
 const PageStatsSchema = new Schema<IPageStatsDocument>(
     {
-        slug: {
-            type: String,
-            required: [true, 'Slug is required'],
+        contentId: {
+            type: Schema.Types.ObjectId,
+            required: [true, 'Content ID is required'],
             unique: true,
-            trim: true,
-            lowercase: true,
+            ref: 'Content',
             index: true,
         },
         views: {
@@ -43,18 +42,18 @@ const PageStatsSchema = new Schema<IPageStatsDocument>(
 // Indexes
 // ============================================================
 
-PageStatsSchema.index({ slug: 1 }, { unique: true });
-PageStatsSchema.index({ views: -1 }); // For popular content queries
-PageStatsSchema.index({ likes: -1 }); // For most liked content queries
-PageStatsSchema.index({ lastViewedAt: -1 }); // For recent activity queries
+PageStatsSchema.index({ contentId: 1 }, { unique: true });
+PageStatsSchema.index({ views: -1 });
+PageStatsSchema.index({ likes: -1 });
+PageStatsSchema.index({ lastViewedAt: -1 });
 
 // ============================================================
 // Static Methods
 // ============================================================
 
-PageStatsSchema.statics.incrementViews = async function (slug: string) {
+PageStatsSchema.statics.incrementViews = async function (contentId: mongoose.Types.ObjectId) {
     return this.findOneAndUpdate(
-        { slug },
+        { contentId },
         {
             $inc: { views: 1 },
             $set: { lastViewedAt: new Date() },
@@ -68,9 +67,9 @@ PageStatsSchema.statics.incrementViews = async function (slug: string) {
     );
 };
 
-PageStatsSchema.statics.incrementLikes = async function (slug: string) {
+PageStatsSchema.statics.incrementLikes = async function (contentId: mongoose.Types.ObjectId) {
     return this.findOneAndUpdate(
-        { slug },
+        { contentId },
         {
             $inc: { likes: 1 },
             $setOnInsert: { views: 0, createdAt: new Date() },
@@ -83,8 +82,8 @@ PageStatsSchema.statics.incrementLikes = async function (slug: string) {
     );
 };
 
-PageStatsSchema.statics.decrementLikes = async function (slug: string) {
-    const stats = await this.findOne({ slug });
+PageStatsSchema.statics.decrementLikes = async function (contentId: mongoose.Types.ObjectId) {
+    const stats = await this.findOne({ contentId });
     if (stats && stats.likes > 0) {
         stats.likes -= 1;
         return stats.save();
@@ -111,9 +110,9 @@ PageStatsSchema.statics.getTopLiked = async function (limit: number = 10) {
 // ============================================================
 
 interface IPageStatsModel extends Model<IPageStatsDocument> {
-    incrementViews(slug: string): Promise<IPageStats>;
-    incrementLikes(slug: string): Promise<IPageStats>;
-    decrementLikes(slug: string): Promise<IPageStats | null>;
+    incrementViews(contentId: mongoose.Types.ObjectId): Promise<IPageStats>;
+    incrementLikes(contentId: mongoose.Types.ObjectId): Promise<IPageStats>;
+    decrementLikes(contentId: mongoose.Types.ObjectId): Promise<IPageStats | null>;
     getTopViewed(limit?: number): Promise<IPageStats[]>;
     getTopLiked(limit?: number): Promise<IPageStats[]>;
 }
