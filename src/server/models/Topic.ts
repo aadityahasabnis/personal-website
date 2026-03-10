@@ -11,7 +11,6 @@ const TopicSchema = new Schema<ITopicDocument>(
         slug: {
             type: String,
             required: [true, 'Slug is required'],
-            unique: true,
             trim: true,
             lowercase: true,
             match: [VALIDATION_PATTERNS.SLUG, 'Slug can only contain lowercase letters, numbers, and hyphens'],
@@ -43,12 +42,10 @@ const TopicSchema = new Schema<ITopicDocument>(
         published: {
             type: Boolean,
             default: false,
-            index: true,
         },
         featured: {
             type: Boolean,
             default: false,
-            index: true,
         },
         contentCount: {
             type: Number,

@@ -12,7 +12,6 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
             type: Schema.Types.ObjectId,
             required: [true, 'Topic ID is required'],
             ref: 'Topic',
-            index: true,
         },
         slug: {
             type: String,
@@ -43,7 +42,6 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
         published: {
             type: Boolean,
             default: false,
-            index: true,
         },
         contentCount: {
             type: Number,

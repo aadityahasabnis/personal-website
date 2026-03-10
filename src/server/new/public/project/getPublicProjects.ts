@@ -7,17 +7,17 @@
  * Optimized for SSG/ISR with full SEO metadata.
  */
 
+import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import type { IProject, ProjectStatus } from '@/interfaces/schema';
-import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
 import {
-    ensureConnection,
     Content,
+    ensureConnection,
     findPublishedProject,
+    handleError,
+    normalizePagination,
     notFoundError,
     ok,
     paginatedOk,
-    handleError,
-    normalizePagination,
     type PaginationParams,
 } from '../../utils';
 import type { PublicProject, PublicProjectCard } from './types';

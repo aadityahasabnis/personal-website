@@ -7,16 +7,16 @@
  * Uses Content model directly for toggle/featured operations.
  */
 
-import type { IApiResponse } from '@/interfaces/IApiResponse';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import {
-    ensureConnection,
     Content,
+    ensureConnection,
     findBlog,
     findBlogDoc,
-    notFoundError,
-    okVoid,
-    ok,
     handleError,
+    notFoundError,
+    ok,
+    okVoid,
     revalidateContentPaths,
 } from '../../../utils';
 

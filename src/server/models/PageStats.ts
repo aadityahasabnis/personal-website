@@ -11,9 +11,7 @@ const PageStatsSchema = new Schema<IPageStatsDocument>(
         contentId: {
             type: Schema.Types.ObjectId,
             required: [true, 'Content ID is required'],
-            unique: true,
             ref: 'Content',
-            index: true,
         },
         views: {
             type: Number,

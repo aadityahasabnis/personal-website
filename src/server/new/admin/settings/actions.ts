@@ -11,28 +11,28 @@
  * the new pattern, the import can be updated.
  */
 
-import { ObjectId } from 'mongodb';
 import bcrypt from 'bcryptjs';
+import { ObjectId } from 'mongodb';
 
-import type { IUser } from '@/interfaces/schema';
-import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { COLLECTIONS } from '@/constants/siteConstants';
+import type { IApiResponse } from '@/interfaces/actionHelper';
+import type { IUser } from '@/interfaces/schema';
 import { getCollection } from '@/lib/db/connect';
-import { requireAuth, type AuthUser } from '@/server/admin/utils/authGuard';
 import { logActivity } from '@/server/admin/utils/activityLogger';
+import { requireAuth, type AuthUser } from '@/server/admin/utils/authGuard';
 
+import { revalidatePath } from 'next/cache';
 import {
-    okVoid,
-    errorResponse,
+    error,
     handleError,
-    revalidatePaths,
+    ok,
 } from '../../utils';
 
 import type {
-    SiteSettingsInput,
-    SeoSettingsInput,
-    SocialSettingsInput,
     ChangePasswordInput,
+    SeoSettingsInput,
+    SiteSettingsInput,
+    SocialSettingsInput,
 } from './types';
 
 // ============================================================
@@ -84,8 +84,8 @@ export async function updateSiteSettings(
         await upsertSetting('site', input);
         await logActivity('update', 'settings', { entityTitle: 'Site Settings' });
 
-        revalidatePaths(['/']);
-        return okVoid('Site settings updated');
+        revalidatePath('/');
+        return ok('Site settings updated');
     } catch (err) {
         return handleError(err, 'Failed to update site settings');
     }
@@ -101,8 +101,8 @@ export async function updateSeoSettings(
         await upsertSetting('seo', input);
         await logActivity('update', 'settings', { entityTitle: 'SEO Settings' });
 
-        revalidatePaths(['/']);
-        return okVoid('SEO settings updated');
+        revalidatePath('/');
+        return ok('SEO settings updated');
     } catch (err) {
         return handleError(err, 'Failed to update SEO settings');
     }
@@ -118,7 +118,7 @@ export async function updateSocialSettings(
         await upsertSetting('social', input);
         await logActivity('update', 'settings', { entityTitle: 'Social Links' });
 
-        return okVoid('Social links updated');
+        return ok('Social links updated');
     } catch (err) {
         return handleError(err, 'Failed to update social links');
     }
@@ -142,11 +142,11 @@ export async function changePassword(
         });
 
         if (!dbUser) {
-            return errorResponse('User not found', 404);
+            return error('User not found', 404);
         }
 
         if (!dbUser.passwordHash) {
-            return errorResponse(
+            return error(
                 'Password authentication not configured for this account',
             );
         }
@@ -154,13 +154,13 @@ export async function changePassword(
         // Verify current password
         const isValid = await bcrypt.compare(currentPassword, dbUser.passwordHash);
         if (!isValid) {
-            return errorResponse('Current password is incorrect');
+            return error('Current password is incorrect');
         }
 
         // Ensure new password differs
         const isSame = await bcrypt.compare(newPassword, dbUser.passwordHash);
         if (isSame) {
-            return errorResponse(
+            return error(
                 'New password must be different from current password',
             );
         }
@@ -184,7 +184,7 @@ export async function changePassword(
             entityTitle: 'Password Changed',
         });
 
-        return okVoid('Password changed successfully');
+        return ok('Password changed successfully');
     } catch (err) {
         return handleError(err, 'Failed to change password');
     }

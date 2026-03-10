@@ -7,18 +7,18 @@
  * Uses Content model directly for toggle/featured/reorder operations.
  */
 
-import type { IApiResponse } from '@/interfaces/IApiResponse';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import {
-    ensureConnection,
     Content,
+    ensureConnection,
     findArticle,
     findArticleDoc,
-    notFoundError,
-    okVoid,
-    ok,
     handleError,
-    updateContentCounts,
+    notFoundError,
+    ok,
+    okVoid,
     revalidateContentPaths,
+    updateContentCounts,
 } from '../../../utils';
 
 // ============================================================

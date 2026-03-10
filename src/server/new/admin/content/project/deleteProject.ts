@@ -4,16 +4,16 @@
  * Delete Project – Admin Server Action
  */
 
-import type { IApiResponse } from '@/interfaces/IApiResponse';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import {
-    ensureConnection,
-    Content,
-    PageStats,
     Comment,
+    Content,
+    ensureConnection,
     findProject,
+    handleError,
     notFoundError,
     okVoid,
-    handleError,
+    PageStats,
     revalidateContentPaths,
 } from '../../../utils';
 

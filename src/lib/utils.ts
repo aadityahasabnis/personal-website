@@ -1,138 +1,94 @@
 import { type ClassValue, clsx } from 'clsx';
+import { ObjectId } from 'mongodb';
 import { twMerge } from 'tailwind-merge';
 
-/**
- * Merge Tailwind classes with clsx
- */
-export const cn = (...inputs: ClassValue[]): string => {
-  return twMerge(clsx(inputs));
+// =================================================
+// Styling
+// =================================================
+
+export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
+
+// =================================================
+// DB Utilities — ObjectId helpers only
+// =================================================
+
+export const isValidObjectId = (id: string): boolean =>
+    ObjectId.isValid(id) && new ObjectId(id).toString() === id;
+
+export const toObjectId = (id: string | ObjectId): ObjectId | null => {
+    try {
+        if (id instanceof ObjectId) return id;
+        return isValidObjectId(id as string) ? new ObjectId(id) : null;
+    } catch { return null; }
 };
 
-/**
- * Format date for display
- */
-export const formatDate = (date: Date | string | undefined): string => {
-  if (!date) return '';
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+export const toObjectIds = (ids: string[]): ObjectId[] =>
+    ids.map(toObjectId).filter((id): id is ObjectId => id !== null);
+
+
+// =================================================
+// Date & Time
+// =================================================
+
+export const formatDate = (date?: Date | string): string => {
+    if (!date) return '';
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
-/**
- * Format relative time (e.g., "2 days ago")
- */
 export const formatRelativeTime = (date: Date | string): string => {
-  const now = new Date();
-  const d = typeof date === 'string' ? new Date(date) : date;
-  const diff = now.getTime() - d.getTime();
-
-  const seconds = Math.floor(diff / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  if (days > 7) return formatDate(d);
-  if (days > 0) return `${days}d ago`;
-  if (hours > 0) return `${hours}h ago`;
-  if (minutes > 0) return `${minutes}m ago`;
-  return 'Just now';
+    const diff = Date.now() - new Date(date).getTime();
+    const m = Math.floor(diff / 60000);
+    const h = Math.floor(m / 60);
+    const d = Math.floor(h / 24);
+    if (d > 7)  return formatDate(date);
+    if (d > 0)  return `${d}d ago`;
+    if (h > 0)  return `${h}h ago`;
+    if (m > 0)  return `${m}m ago`;
+    return 'Just now';
 };
 
-/**
- * Slugify text for URLs
- */
-export const slugify = (text: string): string => {
-  return text
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-};
+// =================================================
+// String
+// =================================================
 
-/**
- * Calculate reading time in minutes
- */
-export const calculateReadingTime = (text: string): number => {
-  const wordsPerMinute = 120;
-  const words = text.trim().split(/\s+/).length;
-  return Math.ceil(words / wordsPerMinute);
-};
+export const slugify = (text: string) =>
+    text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-/**
- * Format number with K/M suffix
- */
-export const formatNumber = (num: number): string => {
-  if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(1)}M`;
-  if (num >= 1_000) return `${(num / 1_000).toFixed(1)}K`;
-  return num.toLocaleString();
-};
+export const calculateReadingTime = (text: string) =>
+    Math.ceil(text.trim().split(/\s+/).length / 120); // ~120 wpm
 
-/**
- * Truncate text with ellipsis
- */
-export const truncate = (text: string, length: number): string => {
-  if (text.length <= length) return text;
-  return text.slice(0, length).trim() + '...';
-};
+export const formatNumber = (n: number) =>
+    n >= 1_000_000 ? `${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000   ? `${(n / 1_000).toFixed(1)}K`
+    : n.toLocaleString();
 
-/**
- * Debounce function
- */
-export const debounce = <T extends (...args: unknown[]) => unknown>(
-  fn: T,
-  delay: number
-): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => fn(...args), delay);
-  };
-};
+export const truncate = (text: string, length: number) =>
+    text.length <= length ? text : `${text.slice(0, length).trim()}...`;
 
-/**
- * Generate a random ID
- */
-export const generateId = (): string => {
-  return Math.random().toString(36).substring(2, 11);
-};
+// =================================================
+// Serialization (Server → Client Components)
+// =================================================
 
-/**
- * Check if we're on the server
- */
+export const serialize = <T extends Record<string, unknown>>(doc: T): T =>
+    JSON.parse(JSON.stringify(doc, (_, v) => {
+        if (v?._bsontype === 'ObjectId') return v.toString();
+        if (v instanceof Date) return v.toISOString();
+        return v;
+    }));
+
+export const serializeMany = <T extends Record<string, unknown>>(docs: T[]): T[] =>
+    docs.map(serialize);
+
+// =================================================
+// Error
+// =================================================
+
+export const getErrorMessage = (err: unknown): string =>
+    err instanceof Error ? err.message : typeof err === 'string' ? err : 'An unexpected error occurred';
+
+// =================================================
+// Environment
+// =================================================
+
 export const isServer = typeof window === 'undefined';
-
-/**
- * Check if we're on the client
- */
-export const isClient = typeof window !== 'undefined';
-
-/**
- * Serialize MongoDB documents for passing from Server to Client Components
- * Converts ObjectId to string and handles Date objects
- */
-export const serializeDocument = <T extends Record<string, any>>(doc: T): T => {
-  if (!doc) return doc;
-  
-  return JSON.parse(
-    JSON.stringify(doc, (key, value) => {
-      // Convert ObjectId to string
-      if (value && typeof value === 'object' && value._bsontype === 'ObjectId') {
-        return value.toString();
-      }
-      // Convert Date to ISO string
-      if (value instanceof Date) {
-        return value.toISOString();
-      }
-      return value;
-    })
-  );
-};
-
-/**
- * Serialize an array of MongoDB documents
- */
-export const serializeDocuments = <T extends Record<string, any>>(docs: T[]): T[] => {
-  return docs.map(doc => serializeDocument(doc));
-};
+export const isClient = !isServer;

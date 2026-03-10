@@ -4,22 +4,22 @@
  * Update Project – Admin Server Action
  */
 
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import type { IProject } from '@/interfaces/schema';
-import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { ProjectUpdateInput } from './types';
 import {
-    ensureConnection,
-    Content,
-    findProject,
-    notFoundError,
-    duplicateError,
-    okVoid,
-    handleError,
-    revalidateContentPaths,
     buildSeoMetadata,
     cleanUndefined,
+    Content,
+    duplicateError,
+    ensureConnection,
+    findProject,
+    handleError,
+    notFoundError,
+    okVoid,
+    revalidateContentPaths,
     updatedNow,
 } from '../../../utils';
+import type { ProjectUpdateInput } from './types';
 
 // ============================================================
 // Server Action

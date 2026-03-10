@@ -11,19 +11,19 @@
  * SEO fields are fully populated so Next.js metadata can be generated.
  */
 
+import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import type { IArticle } from '@/interfaces/schema';
-import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
 import {
-    ensureConnection,
     Content,
-    Topic,
     Subtopic,
+    Topic,
+    ensureConnection,
     findPublishedArticle,
+    handleError,
+    normalizePagination,
     notFoundError,
     ok,
     paginatedOk,
-    handleError,
-    normalizePagination,
     type PaginationParams,
 } from '../../utils';
 import type { PublicArticle, PublicArticleCard, PublicTopicWithArticles } from './types';

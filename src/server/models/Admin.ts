@@ -11,11 +11,9 @@ const AdminSchema = new Schema<IAdminDocument>(
         email: {
             type: String,
             required: [true, 'Email is required'],
-            unique: true,
             trim: true,
             lowercase: true,
             match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
-            index: true,
         },
         name: {
             type: String,

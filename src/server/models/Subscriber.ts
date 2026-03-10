@@ -11,11 +11,9 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
         email: {
             type: String,
             required: [true, 'Email is required'],
-            unique: true,
             trim: true,
             lowercase: true,
             match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
-            index: true,
         },
         name: {
             type: String,
@@ -27,7 +25,6 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
         confirmed: {
             type: Boolean,
             default: false,
-            index: true,
         },
         subscribedAt: {
             type: Date,

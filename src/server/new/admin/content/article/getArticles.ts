@@ -7,18 +7,18 @@
  * They return serialized (JSON-safe) data for client components.
  */
 
+import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import type { IArticle } from '@/interfaces/schema';
-import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
 import {
-    ensureConnection,
     Content,
     Subtopic,
+    ensureConnection,
     findArticle,
+    handleError,
+    normalizePagination,
     notFoundError,
     ok,
     paginatedOk,
-    handleError,
-    normalizePagination,
     type PaginationParams,
 } from '../../../utils';
 

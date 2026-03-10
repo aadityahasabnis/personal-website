@@ -4,19 +4,19 @@
  * Create Project – Admin Server Action
  */
 
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import type { IProject } from '@/interfaces/schema';
-import type { IApiResponse } from '@/interfaces/IApiResponse';
-import type { ProjectCreateInput } from './types';
 import {
-    ensureConnection,
+    buildSeoMetadata,
     Content,
-    duplicateError,
     created,
+    duplicateError,
+    ensureConnection,
     handleError,
     revalidateContentPaths,
-    buildSeoMetadata,
     timestamps,
 } from '../../../utils';
+import type { ProjectCreateInput } from './types';
 
 // ============================================================
 // Server Action

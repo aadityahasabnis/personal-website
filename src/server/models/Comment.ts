@@ -51,13 +51,11 @@ const CommentSchema = new Schema<ICommentDocument>(
             type: Schema.Types.ObjectId,
             required: [true, 'Content ID is required'],
             ref: 'Content',
-            index: true,
         },
         parentId: {
             type: Schema.Types.ObjectId,
             default: null,
             ref: 'Comment',
-            index: true,
         },
         author: {
             type: AuthorSchema,
@@ -78,7 +76,6 @@ const CommentSchema = new Schema<ICommentDocument>(
         approved: {
             type: Boolean,
             default: false,
-            index: true,
         },
         replyCount: {
             type: Number,

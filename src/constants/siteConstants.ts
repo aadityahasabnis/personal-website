@@ -51,3 +51,18 @@ export const SOCIAL_LINKS = [
   { platform: 'LinkedIn', url: 'https://linkedin.com/in/aadityahasabnis' },
   { platform: 'Email', url: 'mailto:aaditya.hasabnis@gmail.com' },
 ] as const;
+
+// ============================================================
+// Database Collections
+// ============================================================
+
+export const COLLECTIONS = {
+  admins: 'admins',
+  comments: 'comments',
+  contacts: 'contacts',
+  contents: 'contents',
+  pageStats: 'pageStats',
+  subscribers: 'subscribers',
+  subtopics: 'subtopics',
+  topics: 'topics',
+} as const;

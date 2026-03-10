@@ -21,7 +21,6 @@ const ContactSchema = new Schema<IContactDocument>(
             trim: true,
             lowercase: true,
             match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
-            index: true,
         },
         subject: {
             type: String,
@@ -45,7 +44,6 @@ const ContactSchema = new Schema<IContactDocument>(
                 message: 'Status must be one of: new, read, replied, archived',
             },
             default: CONTACT_STATUS.NEW,
-            index: true,
         },
         ipHash: {
             type: String,

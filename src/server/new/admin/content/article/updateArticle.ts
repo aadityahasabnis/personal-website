@@ -4,26 +4,26 @@
  * Update Article – Admin Server Action
  */
 
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import type { IArticle } from '@/interfaces/schema';
-import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { calculateReadingTime } from '@/lib/utils';
-import type { ArticleUpdateInput } from './types';
 import {
-    ensureConnection,
-    Content,
-    findArticle,
-    notFoundError,
-    duplicateError,
-    errorResponse,
-    okVoid,
-    handleError,
-    verifyTopicExists,
-    updateContentCounts,
-    revalidateContentPaths,
     buildSeoMetadata,
     cleanUndefined,
+    Content,
+    duplicateError,
+    ensureConnection,
+    errorResponse,
+    findArticle,
+    handleError,
+    notFoundError,
+    okVoid,
+    revalidateContentPaths,
+    updateContentCounts,
     updatedNow,
+    verifyTopicExists,
 } from '../../../utils';
+import type { ArticleUpdateInput } from './types';
 
 // ============================================================
 // Server Action

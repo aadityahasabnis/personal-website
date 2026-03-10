@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient, type QueryKey, type UseQueryOptions } from '@tanstack/react-query';
-import type { IApiResponse } from '@/interfaces/IApiResponse';
+import type { IApiResponse } from '@/interfaces/actionHelper';
+import { useMutation, useQuery, useQueryClient, type QueryKey, type UseQueryOptions } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
 
 // ===== TYPES =====
 

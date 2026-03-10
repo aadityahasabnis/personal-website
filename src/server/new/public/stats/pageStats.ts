@@ -12,14 +12,14 @@
  * static/ISR page generation (views/likes are dynamic by definition).
  */
 
-import type { IApiResponse } from '@/interfaces/IApiResponse';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import {
-    incrementViews as _incrementViews,
-    incrementLikes as _incrementLikes,
     decrementLikes as _decrementLikes,
+    incrementLikes as _incrementLikes,
+    incrementViews as _incrementViews,
     getStats,
-    ok,
     handleError,
+    ok,
 } from '../../utils';
 
 // ============================================================

@@ -56,7 +56,6 @@ const ContentSchema = new Schema(
                 values: Object.values(CONTENT_TYPES),
                 message: 'Type must be one of: article, blog, project',
             },
-            index: true,
         },
         slug: {
             type: String,
@@ -106,12 +105,10 @@ const ContentSchema = new Schema(
         published: {
             type: Boolean,
             default: false,
-            index: true,
         },
         publishedAt: {
             type: Date,
             default: null,
-            index: true,
         },
         scheduledAt: {
             type: Date,
@@ -120,7 +117,6 @@ const ContentSchema = new Schema(
         featured: {
             type: Boolean,
             default: false,
-            index: true,
         },
         
         // SEO
@@ -134,26 +130,22 @@ const ContentSchema = new Schema(
             type: Schema.Types.ObjectId,
             required: [true, 'Creator is required'],
             ref: 'Admin',
-            index: true,
         },
         updatedBy: {
             type: Schema.Types.ObjectId,
             required: [true, 'Updater is required'],
             ref: 'Admin',
-            index: true,
         },
         
         // Article-specific fields (only used when type='article')
         topicId: {
             type: Schema.Types.ObjectId,
             ref: 'Topic',
-            index: true,
         },
         subtopicId: {
             type: Schema.Types.ObjectId,
             default: null,
             ref: 'Subtopic',
-            index: true,
         },
         
         // Project-specific fields (only used when type='project')

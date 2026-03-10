@@ -7,18 +7,18 @@
  * Uses the new IApiResponse<T> pattern and centralized helpers.
  */
 
-import type { IApiResponse } from '@/interfaces/IApiResponse';
 import { COLLECTIONS } from '@/constants/siteConstants';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import { getCollection } from '@/lib/db/connect';
 
-import { ok, handleError } from '../../utils';
+import { handleError, ok } from '../../utils';
 
 import type {
+    AllSettings,
+    SeoSettings,
     SettingDocument,
     SiteSettings,
-    SeoSettings,
     SocialSettings,
-    AllSettings,
 } from './types';
 
 // ============================================================

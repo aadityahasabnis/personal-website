@@ -4,20 +4,20 @@
  * Get Project(s) – Admin Server Actions (queries)
  */
 
+import { ProjectStatus } from '@/constants';
+import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import type { IProject } from '@/interfaces/schema';
-import type { IApiResponse, IPaginatedResponse } from '@/interfaces/IApiResponse';
 import {
-    ensureConnection,
     Content,
+    ensureConnection,
     findProject,
+    handleError,
+    normalizePagination,
     notFoundError,
     ok,
     paginatedOk,
-    handleError,
-    normalizePagination,
     type PaginationParams,
 } from '../../../utils';
-import { ProjectStatus } from '@/constants';
 
 // ============================================================
 // Serialized Types
