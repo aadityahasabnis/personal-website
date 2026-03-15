@@ -80,15 +80,6 @@ PageStatsSchema.statics.incrementLikes = async function (contentId: mongoose.Typ
     );
 };
 
-PageStatsSchema.statics.decrementLikes = async function (contentId: mongoose.Types.ObjectId) {
-    const stats = await this.findOne({ contentId });
-    if (stats && stats.likes > 0) {
-        stats.likes -= 1;
-        return stats.save();
-    }
-    return stats;
-};
-
 PageStatsSchema.statics.getTopViewed = async function (limit: number = 10) {
     return this.find()
         .sort({ views: -1 })
@@ -110,7 +101,6 @@ PageStatsSchema.statics.getTopLiked = async function (limit: number = 10) {
 interface IPageStatsModel extends Model<IPageStatsDocument> {
     incrementViews(contentId: mongoose.Types.ObjectId): Promise<IPageStats>;
     incrementLikes(contentId: mongoose.Types.ObjectId): Promise<IPageStats>;
-    decrementLikes(contentId: mongoose.Types.ObjectId): Promise<IPageStats | null>;
     getTopViewed(limit?: number): Promise<IPageStats[]>;
     getTopLiked(limit?: number): Promise<IPageStats[]>;
 }
