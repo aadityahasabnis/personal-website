@@ -1,4 +1,4 @@
-import { CONTENT_TYPES, PROJECT_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import { CONTENT_TYPES, PROJECT_STATUS, PUBLISH_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema/content';
 import mongoose, { Model, Schema } from 'mongoose';
 import type { IContentDocument } from './types';
@@ -44,10 +44,10 @@ const SeoMetadataSchema = new Schema<ISeoMetadata>(
 );
 
 // ============================================================
-// Content Schema (Supports all content types)
+// Base Content Schema
 // ============================================================
 
-const ContentSchema = new Schema(
+const BaseContentSchema = new Schema(
     {
         type: {
             type: String,
@@ -100,17 +100,17 @@ const ContentSchema = new Schema(
             default: 0,
             min: [0, 'Reading time cannot be negative'],
         },
-        
+
         // Publishing
-        published: {
-            type: Boolean,
-            default: false,
+        publishStatus: {
+            type: String,
+            enum: {
+                values: Object.values(PUBLISH_STATUS),
+                message: 'Publish status must be one of: draft, published, archived',
+            },
+            default: PUBLISH_STATUS.DRAFT,
         },
         publishedAt: {
-            type: Date,
-            default: null,
-        },
-        scheduledAt: {
             type: Date,
             default: null,
         },
@@ -118,13 +118,13 @@ const ContentSchema = new Schema(
             type: Boolean,
             default: false,
         },
-        
+
         // SEO
         seo: {
             type: SeoMetadataSchema,
             default: null,
         },
-        
+
         // Audit fields
         createdBy: {
             type: Schema.Types.ObjectId,
@@ -136,10 +136,30 @@ const ContentSchema = new Schema(
             required: [true, 'Updater is required'],
             ref: 'Admin',
         },
-        
-        // Article-specific fields (only used when type='article')
+    },
+    {
+        timestamps: true,
+        collection: 'content',
+        discriminatorKey: 'type',
+    }
+);
+
+// ============================================================
+// Indexes
+// ============================================================
+
+BaseContentSchema.index({ type: 1, slug: 1 }, { unique: true });
+BaseContentSchema.index({ type: 1, publishStatus: 1, publishedAt: -1 });
+BaseContentSchema.index({ publishStatus: 1, featured: 1 });
+BaseContentSchema.index({ tags: 1 });
+BaseContentSchema.index({ createdBy: 1 });
+BaseContentSchema.index({ updatedBy: 1 });
+
+const ArticleContentSchema = new Schema(
+    {
         topicId: {
             type: Schema.Types.ObjectId,
+            required: [true, 'Topic is required for articles'],
             ref: 'Topic',
         },
         subtopicId: {
@@ -147,8 +167,20 @@ const ContentSchema = new Schema(
             default: null,
             ref: 'Subtopic',
         },
-        
-        // Project-specific fields (only used when type='project')
+        order: {
+            type: Number,
+            default: 0,
+            min: [0, 'Order cannot be negative'],
+        },
+    },
+    { _id: false }
+);
+
+ArticleContentSchema.index({ type: 1, topicId: 1, order: 1 });
+ArticleContentSchema.index({ type: 1, subtopicId: 1, order: 1 });
+
+const ProjectContentSchema = new Schema(
+    {
         techStack: {
             type: [String],
             default: [],
@@ -185,68 +217,44 @@ const ContentSchema = new Schema(
             type: Date,
             default: null,
         },
-        
-        // Order field (used by articles and projects)
         order: {
             type: Number,
             default: 0,
             min: [0, 'Order cannot be negative'],
         },
     },
-    {
-        timestamps: true,
-        collection: 'content',
-        discriminatorKey: 'type',
-    }
+    { _id: false }
 );
 
-// ============================================================
-// Indexes
-// ============================================================
+ProjectContentSchema.index({ type: 1, status: 1, order: 1 });
 
-ContentSchema.index({ type: 1, slug: 1 }, { unique: true });
-ContentSchema.index({ type: 1, published: 1, publishedAt: -1 });
-ContentSchema.index({ type: 1, topicId: 1, order: 1 });
-ContentSchema.index({ type: 1, subtopicId: 1, order: 1 });
-ContentSchema.index({ type: 1, status: 1, order: 1 });
-ContentSchema.index({ published: 1, featured: 1 });
-ContentSchema.index({ tags: 1 });
-ContentSchema.index({ createdBy: 1 });
-ContentSchema.index({ updatedBy: 1 });
+const BlogContentSchema = new Schema({}, { _id: false });
 
 // ============================================================
 // Instance Methods
 // ============================================================
 
-ContentSchema.methods.publish = async function () {
-    this.published = true;
+BaseContentSchema.methods.publish = async function () {
+    this.publishStatus = PUBLISH_STATUS.PUBLISHED;
     this.publishedAt = new Date();
-    this.scheduledAt = null;
     return this.save();
 };
 
-ContentSchema.methods.unpublish = async function () {
-    this.published = false;
+BaseContentSchema.methods.unpublish = async function () {
+    this.publishStatus = PUBLISH_STATUS.DRAFT;
     this.publishedAt = null;
     return this.save();
 };
 
-ContentSchema.methods.schedule = async function (date: Date) {
-    this.published = false;
-    this.publishedAt = null;
-    this.scheduledAt = date;
-    return this.save();
-};
-
-ContentSchema.methods.isArticle = function (): boolean {
+BaseContentSchema.methods.isArticle = function (): boolean {
     return this.type === CONTENT_TYPES.ARTICLE;
 };
 
-ContentSchema.methods.isBlog = function (): boolean {
+BaseContentSchema.methods.isBlog = function (): boolean {
     return this.type === CONTENT_TYPES.BLOG;
 };
 
-ContentSchema.methods.isProject = function (): boolean {
+BaseContentSchema.methods.isProject = function (): boolean {
     return this.type === CONTENT_TYPES.PROJECT;
 };
 
@@ -255,6 +263,18 @@ ContentSchema.methods.isProject = function (): boolean {
 // ============================================================
 
 const Content: Model<IContentDocument> =
-    mongoose.models.Content || mongoose.model<IContentDocument>('Content', ContentSchema);
+    mongoose.models.Content || mongoose.model<IContentDocument>('Content', BaseContentSchema);
+
+if (!mongoose.models.ArticleContent) {
+    Content.discriminator('ArticleContent', ArticleContentSchema, CONTENT_TYPES.ARTICLE);
+}
+
+if (!mongoose.models.BlogContent) {
+    Content.discriminator('BlogContent', BlogContentSchema, CONTENT_TYPES.BLOG);
+}
+
+if (!mongoose.models.ProjectContent) {
+    Content.discriminator('ProjectContent', ProjectContentSchema, CONTENT_TYPES.PROJECT);
+}
 
 export default Content;

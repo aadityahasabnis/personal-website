@@ -1,10 +1,12 @@
 'use server';
 
+import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
+import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
-import { buildSort, handleError, normalizePagination, paginated, success } from '../../../../utils/helper';
+import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../../utils/helper';
 import type { IArticleEdit, IArticleRow, IArticleTableQuery } from './types';
 
 // ========================================================
@@ -19,8 +21,16 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
         const sort = buildSort(params.sort, { updatedAt: -1 });
         const match: Record<string, unknown> = { type: 'article' };
 
-        if (typeof params.published === 'boolean') match.published = params.published;
+        if (typeof params.publishStatus === 'string') match.publishStatus = params.publishStatus;
         if (typeof params.featured === 'boolean') match.featured = params.featured;
+        if (params.topicId) {
+            if (!ObjectId.isValid(params.topicId)) return error('Invalid topic id', 400) as IPaginatedResponse<IArticleRow>;
+            match.topicId = new ObjectId(params.topicId);
+        }
+        if (params.subtopicId) {
+            if (!ObjectId.isValid(params.subtopicId)) return error('Invalid subtopic id', 400) as IPaginatedResponse<IArticleRow>;
+            match.subtopicId = new ObjectId(params.subtopicId);
+        }
         if (params.query?.trim()) {
             const q = params.query.trim();
             match.$or = [
@@ -42,7 +52,6 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
                 },
             },
             { $unwind: '$topic' },
-            ...(params.topicSlug ? [{ $match: { 'topic.slug': params.topicSlug } } as PipelineStage] : []),
             {
                 $lookup: {
                     from: 'subtopics',
@@ -53,7 +62,6 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
                 },
             },
             { $unwind: { path: '$subtopic', preserveNullAndEmptyArrays: true } },
-            ...(params.subtopicSlug ? [{ $match: { 'subtopic.slug': params.subtopicSlug } } as PipelineStage] : []),
             {
                 $facet: {
                     rows: [
@@ -79,7 +87,7 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
                                 },
                                 subtopicSlug: { $ifNull: ['$subtopic.slug', null] },
                                 subtopicTitle: { $ifNull: ['$subtopic.title', null] },
-                                published: { $ifNull: ['$published', false] },
+                                publishStatus: { $ifNull: ['$publishStatus', PUBLISH_STATUS.DRAFT] },
                                 featured: { $ifNull: ['$featured', false] },
                                 readingTime: { $ifNull: ['$readingTime', 0] },
                                 order: { $ifNull: ['$order', 0] },
@@ -110,14 +118,15 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
 };
 
 export const getArticleForEdit = async (
-    topicSlug: string,
-    articleSlug: string,
+    articleId: string,
 ): Promise<IApiResponse<IArticleEdit | null>> => {
     try {
+        if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
+
         await connectDB();
 
         const result = await Content.aggregate<IArticleEdit>([
-            { $match: { type: 'article', slug: articleSlug } },
+            { $match: { type: 'article', _id: new ObjectId(articleId) } },
             {
                 $lookup: {
                     from: 'topics',
@@ -128,7 +137,6 @@ export const getArticleForEdit = async (
                 },
             },
             { $unwind: '$topic' },
-            { $match: { 'topic.slug': topicSlug } },
             {
                 $lookup: {
                     from: 'subtopics',
@@ -157,7 +165,7 @@ export const getArticleForEdit = async (
                     },
                     subtopicSlug: { $ifNull: ['$subtopic.slug', null] },
                     subtopicTitle: { $ifNull: ['$subtopic.title', null] },
-                    published: { $ifNull: ['$published', false] },
+                    publishStatus: { $ifNull: ['$publishStatus', PUBLISH_STATUS.DRAFT] },
                     featured: { $ifNull: ['$featured', false] },
                     readingTime: { $ifNull: ['$readingTime', 0] },
                     order: { $ifNull: ['$order', 0] },
@@ -165,13 +173,6 @@ export const getArticleForEdit = async (
                         $cond: [
                             { $ifNull: ['$publishedAt', false] },
                             { $dateToString: { date: '$publishedAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
-                            null,
-                        ],
-                    },
-                    scheduledAt: {
-                        $cond: [
-                            { $ifNull: ['$scheduledAt', false] },
-                            { $dateToString: { date: '$scheduledAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
                             null,
                         ],
                     },
@@ -187,3 +188,15 @@ export const getArticleForEdit = async (
         return handleError(err, 'Failed to fetch article');
     }
 };
+
+/*
+API Responses:
+- getArticles
+    - 200: Articles list returned with pagination metadata.
+    - 400: Invalid topic id or subtopic id filter.
+    - 500: Unexpected server/database error.
+- getArticleForEdit
+    - 200: Article edit payload returned (or null data when not found).
+    - 400: Invalid article id.
+    - 500: Unexpected server/database error.
+*/

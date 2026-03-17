@@ -1,4 +1,4 @@
-import { type ContentType, type ProjectStatusType } from '@/constants/schemaConstants';
+import { type ContentType, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
 import { type ObjectId } from 'mongodb';
 import type { IAudit, IDocument, ITimestamps } from './base';
 
@@ -28,9 +28,9 @@ interface IContentBase extends IDocument, ITimestamps, IAudit {
     tags: string[];
     coverImage: string | null;
     readingTime: number; // Minutes
+    publishStatus: PublishStatusType;
     published: boolean;
     publishedAt: Date | null;
-    scheduledAt: Date | null;
     featured: boolean;
     seo: ISeoMetadata | null;
 }

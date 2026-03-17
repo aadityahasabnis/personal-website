@@ -1,14 +1,26 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { SITE_CONFIG } from '@/constants/siteConstants';
+import { cn } from '@/lib/utils';
+import {
+    Activity,
+    BarChart3,
+    BookOpen,
+    ChevronLeft, ChevronRight,
+    Database,
+    FileText,
+    FolderKanban,
+    ImageIcon,
+    Layers,
+    LayoutDashboard,
+    Mail,
+    MessageSquare,
+    Settings,
+    type LucideIcon,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-    LayoutDashboard, FileText, BookOpen, FolderKanban, Settings,
-    Mail, BarChart3, Layers, ChevronLeft, ChevronRight, MessageSquare, ImageIcon, Database, Activity, Clock, type LucideIcon,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { SITE_CONFIG } from '@/constants/siteConstants';
+import { useEffect, useState } from 'react';
 
 interface IAdminSidebarProps {
     user: { name: string; email: string; role: string };
@@ -34,7 +46,6 @@ const navItems: INavItem[] = [
     { label: 'Subscribers', href: '/admin/subscribers', icon: Mail },
     { label: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { label: 'Activity', href: '/admin/activity', icon: Activity },
-    { label: 'Scheduled', href: '/admin/scheduled', icon: Clock },
     { label: 'Backup', href: '/admin/backup', icon: Database },
 ];
 

@@ -1,11 +1,14 @@
 'use server';
 
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import { calculateReadingTime } from '@/lib/utils';
 import Content from '@/server/models/Content';
 import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
+import { ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
 import { cleanUndefined, created, error, handleError, timestamps } from '../../../../utils/helper';
 import { buildSeo, getAdminId, revalidateArticlePaths } from '../../shared';
 import type { IArticleCreateInput } from './types';
@@ -16,17 +19,22 @@ import type { IArticleCreateInput } from './types';
 
 export const createArticle = async (input: IArticleCreateInput): Promise<IApiResponse<string>> => {
     try {
+        if (!ObjectId.isValid(input.topicId)) return error('Invalid topic id', 400);
+        if (typeof input.subtopicId === 'string' && !ObjectId.isValid(input.subtopicId)) {
+            return error('Invalid subtopic id', 400);
+        }
+
         await connectDB();
 
         const admin = await getAdminId();
         if (!admin.success) return admin;
 
-        const topic = await Topic.findOne({ slug: input.topicSlug }).select('_id').lean();
+        const topic = await Topic.findById(input.topicId).select('_id slug').lean();
         if (!topic) return error('Topic not found', 404);
 
         let subtopicId = null;
-        if (input.subtopicSlug) {
-            const subtopic = await Subtopic.findOne({ topicId: topic._id, slug: input.subtopicSlug }).select('_id').lean();
+        if (typeof input.subtopicId === 'string') {
+            const subtopic = await Subtopic.findOne({ _id: input.subtopicId, topicId: topic._id }).select('_id').lean();
             if (!subtopic) return error('Subtopic not found', 404);
             subtopicId = subtopic._id;
         }
@@ -35,42 +43,65 @@ export const createArticle = async (input: IArticleCreateInput): Promise<IApiRes
         if (existing) return error('Article with this slug already exists', 409);
 
         const now = timestamps();
-        const published = input.published ?? false;
+        const publishStatus: PublishStatusType = input.publishStatus
+            ?? PUBLISH_STATUS.DRAFT;
 
-        const createdArticle = await Content.create(
-            cleanUndefined({
-                type: 'article',
-                slug: input.slug,
-                title: input.title,
-                description: input.description,
-                body: input.body,
-                tags: input.tags ?? [],
-                coverImage: input.coverImage ?? null,
-                readingTime: input.readingTime ?? calculateReadingTime(input.body),
-                published,
-                publishedAt: published ? new Date() : null,
-                scheduledAt: null,
-                featured: input.featured ?? false,
-                seo: buildSeo(input.seo),
-                topicId: topic._id,
-                subtopicId,
-                order: input.order ?? 0,
-                createdBy: admin.data,
-                updatedBy: admin.data,
-                ...now,
-            })
-        );
+        const txnSession = await mongoose.startSession();
+        let createdArticleId = '';
 
-        if (published) {
-            await Promise.all([
-                Topic.updateOne({ _id: topic._id }, { $inc: { contentCount: 1 } }),
-                subtopicId ? Subtopic.updateOne({ _id: subtopicId }, { $inc: { contentCount: 1 } }) : Promise.resolve(),
-            ]);
+        try {
+            await txnSession.withTransaction(async () => {
+                const createdArticle = new Content(
+                    cleanUndefined({
+                        type: 'article',
+                        slug: input.slug,
+                        title: input.title,
+                        description: input.description,
+                        body: input.body,
+                        tags: input.tags ?? [],
+                        coverImage: input.coverImage ?? null,
+                        readingTime: input.readingTime ?? calculateReadingTime(input.body),
+                        publishStatus,
+                        publishedAt: publishStatus === PUBLISH_STATUS.PUBLISHED ? new Date() : null,
+                        featured: input.featured ?? false,
+                        seo: buildSeo(input.seo),
+                        topicId: topic._id,
+                        subtopicId,
+                        order: input.order ?? 0,
+                        createdBy: admin.data,
+                        updatedBy: admin.data,
+                        ...now,
+                    })
+                );
+
+                await createdArticle.save({ session: txnSession });
+                createdArticleId = createdArticle._id.toString();
+
+                if (publishStatus === PUBLISH_STATUS.PUBLISHED) {
+                    await Promise.all([
+                        Topic.updateOne({ _id: topic._id }, { $inc: { contentCount: 1 } }, { session: txnSession }),
+                        subtopicId
+                            ? Subtopic.updateOne({ _id: subtopicId }, { $inc: { contentCount: 1 } }, { session: txnSession })
+                            : Promise.resolve(),
+                    ]);
+                }
+            });
+        } finally {
+            await txnSession.endSession();
         }
 
-        revalidateArticlePaths(input.topicSlug, input.slug);
-        return created(createdArticle._id.toString(), 'Article created successfully');
+        revalidateArticlePaths(topic.slug, input.slug);
+        return created(createdArticleId, 'Article created successfully');
     } catch (err) {
         return handleError(err, 'Failed to create article');
     }
 };
+
+/*
+API Responses:
+- 201: Article created successfully.
+- 400: Invalid topic id or subtopic id.
+- 404: Topic or subtopic not found.
+- 409: Article slug already exists.
+- 500: Unexpected server/database error.
+*/

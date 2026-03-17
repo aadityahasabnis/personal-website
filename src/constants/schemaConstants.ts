@@ -38,7 +38,7 @@ export type SubscriberStatusType = (typeof SUBSCRIBER_STATUS)[keyof typeof SUBSC
 // Content Visibility & Publishing
 // ============================================================
 
-export const PUBLISH_STATUS = { DRAFT: 'draft', SCHEDULED: 'scheduled', PUBLISHED: 'published', ARCHIVED: 'archived' } as const;
+export const PUBLISH_STATUS = { DRAFT: 'draft', PUBLISHED: 'published', ARCHIVED: 'archived' } as const;
 export type PublishStatusType = (typeof PUBLISH_STATUS)[keyof typeof PUBLISH_STATUS];
 
 // ============================================================

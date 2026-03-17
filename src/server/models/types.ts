@@ -21,7 +21,6 @@ export interface ISubtopicDocument extends Omit<ISubtopic, '_id'>, Document {
 export interface IContentDocument extends Omit<IContent, '_id'>, Document {
     publish(): Promise<this>;
     unpublish(): Promise<this>;
-    schedule(date: Date): Promise<this>;
     isArticle(): boolean;
     isBlog(): boolean;
     isProject(): boolean;
@@ -30,19 +29,16 @@ export interface IContentDocument extends Omit<IContent, '_id'>, Document {
 export interface IArticleDocument extends Omit<IArticle, '_id'>, Document {
     publish(): Promise<this>;
     unpublish(): Promise<this>;
-    schedule(date: Date): Promise<this>;
 }
 
 export interface IBlogDocument extends Omit<IBlog, '_id'>, Document {
     publish(): Promise<this>;
     unpublish(): Promise<this>;
-    schedule(date: Date): Promise<this>;
 }
 
 export interface IProjectDocument extends Omit<IProject, '_id'>, Document {
     publish(): Promise<this>;
     unpublish(): Promise<this>;
-    schedule(date: Date): Promise<this>;
 }
 
 export interface IPageStatsDocument extends Omit<IPageStats, '_id'>, Document {}

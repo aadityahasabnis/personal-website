@@ -1,3 +1,4 @@
+import type { PublishStatusType } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema';
 import type { ITableQueryParams } from '../../shared';
 
@@ -10,23 +11,23 @@ export interface IArticleCreateInput {
     title: string;
     description: string;
     body: string;
-    topicSlug: string;
-    subtopicSlug?: string | null;
+    topicId: string;
+    subtopicId?: string | null;
     tags?: string[];
     coverImage?: string | null;
     readingTime?: number;
-    order?: number;
-    published?: boolean;
+    publishStatus?: PublishStatusType;
     featured?: boolean;
+    order?: number;
     seo?: Partial<ISeoMetadata> | null;
 }
 
 export type IArticleUpdateInput = Partial<IArticleCreateInput>;
 
 export interface IArticleTableQuery extends ITableQueryParams {
-    topicSlug?: string;
-    subtopicSlug?: string;
-    published?: boolean;
+    topicId?: string;
+    subtopicId?: string;
+    publishStatus?: PublishStatusType;
     featured?: boolean;
 }
 
@@ -41,7 +42,7 @@ export interface IArticleRow {
     subtopicId: string | null;
     subtopicSlug: string | null;
     subtopicTitle: string | null;
-    published: boolean;
+    publishStatus: PublishStatusType;
     featured: boolean;
     readingTime: number;
     order: number;
@@ -53,6 +54,5 @@ export interface IArticleEdit extends IArticleRow {
     body: string;
     tags: string[];
     coverImage: string | null;
-    scheduledAt: string | null;
     seo: ISeoMetadata | null;
 }
