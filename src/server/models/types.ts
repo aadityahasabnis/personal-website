@@ -13,13 +13,9 @@ import { Document } from 'mongoose';
 // ============================================================
 
 export interface ITopicDocument extends Omit<ITopic, '_id'>, Document {
-    incrementContentCount(): Promise<this>;
-    decrementContentCount(): Promise<this>;
 }
 
 export interface ISubtopicDocument extends Omit<ISubtopic, '_id'>, Document {
-    incrementContentCount(): Promise<this>;
-    decrementContentCount(): Promise<this>;
 }
 
 export interface IContentDocument extends Omit<IContent, '_id'>, Document {

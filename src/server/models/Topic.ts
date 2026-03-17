@@ -47,6 +47,14 @@ const TopicSchema = new Schema<ITopicDocument>(
             type: Boolean,
             default: false,
         },
+
+        subTopicCount: {
+            type: Number,
+            default: 0,
+            min: [0, 'Subtopic count cannot be negative']
+        },
+
+        // Number of published articles under this topic (not subtopic count)
         contentCount: {
             type: Number,
             default: 0,
@@ -67,23 +75,6 @@ TopicSchema.index({ slug: 1 }, { unique: true });
 TopicSchema.index({ order: 1 });
 TopicSchema.index({ published: 1, order: 1 });
 TopicSchema.index({ featured: 1, published: 1 });
-
-// ============================================================
-// Instance Methods
-// ============================================================
-
-TopicSchema.methods.incrementContentCount = async function (this: ITopicDocument) {
-    this.contentCount += 1;
-    return this.save();
-};
-
-TopicSchema.methods.decrementContentCount = async function (this: ITopicDocument) {
-    if (this.contentCount > 0) {
-        this.contentCount -= 1;
-        return this.save();
-    }
-    return this;
-};
 
 // ============================================================
 // Model Export

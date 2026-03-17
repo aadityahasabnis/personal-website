@@ -3,8 +3,9 @@
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Subtopic from '@/server/models/Subtopic';
+import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
-import { buildSort, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
 import type { ISubtopicEdit, ISubtopicRow, ISubtopicTableQuery } from './types';
 
 // ========================================================
@@ -18,7 +19,12 @@ export const getSubtopics = async (params: ISubtopicTableQuery = {}): Promise<IP
         const sort = buildSort(params.sort, { order: 1, updatedAt: -1 });
         const match: Record<string, unknown> = {};
 
+        if (params.topicId && !ObjectId.isValid(params.topicId)) {
+            return error('Invalid topic id', 400) as IPaginatedResponse<ISubtopicRow>;
+        }
+
         if (typeof params.published === 'boolean') match.published = params.published;
+        if (params.topicId && ObjectId.isValid(params.topicId)) match.topicId = new ObjectId(params.topicId);
         if (params.query?.trim()) {
             const q = params.query.trim();
             match.$or = [
@@ -40,7 +46,6 @@ export const getSubtopics = async (params: ISubtopicTableQuery = {}): Promise<IP
                 },
             },
             { $unwind: '$topic' },
-            ...(params.topicSlug ? [{ $match: { 'topic.slug': params.topicSlug } } as PipelineStage] : []),
             {
                 $facet: {
                     rows: [
@@ -81,14 +86,15 @@ export const getSubtopics = async (params: ISubtopicTableQuery = {}): Promise<IP
 };
 
 export const getSubtopicForEdit = async (
-    topicSlug: string,
-    slug: string,
+    subtopicId: string,
 ): Promise<IApiResponse<ISubtopicEdit | null>> => {
     try {
+        if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
+
         await connectDB();
 
         const result = await Subtopic.aggregate<ISubtopicEdit>([
-            { $match: { slug } },
+            { $match: { _id: new ObjectId(subtopicId) } },
             {
                 $lookup: {
                     from: 'topics',
@@ -99,7 +105,6 @@ export const getSubtopicForEdit = async (
                 },
             },
             { $unwind: '$topic' },
-            { $match: { 'topic.slug': topicSlug } },
             {
                 $project: {
                     _id: { $toString: '$_id' },
@@ -122,3 +127,15 @@ export const getSubtopicForEdit = async (
         return handleError(err, 'Failed to fetch subtopic');
     }
 };
+
+/*
+API Responses:
+- getSubtopics
+    - 200: Subtopic list returned with pagination metadata.
+    - 400: Invalid topic id filter.
+    - 500: Unexpected server/database error.
+- getSubtopicForEdit
+    - 200: Subtopic edit payload returned (or null data when not found).
+    - 400: Invalid subtopic id.
+    - 500: Unexpected server/database error.
+*/

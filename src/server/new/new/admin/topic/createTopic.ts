@@ -24,8 +24,7 @@ export const createTopic = async (input: ITopicCreateInput): Promise<IApiRespons
             description: input.description,
             coverImage: input.coverImage ?? null,
             order: input.order ?? 0,
-            published: input.published ?? false,
-            featured: input.featured ?? false,
+            subTopicCount: 0,
             contentCount: 0,
             ...timestamps(),
         }) as ITopicDocumentInput;
@@ -38,3 +37,10 @@ export const createTopic = async (input: ITopicCreateInput): Promise<IApiRespons
         return handleError(err, 'Failed to create topic');
     }
 };
+
+/*
+API Responses:
+- 201: Topic created successfully.
+- 409: Topic slug already exists.
+- 500: Unexpected server/database error.
+*/

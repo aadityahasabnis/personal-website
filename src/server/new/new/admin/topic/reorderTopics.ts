@@ -3,24 +3,26 @@
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
-import { handleError, success } from '../../../utils/helper';
+import { ObjectId } from 'mongodb';
+import { error, handleError, success } from '../../../utils/helper';
 import { revalidateTopicPaths } from '../shared';
 
 // ========================================================
 // Reorder
 // ========================================================
 
-export const reorderTopics = async (slugs: string[]): Promise<IApiResponse<boolean>> => {
+export const reorderTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
-        if (!slugs.length) return success(true);
+        if (!topicIds.length) return success(true);
+        if (!topicIds.every((id) => ObjectId.isValid(id))) return error('One or more topic ids are invalid', 400);
 
         await connectDB();
         const now = new Date();
 
         await Topic.bulkWrite(
-            slugs.map((slug, index) => ({
+            topicIds.map((id, index) => ({
                 updateOne: {
-                    filter: { slug },
+                    filter: { _id: new ObjectId(id) },
                     update: { $set: { order: index, updatedAt: now } },
                 },
             }))
@@ -32,3 +34,10 @@ export const reorderTopics = async (slugs: string[]): Promise<IApiResponse<boole
         return handleError(err, 'Failed to reorder topics');
     }
 };
+
+/*
+API Responses:
+- 200: Topics reordered successfully.
+- 400: One or more topic ids are invalid.
+- 500: Unexpected server/database error.
+*/

@@ -15,40 +15,53 @@ import { revalidateTopicPaths } from '../shared';
 // Delete
 // ========================================================
 
-export const deleteTopic = async (slug: string, cascade = false): Promise<IApiResponse<boolean>> => {
+export const deleteTopic = async (topicId: string, cascade = false): Promise<IApiResponse<boolean>> => {
     try {
+        if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
+
         await connectDB();
 
-        const topic = await Topic.findOne({ slug }).select('_id').lean();
+        const topic = await Topic.findById(topicId).select('_id slug').lean();
         if (!topic) return error('Topic not found', 404);
 
-        const topicId = topic._id as ObjectId;
-        const [subtopicCount, articleCount] = await Promise.all([
-            Subtopic.countDocuments({ topicId }),
-            Content.countDocuments({ type: 'article', topicId }),
-        ]);
-
-        if (!cascade && (subtopicCount > 0 || articleCount > 0)) {
-            return error('Topic has related subtopics/articles. Use cascade delete.', 409);
-        }
-
+        const resolvedTopicId = topic._id as ObjectId;
         if (cascade) {
-            const contentDocs = await Content.find({ type: 'article', topicId }).select('_id').lean();
-            const contentIds = contentDocs.map((doc) => doc._id as ObjectId);
+            const contentIds = await Content.distinct('_id', {
+                type: 'article',
+                topicId: resolvedTopicId,
+            }) as ObjectId[];
 
             await Promise.all([
-                Content.deleteMany({ type: 'article', topicId }),
-                Subtopic.deleteMany({ topicId }),
+                Content.deleteMany({ type: 'article', topicId: resolvedTopicId }),
+                Subtopic.deleteMany({ topicId: resolvedTopicId }),
                 contentIds.length ? PageStats.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),
                 contentIds.length ? Comment.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),
             ]);
+        } else {
+            const [hasSubtopics, hasArticles] = await Promise.all([
+                Subtopic.exists({ topicId: resolvedTopicId }),
+                Content.exists({ type: 'article', topicId: resolvedTopicId }),
+            ]);
+
+            if (hasSubtopics || hasArticles) {
+                return error('Topic has related subtopics/articles. Use cascade delete.', 409);
+            }
         }
 
-        await Topic.deleteOne({ _id: topicId });
-        revalidateTopicPaths(slug);
+        await Topic.deleteOne({ _id: resolvedTopicId });
+        revalidateTopicPaths(topic.slug);
 
         return success(true, 'Topic deleted successfully');
     } catch (err) {
         return handleError(err, 'Failed to delete topic');
     }
 };
+
+/*
+API Responses:
+- 200: Topic deleted successfully.
+- 400: Invalid topic id.
+- 404: Topic not found.
+- 409: Topic has related subtopics/articles and cascade=false.
+- 500: Unexpected server/database error.
+*/

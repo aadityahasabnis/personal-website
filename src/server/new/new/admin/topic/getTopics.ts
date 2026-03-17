@@ -3,8 +3,9 @@
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
+import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
-import { buildSort, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
 import type { ITopicEdit, ITopicRow, ITopicTableQuery } from './types';
 
 // ========================================================
@@ -48,6 +49,7 @@ export const getTopics = async (params: ITopicTableQuery = {}): Promise<IPaginat
                                 order: { $ifNull: ['$order', 0] },
                                 published: { $ifNull: ['$published', false] },
                                 featured: { $ifNull: ['$featured', false] },
+                                subTopicCount: { $ifNull: ['$subTopicCount', 0] },
                                 contentCount: { $ifNull: ['$contentCount', 0] },
                                 createdAt: { $dateToString: { date: '$createdAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
                                 updatedAt: { $dateToString: { date: '$updatedAt', format: '%Y-%m-%dT%H:%M:%S.%LZ' } },
@@ -69,10 +71,14 @@ export const getTopics = async (params: ITopicTableQuery = {}): Promise<IPaginat
     }
 };
 
-export const getTopicForEdit = async (slug: string): Promise<IApiResponse<ITopicEdit | null>> => {
+export const getTopicForEdit = async (topicId: string): Promise<IApiResponse<ITopicEdit | null>> => {
     try {
+        if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
+
         await connectDB();
-        const topic = await Topic.findOne({ slug }).lean();
+        const topic = await Topic.findById(topicId)
+            .select('slug title description coverImage order published featured subTopicCount contentCount createdAt updatedAt')
+            .lean();
         if (!topic) return success(null);
 
         return success({
@@ -84,6 +90,7 @@ export const getTopicForEdit = async (slug: string): Promise<IApiResponse<ITopic
             order: topic.order ?? 0,
             published: Boolean(topic.published),
             featured: Boolean(topic.featured),
+            subTopicCount: topic.subTopicCount ?? 0,
             contentCount: topic.contentCount ?? 0,
             createdAt: topic.createdAt.toISOString(),
             updatedAt: topic.updatedAt.toISOString(),
@@ -92,3 +99,10 @@ export const getTopicForEdit = async (slug: string): Promise<IApiResponse<ITopic
         return handleError(err, 'Failed to fetch topic');
     }
 };
+
+/*
+API Responses:
+- 200: Topics list/topic edit payload returned.
+- 400: Invalid topic id.
+- 500: Unexpected server/database error.
+*/

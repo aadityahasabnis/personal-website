@@ -5,18 +5,19 @@ import type { ITableQueryParams } from '../shared';
 // ========================================================
 
 export interface ISubtopicCreateInput {
-    topicSlug: string;
+    topicId: string;
     slug: string;
     title: string;
     description?: string | null;
     order?: number;
+}
+
+export interface ISubtopicUpdateInput extends Partial<ISubtopicCreateInput> {
     published?: boolean;
 }
 
-export type ISubtopicUpdateInput = Partial<ISubtopicCreateInput>;
-
 export interface ISubtopicTableQuery extends ITableQueryParams {
-    topicSlug?: string;
+    topicId?: string;
     published?: boolean;
 }
 

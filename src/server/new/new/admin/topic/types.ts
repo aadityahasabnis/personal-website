@@ -11,8 +11,6 @@ export interface ITopicCreateInput {
     description: string;
     coverImage?: string | null;
     order?: number;
-    published?: boolean;
-    featured?: boolean;
 }
 
 export type ITopicUpdateInput = Partial<ITopicCreateInput>;
@@ -31,6 +29,7 @@ export interface ITopicRow {
     order: number;
     published: boolean;
     featured: boolean;
+    subTopicCount: number;
     contentCount: number;
     createdAt: string;
     updatedAt: string;

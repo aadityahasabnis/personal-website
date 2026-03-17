@@ -43,6 +43,7 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
             type: Boolean,
             default: false,
         },
+        // Number of published articles under this subtopic
         contentCount: {
             type: Number,
             default: 0,
@@ -62,23 +63,6 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
 SubtopicSchema.index({ topicId: 1, slug: 1 }, { unique: true });
 SubtopicSchema.index({ topicId: 1, order: 1 });
 SubtopicSchema.index({ topicId: 1, published: 1 });
-
-// ============================================================
-// Instance Methods
-// ============================================================
-
-SubtopicSchema.methods.incrementContentCount = async function (this: ISubtopicDocument) {
-    this.contentCount += 1;
-    return this.save();
-};
-
-SubtopicSchema.methods.decrementContentCount = async function (this: ISubtopicDocument) {
-    if (this.contentCount > 0) {
-        this.contentCount -= 1;
-        return this.save();
-    }
-    return this;
-};
 
 // ============================================================
 // Model Export

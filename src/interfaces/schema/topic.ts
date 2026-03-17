@@ -12,5 +12,6 @@ export interface ITopic extends IDocument, ITimestamps {
     order: number; // Display order
     published: boolean;
     featured: boolean; // Highlight on homepage
+    subTopicCount: number,
     contentCount: number; // Denormalized count of published articles
 }
