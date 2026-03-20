@@ -1,55 +1,58 @@
-/**
- * Admin Article – Input Types
- *
- * Derived from schema.ts interfaces using Pick/Omit/Partial.
- * No Zod — validation is handled at the action level.
- */
+import type { PublishStatusType } from '@/constants/schemaConstants';
+import type { ISeoMetadata } from '@/interfaces/schema';
+import type { ITableQueryParams } from '../../shared';
 
-import type { IArticle, ISeoMetadata } from '@/interfaces/schema';
+// ========================================================
+// Article Types
+// ========================================================
 
-// ============================================================
-// Create Input
-// ============================================================
-
-/**
- * Fields the client provides when creating an article.
- * Auto-generated fields (_id, timestamps, published state) are excluded.
- */
-export type ArticleCreateInput = {
+export interface IArticleCreateInput {
     slug: string;
     title: string;
     description: string;
     body: string;
-    topicSlug: string;
-    subtopicSlug?: string | null;
+    topicId: string;
+    subtopicId?: string | null;
     tags?: string[];
     coverImage?: string | null;
     readingTime?: number;
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
     order?: number;
     seo?: Partial<ISeoMetadata> | null;
-};
+}
 
-// ============================================================
-// Update Input
-// ============================================================
+export type IArticleUpdateInput = Partial<IArticleCreateInput>;
 
-/**
- * All user-editable fields are optional for partial updates.
- */
-export type ArticleUpdateInput = Partial<
-    Pick<
-        IArticle,
-        | 'slug'
-        | 'title'
-        | 'description'
-        | 'body'
-        | 'topicSlug'
-        | 'subtopicSlug'
-        | 'tags'
-        | 'coverImage'
-        | 'readingTime'
-        | 'order'
-    >
-> & {
-    seo?: Partial<ISeoMetadata> | null;
-};
+export interface IArticleTableQuery extends ITableQueryParams {
+    topicId?: string;
+    subtopicId?: string;
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
+}
+
+export interface IArticleRow {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    topicId: string;
+    topicSlug: string;
+    topicTitle: string;
+    subtopicId: string | null;
+    subtopicSlug: string | null;
+    subtopicTitle: string | null;
+    publishStatus: PublishStatusType;
+    featured: boolean;
+    readingTime: number;
+    order: number;
+    publishedAt: string | null;
+    updatedAt: string;
+}
+
+export interface IArticleEdit extends IArticleRow {
+    body: string;
+    tags: string[];
+    coverImage: string | null;
+    seo: ISeoMetadata | null;
+}

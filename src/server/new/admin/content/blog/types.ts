@@ -1,21 +1,12 @@
-/**
- * Admin Blog – Input Types
- *
- * Derived from schema.ts interfaces using Pick/Omit/Partial.
- * No Zod — validation is handled at the action level.
- */
+import type { PublishStatusType } from '@/constants/schemaConstants';
+import type { ISeoMetadata } from '@/interfaces/schema';
+import type { ITableQueryParams } from '../../shared';
 
-import type { IBlog, ISeoMetadata } from '@/interfaces/schema';
+// ========================================================
+// Blog Types
+// ========================================================
 
-// ============================================================
-// Create Input
-// ============================================================
-
-/**
- * Fields the client provides when creating a blog post.
- * Auto-generated fields (_id, timestamps, published state) are excluded.
- */
-export type BlogCreateInput = {
+export interface IBlogCreateInput {
     slug: string;
     title: string;
     description: string;
@@ -23,27 +14,33 @@ export type BlogCreateInput = {
     tags?: string[];
     coverImage?: string | null;
     readingTime?: number;
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
     seo?: Partial<ISeoMetadata> | null;
-};
+}
 
-// ============================================================
-// Update Input
-// ============================================================
+export type IBlogUpdateInput = Partial<IBlogCreateInput>;
 
-/**
- * All user-editable fields are optional for partial updates.
- */
-export type BlogUpdateInput = Partial<
-    Pick<
-        IBlog,
-        | 'slug'
-        | 'title'
-        | 'description'
-        | 'body'
-        | 'tags'
-        | 'coverImage'
-        | 'readingTime'
-    >
-> & {
-    seo?: Partial<ISeoMetadata> | null;
-};
+export interface IBlogTableQuery extends ITableQueryParams {
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
+}
+
+export interface IBlogRow {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    publishStatus: PublishStatusType;
+    featured: boolean;
+    readingTime: number;
+    publishedAt: string | null;
+    updatedAt: string;
+}
+
+export interface IBlogEdit extends IBlogRow {
+    body: string;
+    tags: string[];
+    coverImage: string | null;
+    seo: ISeoMetadata | null;
+}

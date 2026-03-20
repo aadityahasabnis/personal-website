@@ -1,22 +1,9 @@
-/**
- * Admin Project Actions – Barrel Export
- */
+export * from './actions';
+export * from './createProject';
+export * from './deleteProject';
+export * from './getProjects';
+export * from './publishProject';
+export * from './reorderProjects';
+export * from './types';
+export * from './updateProject';
 
-// Mutations
-export { createProject } from './createProject';
-export { updateProject } from './updateProject';
-export { deleteProject } from './deleteProject';
-export {
-    publishProject,
-    unpublishProject,
-    toggleProjectFeatured,
-    updateProjectStatus,
-    reorderProjects,
-} from './publishProject';
-
-// Queries
-export { getProjects, getProjectForEdit } from './getProjects';
-
-// Types – admin serialized types from getProjects, input types from types.ts
-export type { SerializedProject, SerializedProjectForEdit } from './getProjects';
-export type { ProjectCreateInput, ProjectUpdateInput } from './types';

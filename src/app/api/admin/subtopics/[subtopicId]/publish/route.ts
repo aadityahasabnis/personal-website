@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { publishSubtopic, toggleSubtopicPublished, unpublishSubtopic } from '@/server/new/new/admin/subtopic';
+import { publishSubtopic, toggleSubtopicPublished, unpublishSubtopic } from '@/server/new/admin/subtopic';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../../_shared';
 

@@ -1,138 +1,79 @@
 'use server';
 
-/**
- * Publish / Unpublish / Toggle Blog – Admin Server Actions
- *
- * Uses Mongoose document finders + instance methods for publish/unpublish/schedule.
- * Uses Content model directly for toggle/featured operations.
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import {
-    Content,
-    ensureConnection,
-    findBlog,
-    findBlogDoc,
-    handleError,
-    notFoundError,
-    ok,
-    okVoid,
-    revalidateContentPaths,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Content from '@/server/models/Content';
+import { ObjectId } from 'mongodb';
+import { error, handleError, success, updatedNow } from '../../../utils/helper';
+import { revalidateBlogPaths } from '../../shared';
+import { isPublishedBlog, isValidPublishStatus, type IBlogActionBase } from './helpers';
 
-// ============================================================
-// Publish
-// ============================================================
+// ========================================================
+// Status Change
+// ========================================================
 
-export async function publishBlog(slug: string): Promise<IApiResponse<void>> {
+export const changeBlogPublishStatus = async (
+    blogId: string,
+    nextStatus: PublishStatusType,
+): Promise<IApiResponse<boolean>> => {
     try {
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
+        if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
+        if (!isValidPublishStatus(nextStatus)) return error('Invalid publish status', 400);
 
-        if (blog.published) return okVoid('Blog post is already published');
+        await connectDB();
 
-        const doc = await findBlogDoc(slug);
-        if (!doc) return notFoundError('Blog post');
-        await doc.publish();
+        const blog = await Content.findOne({
+            type: 'blog',
+            _id: blogId,
+        }).select('_id slug publishStatus').lean<Pick<IBlogActionBase, '_id' | 'slug' | 'publishStatus'> | null>();
 
-        revalidateContentPaths('blog', slug);
+        if (!blog) return error('Blog not found', 404);
+        if (blog.publishStatus === nextStatus) return success(true, `Blog already ${nextStatus}`);
 
-        return okVoid('Blog post published successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to publish blog post');
-    }
-}
+        const wasPublished = isPublishedBlog(blog);
+        const willBePublished = nextStatus === PUBLISH_STATUS.PUBLISHED;
+        const nextPublishedAt = !wasPublished && willBePublished
+            ? new Date()
+            : wasPublished && !willBePublished
+                ? null
+                : undefined;
 
-// ============================================================
-// Unpublish
-// ============================================================
-
-export async function unpublishBlog(slug: string): Promise<IApiResponse<void>> {
-    try {
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
-
-        if (!blog.published) return okVoid('Blog post is already unpublished');
-
-        const doc = await findBlogDoc(slug);
-        if (!doc) return notFoundError('Blog post');
-        await doc.unpublish();
-
-        revalidateContentPaths('blog', slug);
-
-        return okVoid('Blog post unpublished successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to unpublish blog post');
-    }
-}
-
-// ============================================================
-// Toggle Published
-// ============================================================
-
-export async function toggleBlogPublished(
-    slug: string,
-): Promise<IApiResponse<boolean>> {
-    try {
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
-
-        if (blog.published) {
-            await unpublishBlog(slug);
-            return ok(false, 'Blog post unpublished');
-        } else {
-            await publishBlog(slug);
-            return ok(true, 'Blog post published');
-        }
-    } catch (err) {
-        return handleError(err, 'Failed to toggle blog published status');
-    }
-}
-
-// ============================================================
-// Toggle Featured
-// ============================================================
-
-export async function toggleBlogFeatured(
-    slug: string,
-): Promise<IApiResponse<boolean>> {
-    try {
-        await ensureConnection();
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
-
-        const newFeatured = !blog.featured;
         await Content.updateOne(
-            { type: 'blog', slug },
-            { $set: { featured: newFeatured, updatedAt: new Date() } },
+            { _id: blog._id },
+            {
+                $set: {
+                    publishStatus: nextStatus,
+                    publishedAt: nextPublishedAt,
+                    ...updatedNow(),
+                },
+            }
         );
 
-        revalidateContentPaths('blog', slug);
-
-        return ok(newFeatured, newFeatured ? 'Blog featured' : 'Blog unfeatured');
+        revalidateBlogPaths(blog.slug);
+        return success(true, `Blog status changed to ${nextStatus}`);
     } catch (err) {
-        return handleError(err, 'Failed to toggle blog featured status');
+        return handleError(err, 'Failed to change blog status');
     }
-}
+};
 
-// ============================================================
-// Schedule
-// ============================================================
+export const setBlogPublished = async (blogId: string): Promise<IApiResponse<boolean>> => {
+    return changeBlogPublishStatus(blogId, PUBLISH_STATUS.PUBLISHED);
+};
 
-export async function scheduleBlog(
-    slug: string,
-    scheduledAt: Date,
-): Promise<IApiResponse<void>> {
-    try {
-        const doc = await findBlogDoc(slug);
-        if (!doc) return notFoundError('Blog post');
+export const setBlogDraft = async (blogId: string): Promise<IApiResponse<boolean>> => {
+    return changeBlogPublishStatus(blogId, PUBLISH_STATUS.DRAFT);
+};
 
-        await doc.schedule(scheduledAt);
+export const setBlogArchived = async (blogId: string): Promise<IApiResponse<boolean>> => {
+    return changeBlogPublishStatus(blogId, PUBLISH_STATUS.ARCHIVED);
+};
 
-        revalidateContentPaths('blog', slug);
-
-        return okVoid('Blog post scheduled successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to schedule blog post');
-    }
-}
+/*
+API Responses:
+- changeBlogPublishStatus/setBlogPublished/setBlogDraft/setBlogArchived
+    - 200: Action completed successfully.
+    - 400: Invalid blog id or publish status.
+    - 404: Blog not found.
+    - 500: Unexpected server/database error.
+*/

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { reorderSubtopics } from '@/server/new/new/admin/subtopic';
+import { reorderSubtopics } from '@/server/new/admin/subtopic';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

@@ -6,7 +6,7 @@ import {
     bulkPublishTopics,
     bulkUnfeatureTopics,
     bulkUnpublishTopics,
-} from '@/server/new/new/admin/topic';
+} from '@/server/new/admin/topic';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

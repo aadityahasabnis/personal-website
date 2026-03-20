@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { PublishStatusType } from '@/constants/schemaConstants';
-import type { IArticleTableQuery } from '@/server/new/new/admin/content/article';
-import { createArticle, getArticleForEdit, getArticles, reconcileArticleCounters } from '@/server/new/new/admin/content/article';
+import type { IArticleTableQuery } from '@/server/new/admin/content/article';
+import { createArticle, getArticleForEdit, getArticles, reconcileArticleCounters } from '@/server/new/admin/content/article';
 
 import { parseBooleanQuery, parseJsonBody, requireAdmin, toHttp } from './_shared';
 

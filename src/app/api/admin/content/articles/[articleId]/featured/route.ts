@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { setArticleFeatured } from '@/server/new/new/admin/content/article';
+import { setArticleFeatured } from '@/server/new/admin/content/article';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../../_shared';
 

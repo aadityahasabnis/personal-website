@@ -1,45 +1,53 @@
 'use server';
 
-/**
- * Delete Blog – Admin Server Action
- */
-
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import {
-    Comment,
-    Content,
-    ensureConnection,
-    findBlog,
-    handleError,
-    notFoundError,
-    okVoid,
-    PageStats,
-    revalidateContentPaths,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Comment from '@/server/models/Comment';
+import Content from '@/server/models/Content';
+import PageStats from '@/server/models/PageStats';
+import { ObjectId } from 'mongodb';
+import { error, handleError, success } from '../../../utils/helper';
+import { revalidateBlogPaths } from '../../shared';
 
-// ============================================================
-// Server Action
-// ============================================================
+interface IBlogDeleteBase {
+    _id: ObjectId;
+    slug: string;
+}
 
-export async function deleteBlog(slug: string): Promise<IApiResponse<void>> {
+// ========================================================
+// Delete
+// ========================================================
+
+export const deleteBlog = async (blogId: string): Promise<IApiResponse<boolean>> => {
     try {
-        await ensureConnection();
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
+        if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
-        // Delete content document
-        await Content.deleteOne({ type: 'blog', slug });
+        await connectDB();
 
-        // Cleanup associated data in parallel
+        const blog = await Content.findOne({
+            type: 'blog',
+            _id: blogId,
+        }).select('_id slug').lean<IBlogDeleteBase | null>();
+
+        if (!blog) return error('Blog not found', 404);
+
         await Promise.all([
-            PageStats.deleteOne({ slug }),
-            Comment.deleteMany({ contentSlug: slug }),
+            Content.deleteOne({ _id: blog._id }),
+            PageStats.deleteOne({ contentId: blog._id }),
+            Comment.deleteMany({ contentId: blog._id }),
         ]);
 
-        revalidateContentPaths('blog', slug);
-
-        return okVoid('Blog post deleted successfully');
+        revalidateBlogPaths(blog.slug);
+        return success(true, 'Blog deleted successfully');
     } catch (err) {
-        return handleError(err, 'Failed to delete blog post');
+        return handleError(err, 'Failed to delete blog');
     }
-}
+};
+
+/*
+API Responses:
+- 200: Blog deleted successfully.
+- 400: Invalid blog id.
+- 404: Blog not found.
+- 500: Unexpected server/database error.
+*/

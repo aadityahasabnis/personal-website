@@ -1,7 +1,7 @@
 import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { bulkSetArticleStatus } from '@/server/new/new/admin/content/article';
+import { bulkSetArticleStatus } from '@/server/new/admin/content/article';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../../_shared';
 

@@ -1,45 +1,53 @@
 'use server';
 
-/**
- * Delete Project – Admin Server Action
- */
-
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import {
-    Comment,
-    Content,
-    ensureConnection,
-    findProject,
-    handleError,
-    notFoundError,
-    okVoid,
-    PageStats,
-    revalidateContentPaths,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Comment from '@/server/models/Comment';
+import Content from '@/server/models/Content';
+import PageStats from '@/server/models/PageStats';
+import { ObjectId } from 'mongodb';
+import { error, handleError, success } from '../../../utils/helper';
+import { revalidateProjectPaths } from '../../shared';
 
-// ============================================================
-// Server Action
-// ============================================================
+interface IProjectDeleteBase {
+    _id: ObjectId;
+    slug: string;
+}
 
-export async function deleteProject(slug: string): Promise<IApiResponse<void>> {
+// ========================================================
+// Delete
+// ========================================================
+
+export const deleteProject = async (projectId: string): Promise<IApiResponse<boolean>> => {
     try {
-        await ensureConnection();
-        const project = await findProject(slug);
-        if (!project) return notFoundError('Project');
+        if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
 
-        // Delete content document
-        await Content.deleteOne({ type: 'project', slug });
+        await connectDB();
 
-        // Cleanup associated data in parallel
+        const project = await Content.findOne({
+            type: 'project',
+            _id: projectId,
+        }).select('_id slug').lean<IProjectDeleteBase | null>();
+
+        if (!project) return error('Project not found', 404);
+
         await Promise.all([
-            PageStats.deleteOne({ slug }),
-            Comment.deleteMany({ contentSlug: slug }),
+            Content.deleteOne({ _id: project._id }),
+            PageStats.deleteOne({ contentId: project._id }),
+            Comment.deleteMany({ contentId: project._id }),
         ]);
 
-        revalidateContentPaths('project', slug);
-
-        return okVoid('Project deleted successfully');
+        revalidateProjectPaths(project.slug);
+        return success(true, 'Project deleted successfully');
     } catch (err) {
         return handleError(err, 'Failed to delete project');
     }
-}
+};
+
+/*
+API Responses:
+- 200: Project deleted successfully.
+- 400: Invalid project id.
+- 404: Project not found.
+- 500: Unexpected server/database error.
+*/

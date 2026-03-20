@@ -1,134 +1,130 @@
 'use server';
 
-/**
- * Get Blog(s) – Admin Server Actions (queries)
- */
-
+import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse, IPaginatedResponse } from '@/interfaces/actionHelper';
-import type { IBlog } from '@/interfaces/schema';
-import {
-    Content,
-    ensureConnection,
-    findBlog,
-    handleError,
-    normalizePagination,
-    notFoundError,
-    ok,
-    paginatedOk,
-    type PaginationParams,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Content from '@/server/models/Content';
+import { ObjectId } from 'mongodb';
+import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import type { IBlogEdit, IBlogRow, IBlogTableQuery } from './types';
 
-// ============================================================
-// Serialized Types
-// ============================================================
-
-/** Admin blog list item — excludes body for performance. */
-export interface SerializedBlog {
-    _id: string;
+interface IBlogListDoc {
+    _id: ObjectId;
     slug: string;
     title: string;
     description: string;
-    published: boolean;
-    featured: boolean;
-    publishedAt: string | null;
-    scheduledAt: string | null;
-    createdAt: string;
-    updatedAt: string;
-    readingTime: number;
-    tags: string[];
+    publishStatus?: string;
+    featured?: boolean;
+    readingTime?: number;
+    publishedAt?: Date | null;
+    updatedAt: Date;
 }
 
-/** Admin blog for editing — includes body + SEO. */
-export interface SerializedBlogForEdit extends SerializedBlog {
+interface IBlogEditDoc extends IBlogListDoc {
     body: string;
-    coverImage: string | null;
-    seo: {
-        title: string | null;
-        description: string | null;
-        keywords: string[];
-        ogImage: string | null;
-        canonicalUrl: string | null;
-        noIndex: boolean;
-    } | null;
+    tags?: string[];
+    coverImage?: string | null;
+    seo?: IBlogEdit['seo'];
 }
 
-// ============================================================
-// Serializer
-// ============================================================
-
-function serializeBlog(b: IBlog): SerializedBlog {
-    return {
-        _id: b._id?.toString() ?? '',
-        slug: b.slug,
-        title: b.title,
-        description: b.description,
-        published: b.published,
-        featured: b.featured,
-        publishedAt: b.publishedAt?.toISOString?.() ?? (b.publishedAt as unknown as string) ?? null,
-        scheduledAt: b.scheduledAt?.toISOString?.() ?? (b.scheduledAt as unknown as string) ?? null,
-        createdAt: b.createdAt?.toISOString?.() ?? (b.createdAt as unknown as string),
-        updatedAt: b.updatedAt?.toISOString?.() ?? (b.updatedAt as unknown as string),
-        readingTime: b.readingTime,
-        tags: b.tags ?? [],
-    };
-}
-
-// ============================================================
+// ========================================================
 // Queries
-// ============================================================
+// ========================================================
 
-export async function getBlogs(
-    pagination?: PaginationParams,
-): Promise<IPaginatedResponse<SerializedBlog>> {
+export const getBlogs = async (params: IBlogTableQuery = {}): Promise<IPaginatedResponse<IBlogRow>> => {
     try {
-        await ensureConnection();
-        const { offset, limit } = normalizePagination(pagination);
-        const filter = { type: 'blog' as const };
+        await connectDB();
 
-        const [docs, count] = await Promise.all([
-            Content.find(filter)
-                .sort({ updatedAt: -1 })
+        const { offset, limit } = normalizePagination(params.pagination);
+        const sort = buildSort(params.sort, { updatedAt: -1 });
+        const match: Record<string, unknown> = { type: 'blog' };
+
+        if (typeof params.publishStatus === 'string') match.publishStatus = params.publishStatus;
+        if (typeof params.featured === 'boolean') match.featured = params.featured;
+        if (params.query?.trim()) {
+            const q = params.query.trim();
+            match.$or = [
+                { title: { $regex: q, $options: 'i' } },
+                { description: { $regex: q, $options: 'i' } },
+                { slug: { $regex: q, $options: 'i' } },
+                { tags: { $regex: q, $options: 'i' } },
+            ];
+        }
+
+        const [docs, total] = await Promise.all([
+            Content.find(match)
+                .select('_id slug title description publishStatus featured readingTime publishedAt updatedAt')
+                .sort(sort)
                 .skip(offset)
                 .limit(limit)
-                .select('-body')
-                .lean<IBlog[]>(),
-            Content.countDocuments(filter),
+                .lean<IBlogListDoc[]>(),
+            Content.countDocuments(match),
         ]);
 
-        return paginatedOk(
-            docs.map(serializeBlog),
-            count,
-            offset,
-            limit,
-        );
+        const rows: IBlogRow[] = docs.map((doc) => ({
+            id: doc._id.toString(),
+            slug: doc.slug,
+            title: doc.title,
+            description: doc.description,
+            publishStatus: (doc.publishStatus ?? PUBLISH_STATUS.DRAFT) as IBlogRow['publishStatus'],
+            featured: doc.featured ?? false,
+            readingTime: doc.readingTime ?? 0,
+            publishedAt: doc.publishedAt ? doc.publishedAt.toISOString() : null,
+            updatedAt: doc.updatedAt.toISOString(),
+        }));
+
+        return paginated(rows, total, offset, limit);
     } catch (err) {
-        return handleError(err, 'Failed to fetch blog posts') as unknown as IPaginatedResponse<SerializedBlog>;
+        return handleError(err, 'Failed to fetch blogs') as IPaginatedResponse<IBlogRow>;
     }
-}
+};
 
-export async function getBlogForEdit(
-    slug: string,
-): Promise<IApiResponse<SerializedBlogForEdit | null>> {
+export const getBlogForEdit = async (
+    blogId: string,
+): Promise<IApiResponse<IBlogEdit | null>> => {
     try {
-        const blog = await findBlog(slug);
-        if (!blog) return notFoundError('Blog post');
+        if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
-        const serialized: SerializedBlogForEdit = {
-            ...serializeBlog(blog),
-            body: blog.body,
-            coverImage: blog.coverImage,
-            seo: blog.seo ? {
-                title: blog.seo.title,
-                description: blog.seo.description,
-                keywords: blog.seo.keywords,
-                ogImage: blog.seo.ogImage,
-                canonicalUrl: blog.seo.canonicalUrl,
-                noIndex: blog.seo.noIndex,
-            } : null,
+        await connectDB();
+
+        const doc = await Content.findOne({
+            type: 'blog',
+            _id: blogId,
+        })
+            .select('_id slug title description body tags coverImage publishStatus featured readingTime publishedAt seo updatedAt')
+            .lean<IBlogEditDoc | null>();
+
+        if (!doc) return success(null);
+
+        const payload: IBlogEdit = {
+            id: doc._id.toString(),
+            slug: doc.slug,
+            title: doc.title,
+            description: doc.description,
+            body: doc.body,
+            tags: doc.tags ?? [],
+            coverImage: doc.coverImage ?? null,
+            publishStatus: (doc.publishStatus ?? PUBLISH_STATUS.DRAFT) as IBlogEdit['publishStatus'],
+            featured: doc.featured ?? false,
+            readingTime: doc.readingTime ?? 0,
+            publishedAt: doc.publishedAt ? doc.publishedAt.toISOString() : null,
+            seo: doc.seo ?? null,
+            updatedAt: doc.updatedAt.toISOString(),
         };
 
-        return ok(serialized);
+        return success(payload);
     } catch (err) {
-        return handleError(err, 'Failed to fetch blog post for edit');
+        return handleError(err, 'Failed to fetch blog');
     }
-}
+};
+
+/*
+API Responses:
+- getBlogs
+    - 200: Blogs list returned with pagination metadata.
+    - 500: Unexpected server/database error.
+- getBlogForEdit
+    - 200: Blog edit payload returned (or null data when not found).
+    - 400: Invalid blog id.
+    - 500: Unexpected server/database error.
+*/

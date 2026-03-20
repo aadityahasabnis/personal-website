@@ -1,147 +1,79 @@
 'use server';
 
-/**
- * Publish / Toggle / Reorder Project – Admin Server Actions
- *
- * Uses Mongoose document finders + instance methods for publish/unpublish.
- * Uses Content model directly for toggle/status/reorder operations.
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import type { ProjectStatus } from '@/interfaces/schema';
-import {
-    Content,
-    ensureConnection,
-    errorResponse,
-    findProject,
-    findProjectDoc,
-    handleError,
-    notFoundError,
-    ok,
-    okVoid,
-    revalidateContentPaths,
-    revalidatePaths,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Content from '@/server/models/Content';
+import { ObjectId } from 'mongodb';
+import { error, handleError, success, updatedNow } from '../../../utils/helper';
+import { revalidateProjectPaths } from '../../shared';
+import { isPublishedProject, isValidPublishStatus, type IProjectActionBase } from './helpers';
 
-// ============================================================
-// Publish / Unpublish
-// ============================================================
+// ========================================================
+// Status Change
+// ========================================================
 
-export async function publishProject(slug: string): Promise<IApiResponse<void>> {
+export const changeProjectPublishStatus = async (
+    projectId: string,
+    nextStatus: PublishStatusType,
+): Promise<IApiResponse<boolean>> => {
     try {
-        const project = await findProject(slug);
-        if (!project) return notFoundError('Project');
+        if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
+        if (!isValidPublishStatus(nextStatus)) return error('Invalid publish status', 400);
 
-        if (project.published) return okVoid('Project is already published');
+        await connectDB();
 
-        const doc = await findProjectDoc(slug);
-        if (!doc) return notFoundError('Project');
-        await doc.publish();
+        const project = await Content.findOne({
+            type: 'project',
+            _id: projectId,
+        }).select('_id slug publishStatus').lean<Pick<IProjectActionBase, '_id' | 'slug' | 'publishStatus'> | null>();
 
-        revalidateContentPaths('project', slug);
+        if (!project) return error('Project not found', 404);
+        if (project.publishStatus === nextStatus) return success(true, `Project already ${nextStatus}`);
 
-        return okVoid('Project published successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to publish project');
-    }
-}
-
-export async function unpublishProject(slug: string): Promise<IApiResponse<void>> {
-    try {
-        const project = await findProject(slug);
-        if (!project) return notFoundError('Project');
-
-        if (!project.published) return okVoid('Project is already unpublished');
-
-        const doc = await findProjectDoc(slug);
-        if (!doc) return notFoundError('Project');
-        await doc.unpublish();
-
-        revalidateContentPaths('project', slug);
-
-        return okVoid('Project unpublished successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to unpublish project');
-    }
-}
-
-// ============================================================
-// Toggle Featured
-// ============================================================
-
-export async function toggleProjectFeatured(
-    slug: string,
-): Promise<IApiResponse<boolean>> {
-    try {
-        await ensureConnection();
-        const project = await findProject(slug);
-        if (!project) return notFoundError('Project');
-
-        const newFeatured = !project.featured;
-        await Content.updateOne(
-            { type: 'project', slug },
-            { $set: { featured: newFeatured, updatedAt: new Date() } },
-        );
-
-        revalidateContentPaths('project', slug);
-
-        return ok(newFeatured, newFeatured ? 'Project featured' : 'Project unfeatured');
-    } catch (err) {
-        return handleError(err, 'Failed to toggle project featured status');
-    }
-}
-
-// ============================================================
-// Update Status
-// ============================================================
-
-export async function updateProjectStatus(
-    slug: string,
-    status: ProjectStatus,
-): Promise<IApiResponse<void>> {
-    try {
-        await ensureConnection();
-        const project = await findProject(slug);
-        if (!project) return notFoundError('Project');
+        const wasPublished = isPublishedProject(project);
+        const willBePublished = nextStatus === PUBLISH_STATUS.PUBLISHED;
+        const nextPublishedAt = !wasPublished && willBePublished
+            ? new Date()
+            : wasPublished && !willBePublished
+                ? null
+                : undefined;
 
         await Content.updateOne(
-            { type: 'project', slug },
-            { $set: { status, updatedAt: new Date() } },
+            { _id: project._id },
+            {
+                $set: {
+                    publishStatus: nextStatus,
+                    publishedAt: nextPublishedAt,
+                    ...updatedNow(),
+                },
+            }
         );
 
-        revalidateContentPaths('project', slug);
-
-        return okVoid(`Project status updated to ${status}`);
+        revalidateProjectPaths(project.slug);
+        return success(true, `Project status changed to ${nextStatus}`);
     } catch (err) {
-        return handleError(err, 'Failed to update project status');
+        return handleError(err, 'Failed to change project status');
     }
-}
+};
 
-// ============================================================
-// Reorder
-// ============================================================
+export const setProjectPublished = async (projectId: string): Promise<IApiResponse<boolean>> => {
+    return changeProjectPublishStatus(projectId, PUBLISH_STATUS.PUBLISHED);
+};
 
-export async function reorderProjects(
-    slugs: string[],
-): Promise<IApiResponse<void>> {
-    try {
-        if (!slugs.length) return errorResponse('No slugs provided');
+export const setProjectDraft = async (projectId: string): Promise<IApiResponse<boolean>> => {
+    return changeProjectPublishStatus(projectId, PUBLISH_STATUS.DRAFT);
+};
 
-        await ensureConnection();
+export const setProjectArchived = async (projectId: string): Promise<IApiResponse<boolean>> => {
+    return changeProjectPublishStatus(projectId, PUBLISH_STATUS.ARCHIVED);
+};
 
-        const ops = slugs.map((s, index) => ({
-            updateOne: {
-                filter: { type: 'project' as const, slug: s },
-                update: { $set: { order: index, updatedAt: new Date() } },
-            },
-        }));
-
-        await Content.bulkWrite(ops);
-
-        revalidatePaths(['/projects', '/admin/projects', '/']);
-
-        return okVoid('Projects reordered successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to reorder projects');
-    }
-}
+/*
+API Responses:
+- changeProjectPublishStatus/setProjectPublished/setProjectDraft/setProjectArchived
+    - 200: Action completed successfully.
+    - 400: Invalid project id or publish status.
+    - 404: Project not found.
+    - 500: Unexpected server/database error.
+*/

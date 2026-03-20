@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "admin:create": "tsx --env-file=.env.local src/scripts/create-admin.ts"
+    "admin:create": "tsx --env-file=.env.local src/scripts/create-admin.ts",
+    "db:fix-content-index": "tsx --env-file=.env.local src/scripts/fix-content-index.ts"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",

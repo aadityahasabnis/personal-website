@@ -1,92 +1,163 @@
 'use server';
 
-/**
- * Update Article – Admin Server Action
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import type { IArticle } from '@/interfaces/schema';
+import { connectDB } from '@/lib/db/connectDB';
 import { calculateReadingTime } from '@/lib/utils';
-import {
-    buildSeoMetadata,
-    cleanUndefined,
-    Content,
-    duplicateError,
-    ensureConnection,
-    errorResponse,
-    findArticle,
-    handleError,
-    notFoundError,
-    okVoid,
-    revalidateContentPaths,
-    updateContentCounts,
-    updatedNow,
-    verifyTopicExists,
-} from '../../../utils';
-import type { ArticleUpdateInput } from './types';
+import Content from '@/server/models/Content';
+import Subtopic from '@/server/models/Subtopic';
+import Topic from '@/server/models/Topic';
+import { ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
+import { cleanUndefined, error, handleError, success, updatedNow } from '../../../utils/helper';
+import { buildSeo, getAdminId, revalidateArticlePaths } from '../../shared';
+import { isDuplicateSlugError } from '../helpers';
+import type { IArticleUpdateInput } from './types';
 
-// ============================================================
-// Server Action
-// ============================================================
+interface IArticleUpdateBase {
+    _id: ObjectId;
+    slug: string;
+    topicId: ObjectId;
+    subtopicId: ObjectId | null;
+    publishStatus: PublishStatusType;
+    publishedAt: Date | null;
+}
 
-export async function updateArticle(
-    topicSlug: string,
-    slug: string,
-    input: ArticleUpdateInput,
-): Promise<IApiResponse<void>> {
+const isPublishedArticle = (article: IArticleUpdateBase): boolean => {
+    return article.publishStatus === PUBLISH_STATUS.PUBLISHED;
+};
+
+// ========================================================
+// Update
+// ========================================================
+
+export const updateArticle = async (
+    articleId: string,
+    input: IArticleUpdateInput,
+): Promise<IApiResponse<boolean>> => {
     try {
-        await ensureConnection();
+        if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
+        if (typeof input.topicId === 'string' && !ObjectId.isValid(input.topicId)) return error('Invalid topic id', 400);
+        if (typeof input.subtopicId === 'string' && !ObjectId.isValid(input.subtopicId)) return error('Invalid subtopic id', 400);
 
-        // 1. Find existing
-        const existing = await findArticle(topicSlug, slug);
-        if (!existing) return notFoundError('Article');
+        await connectDB();
 
-        // 2. Check slug conflicts
-        if (input.slug && input.slug !== slug) {
-            const conflict = await Content.findOne({
-                type: 'article',
-                topicSlug: input.topicSlug ?? topicSlug,
-                slug: input.slug,
-            }).lean();
-            if (conflict) return duplicateError('An article with this slug');
+        const admin = await getAdminId();
+        if (!admin.success) return admin;
+
+        const article = await Content.findOne({
+            type: 'article',
+            _id: articleId,
+        }).select('_id slug topicId subtopicId publishStatus publishedAt').lean<IArticleUpdateBase | null>();
+
+        if (!article) return error('Article not found', 404);
+
+        const currentTopic = await Topic.findById(article.topicId).select('_id slug').lean();
+        if (!currentTopic) return error('Topic not found', 404);
+
+        const targetTopic = input.topicId && input.topicId !== article.topicId.toString()
+            ? await Topic.findById(input.topicId).select('_id slug').lean()
+            : currentTopic;
+
+        if (!targetTopic) return error('Target topic not found', 404);
+
+        const topicChanged = targetTopic._id.toString() !== article.topicId.toString();
+        let targetSubtopicId = topicChanged ? null : (article.subtopicId ?? null);
+
+        if (input.subtopicId === null) targetSubtopicId = null;
+        if (typeof input.subtopicId === 'string') {
+            const targetSubtopic = await Subtopic.findOne({
+                topicId: targetTopic._id,
+                _id: input.subtopicId,
+            }).select('_id').lean();
+
+            if (!targetSubtopic) return error('Target subtopic not found', 404);
+            targetSubtopicId = targetSubtopic._id;
         }
 
-        // 3. Verify new topic if changing
-        if (input.topicSlug && input.topicSlug !== topicSlug) {
-            if (!(await verifyTopicExists(input.topicSlug))) {
-                return errorResponse('New topic not found');
+        if (input.slug && input.slug !== article.slug) {
+            const conflict = await Content.findOne({ type: 'article', slug: input.slug }).select('_id').lean();
+            if (conflict && conflict._id.toString() !== article._id.toString()) {
+                return error('Article with this slug already exists', 409);
             }
         }
 
-        // 4. Build update
-        const updateData: Partial<IArticle> = cleanUndefined({
-            ...input,
-            seo: input.seo ? buildSeoMetadata(input.seo) : undefined,
-            coverImage: input.coverImage || undefined,
-            ...updatedNow(),
-            ...(input.body ? { readingTime: calculateReadingTime(input.body) } : {}),
-        }) as Partial<IArticle>;
+        const currentPublished = isPublishedArticle(article);
+        const nextPublishStatus: PublishStatusType = input.publishStatus ?? article.publishStatus;
+        const nextPublished = nextPublishStatus === PUBLISH_STATUS.PUBLISHED;
+        const subtopicChanged = String(targetSubtopicId ?? '') !== String(article.subtopicId ?? '');
+        const nextPublishedAt = !currentPublished && nextPublished
+            ? new Date()
+            : currentPublished && !nextPublished
+                ? null
+                : undefined;
 
-        // 5. Update
-        await Content.updateOne(
-            { type: 'article', topicSlug, slug },
-            { $set: updateData },
-        );
+        const txnSession = await mongoose.startSession();
+        try {
+            await txnSession.withTransaction(async () => {
+                await Content.updateOne(
+                    { _id: article._id },
+                    {
+                        $set: cleanUndefined({
+                            slug: input.slug,
+                            title: input.title,
+                            description: input.description,
+                            body: input.body,
+                            tags: input.tags,
+                            coverImage: input.coverImage,
+                            readingTime: input.body ? calculateReadingTime(input.body) : input.readingTime,
+                            featured: input.featured,
+                            seo: input.seo ? buildSeo(input.seo) : undefined,
+                            topicId: targetTopic._id,
+                            subtopicId: targetSubtopicId,
+                            order: input.order,
+                            publishStatus: nextPublishStatus,
+                            publishedAt: nextPublishedAt,
+                            updatedBy: admin.data,
+                            ...updatedNow(),
+                        }),
+                    },
+                    { session: txnSession }
+                );
 
-        // 6. Handle topic change — update denormalized counts
-        if (existing.published && input.topicSlug && input.topicSlug !== topicSlug) {
-            await updateContentCounts(topicSlug, existing.subtopicSlug, -1);
-            await updateContentCounts(input.topicSlug, input.subtopicSlug ?? null, 1);
+                if (currentPublished !== nextPublished || topicChanged || subtopicChanged) {
+                    if (currentPublished) {
+                        await Promise.all([
+                            Topic.updateOne({ _id: article.topicId }, { $inc: { contentCount: -1 } }, { session: txnSession }),
+                            article.subtopicId
+                                ? Subtopic.updateOne({ _id: article.subtopicId }, { $inc: { contentCount: -1 } }, { session: txnSession })
+                                : Promise.resolve(),
+                        ]);
+                    }
+                    if (nextPublished) {
+                        await Promise.all([
+                            Topic.updateOne({ _id: targetTopic._id }, { $inc: { contentCount: 1 } }, { session: txnSession }),
+                            targetSubtopicId
+                                ? Subtopic.updateOne({ _id: targetSubtopicId }, { $inc: { contentCount: 1 } }, { session: txnSession })
+                                : Promise.resolve(),
+                        ]);
+                    }
+                }
+            });
+        } finally {
+            await txnSession.endSession();
         }
 
-        // 7. Revalidate
-        revalidateContentPaths('article', slug, topicSlug);
-        if (input.topicSlug && input.topicSlug !== topicSlug) {
-            revalidateContentPaths('article', input.slug ?? slug, input.topicSlug);
-        }
+        revalidateArticlePaths(currentTopic.slug, article.slug);
+        revalidateArticlePaths(targetTopic.slug, input.slug ?? article.slug);
 
-        return okVoid('Article updated successfully');
+        return success(true, 'Article updated successfully');
     } catch (err) {
+        if (isDuplicateSlugError(err)) return error('Article with this slug already exists', 409);
         return handleError(err, 'Failed to update article');
     }
-}
+};
+
+/*
+API Responses:
+- 200: Article updated successfully.
+- 400: Invalid article/topic/subtopic id.
+- 404: Article, current topic, target topic, or target subtopic not found.
+- 409: Article slug conflict.
+- 500: Unexpected server/database error.
+*/

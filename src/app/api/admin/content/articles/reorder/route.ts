@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { reorderArticles } from '@/server/new/new/admin/content/article';
+import { reorderArticles } from '@/server/new/admin/content/article';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

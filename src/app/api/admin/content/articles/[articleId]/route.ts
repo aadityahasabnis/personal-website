@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { PublishStatusType } from '@/constants/schemaConstants';
-import { deleteArticle, updateArticle } from '@/server/new/new/admin/content/article';
+import { deleteArticle, updateArticle } from '@/server/new/admin/content/article';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

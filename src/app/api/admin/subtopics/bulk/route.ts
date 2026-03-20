@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { bulkDeleteSubtopics, bulkPublishSubtopics, bulkUnpublishSubtopics } from '@/server/new/new/admin/subtopic';
+import { bulkDeleteSubtopics, bulkPublishSubtopics, bulkUnpublishSubtopics } from '@/server/new/admin/subtopic';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

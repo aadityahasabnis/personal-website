@@ -1,64 +1,61 @@
 'use server';
 
-/**
- * Create Blog – Admin Server Action
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import type { IBlog } from '@/interfaces/schema';
+import { connectDB } from '@/lib/db/connectDB';
 import { calculateReadingTime } from '@/lib/utils';
-import {
-    buildSeoMetadata,
-    Content,
-    created,
-    duplicateError,
-    ensureConnection,
-    handleError,
-    revalidateContentPaths,
-    timestamps,
-} from '../../../utils';
-import type { BlogCreateInput } from './types';
+import Content from '@/server/models/Content';
+import { created, error, handleError, timestamps } from '../../../utils/helper';
+import { buildSeo, getAdminId, revalidateBlogPaths } from '../../shared';
+import { isDuplicateSlugError, isValidPublishStatus } from './helpers';
+import type { IBlogCreateInput } from './types';
 
-// ============================================================
-// Server Action
-// ============================================================
+// ========================================================
+// Create
+// ========================================================
 
-export async function createBlog(
-    input: BlogCreateInput,
-): Promise<IApiResponse<string>> {
+export const createBlog = async (input: IBlogCreateInput): Promise<IApiResponse<string>> => {
     try {
-        await ensureConnection();
+        const publishStatus: PublishStatusType = input.publishStatus ?? PUBLISH_STATUS.DRAFT;
+        if (!isValidPublishStatus(publishStatus)) return error('Invalid publish status', 400);
 
-        // Check uniqueness
-        const existing = await Content.findOne({
-            type: 'blog',
-            slug: input.slug,
-        }).lean();
-        if (existing) return duplicateError('A blog post with this slug');
+        await connectDB();
+
+        const admin = await getAdminId();
+        if (!admin.success) return admin;
 
         const now = timestamps();
-        const blog: Omit<IBlog, '_id'> = {
+        const createdBlog = await Content.create({
             type: 'blog',
             slug: input.slug,
             title: input.title,
             description: input.description,
             body: input.body,
             tags: input.tags ?? [],
-            coverImage: input.coverImage || null,
+            coverImage: input.coverImage ?? null,
             readingTime: input.readingTime ?? calculateReadingTime(input.body),
-            published: false,
-            publishedAt: null,
-            scheduledAt: null,
-            featured: false,
-            seo: buildSeoMetadata(input.seo ?? null),
+            publishStatus,
+            publishedAt: publishStatus === PUBLISH_STATUS.PUBLISHED ? new Date() : null,
+            featured: input.featured ?? false,
+            seo: buildSeo(input.seo),
+            createdBy: admin.data,
+            updatedBy: admin.data,
             ...now,
-        };
+        });
 
-        const doc = await Content.create(blog);
-        revalidateContentPaths('blog', input.slug);
-
-        return created(doc._id.toString(), 'Blog post created successfully');
+        revalidateBlogPaths(input.slug);
+        return created(createdBlog._id.toString(), 'Blog created successfully');
     } catch (err) {
-        return handleError(err, 'Failed to create blog post');
+        if (isDuplicateSlugError(err)) return error('Blog with this slug already exists', 409);
+        return handleError(err, 'Failed to create blog');
     }
-}
+};
+
+/*
+API Responses:
+- 201: Blog created successfully.
+- 400: Invalid publish status.
+- 401: Unauthorized admin session.
+- 409: Blog slug already exists.
+- 500: Unexpected server/database error.
+*/

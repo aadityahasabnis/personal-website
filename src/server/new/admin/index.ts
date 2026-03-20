@@ -1,11 +1,5 @@
-/**
- * Admin Actions – Barrel Export
- *
- * Top-level re-export for all admin server actions.
- */
-
-// Content (articles, blogs, projects)
 export * from './content';
+export * from './shared';
+export * from './subtopic';
+export * from './topic';
 
-// Settings (site, SEO, social, password)
-export * from './settings';

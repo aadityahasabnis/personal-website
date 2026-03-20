@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { deleteTopic, updateTopic } from '@/server/new/new/admin/topic';
+import { deleteTopic, updateTopic } from '@/server/new/admin/topic';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 

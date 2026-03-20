@@ -1,191 +1,112 @@
 'use server';
 
-/**
- * Publish / Unpublish Article – Admin Server Actions
- *
- * Uses Mongoose document finders + instance methods for publish/unpublish/schedule.
- * Uses Content model directly for toggle/featured/reorder operations.
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import {
-    Content,
-    ensureConnection,
-    findArticle,
-    findArticleDoc,
-    handleError,
-    notFoundError,
-    ok,
-    okVoid,
-    revalidateContentPaths,
-    updateContentCounts,
-} from '../../../utils';
+import { connectDB } from '@/lib/db/connectDB';
+import Content from '@/server/models/Content';
+import Subtopic from '@/server/models/Subtopic';
+import Topic from '@/server/models/Topic';
+import { ObjectId } from 'mongodb';
+import mongoose from 'mongoose';
+import { error, handleError, success, updatedNow } from '../../../utils/helper';
+import { revalidateArticlePaths } from '../../shared';
 
-// ============================================================
-// Publish
-// ============================================================
+interface IArticlePublishBase {
+    _id: ObjectId;
+    slug: string;
+    topicId: ObjectId;
+    subtopicId: ObjectId | null;
+    publishStatus: PublishStatusType;
+}
 
-export async function publishArticle(
-    topicSlug: string,
-    slug: string,
-): Promise<IApiResponse<void>> {
+const isPublishedArticle = (article: IArticlePublishBase): boolean => article.publishStatus === PUBLISH_STATUS.PUBLISHED;
+
+// ========================================================
+// Status Change
+// ========================================================
+
+export const changeArticlePublishStatus = async (
+    articleId: string,
+    nextStatus: PublishStatusType,
+): Promise<IApiResponse<boolean>> => {
     try {
-        const article = await findArticle(topicSlug, slug);
-        if (!article) return notFoundError('Article');
+        if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
+        if (!Object.values(PUBLISH_STATUS).includes(nextStatus)) return error('Invalid publish status', 400);
 
-        if (article.published) {
-            return okVoid('Article is already published');
+        await connectDB();
+
+        const article = await Content.findOne({
+            type: 'article',
+            _id: articleId,
+        }).select('_id slug topicId subtopicId publishStatus').lean<IArticlePublishBase | null>();
+
+        if (!article) return error('Article not found', 404);
+        if (article.publishStatus === nextStatus) {
+            return success(true, `Article already ${nextStatus}`);
         }
 
-        // Use document finder + instance method
-        const doc = await findArticleDoc(topicSlug, slug);
-        if (!doc) return notFoundError('Article');
-        await doc.publish();
+        const topic = await Topic.findById(article.topicId).select('slug').lean();
+        const wasPublished = isPublishedArticle(article);
+        const willBePublished = nextStatus === PUBLISH_STATUS.PUBLISHED;
+        const nextPublishedAt = !wasPublished && willBePublished
+            ? new Date()
+            : wasPublished && !willBePublished
+                ? null
+                : undefined;
 
-        // Increment denormalized counts
-        await updateContentCounts(topicSlug, article.subtopicSlug, 1);
+        const txnSession = await mongoose.startSession();
+        try {
+            await txnSession.withTransaction(async () => {
+                await Content.updateOne(
+                    { _id: article._id },
+                    {
+                        $set: {
+                            publishStatus: nextStatus,
+                            publishedAt: nextPublishedAt,
+                            ...updatedNow(),
+                        },
+                    },
+                    { session: txnSession }
+                );
 
-        revalidateContentPaths('article', slug, topicSlug);
-
-        return okVoid('Article published successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to publish article');
-    }
-}
-
-// ============================================================
-// Unpublish
-// ============================================================
-
-export async function unpublishArticle(
-    topicSlug: string,
-    slug: string,
-): Promise<IApiResponse<void>> {
-    try {
-        const article = await findArticle(topicSlug, slug);
-        if (!article) return notFoundError('Article');
-
-        if (!article.published) {
-            return okVoid('Article is already unpublished');
+                if (wasPublished !== willBePublished) {
+                    const delta = willBePublished ? 1 : -1;
+                    await Promise.all([
+                        Topic.updateOne({ _id: article.topicId }, { $inc: { contentCount: delta } }, { session: txnSession }),
+                        article.subtopicId
+                            ? Subtopic.updateOne({ _id: article.subtopicId }, { $inc: { contentCount: delta } }, { session: txnSession })
+                            : Promise.resolve(),
+                    ]);
+                }
+            });
+        } finally {
+            await txnSession.endSession();
         }
 
-        // Use document finder + instance method
-        const doc = await findArticleDoc(topicSlug, slug);
-        if (!doc) return notFoundError('Article');
-        await doc.unpublish();
-
-        // Decrement denormalized counts
-        await updateContentCounts(topicSlug, article.subtopicSlug, -1);
-
-        revalidateContentPaths('article', slug, topicSlug);
-
-        return okVoid('Article unpublished successfully');
+        revalidateArticlePaths(topic?.slug, article.slug);
+        return success(true, `Article status changed to ${nextStatus}`);
     } catch (err) {
-        return handleError(err, 'Failed to unpublish article');
+        return handleError(err, 'Failed to change article status');
     }
-}
+};
 
-// ============================================================
-// Toggle Published
-// ============================================================
+export const setArticlePublished = async (articleId: string): Promise<IApiResponse<boolean>> => {
+    return changeArticlePublishStatus(articleId, PUBLISH_STATUS.PUBLISHED);
+};
 
-export async function toggleArticlePublished(
-    topicSlug: string,
-    slug: string,
-): Promise<IApiResponse<boolean>> {
-    try {
-        const article = await findArticle(topicSlug, slug);
-        if (!article) return notFoundError('Article');
+export const setArticleDraft = async (articleId: string): Promise<IApiResponse<boolean>> => {
+    return changeArticlePublishStatus(articleId, PUBLISH_STATUS.DRAFT);
+};
 
-        if (article.published) {
-            await unpublishArticle(topicSlug, slug);
-            return ok(false, 'Article unpublished');
-        } else {
-            await publishArticle(topicSlug, slug);
-            return ok(true, 'Article published');
-        }
-    } catch (err) {
-        return handleError(err, 'Failed to toggle article published status');
-    }
-}
+export const setArticleArchived = async (articleId: string): Promise<IApiResponse<boolean>> => {
+    return changeArticlePublishStatus(articleId, PUBLISH_STATUS.ARCHIVED);
+};
 
-// ============================================================
-// Toggle Featured
-// ============================================================
-
-export async function toggleArticleFeatured(
-    topicSlug: string,
-    slug: string,
-): Promise<IApiResponse<boolean>> {
-    try {
-        await ensureConnection();
-        const article = await findArticle(topicSlug, slug);
-        if (!article) return notFoundError('Article');
-
-        const newFeatured = !article.featured;
-        await Content.updateOne(
-            { type: 'article', topicSlug, slug },
-            { $set: { featured: newFeatured, updatedAt: new Date() } },
-        );
-
-        revalidateContentPaths('article', slug, topicSlug);
-
-        return ok(newFeatured, newFeatured ? 'Article featured' : 'Article unfeatured');
-    } catch (err) {
-        return handleError(err, 'Failed to toggle article featured status');
-    }
-}
-
-// ============================================================
-// Schedule
-// ============================================================
-
-export async function scheduleArticle(
-    topicSlug: string,
-    slug: string,
-    scheduledAt: Date,
-): Promise<IApiResponse<void>> {
-    try {
-        const doc = await findArticleDoc(topicSlug, slug);
-        if (!doc) return notFoundError('Article');
-
-        await doc.schedule(scheduledAt);
-
-        revalidateContentPaths('article', slug, topicSlug);
-
-        return okVoid('Article scheduled successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to schedule article');
-    }
-}
-
-// ============================================================
-// Reorder
-// ============================================================
-
-export async function reorderArticles(
-    topicSlug: string,
-    subtopicSlug: string | null,
-    slugs: string[],
-): Promise<IApiResponse<void>> {
-    try {
-        if (!slugs.length) return okVoid('Nothing to reorder');
-
-        await ensureConnection();
-
-        const ops = slugs.map((s, index) => ({
-            updateOne: {
-                filter: { type: 'article' as const, topicSlug, slug: s },
-                update: { $set: { order: index, updatedAt: new Date() } },
-            },
-        }));
-
-        await Content.bulkWrite(ops);
-
-        revalidateContentPaths('article', undefined, topicSlug);
-
-        return okVoid('Articles reordered successfully');
-    } catch (err) {
-        return handleError(err, 'Failed to reorder articles');
-    }
-}
+/*
+API Responses:
+- changeArticlePublishStatus/setArticlePublished/setArticleDraft/setArticleArchived
+    - 200: Action completed successfully.
+    - 400: Invalid article id.
+    - 404: Article not found.
+    - 500: Unexpected server/database error.
+*/

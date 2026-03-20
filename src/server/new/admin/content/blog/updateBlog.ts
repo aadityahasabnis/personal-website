@@ -1,69 +1,85 @@
 'use server';
 
-/**
- * Update Blog – Admin Server Action
- */
-
+import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import type { IBlog } from '@/interfaces/schema';
+import { connectDB } from '@/lib/db/connectDB';
 import { calculateReadingTime } from '@/lib/utils';
-import {
-    buildSeoMetadata,
-    cleanUndefined,
-    Content,
-    duplicateError,
-    ensureConnection,
-    findBlog,
-    handleError,
-    notFoundError,
-    okVoid,
-    revalidateContentPaths,
-    updatedNow,
-} from '../../../utils';
-import type { BlogUpdateInput } from './types';
+import Content from '@/server/models/Content';
+import { ObjectId } from 'mongodb';
+import { cleanUndefined, error, handleError, success, updatedNow } from '../../../utils/helper';
+import { buildSeo, getAdminId, revalidateBlogPaths } from '../../shared';
+import { isDuplicateSlugError, isPublishedBlog, isValidPublishStatus, type IBlogActionBase } from './helpers';
+import type { IBlogUpdateInput } from './types';
 
-// ============================================================
-// Server Action
-// ============================================================
+// ========================================================
+// Update
+// ========================================================
 
-export async function updateBlog(
-    slug: string,
-    input: BlogUpdateInput,
-): Promise<IApiResponse<void>> {
+export const updateBlog = async (
+    blogId: string,
+    input: IBlogUpdateInput,
+): Promise<IApiResponse<boolean>> => {
     try {
-        await ensureConnection();
-        const existing = await findBlog(slug);
-        if (!existing) return notFoundError('Blog post');
+        if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
+        if (input.publishStatus && !isValidPublishStatus(input.publishStatus)) return error('Invalid publish status', 400);
 
-        // Check slug conflicts
-        if (input.slug && input.slug !== slug) {
-            const conflict = await Content.findOne({
-                type: 'blog',
-                slug: input.slug,
-            }).lean();
-            if (conflict) return duplicateError('A blog post with this slug');
-        }
+        await connectDB();
 
-        const updateData: Partial<IBlog> = cleanUndefined({
-            ...input,
-            seo: input.seo ? buildSeoMetadata(input.seo) : undefined,
-            coverImage: input.coverImage || undefined,
-            ...updatedNow(),
-            ...(input.body ? { readingTime: calculateReadingTime(input.body) } : {}),
-        }) as Partial<IBlog>;
+        const admin = await getAdminId();
+        if (!admin.success) return admin;
+
+        const blog = await Content.findOne({
+            type: 'blog',
+            _id: blogId,
+        }).select('_id slug publishStatus').lean<Pick<IBlogActionBase, '_id' | 'slug' | 'publishStatus'> | null>();
+
+        if (!blog) return error('Blog not found', 404);
+
+        const currentPublished = isPublishedBlog(blog);
+        const nextPublishStatus: PublishStatusType = input.publishStatus ?? blog.publishStatus;
+        const nextPublished = nextPublishStatus === PUBLISH_STATUS.PUBLISHED;
+        const nextPublishedAt = !currentPublished && nextPublished
+            ? new Date()
+            : currentPublished && !nextPublished
+                ? null
+                : undefined;
 
         await Content.updateOne(
-            { type: 'blog', slug },
-            { $set: updateData },
+            { _id: blog._id },
+            {
+                $set: cleanUndefined({
+                    slug: input.slug,
+                    title: input.title,
+                    description: input.description,
+                    body: input.body,
+                    tags: input.tags,
+                    coverImage: input.coverImage,
+                    readingTime: input.body ? calculateReadingTime(input.body) : input.readingTime,
+                    publishStatus: nextPublishStatus,
+                    publishedAt: nextPublishedAt,
+                    featured: input.featured,
+                    seo: input.seo ? buildSeo(input.seo) : undefined,
+                    updatedBy: admin.data,
+                    ...updatedNow(),
+                }),
+            }
         );
 
-        revalidateContentPaths('blog', slug);
-        if (input.slug && input.slug !== slug) {
-            revalidateContentPaths('blog', input.slug);
-        }
-
-        return okVoid('Blog post updated successfully');
+        revalidateBlogPaths(blog.slug);
+        if (input.slug && input.slug !== blog.slug) revalidateBlogPaths(input.slug);
+        return success(true, 'Blog updated successfully');
     } catch (err) {
-        return handleError(err, 'Failed to update blog post');
+        if (isDuplicateSlugError(err)) return error('Blog with this slug already exists', 409);
+        return handleError(err, 'Failed to update blog');
     }
-}
+};
+
+/*
+API Responses:
+- 200: Blog updated successfully.
+- 400: Invalid blog id or publish status.
+- 401: Unauthorized admin session.
+- 404: Blog not found.
+- 409: Blog slug conflict.
+- 500: Unexpected server/database error.
+*/

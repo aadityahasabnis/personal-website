@@ -1,72 +1,91 @@
 'use server';
 
-/**
- * Create Project – Admin Server Action
- */
-
+import { PUBLISH_STATUS, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import type { IProject } from '@/interfaces/schema';
+import { connectDB } from '@/lib/db/connectDB';
+import { calculateReadingTime } from '@/lib/utils';
+import Content from '@/server/models/Content';
+import { cleanUndefined, created, error, handleError, timestamps } from '../../../utils/helper';
+import { buildSeo, getAdminId, revalidateProjectPaths } from '../../shared';
 import {
-    buildSeoMetadata,
-    Content,
-    created,
-    duplicateError,
-    ensureConnection,
-    handleError,
-    revalidateContentPaths,
-    timestamps,
-} from '../../../utils';
-import type { ProjectCreateInput } from './types';
+    invalidDateToken,
+    isDuplicateSlugError,
+    isValidProjectStatus,
+    isValidPublishStatus,
+    parseOptionalDate,
+} from './helpers';
+import type { IProjectCreateInput } from './types';
 
-// ============================================================
-// Server Action
-// ============================================================
+// ========================================================
+// Create
+// ========================================================
 
-export async function createProject(
-    input: ProjectCreateInput,
-): Promise<IApiResponse<string>> {
+export const createProject = async (input: IProjectCreateInput): Promise<IApiResponse<string>> => {
     try {
-        await ensureConnection();
+        const publishStatus: PublishStatusType = input.publishStatus ?? PUBLISH_STATUS.DRAFT;
+        if (!isValidPublishStatus(publishStatus)) return error('Invalid publish status', 400);
 
-        // Check uniqueness
-        const existing = await Content.findOne({
-            type: 'project',
-            slug: input.slug,
-        }).lean();
-        if (existing) return duplicateError('A project with this slug');
+        const projectStatus: ProjectStatusType | null = input.status ?? null;
+        if (projectStatus !== null && !isValidProjectStatus(projectStatus)) return error('Invalid project status', 400);
+
+        const startDate = parseOptionalDate(input.startDate);
+        if (startDate === invalidDateToken) return error('Invalid start date', 400);
+
+        const completedDate = parseOptionalDate(input.completedDate);
+        if (completedDate === invalidDateToken) return error('Invalid completed date', 400);
+
+        if (startDate instanceof Date && completedDate instanceof Date && completedDate < startDate) {
+            return error('Completed date cannot be before start date', 400);
+        }
+
+        await connectDB();
+
+        const admin = await getAdminId();
+        if (!admin.success) return admin;
 
         const now = timestamps();
-        const project: Omit<IProject, '_id'> = {
-            type: 'project',
-            slug: input.slug,
-            title: input.title,
-            description: input.description,
-            body: input.body,
-            tags: input.tags ?? [],
-            coverImage: input.coverImage || null,
-            readingTime: 0,
-            published: false,
-            publishedAt: null,
-            scheduledAt: null,
-            featured: false,
-            seo: buildSeoMetadata(input.seo ?? null),
-            techStack: input.techStack,
-            githubUrl: input.githubUrl || null,
-            liveUrl: input.liveUrl || null,
-            demoVideo: input.demoVideo || null,
-            gallery: input.gallery ?? [],
-            status: input.status ?? 'In Progress',
-            startDate: input.startDate ?? null,
-            completedDate: input.completedDate ?? null,
-            order: input.order ?? 0,
-            ...now,
-        };
+        const createdProject = await Content.create(
+            cleanUndefined({
+                type: 'project',
+                slug: input.slug,
+                title: input.title,
+                description: input.description,
+                body: input.body,
+                tags: input.tags ?? [],
+                coverImage: input.coverImage ?? null,
+                readingTime: input.readingTime ?? calculateReadingTime(input.body),
+                publishStatus,
+                publishedAt: publishStatus === PUBLISH_STATUS.PUBLISHED ? new Date() : null,
+                featured: input.featured ?? false,
+                seo: buildSeo(input.seo),
+                techStack: input.techStack ?? [],
+                githubUrl: input.githubUrl ?? null,
+                liveUrl: input.liveUrl ?? null,
+                demoVideo: input.demoVideo ?? null,
+                gallery: input.gallery ?? [],
+                status: projectStatus,
+                startDate: startDate ?? null,
+                completedDate: completedDate ?? null,
+                order: input.order ?? 0,
+                createdBy: admin.data,
+                updatedBy: admin.data,
+                ...now,
+            })
+        );
 
-        const doc = await Content.create(project);
-        revalidateContentPaths('project', input.slug);
-
-        return created(doc._id.toString(), 'Project created successfully');
+        revalidateProjectPaths(input.slug);
+        return created(createdProject._id.toString(), 'Project created successfully');
     } catch (err) {
+        if (isDuplicateSlugError(err)) return error('Project with this slug already exists', 409);
         return handleError(err, 'Failed to create project');
     }
-}
+};
+
+/*
+API Responses:
+- 201: Project created successfully.
+- 400: Invalid publish status/project status/date input.
+- 401: Unauthorized admin session.
+- 409: Project slug already exists.
+- 500: Unexpected server/database error.
+*/

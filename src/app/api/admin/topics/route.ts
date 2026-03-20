@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ITopicTableQuery } from '@/server/new/new/admin/topic';
-import { createTopic, getTopicForEdit, getTopics } from '@/server/new/new/admin/topic';
+import type { ITopicTableQuery } from '@/server/new/admin/topic';
+import { createTopic, getTopicForEdit, getTopics } from '@/server/new/admin/topic';
 
 import { parseBooleanQuery, parseJsonBody, requireAdmin, toHttp } from './_shared';
 

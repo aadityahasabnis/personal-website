@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import type { ISubtopicTableQuery } from '@/server/new/new/admin/subtopic';
-import { createSubtopic, getSubtopicForEdit, getSubtopics } from '@/server/new/new/admin/subtopic';
+import type { ISubtopicTableQuery } from '@/server/new/admin/subtopic';
+import { createSubtopic, getSubtopicForEdit, getSubtopics } from '@/server/new/admin/subtopic';
 
 import { parseBooleanQuery, parseJsonBody, requireAdmin, toHttp } from './_shared';
 

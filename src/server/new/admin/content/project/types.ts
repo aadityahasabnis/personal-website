@@ -1,65 +1,68 @@
-/**
- * Admin Project – Input Types
- *
- * Derived from schema.ts interfaces using Pick/Omit/Partial.
- * No Zod — validation is handled at the action level.
- */
+import type { ProjectStatusType, PublishStatusType } from '@/constants/schemaConstants';
+import type { ISeoMetadata } from '@/interfaces/schema';
+import type { ITableQueryParams } from '../../shared';
 
-import type { IProject, ISeoMetadata, ProjectStatus } from '@/interfaces/schema';
+// ========================================================
+// Project Types
+// ========================================================
 
-// ============================================================
-// Create Input
-// ============================================================
-
-/**
- * Fields the client provides when creating a project.
- * Auto-generated fields (_id, timestamps, published state) are excluded.
- */
-export type ProjectCreateInput = {
+export interface IProjectCreateInput {
     slug: string;
     title: string;
     description: string;
     body: string;
-    techStack: string[];
-    status?: ProjectStatus;
     tags?: string[];
     coverImage?: string | null;
+    readingTime?: number;
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
+    seo?: Partial<ISeoMetadata> | null;
+
+    techStack?: string[];
     githubUrl?: string | null;
     liveUrl?: string | null;
     demoVideo?: string | null;
     gallery?: string[];
-    startDate?: Date | null;
-    completedDate?: Date | null;
+    status?: ProjectStatusType | null;
+    startDate?: string | Date | null;
+    completedDate?: string | Date | null;
     order?: number;
-    seo?: Partial<ISeoMetadata> | null;
-};
+}
 
-// ============================================================
-// Update Input
-// ============================================================
+export type IProjectUpdateInput = Partial<IProjectCreateInput>;
 
-/**
- * All user-editable fields are optional for partial updates.
- */
-export type ProjectUpdateInput = Partial<
-    Pick<
-        IProject,
-        | 'slug'
-        | 'title'
-        | 'description'
-        | 'body'
-        | 'tags'
-        | 'coverImage'
-        | 'techStack'
-        | 'githubUrl'
-        | 'liveUrl'
-        | 'demoVideo'
-        | 'gallery'
-        | 'status'
-        | 'startDate'
-        | 'completedDate'
-        | 'order'
-    >
-> & {
-    seo?: Partial<ISeoMetadata> | null;
-};
+export interface IProjectTableQuery extends ITableQueryParams {
+    publishStatus?: PublishStatusType;
+    featured?: boolean;
+    status?: ProjectStatusType;
+}
+
+export interface IProjectRow {
+    id: string;
+    slug: string;
+    title: string;
+    description: string;
+    coverImage: string | null;
+
+    techStack: string[];
+    githubUrl: string | null;
+    liveUrl: string | null;
+    status: ProjectStatusType | null;
+
+    publishStatus: PublishStatusType;
+    featured: boolean;
+    order: number;
+    readingTime: number;
+    publishedAt: string | null;
+    updatedAt: string;
+}
+
+export interface IProjectEdit extends IProjectRow {
+    body: string;
+    tags: string[];
+    demoVideo: string | null;
+    gallery: string[];
+    startDate: string | null;
+    completedDate: string | null;
+    seo: ISeoMetadata | null;
+}
