@@ -214,13 +214,17 @@ Current execution scope:
 
 ### Active Workstream SA1 - Public read server-action contract hardening
 
+Status:
+
+- Implemented on 2026-03-21.
+
 Goal:
 
 - Enforce the public read contract uniformly across article/blog/project server actions.
 
 Current gap:
 
-- Core actions exist, but cross-domain contract enforcement (sorting/pagination/shape parity) is not yet validated as one standard.
+- Closed for article/blog/project domains.
 
 Plan:
 
@@ -233,6 +237,16 @@ Deliverables:
 - Cross-domain read-contract checklist implemented and documented.
 - Uniform read behavior for by-path, by-id, listing, and static-path actions.
 
+Implementation notes:
+
+- Added `src/server/new/public/content/shared/` helper layer for stable sorting, published-match builders, and contract declaration helpers.
+- Added domain-level read contract declarations in:
+    - `src/server/new/public/content/article/index.ts`
+    - `src/server/new/public/content/blog/index.ts`
+    - `src/server/new/public/content/project/index.ts`
+- Added global contract registry in `src/server/new/public/content/readContractChecks.ts`.
+- Added read contract checklist: `src/server/new/public/content/READ_CONTRACT_CHECKLIST.md`.
+
 Acceptance criteria:
 
 - Read-contract parity verified for article/blog/project server-action modules.
@@ -240,13 +254,17 @@ Acceptance criteria:
 
 ### Active Workstream SA2 - Shared server-action helper commonization
 
+Status:
+
+- Implemented on 2026-03-21.
+
 Goal:
 
 - Reduce repeated read-helper logic in public server actions and keep behavior centralized.
 
 Current gap:
 
-- Repeated validation/mapping/pagination logic exists across article/blog/project action modules.
+- Closed for the public content read surface.
 
 Plan:
 
@@ -259,6 +277,12 @@ Deliverables:
 - Shared read-helper layer adopted by all public content server-action domains.
 - Reduced duplication across domain action modules.
 
+Implementation notes:
+
+- Centralized content read helpers now live under `src/server/new/public/content/shared/`.
+- Article by-path and by-id detail responses are now mapped through one shared detail mapper path.
+- Blog/project read actions now use shared published-content matching and deterministic sorting helpers.
+
 Acceptance criteria:
 
 - Shared helpers are used by all three content domains.
@@ -266,13 +290,17 @@ Acceptance criteria:
 
 ### Active Workstream SA3 - Dynamic engagement server-action hardening
 
+Status:
+
+- Implemented on 2026-03-21.
+
 Goal:
 
 - Strengthen id-based engagement actions for correctness and parity.
 
 Current gap:
 
-- Engagement behavior is implemented but needs explicit hardening against invalid id and state-edge cases.
+- Closed for current public stats/comments action surface.
 
 Plan:
 
@@ -284,6 +312,13 @@ Deliverables:
 
 - Hardened stats/comment server actions under `src/server/new/public/stats/*` and `src/server/new/public/comments/*`.
 - Engagement parity checklist across article/blog/project id routes.
+
+Implementation notes:
+
+- Stats actions now share a unified content-id parse path and preserve stable 400/404 behavior.
+- Public comment list hardening enforces approved-only visibility and deterministic ordering for top-level and reply rows.
+- Parent-reply creation now validates approved parent existence before insert.
+- Added engagement checklist: `src/server/new/public/ENGAGEMENT_CONTRACT_CHECKLIST.md`.
 
 Acceptance criteria:
 
@@ -343,12 +378,10 @@ Acceptance criteria:
 
 ## 5) Immediate Next Backend Tasks (Execution Order)
 
-1. Standardize public read server-action contract behavior across article/blog/project (shape, pagination, sorting, published filtering).
-2. Introduce and adopt shared helper modules for public content server actions under `src/server/new/public/content/shared/`.
-3. Harden id-based engagement server actions for invalid ids, unpublished content, and moderation invariants.
-4. Add unit tests for public read and engagement server actions.
-5. Add revalidation helper tests for publish/update/unpublish path invalidation behavior.
-6. Run typecheck and test suites for server-action focused changes, and log non-server-action backlog separately.
+1. Add unit tests for public read and engagement server actions.
+2. Add revalidation helper tests for publish/update/unpublish path invalidation behavior.
+3. Run typecheck and test suites for server-action focused changes, and log non-server-action backlog separately.
+4. Add contract tests that fail on read-contract drift (domain exports and payload shape invariants).
 
 Execution notes:
 

@@ -3,7 +3,7 @@
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import { error, handleError, success } from '../../../utils/helper';
-import { toObjectIdOrNull } from '../../shared';
+import { parsePublicContentObjectId } from '../shared';
 import { getPublishedProjectByObjectId, toPublicProjectDetail } from './shared';
 import type { IPublicProjectDetail } from './types';
 
@@ -15,7 +15,7 @@ export const getPublishedProjectById = async (
     contentId: string,
 ): Promise<IApiResponse<IPublicProjectDetail | null>> => {
     try {
-        const objectId = toObjectIdOrNull(contentId);
+        const objectId = parsePublicContentObjectId(contentId);
         if (!objectId) return error('Invalid content id', 400);
 
         await connectDB();

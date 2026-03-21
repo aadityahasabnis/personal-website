@@ -1,10 +1,10 @@
 'use server';
 
-import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { handleError, success } from '../../../utils/helper';
+import { buildPublishedContentMatch, toStableSort } from '../shared';
 import type { IBlogStaticPath } from './types';
 
 // ========================================================
@@ -15,11 +15,8 @@ export const getPublishedBlogStaticPaths = async (): Promise<IApiResponse<IBlogS
     try {
         await connectDB();
 
-        const rows = await Content.find({
-            type: 'blog',
-            publishStatus: PUBLISH_STATUS.PUBLISHED,
-        })
-            .sort({ slug: 1 })
+        const rows = await Content.find(buildPublishedContentMatch('blog'))
+            .sort(toStableSort({ slug: 1 }))
             .select('_id slug')
             .lean<{ _id: { toString(): string }; slug: string }[]>();
 

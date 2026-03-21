@@ -1,10 +1,10 @@
 'use server';
 
-import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { handleError, success } from '../../../utils/helper';
+import { buildPublishedContentMatch } from '../shared';
 import type { IArticleStaticPath } from './types';
 
 // ========================================================
@@ -21,11 +21,7 @@ export const getPublishedArticleStaticPaths = async (): Promise<IApiResponse<IAr
             articleSlug: string;
         }>([
             {
-                $match: {
-                    type: 'article',
-                    publishStatus: PUBLISH_STATUS.PUBLISHED,
-                    topicId: { $ne: null },
-                },
+                $match: buildPublishedContentMatch('article', { topicId: { $ne: null } }),
             },
             {
                 $lookup: {

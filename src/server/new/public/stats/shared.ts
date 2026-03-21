@@ -1,7 +1,12 @@
 import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
+import { parsePublicContentObjectId } from '../content/shared';
 import type { IContentStatsSnapshot } from './types';
+
+export const parseStatsContentObjectId = (contentId: string): ObjectId | null => {
+    return parsePublicContentObjectId(contentId);
+};
 
 export const ensurePublishedContent = async (contentId: ObjectId): Promise<boolean> => {
     const row = await Content.findOne({

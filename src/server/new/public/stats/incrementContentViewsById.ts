@@ -3,9 +3,8 @@
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import PageStats from '@/server/models/PageStats';
-import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
-import { ensurePublishedContent, toStatsSnapshot } from './shared';
+import { ensurePublishedContent, parseStatsContentObjectId, toStatsSnapshot } from './shared';
 import type { IContentStatsSnapshot } from './types';
 
 // ========================================================
@@ -16,10 +15,10 @@ export const incrementContentViewsById = async (
     contentId: string,
 ): Promise<IApiResponse<IContentStatsSnapshot>> => {
     try {
-        if (!ObjectId.isValid(contentId)) return error('Invalid content id', 400);
+        const objectId = parseStatsContentObjectId(contentId);
+        if (!objectId) return error('Invalid content id', 400);
         await connectDB();
 
-        const objectId = new ObjectId(contentId);
         const canRead = await ensurePublishedContent(objectId);
         if (!canRead) return error('Published content not found', 404);
 

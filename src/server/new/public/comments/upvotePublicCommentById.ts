@@ -3,9 +3,14 @@
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Comment from '@/server/models/Comment';
-import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
-import { ensurePublishedContent, mapComment, type ICommentLean } from './shared';
+import {
+    ensurePublishedContent,
+    mapComment,
+    parseCommentContentObjectId,
+    parseCommentObjectId,
+    type ICommentLean,
+} from './shared';
 import type { IPublicCommentNode } from './types';
 
 // ========================================================
@@ -17,18 +22,20 @@ export const upvotePublicCommentById = async (
     commentId: string,
 ): Promise<IApiResponse<IPublicCommentNode>> => {
     try {
-        if (!ObjectId.isValid(contentId)) return error('Invalid content id', 400);
-        if (!ObjectId.isValid(commentId)) return error('Invalid comment id', 400);
+        const contentObjectId = parseCommentContentObjectId(contentId);
+        if (!contentObjectId) return error('Invalid content id', 400);
+
+        const commentObjectId = parseCommentObjectId(commentId);
+        if (!commentObjectId) return error('Invalid comment id', 400);
 
         await connectDB();
 
-        const contentObjectId = new ObjectId(contentId);
         const canRead = await ensurePublishedContent(contentObjectId);
         if (!canRead) return error('Published content not found', 404);
 
         const updated = await Comment.findOneAndUpdate(
             {
-                _id: new ObjectId(commentId),
+                _id: commentObjectId,
                 contentId: contentObjectId,
                 approved: true,
             },

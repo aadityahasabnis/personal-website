@@ -1,104 +1,209 @@
 # Public Article Server Actions Guide
 
-## Purpose
+## 1) Purpose and scope
 
-This module provides public-read article server actions for static-first delivery:
+This module is the canonical public read backend for article pages.
 
-- topic listing for `/articles`
-- topic tree for `/articles/:topicSlug`
-- article detail for `/articles/:topicSlug/:articleSlug`
-- static params source for SSG/ISR
+Supported public surfaces:
 
-These actions are read-only and optimized for published content.
+- articles hub: /articles
+- topic tree page: /articles/:topicSlug
+- article detail page: /articles/:topicSlug/:articleSlug
+- static path discovery for SSG/ISR
+- id-based detail lookup for adapters and integration tests
 
-## Canonical Usage
+The module is read-only and publish-state safe.
 
-- Use directly in server contexts:
-    - page-level data loading in app routes under `src/app/(public)/articles/**`
-    - shared read facade exports under `src/server/new/public` for metadata consumers (for example sitemap/rss)
-- Do not use API fetches from server components for primary content rendering.
-- API route handlers are optional compatibility adapters and should delegate to these actions.
+## 2) Contract snapshot
 
-## Action Map
+Mandatory article read actions:
 
-### `getPublishedArticleTopics(params)`
+- getPublishedArticleByPath
+- getPublishedArticleById
+- getPublishedArticleTopics
+- getPublishedArticleStaticPaths
 
-- Use for the `/articles` hub page.
-- Returns published topics with `contentCount > 0`.
-- Backed by Topic model fields: `published`, `featured`, `order`, `updatedAt`, `contentCount`.
+Contract declaration and checks:
 
-### `getPublishedTopicTreeBySlug(topicSlug)`
+- Local contract declaration: src/server/new/public/content/article/index.ts
+- Cross-domain registry: src/server/new/public/content/readContractChecks.ts
+- Shared contract helpers: src/server/new/public/content/shared/contract.ts
+- Cross-domain checklist: src/server/new/public/content/READ_CONTRACT_CHECKLIST.md
 
-- Use for `/articles/:topicSlug` topic page (accordion/subtopic sections).
-- Returns topic summary + published subtopic sections + article cards + uncategorized articles.
-- Uses Topic + Subtopic + Content models in one composed read.
+Why this exists:
 
-### `getPublishedArticleByPath(topicSlug, articleSlug)`
+- Prevents action-surface drift when teams refactor domain internals.
+- Keeps page routes, metadata builders, and API adapters aligned to one stable read interface.
 
-- Use for `/articles/:topicSlug/:articleSlug` page payload.
-- Returns full public article detail including `id` (content `_id`) for stats/comments coupling.
+## 3) Exact implementation locations
 
-### `getPublishedArticleById(contentId)`
+Core actions:
 
-- Use for API testing and id-based lookups.
-- Returns same detail shape by content `_id`.
+- src/server/new/public/content/article/getPublishedArticleByPath.ts
+- src/server/new/public/content/article/getPublishedArticleById.ts
+- src/server/new/public/content/article/getPublishedArticleTopics.ts
+- src/server/new/public/content/article/getPublishedTopicTreeBySlug.ts
+- src/server/new/public/content/article/getPublishedArticleStaticPaths.ts
 
-### `getPublishedArticleStaticPaths()`
+Shared domain helpers:
 
-- Use for `generateStaticParams()` source data.
-- Returns `{ contentId, topicSlug, articleSlug }[]` for static generation and id bridging.
+- src/server/new/public/content/article/shared.ts
 
-## Frontend Integration (Target)
+Cross-domain shared helpers used by article:
 
-Use these actions as the single read contract for article pages and metadata generation.
+- src/server/new/public/content/shared/helpers.ts
 
-Required migration targets:
+## 4) Action-by-action behavior and guarantees
 
-1. `src/app/(public)/articles/page.tsx`
-    - Replace topic queries with `getPublishedArticleTopics`.
-2. `src/app/(public)/articles/[topicSlug]/page.tsx`
-    - Replace topic-content query with `getPublishedTopicTreeBySlug`.
-3. `src/app/(public)/articles/[topicSlug]/[articleSlug]/page.tsx`
-    - Replace article lookup with `getPublishedArticleByPath`.
-    - Use returned `article.id` for views/likes/comments actions and API tests.
+### getPublishedArticleTopics(params)
 
-## Adapter Endpoints (Optional)
+Use when:
 
-HTTP endpoints may exist for QA/Postman/integration and must remain thin wrappers:
+- Rendering /articles hub listings.
 
-- `GET /api/content/articles/topics`
-- `GET /api/content/articles/topics/:topicSlug`
-- `GET /api/content/articles/:topicSlug/:articleSlug`
-- `GET /api/content/articles/id/:contentId`
-- `GET /api/content/articles/static-paths`
+Guarantees:
 
-## Model and Index Alignment
+- Pagination normalized through normalizePagination.
+- Deterministic sort via shared stable sort helper.
+- Only published topics with contentCount > 0.
 
-The actions are aligned with these models:
+Why:
 
-- Content: `type`, `publishStatus`, `topicId`, `subtopicId`, `slug`, `order`, `publishedAt`
-- Topic: `published`, `featured`, `order`, `contentCount`, `updatedAt`
-- Subtopic: `topicId`, `published`, `order`, `contentCount`, `updatedAt`
+- Deterministic ordering preserves pagination consistency across repeated reads.
 
-Added performance indexes for public reads:
+### getPublishedTopicTreeBySlug(topicSlug)
 
-- `Content`: `{ type, topicId, publishStatus, subtopicId, order, publishedAt }`
-- `Topic`: `{ published, featured, order, updatedAt }`
-- `Subtopic`: `{ topicId, published, order, updatedAt }`
+Use when:
 
-## Static Delivery Strategy (SSG + ISR)
+- Rendering /articles/:topicSlug pages with grouped subtopic sections.
 
-1. Use `generateStaticParams()` from `getPublishedArticleStaticPaths()`.
-2. Keep page-level `revalidate` (for example, 600 for hub, 3600 for topic/article).
-3. Trigger on-demand revalidation from admin publish/update flows.
-4. Avoid runtime API fetch for primary article/topic content in server pages.
-5. Keep only dynamic islands (views/likes/comments) as runtime endpoints/actions.
-6. Prefer shared server facade imports for sitemap/rss over legacy query modules.
+Guarantees:
 
-## Quick Decision Guide
+- Topic must be published.
+- Subtopics are published-only.
+- Articles are publish-state filtered.
+- Output structure is stable: topic + subtopics + uncategorizedArticles.
 
-- Build `/articles` list: `getPublishedArticleTopics`
-- Build `/articles/:topicSlug`: `getPublishedTopicTreeBySlug`
-- Build `/articles/:topicSlug/:articleSlug`: `getPublishedArticleByPath`
-- Build static params: `getPublishedArticleStaticPaths`
-- Test by id payload: `getPublishedArticleById`
+Why:
+
+- Topic tree shape must remain stable for server-rendered templates and tests.
+
+### getPublishedArticleByPath(topicSlug, articleSlug)
+
+Use when:
+
+- Rendering canonical article detail route.
+
+Guarantees:
+
+- Published topic + published article required.
+- Response envelope matches by-id detail shape through one shared mapper.
+
+Why:
+
+- Path and id lookups must not diverge in payload shape.
+
+### getPublishedArticleById(contentId)
+
+Use when:
+
+- API adapter lookup.
+- Integration tests and id-bridged clients.
+
+Guarantees:
+
+- Shared content-id parser.
+- Stable 400 on invalid id.
+- Returns same detail envelope as by-path action.
+
+Why:
+
+- Id adapters are common integration points and must mirror page payload contracts.
+
+### getPublishedArticleStaticPaths()
+
+Use when:
+
+- generateStaticParams.
+- sitemap/feed static route expansion.
+
+Guarantees:
+
+- Publish-state filtering.
+- Deterministic static path order.
+
+Why:
+
+- Static generation must be reproducible and cache-stable.
+
+## 5) Professional integration examples
+
+### A) Server page integration (primary)
+
+Use in:
+
+- src/app/(public)/articles/[topicSlug]/[articleSlug]/page.tsx
+
+Example:
+
+```ts
+const result = await getPublishedArticleByPath(topicSlug, articleSlug);
+if (!result.success || !result.data) notFound();
+
+const article = result.data;
+// article.id can be passed to stats/comment server actions
+```
+
+### B) SSG static params integration
+
+Use in:
+
+- generateStaticParams for article routes
+
+Example:
+
+```ts
+const pathsResult = await getPublishedArticleStaticPaths();
+if (!pathsResult.success) return [];
+
+return pathsResult.data.map((row) => ({
+    topicSlug: row.topicSlug,
+    articleSlug: row.articleSlug,
+}));
+```
+
+### C) Thin API adapter integration
+
+Use in:
+
+- src/app/api/content/articles/\*\*
+
+Example adapter pattern:
+
+```ts
+export const GET = async (_request: Request, context: { params: Promise<{ contentId: string }> }) => {
+    const { contentId } = await context.params;
+    return toHttp(await getPublishedArticleById(contentId));
+};
+```
+
+## 6) Required usage rules
+
+1. Use server actions directly in server render flows.
+2. Keep API routes as wrappers only.
+3. Do not reimplement publish-state filters in page code.
+4. Do not add ad-hoc query utilities outside this contract for public reads.
+5. Preserve stable sort keys for all paginated reads.
+
+## 7) Error semantics
+
+- Invalid id inputs: 400.
+- Non-existent or unpublished resources: null payload (or adapter-level 404 policy, if needed).
+- Unexpected failures: 500 from handleError.
+
+## 8) Why this architecture is correct
+
+- Static-first pages need deterministic and publish-safe read providers.
+- One shared mapper prevents subtle payload drift between route variants.
+- Contract declarations create explicit guardrails for future refactors.
+- Shared helper reuse lowers duplication and regression risk.

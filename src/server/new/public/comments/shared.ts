@@ -3,6 +3,8 @@ import Comment from '@/server/models/Comment';
 import Content from '@/server/models/Content';
 import { createHash } from 'crypto';
 import { ObjectId } from 'mongodb';
+import { parsePublicContentObjectId } from '../content/shared';
+import { toObjectIdOrNull } from '../shared';
 import type { IPublicCommentNode } from './types';
 
 export interface ICommentLean {
@@ -31,6 +33,14 @@ export const normalizeOptionalString = (value: string | null | undefined): strin
 };
 
 export const hashIp = (ipAddress: string): string => createHash('sha256').update(ipAddress).digest('hex');
+
+export const parseCommentContentObjectId = (contentId: string): ObjectId | null => {
+    return parsePublicContentObjectId(contentId);
+};
+
+export const parseCommentObjectId = (commentId: string): ObjectId | null => {
+    return toObjectIdOrNull(commentId);
+};
 
 export const mapComment = (row: ICommentLean): IPublicCommentNode => ({
     id: row._id.toString(),
@@ -64,6 +74,7 @@ export const findParentCommentById = async (parentId: ObjectId, contentId: Objec
     return Comment.findOne({
         _id: parentId,
         contentId,
+        approved: true,
     })
         .select('_id')
         .lean<{ _id: ObjectId } | null>();

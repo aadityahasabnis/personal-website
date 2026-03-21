@@ -3,9 +3,13 @@
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Comment from '@/server/models/Comment';
-import { ObjectId } from 'mongodb';
 import { error, handleError, normalizePagination, success } from '../../utils/helper';
-import { ensurePublishedContent, mapComment, type ICommentLean } from './shared';
+import {
+    ensurePublishedContent,
+    mapComment,
+    parseCommentContentObjectId,
+    type ICommentLean,
+} from './shared';
 import type { ICommentQuery, IPublicCommentListResult, IPublicCommentNode } from './types';
 
 // ========================================================
@@ -16,16 +20,16 @@ export const getPublicCommentsByContentId = async (
     params: ICommentQuery,
 ): Promise<IApiResponse<IPublicCommentListResult>> => {
     try {
-        if (!ObjectId.isValid(params.contentId)) return error('Invalid content id', 400);
+        const contentId = parseCommentContentObjectId(params.contentId);
+        if (!contentId) return error('Invalid content id', 400);
 
         await connectDB();
-        const contentId = new ObjectId(params.contentId);
 
         const canRead = await ensurePublishedContent(contentId);
         if (!canRead) return error('Published content not found', 404);
 
         const { offset, limit } = normalizePagination(params.pagination);
-        const approvedOnly = params.approvedOnly ?? true;
+        const approvedOnly = true;
 
         const baseMatch: Record<string, unknown> = {
             contentId,
@@ -35,7 +39,7 @@ export const getPublicCommentsByContentId = async (
 
         const [rows, total] = await Promise.all([
             Comment.find(baseMatch)
-                .sort({ createdAt: -1 })
+                .sort({ createdAt: -1, _id: -1 })
                 .skip(offset)
                 .limit(limit)
                 .select('_id contentId parentId author content upvotes replyCount createdAt')
@@ -52,7 +56,7 @@ export const getPublicCommentsByContentId = async (
                 parentId: { $in: parentIds },
                 ...(approvedOnly ? { approved: true } : {}),
             })
-                .sort({ createdAt: 1 })
+                .sort({ createdAt: 1, _id: 1 })
                 .select('_id contentId parentId author content upvotes replyCount createdAt')
                 .lean<ICommentLean[]>();
 

@@ -1,11 +1,11 @@
 'use server';
 
-import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import Subtopic from '@/server/models/Subtopic';
 import { handleError, success } from '../../../utils/helper';
+import { buildPublishedContentMatch, toStableSort } from '../shared';
 import {
     getPublishedTopicBySlug,
     toArticleCard,
@@ -30,15 +30,15 @@ export const getPublishedTopicTreeBySlug = async (
 
         const [subtopics, articles] = await Promise.all([
             Subtopic.find({ topicId: topic._id, published: true })
-                .sort({ order: 1, updatedAt: -1 })
+                .sort(toStableSort({ order: 1, updatedAt: -1 }))
                 .select('_id slug title description order contentCount')
                 .lean<ISubtopicLean[]>(),
-            Content.find({
-                type: 'article',
-                topicId: topic._id,
-                publishStatus: PUBLISH_STATUS.PUBLISHED,
-            })
-                .sort({ subtopicId: 1, order: 1, publishedAt: -1 })
+            Content.find(
+                buildPublishedContentMatch('article', {
+                    topicId: topic._id,
+                })
+            )
+                .sort(toStableSort({ subtopicId: 1, order: 1, publishedAt: -1 }))
                 .select('_id slug title description readingTime order featured publishedAt subtopicId')
                 .lean<IArticleLean[]>(),
         ]);

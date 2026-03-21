@@ -4,13 +4,14 @@ import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants'
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Comment from '@/server/models/Comment';
-import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
 import {
     ensurePublishedContent,
     findParentCommentById,
     hashIp,
     normalizeOptionalString,
+    parseCommentContentObjectId,
+    parseCommentObjectId,
     sanitizeAuthorName,
 } from './shared';
 import type { ICreateCommentInput, IPublicCommentNode } from './types';
@@ -23,11 +24,12 @@ export const createPublicComment = async (
     input: ICreateCommentInput,
 ): Promise<IApiResponse<IPublicCommentNode>> => {
     try {
-        if (!ObjectId.isValid(input.contentId)) return error('Invalid content id', 400);
+        const contentId = parseCommentContentObjectId(input.contentId);
+        if (!contentId) return error('Invalid content id', 400);
 
-        if (typeof input.parentId === 'string' && !ObjectId.isValid(input.parentId)) {
-            return error('Invalid parent comment id', 400);
-        }
+        const parentId =
+            typeof input.parentId === 'string' ? parseCommentObjectId(input.parentId) : null;
+        if (typeof input.parentId === 'string' && !parentId) return error('Invalid parent comment id', 400);
 
         const authorName = sanitizeAuthorName(input.authorName);
         if (!authorName || authorName.length < 2) return error('Author name must be at least 2 characters', 400);
@@ -46,15 +48,12 @@ export const createPublicComment = async (
 
         await connectDB();
 
-        const contentId = new ObjectId(input.contentId);
         const canRead = await ensurePublishedContent(contentId);
         if (!canRead) return error('Published content not found', 404);
 
-        let parentId: ObjectId | null = null;
-        if (typeof input.parentId === 'string') {
-            parentId = new ObjectId(input.parentId);
+        if (parentId) {
             const parent = await findParentCommentById(parentId, contentId);
-            if (!parent) return error('Parent comment not found', 404);
+            if (!parent) return error('Approved parent comment not found', 404);
         }
 
         const created = await Comment.create({

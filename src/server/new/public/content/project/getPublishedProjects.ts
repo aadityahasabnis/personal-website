@@ -1,10 +1,10 @@
 'use server';
 
-import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { handleError, normalizePagination, success } from '../../../utils/helper';
+import { buildPublishedContentMatch, toStableSort } from '../shared';
 import { toPublicProjectListItem, type IProjectLean } from './shared';
 import type { IProjectListQuery, IPublicProjectListItem } from './types';
 
@@ -19,10 +19,7 @@ export const getPublishedProjects = async (
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
-        const match: Record<string, unknown> = {
-            type: 'project',
-            publishStatus: PUBLISH_STATUS.PUBLISHED,
-        };
+        const match: Record<string, unknown> = buildPublishedContentMatch('project');
 
         if (params.featuredOnly === true) {
             match.featured = true;
@@ -33,7 +30,7 @@ export const getPublishedProjects = async (
         }
 
         const rows = await Content.find(match)
-            .sort({ order: 1, featured: -1, updatedAt: -1 })
+            .sort(toStableSort({ order: 1, featured: -1, updatedAt: -1 }))
             .skip(offset)
             .limit(limit)
             .select(

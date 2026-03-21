@@ -1,73 +1,169 @@
 # Public Blog Server Actions Guide
 
-## Purpose
+## 1) Purpose and scope
 
-This module provides public-read blog server actions for static-first delivery:
+This module is the canonical public read backend for blog pages.
 
-- blog listing for `/blogs`
-- blog detail for `/blogs/:blogSlug`
-- id lookup for shared engagement and API adapters
-- static params source for SSG/ISR
+Supported public surfaces:
 
-These actions are read-only and optimized for published content.
+- blogs listing page: /blogs
+- blog detail page: /blogs/:blogSlug
+- id-based detail lookup for adapters/tests
+- static path discovery for SSG/ISR
 
-## Canonical Usage
+The module is read-only and publish-state safe.
 
-- Use directly in server contexts:
-    - page-level data loading in app routes under `src/app/(public)/blogs/**`
-    - shared read facade exports under `src/server/new/public` for metadata and backend composition
-- Do not use API fetches from server components for primary content rendering.
-- API route handlers are optional compatibility adapters and should delegate to these actions.
+## 2) Contract snapshot
 
-## Action Map
+Mandatory blog read actions:
 
-### `getPublishedBlogs(params)`
+- getPublishedBlogByPath
+- getPublishedBlogById
+- getPublishedBlogs
+- getPublishedBlogStaticPaths
 
-- Use for the `/blogs` listing page.
-- Returns published blog cards with optional featured filtering.
+Contract declaration and checks:
 
-### `getPublishedBlogByPath(blogSlug)`
+- Local contract declaration: src/server/new/public/content/blog/index.ts
+- Cross-domain registry: src/server/new/public/content/readContractChecks.ts
+- Shared contract helpers: src/server/new/public/content/shared/contract.ts
+- Cross-domain checklist: src/server/new/public/content/READ_CONTRACT_CHECKLIST.md
 
-- Use for `/blogs/:blogSlug` page payload.
-- Returns full public blog detail including `id` (content `_id`) for stats/comments coupling.
+Why this exists:
 
-### `getPublishedBlogById(contentId)`
+- Keeps listing/detail/static-path behavior consistent with article/project domains.
+- Prevents silent contract drift when internal query code changes.
 
-- Use for id-based read checks and API adapter endpoints.
-- Returns same detail shape by content `_id`.
+## 3) Exact implementation locations
 
-### `getPublishedBlogStaticPaths()`
+Core actions:
 
-- Use for `generateStaticParams()` source data.
-- Returns `{ contentId, blogSlug }[]` for static generation and id bridging.
+- src/server/new/public/content/blog/getPublishedBlogs.ts
+- src/server/new/public/content/blog/getPublishedBlogByPath.ts
+- src/server/new/public/content/blog/getPublishedBlogById.ts
+- src/server/new/public/content/blog/getPublishedBlogStaticPaths.ts
 
-## Adapter Endpoints (Optional)
+Domain helper layer:
 
-HTTP endpoints may exist for QA/Postman/integration and must remain thin wrappers:
+- src/server/new/public/content/blog/shared.ts
 
-- `GET /api/content/blogs`
-- `GET /api/content/blogs/:blogSlug`
-- `GET /api/content/blogs/id/:contentId`
-- `GET /api/content/blogs/static-paths`
+Cross-domain shared helpers used by blog:
 
-Optional engagement adapters (if blogs use shared engagement):
+- src/server/new/public/content/shared/helpers.ts
 
-- `GET|POST /api/content/blogs/id/:contentId/views`
-- `GET|POST /api/content/blogs/id/:contentId/likes`
-- `GET|POST /api/content/blogs/id/:contentId/comments`
-- `POST /api/content/blogs/id/:contentId/comments/:commentId/upvote`
+## 4) Action-by-action behavior and guarantees
 
-## Static Delivery Strategy (SSG + ISR)
+### getPublishedBlogs(params)
 
-1. Use `generateStaticParams()` from `getPublishedBlogStaticPaths()`.
-2. Keep page-level `revalidate` for list/detail routes.
-3. Trigger on-demand revalidation from admin publish/update flows.
-4. Avoid runtime API fetch for primary blog content in server pages.
-5. Keep only dynamic islands (views/likes/comments) as runtime endpoints/actions.
+Use when:
 
-## Quick Decision Guide
+- Rendering /blogs listing page.
 
-- Build `/blogs` list: `getPublishedBlogs`
-- Build `/blogs/:blogSlug`: `getPublishedBlogByPath`
-- Build static params: `getPublishedBlogStaticPaths`
-- Test by id payload: `getPublishedBlogById`
+Guarantees:
+
+- Pagination normalized through normalizePagination.
+- Deterministic sort through shared stable sort helper.
+- Optional featured filter.
+- Published-only rows.
+
+Why:
+
+- Deterministic sorting is required to avoid duplicate/shifted rows across pages.
+
+### getPublishedBlogByPath(blogSlug)
+
+Use when:
+
+- Rendering canonical blog detail page.
+
+Guarantees:
+
+- Published-only lookup by slug.
+- Stable detail envelope for frontend usage.
+
+### getPublishedBlogById(contentId)
+
+Use when:
+
+- Id-based adapters and integration checks.
+
+Guarantees:
+
+- Shared content-id parsing.
+- Stable 400 for invalid ids.
+- Same detail envelope semantics as by-path.
+
+### getPublishedBlogStaticPaths()
+
+Use when:
+
+- generateStaticParams and sitemap/feed expansion.
+
+Guarantees:
+
+- Published-only rows.
+- Deterministic ordering.
+
+## 5) Professional integration examples
+
+### A) Server page integration
+
+Use in:
+
+- src/app/(public)/blogs/page.tsx
+- src/app/(public)/blogs/[blogSlug]/page.tsx
+
+Examples:
+
+```ts
+const listResult = await getPublishedBlogs({
+    pagination: { offset: 0, limit: 30 },
+    featuredOnly: false,
+});
+```
+
+```ts
+const detailResult = await getPublishedBlogByPath(blogSlug);
+if (!detailResult.success || !detailResult.data) notFound();
+```
+
+### B) Static params integration
+
+```ts
+const pathsResult = await getPublishedBlogStaticPaths();
+if (!pathsResult.success) return [];
+
+return pathsResult.data.map((row) => ({ blogSlug: row.blogSlug }));
+```
+
+### C) Thin API adapter pattern
+
+Use in:
+
+- src/app/api/content/blogs/\*\*
+
+```ts
+export const GET = async (_request: Request, context: { params: Promise<{ contentId: string }> }) => {
+    const { contentId } = await context.params;
+    return toHttp(await getPublishedBlogById(contentId));
+};
+```
+
+## 6) Required usage rules
+
+1. Keep page data reads on server actions, not server-side fetch to API routes.
+2. Keep API routes as wrappers only.
+3. Preserve stable listing sort for paginated clients.
+4. Keep publish-state filtering in action layer only.
+
+## 7) Error semantics
+
+- Invalid id inputs: 400.
+- Missing or unpublished rows: null payload (or adapter-specific 404 policy).
+- Unexpected failures: 500 from handleError.
+
+## 8) Why this architecture is correct
+
+- Blog domain now matches article/project read contract exactly.
+- Shared helpers reduce duplicated query guard logic.
+- Contract declaration in local index protects long-term maintainability.

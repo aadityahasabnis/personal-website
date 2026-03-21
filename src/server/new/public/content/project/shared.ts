@@ -1,8 +1,9 @@
-import { PUBLISH_STATUS, type ProjectStatusType } from '@/constants/schemaConstants';
+import type { ProjectStatusType } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import { toIsoOrNull } from '../../shared';
+import { buildPublishedContentMatch } from '../shared';
 import type { IPublicProjectDetail, IPublicProjectListItem } from './types';
 
 export interface IProjectLean {
@@ -60,11 +61,11 @@ export const toPublicProjectDetail = (row: IProjectLean): IPublicProjectDetail =
 });
 
 export const getPublishedProjectBySlug = async (projectSlug: string): Promise<IProjectLean | null> => {
-    return Content.findOne({
-        type: 'project',
-        slug: projectSlug,
-        publishStatus: PUBLISH_STATUS.PUBLISHED,
-    })
+    return Content.findOne(
+        buildPublishedContentMatch('project', {
+            slug: projectSlug,
+        })
+    )
         .select(
             '_id slug title description body html coverImage tags techStack githubUrl liveUrl demoVideo gallery status startDate completedDate order readingTime featured publishedAt updatedAt seo'
         )
@@ -72,11 +73,11 @@ export const getPublishedProjectBySlug = async (projectSlug: string): Promise<IP
 };
 
 export const getPublishedProjectByObjectId = async (projectId: ObjectId): Promise<IProjectLean | null> => {
-    return Content.findOne({
-        type: 'project',
-        _id: projectId,
-        publishStatus: PUBLISH_STATUS.PUBLISHED,
-    })
+    return Content.findOne(
+        buildPublishedContentMatch('project', {
+            _id: projectId,
+        })
+    )
         .select(
             '_id slug title description body html coverImage tags techStack githubUrl liveUrl demoVideo gallery status startDate completedDate order readingTime featured publishedAt updatedAt seo'
         )

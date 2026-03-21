@@ -1,10 +1,10 @@
 'use server';
 
-import { PUBLISH_STATUS } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { handleError, normalizePagination, success } from '../../../utils/helper';
+import { buildPublishedContentMatch, toStableSort } from '../shared';
 import { toPublicBlogListItem, type IBlogLean } from './shared';
 import type { IBlogListQuery, IPublicBlogListItem } from './types';
 
@@ -19,10 +19,7 @@ export const getPublishedBlogs = async (
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
-        const match: Record<string, unknown> = {
-            type: 'blog',
-            publishStatus: PUBLISH_STATUS.PUBLISHED,
-        };
+        const match: Record<string, unknown> = buildPublishedContentMatch('blog');
 
         if (params.featuredOnly === true) {
             match.featured = true;
@@ -30,7 +27,7 @@ export const getPublishedBlogs = async (
 
         const rows = await Content
             .find(match)
-            .sort({ featured: -1, publishedAt: -1, updatedAt: -1 })
+            .sort(toStableSort({ featured: -1, publishedAt: -1, updatedAt: -1 }))
             .skip(offset)
             .limit(limit)
             .select('_id slug title description body html tags coverImage readingTime featured publishedAt updatedAt seo')

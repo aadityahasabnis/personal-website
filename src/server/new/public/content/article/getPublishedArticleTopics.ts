@@ -4,6 +4,7 @@ import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { handleError, normalizePagination, success } from '../../../utils/helper';
+import { toStableSort } from '../shared';
 import { toTopicSummary, type ITopicLean } from './shared';
 import type { IArticleTopicQuery, IPublicTopicSummary } from './types';
 
@@ -25,7 +26,7 @@ export const getPublishedArticleTopics = async (
         if (params.featuredOnly === true) match.featured = true;
 
         const topics = await Topic.find(match)
-            .sort({ featured: -1, order: 1, updatedAt: -1 })
+            .sort(toStableSort({ featured: -1, order: 1, updatedAt: -1 }))
             .skip(offset)
             .limit(limit)
             .select('_id slug title description coverImage order featured subTopicCount contentCount updatedAt')
