@@ -6,7 +6,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 
 // ========================================================
 // Publish
@@ -14,6 +14,9 @@ import { revalidateSubtopicPaths } from '../shared';
 
 export const publishSubtopic = async (subtopicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
 
         await connectDB();
@@ -39,6 +42,9 @@ export const publishSubtopic = async (subtopicId: string): Promise<IApiResponse<
 
 export const unpublishSubtopic = async (subtopicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
 
         await connectDB();

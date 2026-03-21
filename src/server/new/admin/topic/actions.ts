@@ -5,7 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 import { deleteTopic } from './deleteTopic';
 import { publishTopic, unpublishTopic } from './publishTopic';
 
@@ -20,6 +20,9 @@ const parseTopicObjectIds = (topicIds: string[]): ObjectId[] | null => {
 
 export const toggleTopicPublished = async (topicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();
@@ -34,6 +37,9 @@ export const toggleTopicPublished = async (topicId: string): Promise<IApiRespons
 
 export const toggleTopicFeatured = async (topicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();
@@ -56,6 +62,9 @@ export const toggleTopicFeatured = async (topicId: string): Promise<IApiResponse
 
 export const bulkDeleteTopics = async (topicIds: string[], cascade = false): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!topicIds.every((id) => ObjectId.isValid(id))) return error('One or more topic ids are invalid', 400);
 
         for (const topicId of topicIds) {
@@ -70,6 +79,9 @@ export const bulkDeleteTopics = async (topicIds: string[], cascade = false): Pro
 
 export const bulkPublishTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseTopicObjectIds(topicIds);
         if (!objectIds) return error('One or more topic ids are invalid', 400);
 
@@ -87,6 +99,9 @@ export const bulkPublishTopics = async (topicIds: string[]): Promise<IApiRespons
 
 export const bulkUnpublishTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseTopicObjectIds(topicIds);
         if (!objectIds) return error('One or more topic ids are invalid', 400);
 
@@ -104,6 +119,9 @@ export const bulkUnpublishTopics = async (topicIds: string[]): Promise<IApiRespo
 
 export const bulkFeatureTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseTopicObjectIds(topicIds);
         if (!objectIds) return error('One or more topic ids are invalid', 400);
 
@@ -121,6 +139,9 @@ export const bulkFeatureTopics = async (topicIds: string[]): Promise<IApiRespons
 
 export const bulkUnfeatureTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseTopicObjectIds(topicIds);
         if (!objectIds) return error('One or more topic ids are invalid', 400);
 

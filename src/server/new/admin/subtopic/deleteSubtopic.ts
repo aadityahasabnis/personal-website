@@ -9,7 +9,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 
 // ========================================================
 // Delete
@@ -20,6 +20,9 @@ export const deleteSubtopic = async (
     cascade = false,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
 
         await connectDB();

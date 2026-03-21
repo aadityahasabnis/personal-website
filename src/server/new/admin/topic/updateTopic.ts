@@ -5,7 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { cleanUndefined, error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 import type { ITopicUpdateInput } from './types';
 
 // ========================================================
@@ -14,6 +14,9 @@ import type { ITopicUpdateInput } from './types';
 
 export const updateTopic = async (topicId: string, input: ITopicUpdateInput): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();

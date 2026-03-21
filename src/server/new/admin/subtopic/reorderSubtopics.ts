@@ -6,7 +6,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 
 // ========================================================
 // Reorder
@@ -14,6 +14,9 @@ import { revalidateSubtopicPaths } from '../shared';
 
 export const reorderSubtopics = async (topicId: string, subtopicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!subtopicIds.length) return success(true);
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
         if (!subtopicIds.every((id) => ObjectId.isValid(id))) return error('One or more subtopic ids are invalid', 400);

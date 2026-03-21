@@ -6,6 +6,7 @@ import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
 import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../utils/helper';
+import { getAdminId } from '../shared';
 import type { ITopicEdit, ITopicRow, ITopicTableQuery } from './types';
 
 // ========================================================
@@ -14,6 +15,9 @@ import type { ITopicEdit, ITopicRow, ITopicTableQuery } from './types';
 
 export const getTopics = async (params: ITopicTableQuery = {}): Promise<IPaginatedResponse<ITopicRow>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
         const { offset, limit } = normalizePagination(params.pagination);
         const sort = buildSort(params.sort, { order: 1, updatedAt: -1 });
@@ -73,6 +77,9 @@ export const getTopics = async (params: ITopicTableQuery = {}): Promise<IPaginat
 
 export const getTopicForEdit = async (topicId: string): Promise<IApiResponse<ITopicEdit | null>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();

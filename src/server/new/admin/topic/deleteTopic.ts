@@ -9,7 +9,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 
 // ========================================================
 // Delete
@@ -17,6 +17,9 @@ import { revalidateTopicPaths } from '../shared';
 
 export const deleteTopic = async (topicId: string, cascade = false): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();

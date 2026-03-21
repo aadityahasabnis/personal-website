@@ -4,7 +4,7 @@ import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { cleanUndefined, created, error, handleError, timestamps } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 import type { ITopicCreateInput, ITopicDocumentInput } from './types';
 
 // ========================================================
@@ -13,6 +13,9 @@ import type { ITopicCreateInput, ITopicDocumentInput } from './types';
 
 export const createTopic = async (input: ITopicCreateInput): Promise<IApiResponse<string>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
 
         const existing = await Topic.findOne({ slug: input.slug }).select('_id').lean();

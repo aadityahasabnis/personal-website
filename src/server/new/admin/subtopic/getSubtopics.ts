@@ -6,6 +6,7 @@ import Subtopic from '@/server/models/Subtopic';
 import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
 import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../utils/helper';
+import { getAdminId } from '../shared';
 import type { ISubtopicEdit, ISubtopicRow, ISubtopicTableQuery } from './types';
 
 // ========================================================
@@ -14,6 +15,9 @@ import type { ISubtopicEdit, ISubtopicRow, ISubtopicTableQuery } from './types';
 
 export const getSubtopics = async (params: ISubtopicTableQuery = {}): Promise<IPaginatedResponse<ISubtopicRow>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
         const { offset, limit } = normalizePagination(params.pagination);
         const sort = buildSort(params.sort, { order: 1, updatedAt: -1 });
@@ -89,6 +93,9 @@ export const getSubtopicForEdit = async (
     subtopicId: string,
 ): Promise<IApiResponse<ISubtopicEdit | null>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
 
         await connectDB();

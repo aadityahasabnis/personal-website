@@ -5,7 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 
 // ========================================================
 // Publish
@@ -13,6 +13,9 @@ import { revalidateTopicPaths } from '../shared';
 
 export const publishTopic = async (topicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();
@@ -30,6 +33,9 @@ export const publishTopic = async (topicId: string): Promise<IApiResponse<boolea
 
 export const unpublishTopic = async (topicId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
 
         await connectDB();

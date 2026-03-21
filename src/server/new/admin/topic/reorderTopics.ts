@@ -5,7 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../utils/helper';
-import { revalidateTopicPaths } from '../shared';
+import { getAdminId, revalidateTopicPaths } from '../shared';
 
 // ========================================================
 // Reorder
@@ -13,6 +13,9 @@ import { revalidateTopicPaths } from '../shared';
 
 export const reorderTopics = async (topicIds: string[]): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!topicIds.length) return success(true);
         if (!topicIds.every((id) => ObjectId.isValid(id))) return error('One or more topic ids are invalid', 400);
 

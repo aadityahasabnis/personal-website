@@ -6,7 +6,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { cleanUndefined, created, error, handleError, timestamps, updatedNow } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 import type { ISubtopicCreateInput } from './types';
 
 // ========================================================
@@ -15,6 +15,9 @@ import type { ISubtopicCreateInput } from './types';
 
 export const createSubtopic = async (input: ISubtopicCreateInput): Promise<IApiResponse<string>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(input.topicId)) return error('Invalid topic id', 400);
 
         await connectDB();

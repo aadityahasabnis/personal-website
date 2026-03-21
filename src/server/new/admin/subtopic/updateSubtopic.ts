@@ -7,7 +7,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { cleanUndefined, error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 import type { ISubtopicUpdateInput } from './types';
 
 // ========================================================
@@ -19,6 +19,9 @@ export const updateSubtopic = async (
     input: ISubtopicUpdateInput,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
         if (input.topicId && !ObjectId.isValid(input.topicId)) return error('Invalid topic id', 400);
 
