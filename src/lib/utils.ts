@@ -1,5 +1,4 @@
 import { type ClassValue, clsx } from 'clsx';
-import { ObjectId } from 'mongodb';
 import { twMerge } from 'tailwind-merge';
 
 // =================================================
@@ -9,21 +8,22 @@ import { twMerge } from 'tailwind-merge';
 export const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 // =================================================
-// DB Utilities — ObjectId helpers only
+// DB Utilities — ObjectId helpers (client-safe)
 // =================================================
 
-export const isValidObjectId = (id: string): boolean =>
-    ObjectId.isValid(id) && new ObjectId(id).toString() === id;
+const OBJECT_ID_HEX_24 = /^[a-f0-9]{24}$/i;
 
-export const toObjectId = (id: string | ObjectId): ObjectId | null => {
+export const isValidObjectId = (id: string): boolean =>
+    typeof id === 'string' && OBJECT_ID_HEX_24.test(id);
+
+export const toObjectId = (id: string): string | null => {
     try {
-        if (id instanceof ObjectId) return id;
-        return isValidObjectId(id as string) ? new ObjectId(id) : null;
+        return isValidObjectId(id) ? id : null;
     } catch { return null; }
 };
 
-export const toObjectIds = (ids: string[]): ObjectId[] =>
-    ids.map(toObjectId).filter((id): id is ObjectId => id !== null);
+export const toObjectIds = (ids: string[]): string[] =>
+    ids.map(toObjectId).filter((id): id is string => id !== null);
 
 
 // =================================================

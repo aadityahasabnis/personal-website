@@ -1,4 +1,4 @@
-import { SITE_CONFIG } from '@/constants/siteConstants';
+import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 import type { IArticle, ITopic } from '@/interfaces/schema';
 
 /**
@@ -7,10 +7,10 @@ import type { IArticle, ITopic } from '@/interfaces/schema';
  * Implements JSON-LD structured data for:
  * - Articles (BlogPosting, TechArticle)
  * - Breadcrumbs
- * - Organization
- * - WebSite with SearchAction
+ * - Person
+ * - WebSite
  * - FAQ sections
- * - Person schema
+ * - Course and HowTo schemas
  * 
  * This helps:
  * 1. Search engines understand content structure
@@ -22,10 +22,14 @@ import type { IArticle, ITopic } from '@/interfaces/schema';
 // ===== BASE SCHEMAS =====
 
 /**
- * Organization Schema
- * Used across all pages for brand identity
+ * Person Schema
+ * Used across all pages for author identity.
  */
-export function generateOrganizationSchema() {
+export function generatePersonSchema() {
+    const sameAs = SOCIAL_LINKS
+        .map((link) => link.url)
+        .filter((url) => /^https?:\/\//.test(url));
+
     return {
         '@context': 'https://schema.org',
         '@type': 'Person',
@@ -34,21 +38,14 @@ export function generateOrganizationSchema() {
         url: SITE_CONFIG.url,
         email: SITE_CONFIG.author.email,
         description: SITE_CONFIG.author.bio,
-        sameAs: SITE_CONFIG.socials?.map(s => s.url) || [],
-        jobTitle: 'Software Developer',
-        knowsAbout: [
-            'Web Development',
-            'JavaScript',
-            'TypeScript',
-            'React',
-            'Next.js',
-            'Node.js',
-            'Data Structures',
-            'Algorithms',
-            'System Design',
-        ],
+        sameAs,
+        jobTitle: SITE_CONFIG.author.jobTitle,
+        knowsAbout: SITE_CONFIG.author.knowsAbout,
     };
 }
+
+// Backward-compatible alias for existing imports.
+export const generateOrganizationSchema = generatePersonSchema;
 
 /**
  * Website Schema
@@ -81,6 +78,11 @@ interface IArticleSchemaProps {
     relatedArticles?: Array<{ slug: string; title: string }>;
 }
 
+const toIsoString = (value: Date | string | undefined | null): string | undefined => {
+    if (!value) return undefined;
+    return new Date(value).toISOString();
+};
+
 /**
  * Generate comprehensive Article schema
  * Combines TechArticle and BlogPosting for maximum SEO
@@ -103,10 +105,11 @@ export function generateArticleSchema({
         ...(article.tags || []),
     ];
 
-    const schema: any = {
+    const schema: Record<string, unknown> = {
         '@context': 'https://schema.org',
         '@type': ['TechArticle', 'BlogPosting'],
         '@id': url,
+        url,
         mainEntityOfPage: {
             '@type': 'WebPage',
             '@id': url,
@@ -120,8 +123,8 @@ export function generateArticleSchema({
         publisher: {
             '@id': `${SITE_CONFIG.url}/#person`,
         },
-        datePublished: article.publishedAt,
-        dateModified: article.updatedAt,
+        datePublished: toIsoString(article.publishedAt),
+        dateModified: toIsoString(article.updatedAt),
         articleSection: topicTitle,
         keywords: keywords.join(', '),
         wordCount: article.body ? article.body.split(/\s+/).length : 0,
@@ -132,17 +135,17 @@ export function generateArticleSchema({
 
     // Add interaction statistics if comments exist
     if (commentCount > 0) {
-        schema.interactionStatistic = {
+        schema['interactionStatistic'] = {
             '@type': 'InteractionCounter',
             interactionType: 'https://schema.org/CommentAction',
             userInteractionCount: commentCount,
         };
-        schema.commentCount = commentCount;
+        schema['commentCount'] = commentCount;
     }
 
     // Add related articles for internal linking
     if (relatedArticles.length > 0) {
-        schema.relatedLink = relatedArticles.map(
+        schema['relatedLink'] = relatedArticles.map(
             (article) => `${SITE_CONFIG.url}/articles/${topicSlug}/${article.slug}`
         );
     }
@@ -329,10 +332,12 @@ export function combineSchemas(...schemas: object[]) {
  * Use in page components like: <JsonLd data={schema} />
  */
 export function JsonLd({ data }: { data: object }) {
+    const json = JSON.stringify(data).replace(/</g, '\\u003c');
+
     return (
         <script
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+            dangerouslySetInnerHTML={{ __html: json }}
         />
     );
 }

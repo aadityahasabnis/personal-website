@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Eye } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { siteStorage } from '@/lib/storage';
+import { cn } from '@/lib/utils';
+import { Eye } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface IArticleViewsProps {
     /** Full article slug (topicSlug/articleSlug) */
@@ -31,6 +31,7 @@ const ArticleViews = ({
     deduplicationHours = 1,
     className,
 }: IArticleViewsProps) => {
+    const storageNamespace = 'articles';
     const [views, setViews] = useState(initialViews);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -38,7 +39,7 @@ const ArticleViews = ({
         const trackView = async () => {
             try {
                 // Check if recently viewed (deduplication)
-                const recentlyViewed = siteStorage.hasViewedRecently(slug, deduplicationHours);
+                const recentlyViewed = siteStorage.hasViewedRecently(slug, deduplicationHours, storageNamespace);
 
                 if (!recentlyViewed) {
                     // Increment view count
@@ -49,7 +50,7 @@ const ArticleViews = ({
                     if (response.ok) {
                         const data = await response.json();
                         setViews(data.data?.views ?? initialViews);
-                        siteStorage.setViewed(slug);
+                        siteStorage.setViewed(slug, storageNamespace);
                     }
                 } else {
                     // Just fetch current views (no increment)
@@ -68,7 +69,7 @@ const ArticleViews = ({
         };
 
         trackView();
-    }, [slug, deduplicationHours, initialViews]);
+    }, [slug, deduplicationHours, initialViews, storageNamespace]);
 
     return (
         <span
@@ -89,3 +90,4 @@ const ArticleViews = ({
 
 export { ArticleViews };
 export type { IArticleViewsProps };
+

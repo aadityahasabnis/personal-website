@@ -1,11 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import Link from 'next/link';
-import Image from 'next/image';
-import { ArrowUpRight, Github, ExternalLink } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import type { IProject } from '@/interfaces/schema';
+import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
+import { ArrowUpRight, ExternalLink, Github } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
 
 interface IProjectCardProps {
   project: IProject;
@@ -90,8 +90,13 @@ export const ProjectCard = ({ project, index = 0, featured = false }: IProjectCa
           </div>
 
           {/* Title */}
-          <h3 className="text-xl md:text-2xl font-medium text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors">
-            {project.title}
+          <h3 className="text-xl md:text-2xl font-medium">
+            <Link
+              href={`/projects/${project.slug}`}
+              className="text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors"
+            >
+              {project.title}
+            </Link>
           </h3>
 
           {/* Description */}

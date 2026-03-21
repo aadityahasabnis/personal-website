@@ -9,35 +9,37 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
  * - Allows all public pages
  * - Blocks admin routes
  * - Blocks API routes (except specific ones if needed)
- * - References sitemap location
+ * - References sitemap and feed locations
  */
 const robots = (): MetadataRoute.Robots => {
     const baseUrl = SITE_CONFIG.url;
+    const protectedPaths = [
+        '/admin/',
+        '/admin',
+        '/api/',
+        '/_next/',
+        '/private/',
+    ];
+
+    const sitemapEntries = [
+        `${baseUrl}/sitemap.xml`,
+        ...(SITE_CONFIG.seo.rssEnabled ? [`${baseUrl}/rss.xml`] : []),
+    ];
 
     return {
         rules: [
             {
                 userAgent: '*',
                 allow: '/',
-                disallow: [
-                    '/admin/',
-                    '/admin',
-                    '/api/',
-                    '/_next/',
-                    '/private/',
-                ],
-            },
-            // Block specific bots that are known to cause issues
-            {
-                userAgent: 'GPTBot',
-                disallow: ['/'],
+                disallow: protectedPaths,
             },
             {
-                userAgent: 'CCBot',
-                disallow: ['/'],
-            },
+                userAgent: ['GPTBot', 'CCBot', 'OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot'],
+                allow: '/',
+                disallow: protectedPaths,
+            }
         ],
-        sitemap: `${baseUrl}/sitemap.xml`,
+        sitemap: sitemapEntries,
         host: baseUrl,
     };
 };

@@ -1,9 +1,9 @@
+import { SITE_CONFIG } from "@/constants/siteConstants";
+import { Providers } from "@/providers";
+import 'authorly-editor/styles.css';
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Providers } from "@/providers";
-import { SITE_CONFIG } from "@/constants/siteConstants";
 import "./globals.css";
-import 'authorly-editor/styles.css';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -68,9 +68,13 @@ export const metadata: Metadata = {
   },
   manifest: "/site.webmanifest",
   alternates: {
-    types: {
-      "application/rss+xml": `${SITE_CONFIG.url}/rss.xml`,
-    },
+    ...(SITE_CONFIG.seo.rssEnabled
+      ? {
+          types: {
+            "application/rss+xml": `${SITE_CONFIG.url}/rss.xml`,
+          },
+        }
+      : {}),
   },
 };
 

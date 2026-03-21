@@ -1,9 +1,9 @@
 'use client';
 
-import { usePageStats, useLikeToggle, type ContentType } from '@/hooks/useContentData';
-import { Eye, Heart } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { useLikeToggle, usePageStats, type ContentType } from '@/hooks/useContentData';
 import { siteStorage } from '@/lib/storage';
+import { cn } from '@/lib/utils';
+import { Eye, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface IContentStatsProps {
@@ -47,15 +47,15 @@ export const ContentStats = ({
     const [userHasLiked, setUserHasLiked] = useState(false);
 
     useEffect(() => {
-        setUserHasLiked(siteStorage.hasLiked(slug));
-    }, [slug]);
+        setUserHasLiked(siteStorage.hasLiked(slug, contentType));
+    }, [slug, contentType]);
 
     useEffect(() => {
         if (likeMutation.isSuccess) setUserHasLiked(true);
     }, [likeMutation.isSuccess]);
 
     const handleLike = () => {
-        if (siteStorage.hasLiked(slug) || likeMutation.isPending) return;
+        if (siteStorage.hasLiked(slug, contentType) || likeMutation.isPending) return;
         likeMutation.mutate();
     };
 

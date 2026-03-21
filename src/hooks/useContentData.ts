@@ -1,13 +1,11 @@
 'use client';
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { QUERY_KEYS, QUERY_CONFIG } from '@/constants/siteConstants';
 import { siteStorage } from '@/lib/storage';
-import { getContentStats } from '@/server/actions/stats';
-import { likePost } from '@/server/actions/like';
-import { getComments, postComment, upvoteComment } from '@/server/actions/comments';
-import type { IContentStats } from '@/server/actions/stats';
 import type { ICommentsResult } from '@/server/actions/comments';
+import { getComments, postComment, upvoteComment } from '@/server/actions/comments';
+import { likePost } from '@/server/actions/like';
+import { getContentStats } from '@/server/actions/stats';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 // ===== TYPES =====
 
@@ -44,7 +42,7 @@ export const usePageStats = (
             return {
                 views: stats.views,
                 likes: stats.likes,
-                userHasLiked: siteStorage.hasLiked(slug),
+                userHasLiked: siteStorage.hasLiked(slug, contentType),
             };
         },
         // Treat initialData as stale immediately so we refetch fresh counts
@@ -98,10 +96,10 @@ export const useLikeToggle = (slug: string, contentType: ContentType) => {
 
     return useMutation({
         mutationFn: async (): Promise<{ likes: number; userHasLiked: boolean }> => {
-            if (siteStorage.hasLiked(slug)) throw new Error('Already liked');
+            if (siteStorage.hasLiked(slug, contentType)) throw new Error('Already liked');
             const result = await likePost(slug);
             if (!result.success) throw new Error('Failed to like');
-            siteStorage.setLiked(slug);
+            siteStorage.setLiked(slug, contentType);
             return { likes: result.data ?? 0, userHasLiked: true };
         },
 
@@ -122,7 +120,7 @@ export const useLikeToggle = (slug: string, contentType: ContentType) => {
             if (context?.previousStats) {
                 queryClient.setQueryData(['stats', contentType, slug], context.previousStats);
             }
-            siteStorage.removeLiked(slug);
+            siteStorage.removeLiked(slug, contentType);
         },
 
         onSuccess: (data) => {

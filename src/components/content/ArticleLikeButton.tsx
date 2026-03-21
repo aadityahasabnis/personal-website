@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { Heart } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { siteStorage } from '@/lib/storage';
+import { cn } from '@/lib/utils';
+import { Heart } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface IArticleLikeButtonProps {
     /** Full article slug (topicSlug/articleSlug) */
@@ -29,6 +29,7 @@ const ArticleLikeButton = ({
     initialLikes = 0,
     className,
 }: IArticleLikeButtonProps) => {
+    const storageNamespace = 'articles';
     const [likes, setLikes] = useState(initialLikes);
     const [hasLiked, setHasLiked] = useState(false);
     const [isPending, setIsPending] = useState(false);
@@ -36,7 +37,7 @@ const ArticleLikeButton = ({
 
     // Check storage for previous like and fetch current count
     useEffect(() => {
-        const wasLiked = siteStorage.hasLiked(slug);
+        const wasLiked = siteStorage.hasLiked(slug, storageNamespace);
         setHasLiked(wasLiked);
 
         // Fetch current like count
@@ -73,7 +74,7 @@ const ArticleLikeButton = ({
             if (response.ok) {
                 const data = await response.json();
                 setLikes(data.data?.likes ?? likes + 1);
-                siteStorage.setLiked(slug);
+                siteStorage.setLiked(slug, storageNamespace);
             } else {
                 // Rollback on error
                 setLikes((prev) => prev - 1);
@@ -87,7 +88,7 @@ const ArticleLikeButton = ({
         } finally {
             setIsPending(false);
         }
-    }, [hasLiked, isPending, slug, likes]);
+    }, [hasLiked, isPending, slug, likes, storageNamespace]);
 
     return (
         <button
@@ -133,3 +134,4 @@ const ArticleLikeButton = ({
 
 export { ArticleLikeButton };
 export type { IArticleLikeButtonProps };
+

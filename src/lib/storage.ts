@@ -26,49 +26,152 @@ export interface IStatsRecord   { [key: string]: number }
 // =================================================
 
 class SiteStorage {
-    private s: Storage | null = typeof window !== 'undefined' ? window.localStorage : null;
+    private get storage(): Storage | null {
+        return typeof window !== 'undefined' ? window.localStorage : null;
+    }
+
+    private namespacedId(id: string, namespace?: string): string {
+        return namespace ? `${namespace}:${id}` : id;
+    }
 
     private get<T>(key: string): T | null {
-        try { return this.s ? JSON.parse(this.s.getItem(key) ?? 'null') : null; } catch { return null; }
+        try {
+            const raw = this.storage?.getItem(key) ?? 'null';
+            return JSON.parse(raw) as T;
+        } catch {
+            return null;
+        }
     }
+
     private set<T>(key: string, val: T): void {
-        try { this.s?.setItem(key, JSON.stringify(val)); } catch { /* quota exceeded */ }
+        try {
+            this.storage?.setItem(key, JSON.stringify(val));
+        } catch {
+            // Ignore storage quota/availability failures to avoid breaking UX flows.
+        }
     }
-    remove(key: string) { this.s?.removeItem(key); }
+
+    remove(key: string): void {
+        this.storage?.removeItem(key);
+    }
 
     // User
-    getProfile()                    { return this.get<IUserProfile>(STORAGE_KEYS.USER.PROFILE); }
-    setProfile(p: IUserProfile)     { this.set(STORAGE_KEYS.USER.PROFILE, p); }
-    updateProfile(p: Partial<IUserProfile>) { this.setProfile({ ...(this.getProfile() ?? { name: '', email: '' }), ...p }); }
+    getProfile(): IUserProfile | null {
+        return this.get<IUserProfile>(STORAGE_KEYS.USER.PROFILE);
+    }
+
+    setProfile(p: IUserProfile): void {
+        this.set(STORAGE_KEYS.USER.PROFILE, p);
+    }
+
+    updateProfile(p: Partial<IUserProfile>): void {
+        this.setProfile({
+            ...(this.getProfile() ?? { name: '', email: '' }),
+            ...p,
+        });
+    }
+
+    // Backward-compatible aliases used in legacy components
+    getUserProfile(): IUserProfile | null {
+        return this.getProfile();
+    }
+
+    setUserProfile(profile: IUserProfile): void {
+        this.setProfile(profile);
+    }
+
+    updateUserProfile(profile: Partial<IUserProfile>): void {
+        this.updateProfile(profile);
+    }
 
     // Comment author
-    getCommentAuthor()              { return this.get<ICommentAuthor>(STORAGE_KEYS.COMMENT.AUTHOR); }
-    setCommentAuthor(a: ICommentAuthor) { this.set(STORAGE_KEYS.COMMENT.AUTHOR, a); }
+    getCommentAuthor(): ICommentAuthor | null {
+        return this.get<ICommentAuthor>(STORAGE_KEYS.COMMENT.AUTHOR);
+    }
+
+    setCommentAuthor(a: ICommentAuthor): void {
+        this.set(STORAGE_KEYS.COMMENT.AUTHOR, a);
+    }
+
+    hasCommentAuthor(): boolean {
+        return Boolean(this.getCommentAuthor());
+    }
+
+    clearCommentAuthor(): void {
+        this.remove(STORAGE_KEYS.COMMENT.AUTHOR);
+    }
 
     // Likes
-    hasLiked(slug: string)          { return slug in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {}); }
-    setLiked(slug: string)          { const d = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {}; d[slug] = Date.now(); this.set(STORAGE_KEYS.STATS.LIKES, d); }
-    removeLiked(slug: string)       { const d = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {}; delete d[slug]; this.set(STORAGE_KEYS.STATS.LIKES, d); }
+    hasLiked(id: string, namespace?: string): boolean {
+        const key = this.namespacedId(id, namespace);
+        return key in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {});
+    }
+
+    setLiked(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {};
+        data[key] = Date.now();
+        this.set(STORAGE_KEYS.STATS.LIKES, data);
+    }
+
+    removeLiked(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {};
+        delete data[key];
+        this.set(STORAGE_KEYS.STATS.LIKES, data);
+    }
 
     // Comment upvotes
-    hasUpvoted(id: string)          { return id in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {}); }
-    setUpvoted(id: string)          { const d = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {}; d[id] = Date.now(); this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, d); }
-    removeUpvote(id: string)        { const d = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {}; delete d[id]; this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, d); }
+    hasUpvoted(id: string): boolean {
+        return id in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {});
+    }
+
+    setUpvoted(id: string): void {
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {};
+        data[id] = Date.now();
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, data);
+    }
+
+    removeUpvote(id: string): void {
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {};
+        delete data[id];
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, data);
+    }
+
+    // Backward-compatible aliases used in current comment components
+    hasUpvotedComment(id: string): boolean {
+        return this.hasUpvoted(id);
+    }
+
+    setCommentUpvoted(id: string): void {
+        this.setUpvoted(id);
+    }
+
+    removeCommentUpvote(id: string): void {
+        this.removeUpvote(id);
+    }
 
     // Views (with TTL dedup)
-    hasViewedRecently(slug: string, hours = 1) {
-        const ts = (this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {})[slug];
+    hasViewedRecently(id: string, hours = 1, namespace?: string): boolean {
+        const key = this.namespacedId(id, namespace);
+        const ts = (this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {})[key];
         return ts ? Date.now() - ts < hours * 3600000 : false;
     }
-    setViewed(slug: string) {
-        const d = this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {};
-        d[slug] = Date.now();
+
+    setViewed(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {};
+        data[key] = Date.now();
+
         // Prune entries older than 7 days
         const cutoff = Date.now() - 7 * 86400000;
-        this.set(STORAGE_KEYS.STATS.VIEWS, Object.fromEntries(Object.entries(d).filter(([, t]) => t > cutoff)));
+        this.set(
+            STORAGE_KEYS.STATS.VIEWS,
+            Object.fromEntries(Object.entries(data).filter(([, timestamp]) => timestamp > cutoff))
+        );
     }
 
-    clearAll() {
+    clearAll(): void {
         [STORAGE_KEYS.USER.PROFILE, STORAGE_KEYS.USER.PREFERENCES,
          STORAGE_KEYS.STATS.LIKES, STORAGE_KEYS.STATS.VIEWS, STORAGE_KEYS.STATS.COMMENT_UPVOTES,
          STORAGE_KEYS.COMMENT.AUTHOR].forEach(k => this.remove(k));

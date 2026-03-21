@@ -1,27 +1,23 @@
 import type { MetadataRoute } from 'next';
 
-import { getAllArticlesForSitemap, getAllNotesForSitemap } from '@/server/queries/content';
-import { getAllTopicsForSitemap } from '@/server/queries/topics';
 import { SITE_CONFIG } from '@/constants/siteConstants';
+import {
+    getPublishedArticleStaticPaths,
+    getPublishedArticleTopics,
+} from '@/server/new/public/content/article';
+import { getPublishedBlogStaticPaths } from '@/server/new/public/content/blog';
+import { getPublishedProjectStaticPaths } from '@/server/new/public/content/project';
 
 /**
  * Dynamic Sitemap Generation
  *
- * Static pages + all dynamic content with correct URLs.
- *
- * Article URLs follow the actual route structure:
- *   /articles/[topicSlug]/[articleSlug]
- *
- * Topic pages are listed separately:
- *   /articles/[topicSlug]
- *
- * Project pages are NOT listed individually — there are no /projects/[slug] routes.
+ * Uses current public content providers (server-action layer) for dynamic URLs.
+ * Includes article topic/detail URLs and blog/project detail URLs where public routes exist.
  */
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     const baseUrl = SITE_CONFIG.url;
     const now = new Date();
 
-    // Static pages
     const staticPages: MetadataRoute.Sitemap = [
         {
             url: baseUrl,
@@ -38,7 +34,13 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
         {
             url: `${baseUrl}/notes`,
             lastModified: now,
-            changeFrequency: 'daily',
+            changeFrequency: 'weekly',
+            priority: 0.8,
+        },
+        {
+            url: `${baseUrl}/blogs`,
+            lastModified: now,
+            changeFrequency: 'weekly',
             priority: 0.8,
         },
         {
@@ -61,38 +63,52 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
         },
     ];
 
-    // Fetch dynamic data in parallel
-    const [articles, notes, topics] = await Promise.all([
-        getAllArticlesForSitemap(),
-        getAllNotesForSitemap(),
-        getAllTopicsForSitemap(),
+    const [topicResult, articlePathsResult, blogPathsResult, projectPathsResult] = await Promise.all([
+        getPublishedArticleTopics({
+            pagination: {
+                offset: 0,
+                limit: 5500,
+            },
+        }),
+        getPublishedArticleStaticPaths(),
+        getPublishedBlogStaticPaths(),
+        getPublishedProjectStaticPaths(),
     ]);
 
-    // Topic hub pages: /articles/[topicSlug]
+    const topics = topicResult.success ? topicResult.data : [];
+    const articlePaths = articlePathsResult.success ? articlePathsResult.data : [];
+    const blogPaths = blogPathsResult.success ? blogPathsResult.data : [];
+    const projectPaths = projectPathsResult.success ? projectPathsResult.data : [];
+
     const topicPages: MetadataRoute.Sitemap = topics.map((topic) => ({
         url: `${baseUrl}/articles/${topic.slug}`,
-        lastModified: topic.updatedAt,
+        lastModified: new Date(topic.updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
     }));
 
-    // Individual article pages: /articles/[topicSlug]/[articleSlug]
-    const articlePages: MetadataRoute.Sitemap = articles.map((article) => ({
-        url: `${baseUrl}/articles/${article.topicSlug}/${article.slug}`,
-        lastModified: article.updatedAt,
+    const articlePages: MetadataRoute.Sitemap = articlePaths.map((article) => ({
+        url: `${baseUrl}/articles/${article.topicSlug}/${article.articleSlug}`,
+        lastModified: now,
         changeFrequency: 'weekly' as const,
         priority: 0.7,
     }));
 
-    // Individual note pages: /notes/[slug]
-    const notePages: MetadataRoute.Sitemap = notes.map((note) => ({
-        url: `${baseUrl}/notes/${note.slug}`,
-        lastModified: note.updatedAt,
-        changeFrequency: 'monthly' as const,
-        priority: 0.5,
+    const blogPages: MetadataRoute.Sitemap = blogPaths.map((blog) => ({
+        url: `${baseUrl}/blogs/${blog.blogSlug}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
     }));
 
-    return [...staticPages, ...topicPages, ...articlePages, ...notePages];
+    const projectPages: MetadataRoute.Sitemap = projectPaths.map((project) => ({
+        url: `${baseUrl}/projects/${project.projectSlug}`,
+        lastModified: now,
+        changeFrequency: 'weekly' as const,
+        priority: 0.7,
+    }));
+
+    return [...staticPages, ...topicPages, ...articlePages, ...blogPages, ...projectPages];
 };
 
 export default sitemap;

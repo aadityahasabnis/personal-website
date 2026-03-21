@@ -15,11 +15,25 @@ export const SITE_CONFIG = {
     name: 'Aaditya Hasabnis',
     email: 'aaditya.hasabnis@gmail.com',
     bio: 'Developer, writer, and lifelong learner.',
+    jobTitle: 'Software Engineer',
+    knowsAbout: [
+      'Software Engineering',
+      'Web Development',
+      'TypeScript',
+      'JavaScript',
+      'React',
+      'Next.js',
+      'Node.js',
+      'System Design',
+      'Data Structures and Algorithms',
+      'Technical Writing',
+    ],
   },
 
   seo: {
     twitterHandle: '@aadityahasabnis',
     ogImage: '/og-default.png',
+    rssEnabled: true,
   },
 } as const;
 

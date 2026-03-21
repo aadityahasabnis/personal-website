@@ -43,10 +43,32 @@ This plan is backend-only and focuses on:
 - Public comments actions are implemented in `src/server/new/public/comments/*`.
 - Public stats actions are implemented in `src/server/new/public/stats/*`.
 
+### New public server actions (blog + project domains)
+
+- `src/server/new/public/content/blog/*` is implemented with flat modular actions:
+    - `getPublishedBlogByPath`
+    - `getPublishedBlogById`
+    - `getPublishedBlogs`
+    - `getPublishedBlogStaticPaths`
+- `src/server/new/public/content/project/*` is implemented with flat modular actions:
+    - `getPublishedProjectByPath`
+    - `getPublishedProjectById`
+    - `getPublishedProjects`
+    - `getPublishedProjectStaticPaths`
+
 ### Public API namespace migration
 
 - Canonical public article API routes are under `src/app/api/content/articles/**`.
+- Added direct article slug resolver route at `src/app/api/content/articles/[articleSlug]/route.ts` to close the previously empty folder gap.
+- Canonical public blog API routes are under `src/app/api/content/blogs/**`.
+- Canonical public project API routes are under `src/app/api/content/projects/**`.
 - Legacy `src/app/api/articles/**` route handlers were removed.
+
+### Public engagement route parity (id-based)
+
+- Article/blog/project domains all expose id-based views/likes/comment routes under `src/app/api/content/**`.
+- Shared public stats actions are reused for all three content domains.
+- Shared public comments actions are reused for all three content domains.
 
 ### API handler helper reuse (admin)
 
@@ -64,22 +86,16 @@ This plan is backend-only and focuses on:
 
 ## 1.2 Remaining (Not Implemented or Partially Implemented)
 
-### Public blog backend layer is missing
+Current snapshot (2026-03-21):
 
-- `src/server/new/public/content/blog/` is empty.
-- No public API routes under `src/app/api/content/blogs/**`.
-- No static path action for blog pages.
+- Public content API coverage exists for article/blog/project domains under `src/app/api/content/**`.
+- Route diagnostics are clean for the `content/articles` namespace.
+- Remaining work is now concentrated in legacy import migration, SEO feed migration, helper commonization, and backend test coverage.
 
-### Public project backend layer is missing
+### Public read-facade adoption is partial
 
-- `src/server/new/public/content/project/` is empty.
-- No public API routes under `src/app/api/content/projects/**`.
-- No static path action for project pages (if per-project pages are required).
-
-### Public content index is article-only
-
-- `src/server/new/public/content/index.ts` exports only article.
-- Blog and project domains are not integrated into the public content backend contract.
+- `src/server/new/public/content/index.ts` now exports article/blog/project.
+- Some application consumers still use legacy query imports instead of the new public facade.
 
 ### Backend query compatibility gap
 
@@ -87,7 +103,8 @@ This plan is backend-only and focuses on:
     - `@/server/queries/*`
     - `@/server/actions/*`
 - In the present tree, there is no `src/server/queries` directory and no `src/server/actions` directory.
-- A backend compatibility layer or migration is required to remove this contract mismatch.
+- A migration is required to remove this contract mismatch, but it is intentionally deferred from the current server-action execution window.
+- Current grep snapshot shows 76 unresolved legacy imports across public pages, admin pages, hooks, and components.
 
 ### Metadata/sitemap/rss backend dependency gap
 
@@ -105,23 +122,69 @@ This plan is backend-only and focuses on:
 
 ## 2.1 Public read backend by content domain
 
-- `src/server/new/public/content/article/*` (complete)
-- `src/server/new/public/content/blog/*` (to implement)
-- `src/server/new/public/content/project/*` (to implement)
-- `src/server/new/public/content/index.ts` exports all three domains.
+Contract objective:
 
-Each domain should provide:
+- All public content domains must expose the same read surface so pages, API adapters, sitemap/RSS generators, and tests integrate through one predictable backend contract.
 
-- by-path read action
-- by-id read action
-- listing action
-- static-paths action for SSG
+Implementation status:
+
+- `src/server/new/public/content/article/*` is complete.
+- `src/server/new/public/content/blog/*` is complete.
+- `src/server/new/public/content/project/*` is complete.
+- `src/server/new/public/content/index.ts` exports all three domains and is complete.
+
+Required domain read contract (mandatory for every domain):
+
+| Domain  | By-path read action         | By-id read action         | Listing action                                                                       | Static-paths action (SSG)        |
+| ------- | --------------------------- | ------------------------- | ------------------------------------------------------------------------------------ | -------------------------------- |
+| Article | `getPublishedArticleByPath` | `getPublishedArticleById` | `getPublishedArticleTopics` (plus `getPublishedTopicTreeBySlug` for topic detail IA) | `getPublishedArticleStaticPaths` |
+| Blog    | `getPublishedBlogByPath`    | `getPublishedBlogById`    | `getPublishedBlogs`                                                                  | `getPublishedBlogStaticPaths`    |
+| Project | `getPublishedProjectByPath` | `getPublishedProjectById` | `getPublishedProjects`                                                               | `getPublishedProjectStaticPaths` |
+
+Contract guarantees:
+
+1. Read actions are publish-state aware and never leak unpublished content in public flows.
+2. Payload envelopes remain stable (`IApiResponse<T>` compatible) across domains.
+3. Listing actions are pagination-safe and deterministic under repeated reads.
+4. Static-path actions are the canonical source for prerender route discovery.
+
+Operational rules:
+
+1. By-path and by-id actions must return published-only content and stable payload shapes.
+2. Listing actions must support pagination and deterministic sorting semantics.
+3. Static-path actions must be the single source for prerender route discovery.
+4. New public domains (for example notes/pages/series) must adopt this same four-action contract before API exposure.
+
+Compliance checks:
+
+1. Every public content domain must export the four mandatory read actions through its local `index.ts`.
+2. `src/server/new/public/content/index.ts` must continue exporting all active public content domains.
+3. Any new domain route under `src/app/api/content/<domain>/**` must map to these read actions, not ad-hoc query utilities.
+4. SSG/ISR entrypoints (`generateStaticParams`, sitemap, rss, feed builders) must use `getPublished*StaticPaths` and corresponding read actions only.
 
 ## 2.2 Dynamic engagement backend (id-based)
 
-- Continue id-based stats/comments with ObjectId-first operations.
-- Keep atomic counters in `PageStats` using upsert + `$inc`.
-- Keep moderation-first comments policy.
+Contract objective:
+
+- All engagement writes and reads (views, likes, comments, comment upvotes) must use id-based operations and shared public actions to preserve cross-domain parity.
+
+Core rules:
+
+1. Continue id-based stats/comments with ObjectId-first operations.
+2. Keep atomic counters in `PageStats` using upsert + `$inc`.
+3. Keep moderation-first comments policy.
+
+Data and concurrency invariants:
+
+1. View/like increments must be atomic and monotonic at document level.
+2. Engagement mutations must fail safely on invalid ids and unpublished/missing content.
+3. Comment upvotes must resolve against approved/public comments only.
+4. Engagement read payload shape must remain consistent across article/blog/project id routes.
+
+Integration boundaries:
+
+1. API routes under `src/app/api/content/**/id/[contentId]/**` are adapters; server actions under `src/server/new/public/stats/*` and `src/server/new/public/comments/*` remain source of truth.
+2. Domain-specific pages/components should consume server actions directly for SSR/SSG flows; APIs remain for integration/testing clients.
 
 ## 2.3 API contract (testability)
 
@@ -140,87 +203,131 @@ Each domain should provide:
 
 ---
 
-## 3) Implementation Plan (Backend Only)
+## 3) Remaining Backend Execution Plan (Pending Work Only)
 
-## Phase A - Stabilize backend contracts (highest priority)
+Only unfinished backend work is listed in this section. Completed work remains documented in section 1.1.
 
-1. Keep revalidation helper-driven only (no API fallback).
-2. Introduce a small backend facade package under `src/server/new/public` (or `src/server/new/read`) that sitemap/rss and API routes can use.
-3. Standardize helper usage across new server actions for consistency.
+Current execution scope:
+
+- Server actions only.
+- No active migration work for `@/server/queries/*` in this execution window.
+
+### Active Workstream SA1 - Public read server-action contract hardening
+
+Goal:
+
+- Enforce the public read contract uniformly across article/blog/project server actions.
+
+Current gap:
+
+- Core actions exist, but cross-domain contract enforcement (sorting/pagination/shape parity) is not yet validated as one standard.
+
+Plan:
+
+1. Standardize pagination and deterministic sorting behavior across all listing actions.
+2. Align by-path and by-id output envelopes to the same domain-specific response guarantees.
+3. Add contract checks to ensure each domain continues exporting the mandatory read actions through local `index.ts` files.
 
 Deliverables:
 
-- `src/server/new/utils/helper.ts` remains canonical for revalidation entrypoint
-- `src/server/new/admin/shared/revalidate.ts` delegates to `revalidateContent`
-- no `src/app/api/revalidate/route.ts` dependency in backend flow
+- Cross-domain read-contract checklist implemented and documented.
+- Uniform read behavior for by-path, by-id, listing, and static-path actions.
 
-## Phase B - Public blog server actions + APIs
+Acceptance criteria:
 
-Implement `src/server/new/public/content/blog`:
+- Read-contract parity verified for article/blog/project server-action modules.
+- No domain-specific contract drift in response shape and pagination semantics.
 
-- `getPublishedBlogByPath.ts`
-- `getPublishedBlogById.ts`
-- `getPublishedBlogs.ts`
-- `getPublishedBlogStaticPaths.ts`
-- `shared.ts`
-- `types.ts`
-- `index.ts`
-- `SERVER_ACTIONS.md`
+### Active Workstream SA2 - Shared server-action helper commonization
 
-Implement `src/app/api/content/blogs/**`:
+Goal:
 
-- listing
-- slug route
-- id route
-- static-paths route
-- optional views/likes/comments id routes if blogs use same engagement model
+- Reduce repeated read-helper logic in public server actions and keep behavior centralized.
 
-## Phase C - Public project server actions + APIs
+Current gap:
 
-Implement `src/server/new/public/content/project`:
+- Repeated validation/mapping/pagination logic exists across article/blog/project action modules.
 
-- `getPublishedProjectByPath.ts`
-- `getPublishedProjectById.ts`
-- `getPublishedProjects.ts`
-- `getPublishedProjectStaticPaths.ts` (if project detail pages exist)
-- `shared.ts`
-- `types.ts`
-- `index.ts`
-- `SERVER_ACTIONS.md`
+Plan:
 
-Implement `src/app/api/content/projects/**`:
+1. Introduce `src/server/new/public/content/shared/` for reusable read helpers.
+2. Move repeated ObjectId validation, published-content guards, and mapping helpers into shared modules.
+3. Refactor article/blog/project server actions to consume shared helpers without changing API contracts.
 
-- listing
-- slug route (if detail route exists)
-- id route
-- static-paths route (if applicable)
+Deliverables:
 
-## Phase D - Commonize backend helpers/actions
+- Shared read-helper layer adopted by all public content server-action domains.
+- Reduced duplication across domain action modules.
 
-1. Create a shared public action helper layer for:
-    - ObjectId validation
-    - published-content existence guard
-    - pagination normalization for public reads
-    - consistent response mapping helpers
-2. Consolidate API `_shared` contracts under a common content API shared module and re-export where needed.
-3. Keep domain modules small and single-action-per-file.
+Acceptance criteria:
 
-## Phase E - SEO/SSG/ISR backend completion
+- Shared helpers are used by all three content domains.
+- Existing action payload contracts remain backward-compatible.
 
-1. Migrate sitemap/rss data dependencies to new backend read providers.
-2. Ensure all static-path actions are wired for article/blog/project where required.
-3. Ensure publish/update server actions trigger deterministic revalidation path sets.
-4. Add optional cache tags (`revalidateTag`) for coarse invalidation per content type.
+### Active Workstream SA3 - Dynamic engagement server-action hardening
 
-## Phase F - Backend tests and validation
+Goal:
 
-1. Unit tests for public server actions:
-    - happy path
-    - invalid id/path handling
-    - unpublished filtering
-2. API contract tests for `src/app/api/content/**` routes.
-3. Revalidation helper tests for affected-path invalidation behavior.
-4. Query-plan validation for hot read paths (topic tree, article by path, listings).
+- Strengthen id-based engagement actions for correctness and parity.
+
+Current gap:
+
+- Engagement behavior is implemented but needs explicit hardening against invalid id and state-edge cases.
+
+Plan:
+
+1. Tighten invalid-id and missing-content handling in stats/comment actions.
+2. Validate monotonic atomic updates for views/likes (`PageStats` upsert + `$inc`).
+3. Enforce moderation and approval invariants for comment read/write/upvote actions.
+
+Deliverables:
+
+- Hardened stats/comment server actions under `src/server/new/public/stats/*` and `src/server/new/public/comments/*`.
+- Engagement parity checklist across article/blog/project id routes.
+
+Acceptance criteria:
+
+- Engagement server actions are consistent and deterministic across domains.
+- Invalid-id and unpublished-content scenarios return stable, safe responses.
+
+### Active Workstream SA4 - Server-action tests and revalidation validation
+
+Goal:
+
+- Lock server-action behavior with targeted tests and deterministic revalidation checks.
+
+Current gap:
+
+- End-to-end server-action test coverage is incomplete.
+
+Plan:
+
+1. Add unit tests for public read actions and engagement actions (happy path + edge cases).
+2. Add revalidation helper tests for publish/update/unpublish path invalidation behavior.
+3. Add contract tests for action output shape stability.
+
+Deliverables:
+
+- `src/server/new/public/**/__tests__` action unit suites.
+- Revalidation helper validation suite for deterministic path invalidation.
+
+Acceptance criteria:
+
+- Server-action test suites pass for public read and engagement domains.
+- Revalidation behavior is verified for key content lifecycle transitions.
+
+### Deferred work (not in current scope)
+
+- Legacy import migration for `@/server/queries/*`.
+- Legacy import migration for `@/server/actions/*`.
+- Metadata migration work that depends on legacy query import replacement.
+
+### Execution order for current scope
+
+1. Workstream SA1 (public read contract hardening)
+2. Workstream SA2 (shared helper commonization)
+3. Workstream SA3 (dynamic engagement hardening)
+4. Workstream SA4 (server-action tests and revalidation validation)
 
 ---
 
@@ -236,11 +343,17 @@ Implement `src/app/api/content/projects/**`:
 
 ## 5) Immediate Next Backend Tasks (Execution Order)
 
-1. Build public blog domain server actions + APIs.
-2. Build public project domain server actions + APIs.
-3. Migrate sitemap/rss backend reads to new server-action providers.
-4. Add backend facade for compatibility where legacy query imports remain.
-5. Add backend tests for public server actions and API routes.
+1. Standardize public read server-action contract behavior across article/blog/project (shape, pagination, sorting, published filtering).
+2. Introduce and adopt shared helper modules for public content server actions under `src/server/new/public/content/shared/`.
+3. Harden id-based engagement server actions for invalid ids, unpublished content, and moderation invariants.
+4. Add unit tests for public read and engagement server actions.
+5. Add revalidation helper tests for publish/update/unpublish path invalidation behavior.
+6. Run typecheck and test suites for server-action focused changes, and log non-server-action backlog separately.
+
+Execution notes:
+
+- Target order is strict: complete steps 1-3 before broad test implementation to avoid rewriting tests.
+- Legacy query import migration is intentionally deferred and should not block current server-action work.
 
 ---
 
