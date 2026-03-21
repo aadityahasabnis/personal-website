@@ -27,6 +27,13 @@ const AdminSchema = new Schema<IAdminDocument>(
             default: null,
             trim: true,
         },
+        recoveryEmail: {
+            type: String,
+            default: null,
+            trim: true,
+            lowercase: true,
+            match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid recovery email address'],
+        },
         passwordHash: {
             type: String,
             default: null,

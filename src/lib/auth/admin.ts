@@ -1,11 +1,14 @@
-import { MongoDBAdapter } from '@auth/mongodb-adapter';
-import type { Adapter } from 'next-auth/adapters';
-import bcrypt from 'bcryptjs';
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
 import { env } from '@/env';
 import { clientPromise, connectDB } from '@/lib/db/connectDB';
 import Admin from '@/server/models/Admin';
+import { MongoDBAdapter } from '@auth/mongodb-adapter';
+import bcrypt from 'bcryptjs';
+import NextAuth from 'next-auth';
+import type { Adapter } from 'next-auth/adapters';
+import Credentials from 'next-auth/providers/credentials';
+import Google from 'next-auth/providers/google';
+
+const googleProviderEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(clientPromise, { databaseName: env.DB_NAME }) as Adapter,
@@ -46,8 +49,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 }
             },
         }),
+        ...(googleProviderEnabled
+            ? [
+                  Google({
+                      clientId: env.GOOGLE_CLIENT_ID,
+                      clientSecret: env.GOOGLE_CLIENT_SECRET,
+                  }),
+              ]
+            : []),
     ],
     callbacks: {
+        async signIn({ user, account }) {
+            // Google access is restricted to admins that already exist in the admins collection.
+            if (account?.provider === 'google') {
+                if (!user.email) return false;
+
+                try {
+                    await connectDB();
+                    const admin = await Admin.findByEmail(user.email);
+                    if (!admin) return false;
+
+                    await admin.updateLastLogin();
+                    user.id = admin._id.toString();
+                    user.name = admin.name;
+                    user.image = admin.image ?? user.image ?? null;
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+
+            return true;
+        },
         jwt({ token, user }) {
             if (user) {
                 token.id = user.id;

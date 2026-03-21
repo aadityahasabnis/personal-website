@@ -14,9 +14,11 @@ const get = (key: string, required = true): string => {
 
 export const env = {
     MONGODB_URI:           get('MONGODB_URI'),
-    DB_NAME:       get('DB_NAME', false) || 'portfolio',
+    DB_NAME:               get('DB_NAME', false) || 'portfolio',
     CDN_SECRET:            get('CDN_SECRET'),
     NEXTAUTH_SECRET:       get('NEXTAUTH_SECRET'),
+    GOOGLE_CLIENT_ID:      get('GOOGLE_CLIENT_ID', false),
+    GOOGLE_CLIENT_SECRET:  get('GOOGLE_CLIENT_SECRET', false),
     CLOUDINARY_CLOUD_NAME: get('CLOUDINARY_CLOUD_NAME', false),
     CLOUDINARY_API_KEY:    get('CLOUDINARY_API_KEY',    false),
     CLOUDINARY_API_SECRET: get('CLOUDINARY_API_SECRET', false),
