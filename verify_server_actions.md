@@ -530,3 +530,90 @@ Result:
 
 Remaining high-priority work outside completed P0 auth batch:
 1. Public abuse controls (contact/upvote/stats) remain P1 and are not changed in this batch set.
+
+## 15) P1 Implementation Progress (Strict Order)
+
+Execution mode: strict file order with document update after each batch.
+
+### Batch 1: Public contact anti-abuse hardening
+
+Status: Completed
+
+Updated files:
+
+1. [src/server/new/public/contact/submitPublicContact.ts](src/server/new/public/contact/submitPublicContact.ts)
+2. [src/server/new/public/shared/helpers.ts](src/server/new/public/shared/helpers.ts)
+
+Change summary:
+
+1. Added server-action-level abuse controls for contact submission using client fingerprint, scoped rate limit checks, and duplicate submission window checks.
+2. Kept implementation in server actions and shared server helpers (no API-layer dependency for runtime enforcement).
+3. Preserved existing success/error envelope conventions and adjusted throttling responses to allowed typed status codes.
+4. Validation: no errors in contact and shared public helper modules after patch.
+
+Next batch in strict order:
+
+1. Public comment upvote dedup hardening.
+
+### Batch 2: Public comment upvote dedup hardening
+
+Status: Completed
+
+Updated files:
+
+1. [src/server/new/public/comments/upvotePublicCommentById.ts](src/server/new/public/comments/upvotePublicCommentById.ts)
+2. [src/server/new/public/shared/helpers.ts](src/server/new/public/shared/helpers.ts)
+
+Change summary:
+
+1. Added per-client dedup/rate-limit guard for upvotes using server-action request metadata and shared fingerprint helpers.
+2. Added idempotent duplicate path that returns current snapshot without re-incrementing counters.
+3. Validation: no errors in upvote and shared public helper modules after patch.
+
+Next batch in strict order:
+
+1. Public stats views increment dedup hardening.
+
+### Batch 3: Public stats views increment dedup hardening
+
+Status: Completed
+
+Updated files:
+
+1. [src/server/new/public/stats/incrementContentViewsById.ts](src/server/new/public/stats/incrementContentViewsById.ts)
+2. [src/server/new/public/shared/helpers.ts](src/server/new/public/shared/helpers.ts)
+
+Change summary:
+
+1. Added per-client dedup window for view increments to reduce automated counter inflation.
+2. Added idempotent duplicate response path that returns current aggregate stats without additional increments.
+3. Validation: no errors in views increment and shared public helper modules after patch.
+
+Next batch in strict order:
+
+1. Public stats likes increment dedup hardening.
+
+### Batch 4: Public stats likes increment dedup hardening
+
+Status: Completed
+
+Updated files:
+
+1. [src/server/new/public/stats/incrementContentLikesById.ts](src/server/new/public/stats/incrementContentLikesById.ts)
+2. [src/server/new/public/shared/helpers.ts](src/server/new/public/shared/helpers.ts)
+
+Change summary:
+
+1. Added per-client dedup window for like increments to reduce repeated abuse from the same client identity.
+2. Added idempotent duplicate response path that returns current aggregate stats without additional increments.
+3. Validation: no errors in likes increment and shared public helper modules after patch.
+
+### Post-batch verification checkpoint (P1 public abuse-control scope)
+
+Status: Completed
+
+Result:
+
+1. Requested P1 hardening is implemented in strict order for contact submit, comment upvote, content views increment, and content likes increment server actions.
+2. Shared anti-abuse primitives are centralized in [src/server/new/public/shared/helpers.ts](src/server/new/public/shared/helpers.ts) for consistent policy reuse.
+3. Runtime enforcement remains server-action-first; temporary API helper detours were removed to keep architecture aligned with server-action execution.
