@@ -6,7 +6,7 @@ import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../utils/helper';
-import { revalidateSubtopicPaths } from '../shared';
+import { getAdminId, revalidateSubtopicPaths } from '../shared';
 import { deleteSubtopic } from './deleteSubtopic';
 
 const parseSubtopicObjectIds = (subtopicIds: string[]): ObjectId[] | null => {
@@ -22,6 +22,9 @@ export const toggleSubtopicPublished = async (
     subtopicId: string,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(subtopicId)) return error('Invalid subtopic id', 400);
 
         await connectDB();
@@ -49,6 +52,9 @@ export const bulkDeleteSubtopics = async (
     cascade = false,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!subtopicIds.every((id) => ObjectId.isValid(id))) return error('One or more subtopic ids are invalid', 400);
 
         for (const subtopicId of subtopicIds) {
@@ -65,6 +71,9 @@ export const bulkPublishSubtopics = async (
     subtopicIds: string[],
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseSubtopicObjectIds(subtopicIds);
         if (!objectIds) return error('One or more subtopic ids are invalid', 400);
 
@@ -89,6 +98,9 @@ export const bulkUnpublishSubtopics = async (
     subtopicIds: string[],
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         const objectIds = parseSubtopicObjectIds(subtopicIds);
         if (!objectIds) return error('One or more subtopic ids are invalid', 400);
 

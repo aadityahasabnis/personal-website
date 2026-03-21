@@ -8,7 +8,7 @@ import Content from '@/server/models/Content';
 import PageStats from '@/server/models/PageStats';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../../utils/helper';
-import { revalidateBlogPaths } from '../../shared';
+import { getAdminId, revalidateBlogPaths } from '../../shared';
 import { isValidPublishStatus, normalizeBlogIds, toObjectIds, type IBlogActionBase } from './helpers';
 import { changeBlogPublishStatus } from './publishBlog';
 
@@ -32,6 +32,9 @@ export const setBlogStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
         if (!isValidPublishStatus(status)) return error('Invalid publish status', 400);
         return changeBlogPublishStatus(blogId, status);
@@ -44,6 +47,9 @@ export const toggleBlogFeatured = async (
     blogId: string,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
         await connectDB();
@@ -64,6 +70,9 @@ export const setBlogFeatured = async (
     featured: boolean,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
         await connectDB();
@@ -94,6 +103,9 @@ export const bulkDeleteBlogs = async (
     blogIds: string[],
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!blogIds.length) return success(true, 'No blogs selected');
         if (!blogIds.every((id) => ObjectId.isValid(id))) return error('One or more blog ids are invalid', 400);
 
@@ -133,6 +145,9 @@ export const bulkSetBlogStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!blogIds.length) return success(true, 'No blogs selected');
         if (!blogIds.every((id) => ObjectId.isValid(id))) return error('One or more blog ids are invalid', 400);
         if (!isValidPublishStatus(status)) return error('Invalid publish status', 400);

@@ -9,7 +9,7 @@ import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 import { error, handleError, success, updatedNow } from '../../../utils/helper';
-import { revalidateArticlePaths } from '../../shared';
+import { getAdminId, revalidateArticlePaths } from '../../shared';
 
 interface IArticlePublishBase {
     _id: ObjectId;
@@ -30,6 +30,9 @@ export const changeArticlePublishStatus = async (
     nextStatus: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
         if (!Object.values(PUBLISH_STATUS).includes(nextStatus)) return error('Invalid publish status', 400);
 

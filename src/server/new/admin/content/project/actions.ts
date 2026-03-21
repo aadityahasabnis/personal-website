@@ -8,7 +8,7 @@ import Content from '@/server/models/Content';
 import PageStats from '@/server/models/PageStats';
 import { ObjectId } from 'mongodb';
 import { cleanUndefined, error, handleError, success, updatedNow } from '../../../utils/helper';
-import { revalidateProjectPaths } from '../../shared';
+import { getAdminId, revalidateProjectPaths } from '../../shared';
 import {
     isValidProjectStatus,
     isValidPublishStatus,
@@ -38,6 +38,9 @@ export const setProjectStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
         if (!isValidPublishStatus(status)) return error('Invalid publish status', 400);
         return changeProjectPublishStatus(projectId, status);
@@ -50,6 +53,9 @@ export const toggleProjectFeatured = async (
     projectId: string,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
 
         await connectDB();
@@ -70,6 +76,9 @@ export const setProjectFeatured = async (
     featured: boolean,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
 
         await connectDB();
@@ -97,6 +106,9 @@ export const setProjectLifecycleStatus = async (
     status: ProjectStatusType | null,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
         if (typeof status === 'string' && !isValidProjectStatus(status)) return error('Invalid project status', 400);
 
@@ -129,6 +141,9 @@ export const bulkDeleteProjects = async (
     projectIds: string[],
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!projectIds.length) return success(true, 'No projects selected');
         if (!projectIds.every((id) => ObjectId.isValid(id))) return error('One or more project ids are invalid', 400);
 
@@ -168,6 +183,9 @@ export const bulkSetProjectStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!projectIds.length) return success(true, 'No projects selected');
         if (!projectIds.every((id) => ObjectId.isValid(id))) return error('One or more project ids are invalid', 400);
         if (!isValidPublishStatus(status)) return error('Invalid publish status', 400);
@@ -214,6 +232,9 @@ export const bulkSetProjectLifecycleStatus = async (
     status: ProjectStatusType | null,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!projectIds.length) return success(true, 'No projects selected');
         if (!projectIds.every((id) => ObjectId.isValid(id))) return error('One or more project ids are invalid', 400);
         if (typeof status === 'string' && !isValidProjectStatus(status)) return error('Invalid project status', 400);

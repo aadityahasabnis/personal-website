@@ -7,7 +7,7 @@ import Content from '@/server/models/Content';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../../utils/helper';
-import { revalidateArticlePaths } from '../../shared';
+import { getAdminId, revalidateArticlePaths } from '../../shared';
 import { deleteArticle } from './deleteArticle';
 import { changeArticlePublishStatus } from './publishArticle';
 
@@ -28,6 +28,9 @@ export const setArticleStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
         if (!Object.values(PUBLISH_STATUS).includes(status)) return error('Invalid publish status', 400);
         return changeArticlePublishStatus(articleId, status);
@@ -40,6 +43,9 @@ export const toggleArticleFeatured = async (
     articleId: string,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
 
         await connectDB();
@@ -60,6 +66,9 @@ export const setArticleFeatured = async (
     featured: boolean,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
 
         await connectDB();
@@ -92,6 +101,9 @@ export const bulkDeleteArticles = async (
     articleIds: string[],
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!articleIds.every((id) => ObjectId.isValid(id))) return error('One or more article ids are invalid', 400);
 
         for (const articleId of articleIds) {
@@ -115,6 +127,9 @@ export const bulkSetArticleStatus = async (
     status: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!articleIds.every((id) => ObjectId.isValid(id))) return error('One or more article ids are invalid', 400);
         if (!Object.values(PUBLISH_STATUS).includes(status)) return error('Invalid publish status', 400);
 

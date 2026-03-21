@@ -7,7 +7,7 @@ import Content from '@/server/models/Content';
 import PageStats from '@/server/models/PageStats';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../../utils/helper';
-import { revalidateProjectPaths } from '../../shared';
+import { getAdminId, revalidateProjectPaths } from '../../shared';
 
 interface IProjectDeleteBase {
     _id: ObjectId;
@@ -20,6 +20,9 @@ interface IProjectDeleteBase {
 
 export const deleteProject = async (projectId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
 
         await connectDB();

@@ -6,7 +6,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../../utils/helper';
-import { revalidateProjectPaths } from '../../shared';
+import { getAdminId, revalidateProjectPaths } from '../../shared';
 import { isValidProjectStatus } from './helpers';
 
 interface IProjectReorderBase {
@@ -23,6 +23,9 @@ export const reorderProjects = async (
     status?: ProjectStatusType | null,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!projectIds.length) return success(true);
         if (!projectIds.every((id) => ObjectId.isValid(id))) return error('One or more project ids are invalid', 400);
         if (typeof status === 'string' && !isValidProjectStatus(status)) return error('Invalid project status', 400);

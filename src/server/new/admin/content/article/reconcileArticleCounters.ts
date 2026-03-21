@@ -7,6 +7,7 @@ import Content from '@/server/models/Content';
 import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
 import { handleError, success, updatedNow } from '../../../utils/helper';
+import { getAdminId } from '../../shared';
 
 interface IReconcileCountersResult {
     topicsUpdated: number;
@@ -19,6 +20,9 @@ interface IReconcileCountersResult {
 
 export const reconcileArticleCounters = async (): Promise<IApiResponse<IReconcileCountersResult>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
 
         const [topicCounts, subtopicCounts, allTopics, allSubtopics] = await Promise.all([

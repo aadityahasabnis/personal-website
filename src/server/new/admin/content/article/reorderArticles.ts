@@ -6,7 +6,7 @@ import Content from '@/server/models/Content';
 import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../../utils/helper';
-import { revalidateArticlePaths } from '../../shared';
+import { getAdminId, revalidateArticlePaths } from '../../shared';
 
 // ========================================================
 // Reorder
@@ -18,6 +18,9 @@ export const reorderArticles = async (
     subtopicId?: string | null,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!articleIds.length) return success(true);
         if (!ObjectId.isValid(topicId)) return error('Invalid topic id', 400);
         if (!articleIds.every((id) => ObjectId.isValid(id))) return error('One or more article ids are invalid', 400);

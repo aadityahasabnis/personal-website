@@ -7,6 +7,7 @@ import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import type { PipelineStage } from 'mongoose';
 import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import { getAdminId } from '../../shared';
 import type { IArticleEdit, IArticleRow, IArticleTableQuery } from './types';
 
 // ========================================================
@@ -15,6 +16,9 @@ import type { IArticleEdit, IArticleRow, IArticleTableQuery } from './types';
 
 export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPaginatedResponse<IArticleRow>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
@@ -121,6 +125,9 @@ export const getArticleForEdit = async (
     articleId: string,
 ): Promise<IApiResponse<IArticleEdit | null>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(articleId)) return error('Invalid article id', 400);
 
         await connectDB();

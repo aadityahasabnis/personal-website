@@ -6,6 +6,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import { getAdminId } from '../../shared';
 import type { IBlogEdit, IBlogRow, IBlogTableQuery } from './types';
 
 interface IBlogListDoc {
@@ -33,6 +34,9 @@ interface IBlogEditDoc extends IBlogListDoc {
 
 export const getBlogs = async (params: IBlogTableQuery = {}): Promise<IPaginatedResponse<IBlogRow>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
@@ -83,6 +87,9 @@ export const getBlogForEdit = async (
     blogId: string,
 ): Promise<IApiResponse<IBlogEdit | null>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
         await connectDB();

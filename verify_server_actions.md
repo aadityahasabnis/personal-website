@@ -436,3 +436,97 @@ Change summary:
 Next batch in strict order:
 
 1. Subtopic module auth hardening.
+
+### Batch 2: Subtopic module auth hardening
+
+Status: Completed
+
+Updated files:
+
+1. [src/server/new/admin/subtopic/createSubtopic.ts](src/server/new/admin/subtopic/createSubtopic.ts)
+2. [src/server/new/admin/subtopic/getSubtopics.ts](src/server/new/admin/subtopic/getSubtopics.ts)
+3. [src/server/new/admin/subtopic/updateSubtopic.ts](src/server/new/admin/subtopic/updateSubtopic.ts)
+4. [src/server/new/admin/subtopic/deleteSubtopic.ts](src/server/new/admin/subtopic/deleteSubtopic.ts)
+5. [src/server/new/admin/subtopic/publishSubtopic.ts](src/server/new/admin/subtopic/publishSubtopic.ts)
+6. [src/server/new/admin/subtopic/reorderSubtopics.ts](src/server/new/admin/subtopic/reorderSubtopics.ts)
+7. [src/server/new/admin/subtopic/actions.ts](src/server/new/admin/subtopic/actions.ts)
+
+Change summary:
+
+1. Added admin guard checks via getAdminId at the start of all exported subtopic actions.
+2. Preserved existing business logic and response contracts.
+3. Validation: no errors in subtopic module after patch.
+
+Next batch in strict order:
+
+1. Content/article module auth hardening.
+
+### Batch 3: Content/article module auth hardening
+
+Status: Completed
+
+Updated files:
+1. [src/server/new/admin/content/article/deleteArticle.ts](src/server/new/admin/content/article/deleteArticle.ts)
+2. [src/server/new/admin/content/article/publishArticle.ts](src/server/new/admin/content/article/publishArticle.ts)
+3. [src/server/new/admin/content/article/actions.ts](src/server/new/admin/content/article/actions.ts)
+4. [src/server/new/admin/content/article/getArticles.ts](src/server/new/admin/content/article/getArticles.ts)
+5. [src/server/new/admin/content/article/reorderArticles.ts](src/server/new/admin/content/article/reorderArticles.ts)
+6. [src/server/new/admin/content/article/reconcileArticleCounters.ts](src/server/new/admin/content/article/reconcileArticleCounters.ts)
+
+Change summary:
+
+1. Added admin guard checks via getAdminId at the start of all previously unguarded exported article actions.
+2. Preserved existing write/read logic, transaction behavior, and response contracts.
+3. Validation: no errors in article module after patch.
+
+Next batch in strict order:
+
+1. Content/blog module auth hardening.
+
+### Batch 4: Content/blog module auth hardening
+
+Status: Completed
+
+Updated files:
+1. [src/server/new/admin/content/blog/publishBlog.ts](src/server/new/admin/content/blog/publishBlog.ts)
+2. [src/server/new/admin/content/blog/getBlogs.ts](src/server/new/admin/content/blog/getBlogs.ts)
+3. [src/server/new/admin/content/blog/deleteBlog.ts](src/server/new/admin/content/blog/deleteBlog.ts)
+4. [src/server/new/admin/content/blog/actions.ts](src/server/new/admin/content/blog/actions.ts)
+
+Change summary:
+
+1. Added admin guard checks via getAdminId at the start of all previously unguarded exported blog actions.
+2. Preserved existing business logic and response contracts.
+3. Validation: no errors in blog module after patch.
+
+Next batch in strict order:
+
+1. Content/project module auth hardening.
+
+### Batch 5: Content/project module auth hardening
+
+Status: Completed
+
+Updated files:
+1. [src/server/new/admin/content/project/publishProject.ts](src/server/new/admin/content/project/publishProject.ts)
+2. [src/server/new/admin/content/project/getProjects.ts](src/server/new/admin/content/project/getProjects.ts)
+3. [src/server/new/admin/content/project/deleteProject.ts](src/server/new/admin/content/project/deleteProject.ts)
+4. [src/server/new/admin/content/project/reorderProjects.ts](src/server/new/admin/content/project/reorderProjects.ts)
+5. [src/server/new/admin/content/project/actions.ts](src/server/new/admin/content/project/actions.ts)
+
+Change summary:
+
+1. Added admin guard checks via getAdminId at the start of all previously unguarded exported project actions.
+2. Preserved existing business logic and response contracts.
+3. Validation: no errors in project module after patch.
+
+### Post-batch verification checkpoint (P0 auth scope)
+
+Status: Completed
+
+Result:
+1. Admin action files in [src/server/new/admin](src/server/new/admin) now pass guard-presence audit for exported actions (excluding helper/shared modules).
+2. Topic, subtopic, article, blog, and project P0 auth gaps identified in verification are now implemented.
+
+Remaining high-priority work outside completed P0 auth batch:
+1. Public abuse controls (contact/upvote/stats) remain P1 and are not changed in this batch set.

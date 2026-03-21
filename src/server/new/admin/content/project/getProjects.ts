@@ -6,6 +6,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import { buildSort, error, handleError, normalizePagination, paginated, success } from '../../../utils/helper';
+import { getAdminId } from '../../shared';
 import type { IProjectEdit, IProjectRow, IProjectTableQuery } from './types';
 
 interface IProjectListDoc {
@@ -42,6 +43,9 @@ interface IProjectEditDoc extends IProjectListDoc {
 
 export const getProjects = async (params: IProjectTableQuery = {}): Promise<IPaginatedResponse<IProjectRow>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
@@ -100,6 +104,9 @@ export const getProjectForEdit = async (
     projectId: string,
 ): Promise<IApiResponse<IProjectEdit | null>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
 
         await connectDB();

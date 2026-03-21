@@ -6,7 +6,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success, updatedNow } from '../../../utils/helper';
-import { revalidateBlogPaths } from '../../shared';
+import { getAdminId, revalidateBlogPaths } from '../../shared';
 import { isPublishedBlog, isValidPublishStatus, type IBlogActionBase } from './helpers';
 
 // ========================================================
@@ -18,6 +18,9 @@ export const changeBlogPublishStatus = async (
     nextStatus: PublishStatusType,
 ): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
         if (!isValidPublishStatus(nextStatus)) return error('Invalid publish status', 400);
 

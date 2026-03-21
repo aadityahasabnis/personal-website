@@ -7,7 +7,7 @@ import Content from '@/server/models/Content';
 import PageStats from '@/server/models/PageStats';
 import { ObjectId } from 'mongodb';
 import { error, handleError, success } from '../../../utils/helper';
-import { revalidateBlogPaths } from '../../shared';
+import { getAdminId, revalidateBlogPaths } from '../../shared';
 
 interface IBlogDeleteBase {
     _id: ObjectId;
@@ -20,6 +20,9 @@ interface IBlogDeleteBase {
 
 export const deleteBlog = async (blogId: string): Promise<IApiResponse<boolean>> => {
     try {
+        const authResult = await getAdminId();
+        if (!authResult.success) return authResult;
+
         if (!ObjectId.isValid(blogId)) return error('Invalid blog id', 400);
 
         await connectDB();
