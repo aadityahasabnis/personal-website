@@ -63,6 +63,7 @@ const SubtopicSchema = new Schema<ISubtopicDocument>(
 SubtopicSchema.index({ topicId: 1, slug: 1 }, { unique: true });
 SubtopicSchema.index({ topicId: 1, order: 1 });
 SubtopicSchema.index({ topicId: 1, published: 1 });
+SubtopicSchema.index({ topicId: 1, published: 1, order: 1, updatedAt: -1 });
 
 // ============================================================
 // Model Export

@@ -13,11 +13,11 @@ This module provides project-focused server actions for admin workflows:
 
 Use these actions as the backend contract for admin routes and server-side workflows.
 
-## Where To Use
+## Canonical Usage
 
-- route handlers under `src/app/api/admin/content/projects/**`
-- server components or other server-only modules
-- client components should call admin API routes instead of calling server actions directly
+- Use these actions as the canonical backend contract in server contexts.
+- Route handlers under `src/app/api/admin/content/projects/**` are optional adapters and must delegate to these actions.
+- Client components should use server boundaries; keep mutation logic centralized in these actions.
 
 ## Action Map
 
@@ -107,3 +107,8 @@ Use bulk helpers for high-throughput admin operations with batched database writ
 - List projects: `getProjects`
 - Get edit payload: `getProjectForEdit`
 - Bulk operations: bulk helpers
+
+## Revalidation Contract
+
+- Revalidation is helper-driven through admin shared delegates and `revalidateContent`.
+- No dedicated `/api/revalidate` dependency is part of the mutation pipeline.

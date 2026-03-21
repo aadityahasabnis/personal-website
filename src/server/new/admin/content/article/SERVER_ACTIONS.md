@@ -12,13 +12,12 @@ This module provides article-focused server actions for admin workflows:
 
 Use these actions as the backend contract for admin routes and server-side workflows.
 
-## Where To Use
+## Canonical Usage
 
-- Use directly in server contexts:
-    - route handlers under `src/app/api/admin/content/articles/**`
-    - server components or other server-only modules
+- Use these actions as the canonical write/read contract in server contexts.
+- Admin route handlers are optional HTTP adapters and should remain thin wrappers around these actions.
+- Do not duplicate business logic in route handlers.
 - Do not call these actions directly from client components.
-    - Client components should call admin API routes.
 
 ## Action Map
 
@@ -119,18 +118,18 @@ Use these actions as the backend contract for admin routes and server-side workf
 
 Use for admin bulk operations. These iterate item-wise and stop on first failure.
 
-## Component Usage Pattern
+## Usage Pattern
 
-### Server-side caller (recommended for orchestration)
+### Server-side caller (recommended)
 
 ```ts
 // route handler / server module
-import { setArticleStatus } from '@/server/new/new/admin/content/article';
+import { setArticleStatus } from '@/server/new/admin/content/article';
 
 const result = await setArticleStatus(articleId, 'published');
 ```
 
-### Client component caller (recommended pattern)
+### Client component caller (when HTTP boundary is required)
 
 ```ts
 // client component
@@ -150,3 +149,8 @@ await fetch(`/api/admin/content/articles/${articleId}/status`, {
 - Bulk status/delete: bulk helpers
 - Repair counts: `reconcileArticleCounters`
 - Delete permanently: `deleteArticle`
+
+## Revalidation Contract
+
+- Revalidation is helper-driven via admin shared revalidation delegates and `revalidateContent`.
+- No dedicated `/api/revalidate` dependency in the backend mutation flow.

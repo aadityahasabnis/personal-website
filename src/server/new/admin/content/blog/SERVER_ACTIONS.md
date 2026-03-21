@@ -12,11 +12,11 @@ This module provides blog-focused server actions for admin workflows.
 
 Use these actions as the backend contract for admin routes and server-side workflows.
 
-## Where To Use
+## Canonical Usage
 
-- route handlers under `src/app/api/admin/content/blogs/**`
-- server components or other server-only modules
-- client components should call admin API routes instead of calling server actions directly
+- Use these actions as the canonical backend contract in server contexts.
+- Route handlers under `src/app/api/admin/content/blogs/**` are optional adapters and must delegate to these actions.
+- Client components should consume server boundaries; do not duplicate mutation logic in API handlers.
 
 ## Action Map
 
@@ -84,7 +84,7 @@ Use bulk helpers for admin bulk operations. These validate all requested ids fir
 ### Server-side caller
 
 ```ts
-import { setBlogStatus } from '@/server/new/new/admin/content/blog';
+import { setBlogStatus } from '@/server/new/admin/content/blog';
 
 const result = await setBlogStatus(blogId, 'published');
 ```
@@ -107,3 +107,8 @@ await fetch(`/api/admin/content/blogs/${blogId}/status`, {
 - List blogs: `getBlogs`
 - Get edit payload: `getBlogForEdit`
 - Bulk status or delete: bulk helpers
+
+## Revalidation Contract
+
+- Revalidation is helper-driven through admin shared revalidation delegates and `revalidateContent`.
+- No dedicated `/api/revalidate` dependency is part of this workflow.

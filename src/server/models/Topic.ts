@@ -75,6 +75,7 @@ TopicSchema.index({ slug: 1 }, { unique: true });
 TopicSchema.index({ order: 1 });
 TopicSchema.index({ published: 1, order: 1 });
 TopicSchema.index({ featured: 1, published: 1 });
+TopicSchema.index({ published: 1, featured: -1, order: 1, updatedAt: -1 });
 
 // ============================================================
 // Model Export

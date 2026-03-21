@@ -178,6 +178,7 @@ const ArticleContentSchema = new Schema(
 
 ArticleContentSchema.index({ type: 1, topicId: 1, order: 1 });
 ArticleContentSchema.index({ type: 1, subtopicId: 1, order: 1 });
+ArticleContentSchema.index({ type: 1, topicId: 1, publishStatus: 1, subtopicId: 1, order: 1, publishedAt: -1 });
 
 const ProjectContentSchema = new Schema(
     {
