@@ -58,6 +58,10 @@ export interface ISubscriberDocument extends Omit<ISubscriber, '_id'>, Document 
 
 export interface IAdminDocument extends Omit<IAdmin, '_id'>, Document {
     updateLastLogin(): Promise<this>;
+    setOtp(code: string, expiresAt: Date, targetEmail: string): Promise<this>;
+    clearOtp(): Promise<this>;
+    setPasswordResetToken(token: string, expiresAt: Date): Promise<this>;
+    clearPasswordResetToken(): Promise<this>;
 }
 
 export interface IContactDocument extends Omit<IContact, '_id'>, Document {

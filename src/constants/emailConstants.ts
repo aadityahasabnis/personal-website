@@ -109,9 +109,12 @@ export const EMAIL_VALIDATION = {
 // ============================================================
 
 export const OTP_CONFIG = {
+    /** Number of digits in OTP */
     length: 6,
-    expiresInMinutes: 10,
-    expiresInText: '10 minutes',
+    /** OTP validity period in minutes */
+    expiresInMinutes: 5,
+    /** Human-readable expiry text for emails */
+    expiresInText: '5 minutes',
 } as const;
 
 // ============================================================
@@ -119,6 +122,21 @@ export const OTP_CONFIG = {
 // ============================================================
 
 export const PASSWORD_RESET_CONFIG = {
-    expiresInHours: 1,
-    expiresInText: '1 hour',
+    /** Token validity period in minutes */
+    expiresInMinutes: 15,
+    /** Human-readable expiry text for emails */
+    expiresInText: '15 minutes',
+    /** Length of the reset token (secure random string) */
+    tokenLength: 16,
+} as const;
+
+// ============================================================
+// Pending Login Token Configuration (JWT for OTP flow)
+// ============================================================
+
+export const PENDING_LOGIN_CONFIG = {
+    /** Token validity period in minutes (same as OTP) */
+    expiresInMinutes: 5,
+    /** JWT purpose identifier */
+    purpose: 'login-otp' as const,
 } as const;

@@ -82,6 +82,14 @@ const CRITICAL_ACTIONS = new Set([
     'sendPasswordReset',
     'sendTestEmail',
     'verifyEmailConnection',
+
+    // Auth (admin - two-step login & forgot password)
+    'verifyCredentials',
+    'requestLoginOtp',
+    'verifyLoginOtp',
+    'requestPasswordReset',
+    'verifyResetToken',
+    'resetPassword',
 ]);
 
 const HIGH_RISK_INDEX_CHECKS: Array<Omit<IIndexCheck, 'pass' | 'details'>> = [

@@ -3,6 +3,48 @@ import mongoose, { Model, Schema } from 'mongoose';
 import type { IAdminDocument } from './types';
 
 // ============================================================
+// OTP Sub-Schema - For two-step login flow
+// ============================================================
+
+const OtpSchema = new Schema(
+    {
+        code: {
+            type: String,
+            required: true,
+        },
+        expiresAt: {
+            type: Date,
+            required: true,
+        },
+        targetEmail: {
+            type: String,
+            required: true,
+            lowercase: true,
+            trim: true,
+        },
+    },
+    { _id: false }
+);
+
+// ============================================================
+// Password Reset Token Sub-Schema - For forgot password flow
+// ============================================================
+
+const PasswordResetTokenSchema = new Schema(
+    {
+        token: {
+            type: String,
+            required: true,
+        },
+        expiresAt: {
+            type: Date,
+            required: true,
+        },
+    },
+    { _id: false }
+);
+
+// ============================================================
 // Admin Schema
 // ============================================================
 
@@ -43,6 +85,16 @@ const AdminSchema = new Schema<IAdminDocument>(
             type: Date,
             default: null,
         },
+        otp: {
+            type: OtpSchema,
+            default: null,
+            select: false,
+        },
+        passwordResetToken: {
+            type: PasswordResetTokenSchema,
+            default: null,
+            select: false,
+        },
     },
     {
         timestamps: true,
@@ -65,6 +117,18 @@ AdminSchema.statics.findByEmail = async function (email: string) {
     return this.findOne({ email: email.toLowerCase() }).select('+passwordHash');
 };
 
+AdminSchema.statics.findByEmailWithOtp = async function (email: string) {
+    return this.findOne({ email: email.toLowerCase() }).select('+passwordHash +otp');
+};
+
+AdminSchema.statics.findByEmailWithResetToken = async function (email: string) {
+    return this.findOne({ email: email.toLowerCase() }).select('+passwordHash +passwordResetToken');
+};
+
+AdminSchema.statics.findByResetToken = async function (token: string) {
+    return this.findOne({ 'passwordResetToken.token': token }).select('+passwordHash +passwordResetToken');
+};
+
 AdminSchema.statics.getAdminCount = async function () {
     return this.countDocuments();
 };
@@ -78,12 +142,48 @@ AdminSchema.methods.updateLastLogin = async function (this: IAdminDocument) {
     return this.save();
 };
 
+AdminSchema.methods.setOtp = async function (
+    this: IAdminDocument,
+    code: string,
+    expiresAt: Date,
+    targetEmail: string
+) {
+    this.otp = { code, expiresAt, targetEmail };
+    this.markModified('otp'); // Explicitly mark as modified for select: false fields
+    return this.save();
+};
+
+AdminSchema.methods.clearOtp = async function (this: IAdminDocument) {
+    this.otp = null;
+    this.markModified('otp'); // Explicitly mark as modified for select: false fields
+    return this.save();
+};
+
+AdminSchema.methods.setPasswordResetToken = async function (
+    this: IAdminDocument,
+    token: string,
+    expiresAt: Date
+) {
+    this.passwordResetToken = { token, expiresAt };
+    this.markModified('passwordResetToken'); // Explicitly mark as modified for select: false fields
+    return this.save();
+};
+
+AdminSchema.methods.clearPasswordResetToken = async function (this: IAdminDocument) {
+    this.passwordResetToken = null;
+    this.markModified('passwordResetToken'); // Explicitly mark as modified for select: false fields
+    return this.save();
+};
+
 // ============================================================
 // Model Export
 // ============================================================
 
 interface IAdminModel extends Model<IAdminDocument> {
     findByEmail(email: string): Promise<IAdminDocument | null>;
+    findByEmailWithOtp(email: string): Promise<IAdminDocument | null>;
+    findByEmailWithResetToken(email: string): Promise<IAdminDocument | null>;
+    findByResetToken(token: string): Promise<IAdminDocument | null>;
     getAdminCount(): Promise<number>;
 }
 

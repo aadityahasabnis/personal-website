@@ -10,6 +10,13 @@ import Google from 'next-auth/providers/google';
 
 const googleProviderEnabled = Boolean(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET);
 
+/**
+ * Special marker used by the OTP verification flow to indicate
+ * that the user has already been authenticated via OTP.
+ * When this marker is passed as the password, we skip password verification.
+ */
+export const OTP_VERIFIED_MARKER = '__OTP_VERIFIED__';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(clientPromise, { databaseName: env.DB_NAME }) as Adapter,
     secret: env.NEXTAUTH_SECRET,
@@ -28,7 +35,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 try {
                     await connectDB();
                     const admin = await Admin.findByEmail(credentials.email as string);
-                    if (!admin?.passwordHash) return null;
+                    if (!admin) return null;
+
+                    // Check if this is an OTP-verified login (from verifyLoginOtp action)
+                    // In this case, we skip password verification since the user has
+                    // already been authenticated through the OTP flow.
+                    const isOtpVerified = credentials.password === OTP_VERIFIED_MARKER;
+
+                    if (isOtpVerified) {
+                        // For OTP-verified logins, just return the admin
+                        // The OTP verification was already done in verifyLoginOtp
+                        // Note: lastLoginAt is already updated by the OTP verification action
+                        return {
+                            id: admin._id.toString(),
+                            email: admin.email,
+                            name: admin.name,
+                            image: admin.image ?? null,
+                        };
+                    }
+
+                    // Regular password-based login
+                    if (!admin.passwordHash) return null;
 
                     const isValid = await bcrypt.compare(
                         credentials.password as string,
