@@ -10,6 +10,7 @@ export * from './base';
 export * from './comment';
 export * from './contact';
 export * from './content';
+export * from './media';
 export * from './pageStats';
 export * from './subscriber';
 export * from './subtopic';

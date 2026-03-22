@@ -83,6 +83,13 @@ const CRITICAL_ACTIONS = new Set([
     'sendTestEmail',
     'verifyEmailConnection',
 
+    // Media (admin)
+    'getMedia',
+    'uploadMedia',
+    'updateMedia',
+    'deleteMedia',
+    'getMediaStats',
+
     // Auth (admin - two-step login & forgot password)
     'verifyCredentials',
     'requestLoginOtp',
@@ -146,6 +153,17 @@ const HIGH_RISK_INDEX_CHECKS: Array<Omit<IIndexCheck, 'pass' | 'details'>> = [
             "return { subscribedAt: -1 };",
         ],
         indexPattern: 'SubscriberSchema.index({ confirmed: 1, unsubscribedAt: 1, subscribedAt: -1 });',
+    },
+    {
+        id: 'media-admin-filters',
+        queryFile: 'src/server/new/admin/media/shared.ts',
+        indexFile: 'src/server/models/Media.ts',
+        queryPatterns: [
+            "match.fileType = filter;",
+            "match.folder = filter;",
+            "return { createdAt: -1 };",
+        ],
+        indexPattern: 'MediaSchema.index({ fileType: 1, folder: 1, createdAt: -1 });',
     },
 ];
 

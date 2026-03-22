@@ -2,6 +2,7 @@ import type { IAdmin } from '@/interfaces/schema/admin';
 import type { IComment } from '@/interfaces/schema/comment';
 import type { IContact } from '@/interfaces/schema/contact';
 import type { IArticle, IBlog, IContent, IProject } from '@/interfaces/schema/content';
+import type { IMedia } from '@/interfaces/schema/media';
 import type { IPageStats } from '@/interfaces/schema/pageStats';
 import type { ISubscriber } from '@/interfaces/schema/subscriber';
 import type { ISubtopic } from '@/interfaces/schema/subtopic';
@@ -69,4 +70,12 @@ export interface IContactDocument extends Omit<IContact, '_id'>, Document {
     markAsReplied(): Promise<this>;
     archive(): Promise<this>;
     unarchive(): Promise<this>;
+}
+
+export interface IMediaDocument extends Omit<IMedia, '_id'>, Document {
+    updateMetadata(updates: Partial<{ description: string; altText: string; tags: string[] }>): Promise<this>;
+    addTags(newTags: string[]): Promise<this>;
+    removeTags(tagsToRemove: string[]): Promise<this>;
+    // Virtual properties
+    sizeFormatted?: string;
 }

@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Upload, Trash2, Copy, Check, X, Search, Grid, List, ImageIcon, Film, FileText, MoreVertical, Download, Pencil } from 'lucide-react';
+import { Upload, Trash2, Copy, Check, X, Grid, List, ImageIcon, Film, FileText, MoreVertical, Download, Pencil } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useAdminTable } from '@/hooks';
 import { Button } from '@/components/ui/button';

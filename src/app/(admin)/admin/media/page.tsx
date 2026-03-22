@@ -12,11 +12,18 @@ export const metadata = {
 
 // Serialize media for client component
 function serializeMedia(media: IMedia[]) {
-    return media.map(m => ({
-        ...m,
-        _id: m._id?.toString(),
-        uploadedBy: m.uploadedBy?.toString(),
-        createdAt: m.createdAt.toISOString(),
+    return media.map((m) => ({
+        filename: m.fileName,
+        url: m.publicUrl,
+        publicId: m.fileKey,
+        mimeType: m.mimeType,
+        size: m.size,
+        ...(m.width !== null && m.width !== undefined ? { width: m.width } : {}),
+        ...(m.height !== null && m.height !== undefined ? { height: m.height } : {}),
+        ...(m.altText ? { alt: m.altText } : {}),
+        ...(m._id ? { _id: m._id.toString() } : {}),
+        ...(m.uploadedBy ? { uploadedBy: m.uploadedBy.toString() } : {}),
+        createdAt: (m.createdAt ?? new Date()).toISOString(),
     }));
 }
 
