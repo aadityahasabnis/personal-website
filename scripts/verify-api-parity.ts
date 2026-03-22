@@ -75,6 +75,13 @@ const CRITICAL_ACTIONS = new Set([
     'getContentViewsById',
     'incrementContentLikesById',
     'incrementContentViewsById',
+
+    // Email (admin)
+    'sendNewsletter',
+    'sendOtp',
+    'sendPasswordReset',
+    'sendTestEmail',
+    'verifyEmailConnection',
 ]);
 
 const HIGH_RISK_INDEX_CHECKS: Array<Omit<IIndexCheck, 'pass' | 'details'>> = [

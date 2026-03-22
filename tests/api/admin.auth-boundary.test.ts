@@ -1,5 +1,6 @@
 import { GET as commentsGet, POST as commentsPost } from '@/app/api/admin/comments/route';
 import { GET as contactsGet, POST as contactsPost } from '@/app/api/admin/contacts/route';
+import { GET as emailGet, POST as emailPost } from '@/app/api/admin/email/route';
 import { POST as settingsPost } from '@/app/api/admin/settings/route';
 import { GET as subscribersGet, POST as subscribersPost } from '@/app/api/admin/subscribers/route';
 import * as authModule from '@/lib/auth/admin';
@@ -49,6 +50,14 @@ vi.mock('@/server/new/admin/settings', () => ({
     updateAdminRecoveryEmail: vi.fn(),
 }));
 
+vi.mock('@/server/new/admin/email', () => ({
+    sendNewsletter: vi.fn(),
+    sendOtp: vi.fn(),
+    sendPasswordReset: vi.fn(),
+    sendTestEmail: vi.fn(),
+    verifyEmailConnection: vi.fn(),
+}));
+
 const assertUnauthorized = async (responsePromise: Promise<Response>) => {
     const response = await responsePromise;
     const payload = await response.json();
@@ -74,6 +83,9 @@ describe('admin auth boundaries', () => {
         await assertUnauthorized(subscribersGet(new NextRequest('http://localhost/api/admin/subscribers')));
         await assertUnauthorized(subscribersPost(new NextRequest('http://localhost/api/admin/subscribers', { method: 'POST', body: '{}' })));
 
+        await assertUnauthorized(emailGet());
+        await assertUnauthorized(emailPost(new NextRequest('http://localhost/api/admin/email', { method: 'POST', body: '{}' })));
+
         await assertUnauthorized(settingsPost(new NextRequest('http://localhost/api/admin/settings', { method: 'POST', body: '{}' })));
     });
 
@@ -86,6 +98,7 @@ describe('admin auth boundaries', () => {
         await assertUnauthorized(commentsGet(new NextRequest('http://localhost/api/admin/comments?action=stats')));
         await assertUnauthorized(contactsGet(new NextRequest('http://localhost/api/admin/contacts?action=stats')));
         await assertUnauthorized(subscribersGet(new NextRequest('http://localhost/api/admin/subscribers?action=stats')));
+        await assertUnauthorized(emailGet());
         await assertUnauthorized(settingsPost(new NextRequest('http://localhost/api/admin/settings', { method: 'POST', body: '{}' })));
     });
 });

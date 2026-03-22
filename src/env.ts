@@ -22,9 +22,15 @@ export const env = {
     CLOUDINARY_CLOUD_NAME: get('CLOUDINARY_CLOUD_NAME', false),
     CLOUDINARY_API_KEY:    get('CLOUDINARY_API_KEY',    false),
     CLOUDINARY_API_SECRET: get('CLOUDINARY_API_SECRET', false),
+    // Email Configuration (Gmail SMTP)
+    GMAIL_ACCOUNT:         get('GMAIL_ACCOUNT', false),
+    GMAIL_PASSWORD:        get('GMAIL_PASSWORD', false),
     IS_PROD: process.env.NODE_ENV === 'production',
     IS_DEV:  process.env.NODE_ENV === 'development',
 } as const;
 
 export const isCloudinaryConfigured = () =>
     Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
+
+export const isEmailConfigured = () =>
+    Boolean(env.GMAIL_ACCOUNT && env.GMAIL_PASSWORD);
