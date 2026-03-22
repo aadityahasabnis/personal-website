@@ -33,6 +33,12 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# generated backend audit artifacts
+/.audit-matrix.json
+/scripts/*.output.json
+/scripts/query-performance*.json
+/scripts/query-performance-report.json
+
 # vercel
 .vercel
 

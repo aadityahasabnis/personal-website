@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Personal Website Backend and App
 
-## Getting Started
+Production-focused personal website built with Next.js App Router, MongoDB, and typed server actions.
 
-First, run the development server:
+## Stack
+
+- Next.js 16
+- TypeScript (strict mode)
+- MongoDB + Mongoose
+- NextAuth (admin auth)
+- Vitest (API/backend test coverage)
+
+## Local setup
+
+1. Install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Create environment file from `.env.example` and configure required keys.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start dev server:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+pnpm dev
+```
 
-## Learn More
+## Core commands
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+pnpm dev
+pnpm build
+pnpm lint
+pnpm typecheck
+pnpm typecheck:backend
+pnpm test:api
+pnpm verify:api
+pnpm validate:queries
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Backend quality workflow
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Use this baseline before backend merges:
 
-## Deploy on Vercel
+1. `pnpm test:api`
+2. `pnpm verify:api`
+3. `pnpm validate:queries` (when query/index changes are included)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Documentation map
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Infrastructure and runtime behavior: `INFRASTRUCTURE.md`
+- Backend implementation status: `BACKEND_IMPLEMENTATION_PLAN.md`
+- Server action verification charter: `verify_server_actions.md`
+- Script usage and rationale: `scripts/README.md`
+- API tests usage and rationale: `tests/api/README.md`
+- Server action domain contracts: `src/server/new/**/SERVER_ACTIONS.md`
+
+## Notes
+
+- Backend scripts may generate local JSON diagnostics under `scripts/`; these artifacts are intentionally ignored and not part of source code.
+- API routes are thin wrappers over server actions where possible to preserve a single backend contract surface.

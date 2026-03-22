@@ -114,7 +114,7 @@ const HIGH_RISK_INDEX_CHECKS: Array<Omit<IIndexCheck, 'pass' | 'details'>> = [
         queryFile: 'src/server/new/public/contact/submitPublicContact.ts',
         indexFile: 'src/server/models/Contact.ts',
         queryPatterns: [
-            'duplicateSubmission = await Contact.findOne({',
+            'duplicateCandidates = await Contact.find({',
             'email,',
             'subject,',
             'createdAt: { $gte: duplicateWindowStart },',
