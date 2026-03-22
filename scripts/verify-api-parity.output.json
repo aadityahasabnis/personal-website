@@ -1,0 +1,354 @@
+{
+  "generatedAt": "2026-03-22T08:24:35.225Z",
+  "criticalCoverage": {
+    "totalCriticalActions": 34,
+    "mappedCriticalActions": 34,
+    "missingCriticalActions": 0,
+    "coverage": 100,
+    "missingActions": [],
+    "mappedActions": [
+      {
+        "fn": "adminReplyToComment",
+        "file": "src/server/new/admin/comments/adminReplyToComment.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "approveComment",
+        "file": "src/server/new/admin/comments/approveComment.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "bulkApproveComments",
+        "file": "src/server/new/admin/comments/bulkApproveComments.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "bulkDeleteComments",
+        "file": "src/server/new/admin/comments/bulkDeleteComments.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "deleteComment",
+        "file": "src/server/new/admin/comments/deleteComment.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "getComments",
+        "file": "src/server/new/admin/comments/getComments.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "getCommentStats",
+        "file": "src/server/new/admin/comments/getCommentStats.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "rejectComment",
+        "file": "src/server/new/admin/comments/rejectComment.ts",
+        "domain": "admin/comments"
+      },
+      {
+        "fn": "archiveContact",
+        "file": "src/server/new/admin/contacts/archiveContact.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "bulkArchiveContacts",
+        "file": "src/server/new/admin/contacts/bulkArchiveContacts.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "bulkDeleteContacts",
+        "file": "src/server/new/admin/contacts/bulkDeleteContacts.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "deleteContact",
+        "file": "src/server/new/admin/contacts/deleteContact.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "getContactById",
+        "file": "src/server/new/admin/contacts/getContactById.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "getContacts",
+        "file": "src/server/new/admin/contacts/getContacts.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "getContactStats",
+        "file": "src/server/new/admin/contacts/getContactStats.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "markContactAsRead",
+        "file": "src/server/new/admin/contacts/markContactAsRead.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "markContactAsReplied",
+        "file": "src/server/new/admin/contacts/markContactAsReplied.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "unarchiveContact",
+        "file": "src/server/new/admin/contacts/unarchiveContact.ts",
+        "domain": "admin/contacts"
+      },
+      {
+        "fn": "bulkDeleteSubscribers",
+        "file": "src/server/new/admin/subscribers/bulkDeleteSubscribers.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "confirmSubscriber",
+        "file": "src/server/new/admin/subscribers/confirmSubscriber.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "deleteSubscriber",
+        "file": "src/server/new/admin/subscribers/deleteSubscriber.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "exportSubscribers",
+        "file": "src/server/new/admin/subscribers/exportSubscribers.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "getSubscribers",
+        "file": "src/server/new/admin/subscribers/getSubscribers.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "getSubscriberStats",
+        "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+        "domain": "admin/subscribers"
+      },
+      {
+        "fn": "createPublicComment",
+        "file": "src/server/new/public/comments/createPublicComment.ts",
+        "domain": "public/comments"
+      },
+      {
+        "fn": "getPublicCommentsByContentId",
+        "file": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+        "domain": "public/comments"
+      },
+      {
+        "fn": "upvotePublicCommentById",
+        "file": "src/server/new/public/comments/upvotePublicCommentById.ts",
+        "domain": "public/comments"
+      },
+      {
+        "fn": "submitPublicContact",
+        "file": "src/server/new/public/contact/submitPublicContact.ts",
+        "domain": "public/contact"
+      },
+      {
+        "fn": "getContentLikesById",
+        "file": "src/server/new/public/stats/getContentLikesById.ts",
+        "domain": "public/stats"
+      },
+      {
+        "fn": "getContentViewsById",
+        "file": "src/server/new/public/stats/getContentViewsById.ts",
+        "domain": "public/stats"
+      },
+      {
+        "fn": "incrementContentLikesById",
+        "file": "src/server/new/public/stats/incrementContentLikesById.ts",
+        "domain": "public/stats"
+      },
+      {
+        "fn": "incrementContentViewsById",
+        "file": "src/server/new/public/stats/incrementContentViewsById.ts",
+        "domain": "public/stats"
+      },
+      {
+        "fn": "subscribe",
+        "file": "src/server/new/public/subscribe/subscribe.ts",
+        "domain": "public/subscribe"
+      },
+      {
+        "fn": "unsubscribe",
+        "file": "src/server/new/public/subscribe/unsubscribe.ts",
+        "domain": "public/subscribe"
+      }
+    ]
+  },
+  "missingCriticalByDomain": {},
+  "indexValidation": {
+    "totalChecks": 5,
+    "passedChecks": 4,
+    "failedChecks": 1,
+    "checks": [
+      {
+        "id": "blogs-listing",
+        "queryFile": "src/server/new/public/content/blog/getPublishedBlogs.ts",
+        "indexFile": "src/server/models/Content.ts",
+        "queryPatterns": [
+          "buildPublishedContentMatch('blog')",
+          ".sort(toStableSort({ featured: -1, publishedAt: -1, updatedAt: -1 }))"
+        ],
+        "indexPattern": "BaseContentSchema.index({ type: 1, publishStatus: 1, publishedAt: -1 });",
+        "pass": true,
+        "details": "query and index patterns detected"
+      },
+      {
+        "id": "projects-listing",
+        "queryFile": "src/server/new/public/content/project/getPublishedProjects.ts",
+        "indexFile": "src/server/models/Content.ts",
+        "queryPatterns": [
+          "buildPublishedContentMatch('project')",
+          ".sort(toStableSort({ order: 1, featured: -1, updatedAt: -1 }))"
+        ],
+        "indexPattern": "ProjectContentSchema.index({ type: 1, status: 1, order: 1 });",
+        "pass": true,
+        "details": "query and index patterns detected"
+      },
+      {
+        "id": "comment-threading",
+        "queryFile": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+        "indexFile": "src/server/models/Comment.ts",
+        "queryPatterns": [
+          "Comment.find(baseMatch)",
+          ".sort({ createdAt: -1, _id: -1 })",
+          "approved: true"
+        ],
+        "indexPattern": "CommentSchema.index({ contentId: 1, parentId: 1, approved: 1, createdAt: -1 });",
+        "pass": true,
+        "details": "query and index patterns detected"
+      },
+      {
+        "id": "contact-duplicate-detection",
+        "queryFile": "src/server/new/public/contact/submitPublicContact.ts",
+        "indexFile": "src/server/models/Contact.ts",
+        "queryPatterns": [
+          "duplicateSubmission = await Contact.findOne({",
+          "email,",
+          "subject,",
+          "createdAt: { $gte: duplicateWindowStart },"
+        ],
+        "indexPattern": "ContactSchema.index({ email: 1, subject: 1, createdAt: -1 });",
+        "pass": false,
+        "details": "missing query patterns: duplicateSubmission = await Contact.findOne({"
+      },
+      {
+        "id": "subscriber-admin-filters",
+        "queryFile": "src/server/new/admin/subscribers/shared.ts",
+        "indexFile": "src/server/models/Subscriber.ts",
+        "queryPatterns": [
+          "match.confirmed = true;",
+          "match.unsubscribedAt = null;",
+          "return { subscribedAt: -1 };"
+        ],
+        "indexPattern": "SubscriberSchema.index({ confirmed: 1, unsubscribedAt: 1, subscribedAt: -1 });",
+        "pass": true,
+        "details": "query and index patterns detected"
+      }
+    ]
+  },
+  "thinWrapperAudit": {
+    "violationCount": 11,
+    "violations": [
+      {
+        "api": "src/app/api/admin/comments/route.ts",
+        "importedActions": [
+          "adminReplyToComment",
+          "approveComment",
+          "bulkApproveComments",
+          "bulkDeleteComments",
+          "deleteComment",
+          "getCommentStats",
+          "getComments",
+          "rejectComment"
+        ]
+      },
+      {
+        "api": "src/app/api/admin/contacts/route.ts",
+        "importedActions": [
+          "archiveContact",
+          "bulkArchiveContacts",
+          "bulkDeleteContacts",
+          "deleteContact",
+          "getContactById",
+          "getContactStats",
+          "getContacts",
+          "markContactAsRead",
+          "markContactAsReplied",
+          "unarchiveContact"
+        ]
+      },
+      {
+        "api": "src/app/api/admin/subscribers/route.ts",
+        "importedActions": [
+          "bulkDeleteSubscribers",
+          "confirmSubscriber",
+          "deleteSubscriber",
+          "exportSubscribers",
+          "getSubscriberStats",
+          "getSubscribers"
+        ]
+      },
+      {
+        "api": "src/app/api/content/articles/id/[contentId]/comments/route.ts",
+        "importedActions": [
+          "createPublicComment",
+          "getPublicCommentsByContentId"
+        ]
+      },
+      {
+        "api": "src/app/api/content/articles/id/[contentId]/likes/route.ts",
+        "importedActions": [
+          "getContentLikesById",
+          "incrementContentLikesById"
+        ]
+      },
+      {
+        "api": "src/app/api/content/articles/id/[contentId]/views/route.ts",
+        "importedActions": [
+          "getContentViewsById",
+          "incrementContentViewsById"
+        ]
+      },
+      {
+        "api": "src/app/api/content/blogs/id/[contentId]/comments/route.ts",
+        "importedActions": [
+          "createPublicComment",
+          "getPublicCommentsByContentId"
+        ]
+      },
+      {
+        "api": "src/app/api/content/blogs/id/[contentId]/likes/route.ts",
+        "importedActions": [
+          "getContentLikesById",
+          "incrementContentLikesById"
+        ]
+      },
+      {
+        "api": "src/app/api/content/projects/id/[contentId]/comments/route.ts",
+        "importedActions": [
+          "createPublicComment",
+          "getPublicCommentsByContentId"
+        ]
+      },
+      {
+        "api": "src/app/api/content/projects/id/[contentId]/likes/route.ts",
+        "importedActions": [
+          "getContentLikesById",
+          "incrementContentLikesById"
+        ]
+      },
+      {
+        "api": "src/app/api/public/subscribe/route.ts",
+        "importedActions": [
+          "subscribe",
+          "unsubscribe"
+        ]
+      }
+    ]
+  }
+}

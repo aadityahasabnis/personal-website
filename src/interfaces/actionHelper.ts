@@ -14,7 +14,7 @@ type ApiSuccess<T> = {
 // Error response
 type ApiError = {
     success: false;
-    status: 400 | 401 | 403 | 404 | 409 | 500;
+    status: 400 | 401 | 403 | 404 | 409 | 429 | 500;
     error: string;
 };
 

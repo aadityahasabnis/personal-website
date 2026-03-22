@@ -100,6 +100,9 @@ const CommentSchema = new Schema<ICommentDocument>(
 
 CommentSchema.index({ contentId: 1, parentId: 1, createdAt: -1 });
 CommentSchema.index({ contentId: 1, approved: 1, parentId: 1 });
+CommentSchema.index({ contentId: 1, parentId: 1, approved: 1, createdAt: -1 });
+CommentSchema.index({ contentId: 1, parentId: 1, approved: 1, createdAt: -1, _id: -1 });
+CommentSchema.index({ contentId: 1, parentId: 1, approved: 1, createdAt: 1, _id: 1 });
 CommentSchema.index({ approved: 1, createdAt: -1 });
 CommentSchema.index({ parentId: 1, approved: 1 });
 

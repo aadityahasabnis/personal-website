@@ -1,0 +1,3000 @@
+{
+  "generatedAt": "2026-03-22T07:23:59.684Z",
+  "counts": {
+    "tsFiles": 473,
+    "modelFiles": 9,
+    "actionFiles": 148,
+    "apiRouteFiles": 68,
+    "queryOps": 257,
+    "indexes": 35,
+    "exportedActions": 133,
+    "apiImportedActions": 80,
+    "missingApiActions": 53
+  },
+  "indexes": [
+    {
+      "file": "src/server/models/Admin.ts",
+      "line": 57,
+      "expr": "AdminSchema.index({ email: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/Admin.ts",
+      "line": 58,
+      "expr": "AdminSchema.index({ lastLoginAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 101,
+      "expr": "CommentSchema.index({ contentId: 1, parentId: 1, createdAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 102,
+      "expr": "CommentSchema.index({ contentId: 1, approved: 1, parentId: 1 });"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 103,
+      "expr": "CommentSchema.index({ approved: 1, createdAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 104,
+      "expr": "CommentSchema.index({ parentId: 1, approved: 1 });"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 64,
+      "expr": "ContactSchema.index({ createdAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 65,
+      "expr": "ContactSchema.index({ status: 1, createdAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 66,
+      "expr": "ContactSchema.index({ email: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 151,
+      "expr": "BaseContentSchema.index({ type: 1, slug: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 152,
+      "expr": "BaseContentSchema.index({ type: 1, publishStatus: 1, publishedAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 153,
+      "expr": "BaseContentSchema.index({ publishStatus: 1, featured: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 154,
+      "expr": "BaseContentSchema.index({ tags: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 155,
+      "expr": "BaseContentSchema.index({ createdBy: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 156,
+      "expr": "BaseContentSchema.index({ updatedBy: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 179,
+      "expr": "ArticleContentSchema.index({ type: 1, topicId: 1, order: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 180,
+      "expr": "ArticleContentSchema.index({ type: 1, subtopicId: 1, order: 1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 181,
+      "expr": "ArticleContentSchema.index({ type: 1, topicId: 1, publishStatus: 1, subtopicId: 1, order: 1, publishedAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Content.ts",
+      "line": 230,
+      "expr": "ProjectContentSchema.index({ type: 1, status: 1, order: 1 });"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 43,
+      "expr": "PageStatsSchema.index({ contentId: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 44,
+      "expr": "PageStatsSchema.index({ views: -1 });"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 45,
+      "expr": "PageStatsSchema.index({ likes: -1 });"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 46,
+      "expr": "PageStatsSchema.index({ lastViewedAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 49,
+      "expr": "SubscriberSchema.index({ email: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 50,
+      "expr": "SubscriberSchema.index({ confirmed: 1 });"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 51,
+      "expr": "SubscriberSchema.index({ subscribedAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Subtopic.ts",
+      "line": 63,
+      "expr": "SubtopicSchema.index({ topicId: 1, slug: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/Subtopic.ts",
+      "line": 64,
+      "expr": "SubtopicSchema.index({ topicId: 1, order: 1 });"
+    },
+    {
+      "file": "src/server/models/Subtopic.ts",
+      "line": 65,
+      "expr": "SubtopicSchema.index({ topicId: 1, published: 1 });"
+    },
+    {
+      "file": "src/server/models/Subtopic.ts",
+      "line": 66,
+      "expr": "SubtopicSchema.index({ topicId: 1, published: 1, order: 1, updatedAt: -1 });"
+    },
+    {
+      "file": "src/server/models/Topic.ts",
+      "line": 74,
+      "expr": "TopicSchema.index({ slug: 1 }, { unique: true });"
+    },
+    {
+      "file": "src/server/models/Topic.ts",
+      "line": 75,
+      "expr": "TopicSchema.index({ order: 1 });"
+    },
+    {
+      "file": "src/server/models/Topic.ts",
+      "line": 76,
+      "expr": "TopicSchema.index({ published: 1, order: 1 });"
+    },
+    {
+      "file": "src/server/models/Topic.ts",
+      "line": 77,
+      "expr": "TopicSchema.index({ featured: 1, published: 1 });"
+    },
+    {
+      "file": "src/server/models/Topic.ts",
+      "line": 78,
+      "expr": "TopicSchema.index({ published: 1, featured: -1, order: 1, updatedAt: -1 });"
+    }
+  ],
+  "queryOps": [
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 116,
+      "op": "find",
+      "code": "const topic = topics.find((t) => t.slug === article.topicSlug);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 151,
+      "op": "find",
+      "code": "const article = articles.find((a) => a.slug === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 164,
+      "op": "find",
+      "code": "const article = articles.find((a) => a.slug === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 177,
+      "op": "find",
+      "code": "const article = articles.find((a) => a.slug === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 190,
+      "op": "find",
+      "code": "const article = articles.find((a) => a.slug === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/ArticlesTable.tsx",
+      "line": 199,
+      "op": "find",
+      "code": "const article = articles.find((a) => a.slug === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/new/page.tsx",
+      "line": 18,
+      "op": "find",
+      "code": ".find({})"
+    },
+    {
+      "file": "src/app/(admin)/admin/articles/[topicSlug]/[slug]/edit/page.tsx",
+      "line": 33,
+      "op": "find",
+      "code": ".find({})"
+    },
+    {
+      "file": "src/app/(admin)/admin/messages/MessagesTable.tsx",
+      "line": 324,
+      "op": "find",
+      "code": "const msg = messages.find((m) => m._id === expandedId);"
+    },
+    {
+      "file": "src/app/(admin)/admin/notes/NotesTable.tsx",
+      "line": 183,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => !table.items.find((n) => n.slug === id)?.published).map((id) => toggleNotePublished(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/notes/NotesTable.tsx",
+      "line": 190,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => table.items.find((n) => n.slug === id)?.published).map((id) => toggleNotePublished(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/notes/NotesTable.tsx",
+      "line": 197,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => !table.items.find((n) => n.slug === id)?.featured).map((id) => toggleNoteFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/notes/NotesTable.tsx",
+      "line": 204,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => table.items.find((n) => n.slug === id)?.featured).map((id) => toggleNoteFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/projects/ProjectsTable.tsx",
+      "line": 293,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => !table.items.find((p) => p.slug === id)?.featured).map((id) => toggleProjectFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/projects/ProjectsTable.tsx",
+      "line": 300,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => table.items.find((p) => p.slug === id)?.featured).map((id) => toggleProjectFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/subscribers/SubscribersTable.tsx",
+      "line": 183,
+      "op": "find",
+      "code": ".map((id) => table.items.find((s) => (s._id || s.email) === id))"
+    },
+    {
+      "file": "src/app/(admin)/admin/subtopics/SubtopicsTable.tsx",
+      "line": 117,
+      "op": "find",
+      "code": "const topic = topics.find((t) => t.slug === subtopic.topicSlug);"
+    },
+    {
+      "file": "src/app/(admin)/admin/subtopics/SubtopicsTable.tsx",
+      "line": 178,
+      "op": "find",
+      "code": "const subtopic = table.items.find((s) => getSubtopicKey(s) === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/subtopics/SubtopicsTable.tsx",
+      "line": 190,
+      "op": "find",
+      "code": "const subtopic = table.items.find((s) => getSubtopicKey(s) === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/subtopics/SubtopicsTable.tsx",
+      "line": 198,
+      "op": "find",
+      "code": "const subtopic = table.items.find((s) => getSubtopicKey(s) === id);"
+    },
+    {
+      "file": "src/app/(admin)/admin/topics/TopicsTable.tsx",
+      "line": 167,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => !table.items.find((t) => t.slug === id)?.published).map((id) => toggleTopicPublished(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/topics/TopicsTable.tsx",
+      "line": 174,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => table.items.find((t) => t.slug === id)?.published).map((id) => toggleTopicPublished(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/topics/TopicsTable.tsx",
+      "line": 181,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => !table.items.find((t) => t.slug === id)?.featured).map((id) => toggleTopicFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(admin)/admin/topics/TopicsTable.tsx",
+      "line": 188,
+      "op": "find",
+      "code": "async () => { await Promise.all(ids.filter((id) => table.items.find((t) => t.slug === id)?.featured).map((id) => toggleTopicFeatured(id))); }"
+    },
+    {
+      "file": "src/app/(public)/projects/page.tsx",
+      "line": 82,
+      "op": "find",
+      "code": "const githubUrl = SITE_CONFIG.socials?.find(s => s.name.toLowerCase() === 'github')?.url || '#';"
+    },
+    {
+      "file": "src/app/api/content/articles/[articleSlug]/route.ts",
+      "line": 21,
+      "op": "find",
+      "code": "const match = pathsResult.data.find((path) => path.articleSlug === articleSlug);"
+    },
+    {
+      "file": "src/components/content/ArticleSidebar.tsx",
+      "line": 53,
+      "op": "find",
+      "code": "const currentArticle = articles.find((a) => a.slug === currentSlug);"
+    },
+    {
+      "file": "src/components/form/CustomSelect.tsx",
+      "line": 78,
+      "op": "find",
+      "code": "() => options?.find((opt) => isValueEqual(opt.value, value)),"
+    },
+    {
+      "file": "src/lib/storage.ts",
+      "line": 205,
+      "op": "find",
+      "code": "export const getAvatarById = (id: string) => AVATAR_OPTIONS.find(a => a.id === id);"
+    },
+    {
+      "file": "src/scripts/create-admin.ts",
+      "line": 17,
+      "op": "find",
+      "code": "const arg = process.argv.find(a => a.startsWith(`--${name}=`));"
+    },
+    {
+      "file": "src/scripts/create-admin.ts",
+      "line": 38,
+      "op": "create",
+      "code": "const admin = await Admin.create({ email: EMAIL, name: NAME, passwordHash });"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 655,
+      "op": "create",
+      "code": "await db.posts.create({ title });"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1145,
+      "op": "deleteMany",
+      "code": "await db.collection('content').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1146,
+      "op": "deleteMany",
+      "code": "await db.collection('topics').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1147,
+      "op": "deleteMany",
+      "code": "await db.collection('subtopics').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1148,
+      "op": "deleteMany",
+      "code": "await db.collection('article_stats').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1149,
+      "op": "deleteMany",
+      "code": "await db.collection('pageStats').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1150,
+      "op": "deleteMany",
+      "code": "await db.collection('projects').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1151,
+      "op": "deleteMany",
+      "code": "await db.collection('comments').deleteMany({});"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1155,
+      "op": "insertMany",
+      "code": "await db.collection('topics').insertMany(SAMPLE_TOPICS);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1160,
+      "op": "insertMany",
+      "code": "await db.collection('subtopics').insertMany(SAMPLE_SUBTOPICS);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1165,
+      "op": "insertMany",
+      "code": "await db.collection('content').insertMany(SAMPLE_TOPIC_ARTICLES);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1170,
+      "op": "insertMany",
+      "code": "await db.collection('content').insertMany(SAMPLE_NOTES);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1175,
+      "op": "insertMany",
+      "code": "await db.collection('projects').insertMany(SAMPLE_PROJECTS);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1180,
+      "op": "insertMany",
+      "code": "await db.collection('article_stats').insertMany(SAMPLE_ARTICLE_STATS);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1185,
+      "op": "insertMany",
+      "code": "await db.collection('pageStats').insertMany(SAMPLE_PAGE_STATS);"
+    },
+    {
+      "file": "src/scripts/seed.ts",
+      "line": 1190,
+      "op": "insertMany",
+      "code": "await db.collection('comments').insertMany(SAMPLE_COMMENTS);"
+    },
+    {
+      "file": "src/server/models/Admin.ts",
+      "line": 65,
+      "op": "findOne",
+      "code": "return this.findOne({ email: email.toLowerCase() }).select('+passwordHash');"
+    },
+    {
+      "file": "src/server/models/Admin.ts",
+      "line": 69,
+      "op": "countDocuments",
+      "code": "return this.countDocuments();"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 114,
+      "op": "find",
+      "code": "return this.find({"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 127,
+      "op": "find",
+      "code": "return this.find({"
+    },
+    {
+      "file": "src/server/models/Comment.ts",
+      "line": 139,
+      "op": "countDocuments",
+      "code": "return this.countDocuments({"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 73,
+      "op": "find",
+      "code": "return this.find({ status: CONTACT_STATUS.NEW }).sort({ createdAt: -1 }).lean();"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 77,
+      "op": "countDocuments",
+      "code": "return this.countDocuments({ status: CONTACT_STATUS.NEW });"
+    },
+    {
+      "file": "src/server/models/Contact.ts",
+      "line": 81,
+      "op": "find",
+      "code": "return this.find({ status }).sort({ createdAt: -1 }).lean();"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 53,
+      "op": "findOneAndUpdate",
+      "code": "return this.findOneAndUpdate("
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 69,
+      "op": "findOneAndUpdate",
+      "code": "return this.findOneAndUpdate("
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 84,
+      "op": "find",
+      "code": "return this.find()"
+    },
+    {
+      "file": "src/server/models/PageStats.ts",
+      "line": 91,
+      "op": "find",
+      "code": "return this.find()"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 58,
+      "op": "find",
+      "code": "return this.find({"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 67,
+      "op": "countDocuments",
+      "code": "return this.countDocuments({"
+    },
+    {
+      "file": "src/server/models/Subscriber.ts",
+      "line": 74,
+      "op": "find",
+      "code": "return this.find({"
+    },
+    {
+      "file": "src/server/new/admin/comments/adminReplyToComment.ts",
+      "line": 48,
+      "op": "create",
+      "code": "const created = await Comment.create({"
+    },
+    {
+      "file": "src/server/new/admin/comments/approveComment.ts",
+      "line": 38,
+      "op": "updateOne",
+      "code": "await Comment.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkApproveComments.ts",
+      "line": 36,
+      "op": "find",
+      "code": "const toApprove = await Comment.find({ _id: { $in: objectIds }, approved: false })"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkDeleteComments.ts",
+      "line": 49,
+      "op": "find",
+      "code": "const roots = await Comment.find({ _id: { $in: rootIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkDeleteComments.ts",
+      "line": 57,
+      "op": "deleteMany",
+      "code": "const result = await Comment.deleteMany({ _id: { $in: allTreeIds } });"
+    },
+    {
+      "file": "src/server/new/admin/comments/deleteComment.ts",
+      "line": 37,
+      "op": "deleteMany",
+      "code": "const result = await Comment.deleteMany({ _id: { $in: treeIds } });"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 106,
+      "op": "find",
+      "code": "Comment.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 112,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments(match),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 126,
+      "op": "find",
+      "code": "? Content.find({ _id: { $in: contentIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 131,
+      "op": "find",
+      "code": "? Comment.find({ _id: { $in: parentIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 144,
+      "op": "find",
+      "code": "? await Topic.find({ _id: { $in: topicIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "line": 180,
+      "op": "find",
+      "code": "const ancestorRows = await Comment.find({ _id: { $in: ancestorIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 39,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({}),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 40,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({ approved: true }),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 41,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({ approved: false }),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 42,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({ parentId: null }),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 43,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({ parentId: { $ne: null } }),"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "line": 44,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments({ 'author.isOwner': true }),"
+    },
+    {
+      "file": "src/server/new/admin/comments/rejectComment.ts",
+      "line": 38,
+      "op": "updateOne",
+      "code": "await Comment.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/comments/shared.ts",
+      "line": 264,
+      "op": "find",
+      "code": "const rows = await Content.find({ type: contentType }).select('_id').lean<Array<{ _id: ObjectId }>>();"
+    },
+    {
+      "file": "src/server/new/admin/comments/shared.ts",
+      "line": 294,
+      "op": "updateOne",
+      "code": "Comment.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/comments/shared.ts",
+      "line": 312,
+      "op": "find",
+      "code": "const children = await Comment.find({ parentId: { $in: batch } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/shared.ts",
+      "line": 372,
+      "op": "find",
+      "code": "const contentRows = await Content.find({ _id: { $in: uniqueContentIds } })"
+    },
+    {
+      "file": "src/server/new/admin/comments/shared.ts",
+      "line": 382,
+      "op": "find",
+      "code": "? await Topic.find({ _id: { $in: uniqueTopicIds } }).select('_id slug').lean<Array<{ _id: ObjectId; slug: string }>>()"
+    },
+    {
+      "file": "src/server/new/admin/contacts/bulkDeleteContacts.ts",
+      "line": 28,
+      "op": "deleteMany",
+      "code": "const result = await Contact.deleteMany({ _id: { $in: normalizedIds } });"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContacts.ts",
+      "line": 29,
+      "op": "find",
+      "code": "Contact.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContacts.ts",
+      "line": 35,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments(match),"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "line": 23,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments({}),"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "line": 24,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments(CONTACT_STATS_STATUS_QUERIES.new),"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "line": 25,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments(CONTACT_STATS_STATUS_QUERIES.read),"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "line": 26,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments(CONTACT_STATS_STATUS_QUERIES.replied),"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "line": 27,
+      "op": "countDocuments",
+      "code": "Contact.countDocuments(CONTACT_STATS_STATUS_QUERIES.archived),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "line": 53,
+      "op": "findOne",
+      "code": "const article = await Content.findOne({ type: 'article', _id: articleId })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "line": 76,
+      "op": "findOne",
+      "code": "const article = await Content.findOne({ type: 'article', _id: articleId })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "line": 87,
+      "op": "updateOne",
+      "code": "await Content.updateOne({ _id: article._id }, { $set: { featured, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/content/article/createArticle.ts",
+      "line": 38,
+      "op": "findOne",
+      "code": "const subtopic = await Subtopic.findOne({ _id: input.subtopicId, topicId: topic._id }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/content/article/createArticle.ts",
+      "line": 43,
+      "op": "findOne",
+      "code": "const existing = await Content.findOne({ type: 'article', slug: input.slug }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/content/article/createArticle.ts",
+      "line": 83,
+      "op": "updateOne",
+      "code": "Topic.updateOne({ _id: topic._id }, { $inc: { contentCount: 1 } }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/createArticle.ts",
+      "line": 85,
+      "op": "updateOne",
+      "code": "? Subtopic.updateOne({ _id: subtopicId }, { $inc: { contentCount: 1 } }, { session: txnSession })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 40,
+      "op": "findOne",
+      "code": "const article = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 53,
+      "op": "deleteOne",
+      "code": "Content.deleteOne({ _id: article._id }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 54,
+      "op": "deleteOne",
+      "code": "PageStats.deleteOne({ contentId: article._id as ObjectId }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 55,
+      "op": "deleteMany",
+      "code": "Comment.deleteMany({ contentId: article._id as ObjectId }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 60,
+      "op": "updateOne",
+      "code": "Topic.updateOne({ _id: article.topicId }, { $inc: { contentCount: -1 } }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "line": 62,
+      "op": "updateOne",
+      "code": "? Subtopic.updateOne({ _id: article.subtopicId }, { $inc: { contentCount: -1 } }, { session: txnSession })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "line": 41,
+      "op": "findOne",
+      "code": "const article = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "line": 63,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "line": 78,
+      "op": "updateOne",
+      "code": "Topic.updateOne({ _id: article.topicId }, { $inc: { contentCount: delta } }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "line": 80,
+      "op": "updateOne",
+      "code": "? Subtopic.updateOne({ _id: article.subtopicId }, { $inc: { contentCount: delta } }, { session: txnSession })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reconcileArticleCounters.ts",
+      "line": 49,
+      "op": "find",
+      "code": "Topic.find({}).select('_id').lean(),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reconcileArticleCounters.ts",
+      "line": 50,
+      "op": "find",
+      "code": "Subtopic.find({}).select('_id').lean(),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reconcileArticleCounters.ts",
+      "line": 59,
+      "op": "bulkWrite",
+      "code": "Topic.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/content/article/reconcileArticleCounters.ts",
+      "line": 67,
+      "op": "bulkWrite",
+      "code": "Subtopic.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/content/article/reorderArticles.ts",
+      "line": 38,
+      "op": "countDocuments",
+      "code": "const scopedCount = await Content.countDocuments({"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reorderArticles.ts",
+      "line": 46,
+      "op": "bulkWrite",
+      "code": "await Content.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 48,
+      "op": "findOne",
+      "code": "const article = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 69,
+      "op": "findOne",
+      "code": "const targetSubtopic = await Subtopic.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 79,
+      "op": "findOne",
+      "code": "const conflict = await Content.findOne({ type: 'article', slug: input.slug }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 98,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 126,
+      "op": "updateOne",
+      "code": "Topic.updateOne({ _id: article.topicId }, { $inc: { contentCount: -1 } }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 128,
+      "op": "updateOne",
+      "code": "? Subtopic.updateOne({ _id: article.subtopicId }, { $inc: { contentCount: -1 } }, { session: txnSession })"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 134,
+      "op": "updateOne",
+      "code": "Topic.updateOne({ _id: targetTopic._id }, { $inc: { contentCount: 1 } }, { session: txnSession }),"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "line": 136,
+      "op": "updateOne",
+      "code": "? Subtopic.updateOne({ _id: targetSubtopicId }, { $inc: { contentCount: 1 } }, { session: txnSession })"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 57,
+      "op": "findOne",
+      "code": "const blog = await Content.findOne({ type: 'blog', _id: blogId })"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 80,
+      "op": "findOne",
+      "code": "const blog = await Content.findOne({ type: 'blog', _id: blogId })"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 89,
+      "op": "updateOne",
+      "code": "await Content.updateOne({ _id: blog._id }, { $set: { featured, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 117,
+      "op": "find",
+      "code": "const blogs = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 125,
+      "op": "deleteMany",
+      "code": "Content.deleteMany({ type: 'blog', _id: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 126,
+      "op": "deleteMany",
+      "code": "PageStats.deleteMany({ contentId: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 127,
+      "op": "deleteMany",
+      "code": "Comment.deleteMany({ contentId: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "line": 160,
+      "op": "find",
+      "code": "const blogs = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/createBlog.ts",
+      "line": 28,
+      "op": "create",
+      "code": "const createdBlog = await Content.create({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/deleteBlog.ts",
+      "line": 30,
+      "op": "findOne",
+      "code": "const blog = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/deleteBlog.ts",
+      "line": 38,
+      "op": "deleteOne",
+      "code": "Content.deleteOne({ _id: blog._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/deleteBlog.ts",
+      "line": 39,
+      "op": "deleteOne",
+      "code": "PageStats.deleteOne({ contentId: blog._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/deleteBlog.ts",
+      "line": 40,
+      "op": "deleteMany",
+      "code": "Comment.deleteMany({ contentId: blog._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/getBlogs.ts",
+      "line": 59,
+      "op": "find",
+      "code": "Content.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/getBlogs.ts",
+      "line": 65,
+      "op": "countDocuments",
+      "code": "Content.countDocuments(match),"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/getBlogs.ts",
+      "line": 97,
+      "op": "findOne",
+      "code": "const doc = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "line": 29,
+      "op": "findOne",
+      "code": "const blog = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "line": 45,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/content/blog/updateBlog.ts",
+      "line": 31,
+      "op": "findOne",
+      "code": "const blog = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/updateBlog.ts",
+      "line": 47,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 63,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({ type: 'project', _id: projectId })"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 86,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({ type: 'project', _id: projectId })"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 95,
+      "op": "updateOne",
+      "code": "await Content.updateOne({ _id: project._id }, { $set: { featured, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 117,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({ type: 'project', _id: projectId })"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 127,
+      "op": "updateOne",
+      "code": "await Content.updateOne({ _id: project._id }, { $set: { status, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 155,
+      "op": "find",
+      "code": "const projects = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 163,
+      "op": "deleteMany",
+      "code": "Content.deleteMany({ type: 'project', _id: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 164,
+      "op": "deleteMany",
+      "code": "PageStats.deleteMany({ contentId: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 165,
+      "op": "deleteMany",
+      "code": "Comment.deleteMany({ contentId: { $in: objectIds } }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 198,
+      "op": "find",
+      "code": "const projects = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "line": 247,
+      "op": "find",
+      "code": "const projects = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/createProject.ts",
+      "line": 47,
+      "op": "create",
+      "code": "const createdProject = await Content.create("
+    },
+    {
+      "file": "src/server/new/admin/content/project/deleteProject.ts",
+      "line": 30,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/deleteProject.ts",
+      "line": 38,
+      "op": "deleteOne",
+      "code": "Content.deleteOne({ _id: project._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/deleteProject.ts",
+      "line": 39,
+      "op": "deleteOne",
+      "code": "PageStats.deleteOne({ contentId: project._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/deleteProject.ts",
+      "line": 40,
+      "op": "deleteMany",
+      "code": "Comment.deleteMany({ contentId: project._id }),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/getProjects.ts",
+      "line": 70,
+      "op": "find",
+      "code": "Content.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/content/project/getProjects.ts",
+      "line": 76,
+      "op": "countDocuments",
+      "code": "Content.countDocuments(match),"
+    },
+    {
+      "file": "src/server/new/admin/content/project/getProjects.ts",
+      "line": 114,
+      "op": "findOne",
+      "code": "const doc = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "line": 29,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "line": 45,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/content/project/reorderProjects.ts",
+      "line": 40,
+      "op": "find",
+      "code": "const scopedProjects = await Content.find({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/reorderProjects.ts",
+      "line": 50,
+      "op": "bulkWrite",
+      "code": "await Content.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/content/project/updateProject.ts",
+      "line": 48,
+      "op": "findOne",
+      "code": "const project = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/content/project/updateProject.ts",
+      "line": 73,
+      "op": "updateOne",
+      "code": "await Content.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/settings/shared.ts",
+      "line": 69,
+      "op": "findOne",
+      "code": "admin = await Admin.findOne({ email: normalizeEmail(adminEmail) }).select(selectProjection);"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminProfile.ts",
+      "line": 49,
+      "op": "findOne",
+      "code": "const existing = await Admin.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminRecoveryEmail.ts",
+      "line": 40,
+      "op": "findOne",
+      "code": "const existing = await Admin.findOne({"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/bulkDeleteSubscribers.ts",
+      "line": 30,
+      "op": "deleteMany",
+      "code": "const result = await Subscriber.deleteMany({ _id: { $in: objectIds } });"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/exportSubscribers.ts",
+      "line": 25,
+      "op": "find",
+      "code": "const docs = await Subscriber.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscribers.ts",
+      "line": 29,
+      "op": "find",
+      "code": "Subscriber.find(match)"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscribers.ts",
+      "line": 35,
+      "op": "countDocuments",
+      "code": "Subscriber.countDocuments(match),"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "line": 22,
+      "op": "countDocuments",
+      "code": "Subscriber.countDocuments({}),"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "line": 23,
+      "op": "countDocuments",
+      "code": "Subscriber.countDocuments({ confirmed: true }),"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "line": 24,
+      "op": "countDocuments",
+      "code": "Subscriber.countDocuments({ confirmed: false, unsubscribedAt: null }),"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "line": 25,
+      "op": "countDocuments",
+      "code": "Subscriber.countDocuments({ unsubscribedAt: { $ne: null } }),"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "line": 35,
+      "op": "updateOne",
+      "code": "await Subtopic.updateOne({ _id: subtopic._id }, { $set: { published, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "line": 81,
+      "op": "distinct",
+      "code": "const topicIds = await Subtopic.distinct('topicId', { _id: { $in: objectIds } });"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "line": 88,
+      "op": "find",
+      "code": "const topics = await Topic.find({ _id: { $in: topicIds } }).select('slug').lean();"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "line": 108,
+      "op": "distinct",
+      "code": "const topicIds = await Subtopic.distinct('topicId', { _id: { $in: objectIds } });"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "line": 115,
+      "op": "find",
+      "code": "const topics = await Topic.find({ _id: { $in: topicIds } }).select('slug').lean();"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/createSubtopic.ts",
+      "line": 28,
+      "op": "findOne",
+      "code": "const existing = await Subtopic.findOne({ topicId: topic._id, slug: input.slug }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/createSubtopic.ts",
+      "line": 31,
+      "op": "create",
+      "code": "const createdSubtopic = await Subtopic.create("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/createSubtopic.ts",
+      "line": 43,
+      "op": "updateOne",
+      "code": "await Topic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 37,
+      "op": "distinct",
+      "code": "const contentIds = await Content.distinct('_id', {"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 44,
+      "op": "deleteMany",
+      "code": "Content.deleteMany({ type: 'article', topicId: topic._id, subtopicId: subtopic._id }),"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 45,
+      "op": "deleteMany",
+      "code": "contentIds.length ? PageStats.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 46,
+      "op": "deleteMany",
+      "code": "contentIds.length ? Comment.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 62,
+      "op": "deleteOne",
+      "code": "Subtopic.deleteOne({ _id: subtopic._id }),"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "line": 63,
+      "op": "updateOne",
+      "code": "Topic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/publishSubtopic.ts",
+      "line": 29,
+      "op": "updateOne",
+      "code": "const updated = await Subtopic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/publishSubtopic.ts",
+      "line": 57,
+      "op": "updateOne",
+      "code": "const updated = await Subtopic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/reorderSubtopics.ts",
+      "line": 28,
+      "op": "countDocuments",
+      "code": "const topicScopedCount = await Subtopic.countDocuments({"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/reorderSubtopics.ts",
+      "line": 38,
+      "op": "bulkWrite",
+      "code": "await Subtopic.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/updateSubtopic.ts",
+      "line": 48,
+      "op": "findOne",
+      "code": "const conflict = await Subtopic.findOne({ topicId: targetTopicId, slug: targetSlug }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/updateSubtopic.ts",
+      "line": 54,
+      "op": "updateOne",
+      "code": "await Subtopic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/updateSubtopic.ts",
+      "line": 86,
+      "op": "updateOne",
+      "code": "Topic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/subtopic/updateSubtopic.ts",
+      "line": 108,
+      "op": "updateOne",
+      "code": "Topic.updateOne("
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "line": 50,
+      "op": "updateOne",
+      "code": "await Topic.updateOne({ _id: topic._id }, { $set: { featured, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/topic/createTopic.ts",
+      "line": 21,
+      "op": "findOne",
+      "code": "const existing = await Topic.findOne({ slug: input.slug }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/topic/createTopic.ts",
+      "line": 35,
+      "op": "create",
+      "code": "const createdTopic = await Topic.create(doc);"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 32,
+      "op": "distinct",
+      "code": "const contentIds = await Content.distinct('_id', {"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 38,
+      "op": "deleteMany",
+      "code": "Content.deleteMany({ type: 'article', topicId: resolvedTopicId }),"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 39,
+      "op": "deleteMany",
+      "code": "Subtopic.deleteMany({ topicId: resolvedTopicId }),"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 40,
+      "op": "deleteMany",
+      "code": "contentIds.length ? PageStats.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 41,
+      "op": "deleteMany",
+      "code": "contentIds.length ? Comment.deleteMany({ contentId: { $in: contentIds } }) : Promise.resolve(),"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "line": 54,
+      "op": "deleteOne",
+      "code": "await Topic.deleteOne({ _id: resolvedTopicId });"
+    },
+    {
+      "file": "src/server/new/admin/topic/publishTopic.ts",
+      "line": 25,
+      "op": "updateOne",
+      "code": "await Topic.updateOne({ _id: topic._id }, { $set: { published: true, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/topic/publishTopic.ts",
+      "line": 45,
+      "op": "updateOne",
+      "code": "await Topic.updateOne({ _id: topic._id }, { $set: { published: false, ...updatedNow() } });"
+    },
+    {
+      "file": "src/server/new/admin/topic/reorderTopics.ts",
+      "line": 25,
+      "op": "bulkWrite",
+      "code": "await Topic.bulkWrite("
+    },
+    {
+      "file": "src/server/new/admin/topic/updateTopic.ts",
+      "line": 28,
+      "op": "findOne",
+      "code": "const conflict = await Topic.findOne({ slug: input.slug, _id: { $ne: topic._id } }).select('_id').lean();"
+    },
+    {
+      "file": "src/server/new/admin/topic/updateTopic.ts",
+      "line": 33,
+      "op": "updateOne",
+      "code": "await Topic.updateOne({ _id: topic._id }, { $set: update });"
+    },
+    {
+      "file": "src/server/new/public/comments/createPublicComment.ts",
+      "line": 59,
+      "op": "create",
+      "code": "const created = await Comment.create({"
+    },
+    {
+      "file": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+      "line": 41,
+      "op": "find",
+      "code": "Comment.find(baseMatch)"
+    },
+    {
+      "file": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+      "line": 47,
+      "op": "countDocuments",
+      "code": "Comment.countDocuments(baseMatch),"
+    },
+    {
+      "file": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+      "line": 54,
+      "op": "find",
+      "code": "const replyRows = await Comment.find({"
+    },
+    {
+      "file": "src/server/new/public/comments/shared.ts",
+      "line": 63,
+      "op": "findOne",
+      "code": "const row = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/public/comments/shared.ts",
+      "line": 74,
+      "op": "findOne",
+      "code": "return Comment.findOne({"
+    },
+    {
+      "file": "src/server/new/public/comments/upvotePublicCommentById.ts",
+      "line": 62,
+      "op": "findOne",
+      "code": "const current = await Comment.findOne({"
+    },
+    {
+      "file": "src/server/new/public/comments/upvotePublicCommentById.ts",
+      "line": 75,
+      "op": "findOneAndUpdate",
+      "code": "const updated = await Comment.findOneAndUpdate("
+    },
+    {
+      "file": "src/server/new/public/contact/submitPublicContact.ts",
+      "line": 89,
+      "op": "findOne",
+      "code": "const duplicateSubmission = await Contact.findOne({"
+    },
+    {
+      "file": "src/server/new/public/contact/submitPublicContact.ts",
+      "line": 105,
+      "op": "create",
+      "code": "const doc = await Contact.create({"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedArticleTopics.ts",
+      "line": 28,
+      "op": "find",
+      "code": "const topics = await Topic.find(match)"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedTopicTreeBySlug.ts",
+      "line": 32,
+      "op": "find",
+      "code": "Subtopic.find({ topicId: topic._id, published: true })"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedTopicTreeBySlug.ts",
+      "line": 36,
+      "op": "find",
+      "code": "Content.find("
+    },
+    {
+      "file": "src/server/new/public/content/article/shared.ts",
+      "line": 94,
+      "op": "findOne",
+      "code": "return Topic.findOne({ slug: topicSlug, published: true })"
+    },
+    {
+      "file": "src/server/new/public/content/article/shared.ts",
+      "line": 100,
+      "op": "findOne",
+      "code": "return Topic.findOne({ _id: topicId, published: true })"
+    },
+    {
+      "file": "src/server/new/public/content/article/shared.ts",
+      "line": 106,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/content/article/shared.ts",
+      "line": 117,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/content/article/shared.ts",
+      "line": 129,
+      "op": "findOne",
+      "code": "return Subtopic.findOne({"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogs.ts",
+      "line": 29,
+      "op": "find",
+      "code": ".find(match)"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogStaticPaths.ts",
+      "line": 18,
+      "op": "find",
+      "code": "const rows = await Content.find(buildPublishedContentMatch('blog'))"
+    },
+    {
+      "file": "src/server/new/public/content/blog/shared.ts",
+      "line": 45,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/content/blog/shared.ts",
+      "line": 55,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjects.ts",
+      "line": 32,
+      "op": "find",
+      "code": "const rows = await Content.find(match)"
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjectStaticPaths.ts",
+      "line": 18,
+      "op": "find",
+      "code": "const rows = await Content.find(buildPublishedContentMatch('project'))"
+    },
+    {
+      "file": "src/server/new/public/content/project/shared.ts",
+      "line": 64,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/content/project/shared.ts",
+      "line": 76,
+      "op": "findOne",
+      "code": "return Content.findOne("
+    },
+    {
+      "file": "src/server/new/public/shared/helpers.ts",
+      "line": 83,
+      "op": "deleteMany",
+      "code": "await collection.deleteMany({"
+    },
+    {
+      "file": "src/server/new/public/shared/helpers.ts",
+      "line": 90,
+      "op": "updateOne",
+      "code": "await collection.updateOne("
+    },
+    {
+      "file": "src/server/new/public/shared/helpers.ts",
+      "line": 108,
+      "op": "updateOne",
+      "code": "await collection.updateOne("
+    },
+    {
+      "file": "src/server/new/public/shared/helpers.ts",
+      "line": 120,
+      "op": "findOne",
+      "code": "const current = await collection.findOne("
+    },
+    {
+      "file": "src/server/new/public/stats/getContentLikesById.ts",
+      "line": 23,
+      "op": "findOne",
+      "code": "const row = await PageStats.findOne({ contentId: objectId })"
+    },
+    {
+      "file": "src/server/new/public/stats/getContentViewsById.ts",
+      "line": 23,
+      "op": "findOne",
+      "code": "const row = await PageStats.findOne({ contentId: objectId })"
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentLikesById.ts",
+      "line": 51,
+      "op": "findOne",
+      "code": "const current = await PageStats.findOne({ contentId: objectId })"
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentLikesById.ts",
+      "line": 58,
+      "op": "findOneAndUpdate",
+      "code": "const row = await PageStats.findOneAndUpdate("
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentViewsById.ts",
+      "line": 51,
+      "op": "findOne",
+      "code": "const current = await PageStats.findOne({ contentId: objectId })"
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentViewsById.ts",
+      "line": 58,
+      "op": "findOneAndUpdate",
+      "code": "const row = await PageStats.findOneAndUpdate("
+    },
+    {
+      "file": "src/server/new/public/stats/shared.ts",
+      "line": 12,
+      "op": "findOne",
+      "code": "const row = await Content.findOne({"
+    },
+    {
+      "file": "src/server/new/public/subscribe/subscribe.ts",
+      "line": 36,
+      "op": "findOne",
+      "code": "const existing = await Subscriber.findOne({ email })"
+    },
+    {
+      "file": "src/server/new/public/subscribe/subscribe.ts",
+      "line": 41,
+      "op": "create",
+      "code": "const doc = await Subscriber.create({"
+    },
+    {
+      "file": "src/server/new/public/subscribe/unsubscribe.ts",
+      "line": 23,
+      "op": "findOne",
+      "code": "const subscriber = await Subscriber.findOne({ email }).select('email confirmed unsubscribedAt');"
+    }
+  ],
+  "actions": [
+    {
+      "file": "src/server/new/admin/comments/adminReplyToComment.ts",
+      "fn": "adminReplyToComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/approveComment.ts",
+      "fn": "approveComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkApproveComments.ts",
+      "fn": "bulkApproveComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkDeleteComments.ts",
+      "fn": "bulkDeleteComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/deleteComment.ts",
+      "fn": "deleteComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "fn": "getComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "fn": "getCommentStats"
+    },
+    {
+      "file": "src/server/new/admin/comments/rejectComment.ts",
+      "fn": "rejectComment"
+    },
+    {
+      "file": "src/server/new/admin/contacts/archiveContact.ts",
+      "fn": "archiveContact"
+    },
+    {
+      "file": "src/server/new/admin/contacts/bulkArchiveContacts.ts",
+      "fn": "bulkArchiveContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/bulkDeleteContacts.ts",
+      "fn": "bulkDeleteContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/deleteContact.ts",
+      "fn": "deleteContact"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactById.ts",
+      "fn": "getContactById"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContacts.ts",
+      "fn": "getContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "fn": "getContactStats"
+    },
+    {
+      "file": "src/server/new/admin/contacts/markContactAsRead.ts",
+      "fn": "markContactAsRead"
+    },
+    {
+      "file": "src/server/new/admin/contacts/markContactAsReplied.ts",
+      "fn": "markContactAsReplied"
+    },
+    {
+      "file": "src/server/new/admin/contacts/unarchiveContact.ts",
+      "fn": "unarchiveContact"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "setArticleStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "toggleArticleFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "setArticleFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkDeleteArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkPublishArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkSetArticleStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkArchiveArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkDraftArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/createArticle.ts",
+      "fn": "createArticle"
+    },
+    {
+      "file": "src/server/new/admin/content/article/deleteArticle.ts",
+      "fn": "deleteArticle"
+    },
+    {
+      "file": "src/server/new/admin/content/article/getArticles.ts",
+      "fn": "getArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/getArticles.ts",
+      "fn": "getArticleForEdit"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "changeArticlePublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticlePublished"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticleDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticleArchived"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reconcileArticleCounters.ts",
+      "fn": "reconcileArticleCounters"
+    },
+    {
+      "file": "src/server/new/admin/content/article/reorderArticles.ts",
+      "fn": "reorderArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/updateArticle.ts",
+      "fn": "updateArticle"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "setBlogStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "toggleBlogFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "setBlogFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkDeleteBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkPublishBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkSetBlogStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkArchiveBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkDraftBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/createBlog.ts",
+      "fn": "createBlog"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/deleteBlog.ts",
+      "fn": "deleteBlog"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/getBlogs.ts",
+      "fn": "getBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/getBlogs.ts",
+      "fn": "getBlogForEdit"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "changeBlogPublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogPublished"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogArchived"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/updateBlog.ts",
+      "fn": "updateBlog"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "setProjectStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "toggleProjectFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "setProjectFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "setProjectLifecycleStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkDeleteProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkPublishProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkSetProjectStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkSetProjectLifecycleStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkArchiveProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkDraftProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/createProject.ts",
+      "fn": "createProject"
+    },
+    {
+      "file": "src/server/new/admin/content/project/deleteProject.ts",
+      "fn": "deleteProject"
+    },
+    {
+      "file": "src/server/new/admin/content/project/getProjects.ts",
+      "fn": "getProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/getProjects.ts",
+      "fn": "getProjectForEdit"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "changeProjectPublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectPublished"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectArchived"
+    },
+    {
+      "file": "src/server/new/admin/content/project/reorderProjects.ts",
+      "fn": "reorderProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/updateProject.ts",
+      "fn": "updateProject"
+    },
+    {
+      "file": "src/server/new/admin/settings/changeAdminPassword.ts",
+      "fn": "changeAdminPassword"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminProfile.ts",
+      "fn": "updateAdminProfile"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminRecoveryEmail.ts",
+      "fn": "updateAdminRecoveryEmail"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/bulkDeleteSubscribers.ts",
+      "fn": "bulkDeleteSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/confirmSubscriber.ts",
+      "fn": "confirmSubscriber"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/deleteSubscriber.ts",
+      "fn": "deleteSubscriber"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/exportSubscribers.ts",
+      "fn": "exportSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscribers.ts",
+      "fn": "getSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "fn": "getSubscriberStats"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "fn": "toggleSubtopicPublished"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "fn": "bulkDeleteSubtopics"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "fn": "bulkPublishSubtopics"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/actions.ts",
+      "fn": "bulkUnpublishSubtopics"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/createSubtopic.ts",
+      "fn": "createSubtopic"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/deleteSubtopic.ts",
+      "fn": "deleteSubtopic"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/getSubtopics.ts",
+      "fn": "getSubtopics"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/getSubtopics.ts",
+      "fn": "getSubtopicForEdit"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/publishSubtopic.ts",
+      "fn": "publishSubtopic"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/publishSubtopic.ts",
+      "fn": "unpublishSubtopic"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/reorderSubtopics.ts",
+      "fn": "reorderSubtopics"
+    },
+    {
+      "file": "src/server/new/admin/subtopic/updateSubtopic.ts",
+      "fn": "updateSubtopic"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "toggleTopicPublished"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "toggleTopicFeatured"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "bulkDeleteTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "bulkPublishTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "bulkUnpublishTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "bulkFeatureTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/actions.ts",
+      "fn": "bulkUnfeatureTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/createTopic.ts",
+      "fn": "createTopic"
+    },
+    {
+      "file": "src/server/new/admin/topic/deleteTopic.ts",
+      "fn": "deleteTopic"
+    },
+    {
+      "file": "src/server/new/admin/topic/getTopics.ts",
+      "fn": "getTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/getTopics.ts",
+      "fn": "getTopicForEdit"
+    },
+    {
+      "file": "src/server/new/admin/topic/publishTopic.ts",
+      "fn": "publishTopic"
+    },
+    {
+      "file": "src/server/new/admin/topic/publishTopic.ts",
+      "fn": "unpublishTopic"
+    },
+    {
+      "file": "src/server/new/admin/topic/reorderTopics.ts",
+      "fn": "reorderTopics"
+    },
+    {
+      "file": "src/server/new/admin/topic/updateTopic.ts",
+      "fn": "updateTopic"
+    },
+    {
+      "file": "src/server/new/public/comments/createPublicComment.ts",
+      "fn": "createPublicComment"
+    },
+    {
+      "file": "src/server/new/public/comments/getPublicCommentsByContentId.ts",
+      "fn": "getPublicCommentsByContentId"
+    },
+    {
+      "file": "src/server/new/public/comments/upvotePublicCommentById.ts",
+      "fn": "upvotePublicCommentById"
+    },
+    {
+      "file": "src/server/new/public/contact/submitPublicContact.ts",
+      "fn": "submitPublicContact"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedArticleById.ts",
+      "fn": "getPublishedArticleById"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedArticleByPath.ts",
+      "fn": "getPublishedArticleByPath"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedArticleStaticPaths.ts",
+      "fn": "getPublishedArticleStaticPaths"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedArticleTopics.ts",
+      "fn": "getPublishedArticleTopics"
+    },
+    {
+      "file": "src/server/new/public/content/article/getPublishedTopicTreeBySlug.ts",
+      "fn": "getPublishedTopicTreeBySlug"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogById.ts",
+      "fn": "getPublishedBlogById"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogByPath.ts",
+      "fn": "getPublishedBlogByPath"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogs.ts",
+      "fn": "getPublishedBlogs"
+    },
+    {
+      "file": "src/server/new/public/content/blog/getPublishedBlogStaticPaths.ts",
+      "fn": "getPublishedBlogStaticPaths"
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjectById.ts",
+      "fn": "getPublishedProjectById"
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjectByPath.ts",
+      "fn": "getPublishedProjectByPath"
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjects.ts",
+      "fn": "getPublishedProjects"
+    },
+    {
+      "file": "src/server/new/public/content/project/getPublishedProjectStaticPaths.ts",
+      "fn": "getPublishedProjectStaticPaths"
+    },
+    {
+      "file": "src/server/new/public/stats/getContentLikesById.ts",
+      "fn": "getContentLikesById"
+    },
+    {
+      "file": "src/server/new/public/stats/getContentViewsById.ts",
+      "fn": "getContentViewsById"
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentLikesById.ts",
+      "fn": "incrementContentLikesById"
+    },
+    {
+      "file": "src/server/new/public/stats/incrementContentViewsById.ts",
+      "fn": "incrementContentViewsById"
+    },
+    {
+      "file": "src/server/new/public/subscribe/subscribe.ts",
+      "fn": "subscribe"
+    },
+    {
+      "file": "src/server/new/public/subscribe/unsubscribe.ts",
+      "fn": "unsubscribe"
+    }
+  ],
+  "apiImports": [
+    {
+      "api": "src/app/api/admin/content/articles/bulk/route.ts",
+      "fn": "bulkDeleteArticles",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/bulk/route.ts",
+      "fn": "bulkSetArticleStatus",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/bulk/status/route.ts",
+      "fn": "bulkSetArticleStatus",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/reorder/route.ts",
+      "fn": "reorderArticles",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/route.ts",
+      "fn": "createArticle",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/route.ts",
+      "fn": "getArticleForEdit",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/route.ts",
+      "fn": "getArticles",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/route.ts",
+      "fn": "reconcileArticleCounters",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/[articleId]/featured/route.ts",
+      "fn": "setArticleFeatured",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/[articleId]/publish/route.ts",
+      "fn": "setArticleStatus",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/[articleId]/route.ts",
+      "fn": "deleteArticle",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/[articleId]/route.ts",
+      "fn": "updateArticle",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/articles/[articleId]/status/route.ts",
+      "fn": "setArticleStatus",
+      "module": "admin/content/article"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/bulk/route.ts",
+      "fn": "bulkDeleteBlogs",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/bulk/route.ts",
+      "fn": "bulkSetBlogStatus",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/bulk/status/route.ts",
+      "fn": "bulkSetBlogStatus",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/route.ts",
+      "fn": "createBlog",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/route.ts",
+      "fn": "getBlogForEdit",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/route.ts",
+      "fn": "getBlogs",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/[blogId]/featured/route.ts",
+      "fn": "setBlogFeatured",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/[blogId]/publish/route.ts",
+      "fn": "setBlogStatus",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/[blogId]/route.ts",
+      "fn": "deleteBlog",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/[blogId]/route.ts",
+      "fn": "updateBlog",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/blogs/[blogId]/status/route.ts",
+      "fn": "setBlogStatus",
+      "module": "admin/content/blog"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/bulk/lifecycle/route.ts",
+      "fn": "bulkSetProjectLifecycleStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/bulk/route.ts",
+      "fn": "bulkDeleteProjects",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/bulk/route.ts",
+      "fn": "bulkSetProjectLifecycleStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/bulk/route.ts",
+      "fn": "bulkSetProjectStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/bulk/status/route.ts",
+      "fn": "bulkSetProjectStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/reorder/route.ts",
+      "fn": "reorderProjects",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/route.ts",
+      "fn": "createProject",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/route.ts",
+      "fn": "getProjectForEdit",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/route.ts",
+      "fn": "getProjects",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/featured/route.ts",
+      "fn": "setProjectFeatured",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/featured/toggle/route.ts",
+      "fn": "toggleProjectFeatured",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/lifecycle/route.ts",
+      "fn": "setProjectLifecycleStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/publish/route.ts",
+      "fn": "setProjectStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/route.ts",
+      "fn": "deleteProject",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/route.ts",
+      "fn": "updateProject",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/content/projects/[projectId]/status/route.ts",
+      "fn": "setProjectStatus",
+      "module": "admin/content/project"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/bulk/route.ts",
+      "fn": "bulkDeleteSubtopics",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/bulk/route.ts",
+      "fn": "bulkPublishSubtopics",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/bulk/route.ts",
+      "fn": "bulkUnpublishSubtopics",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/reorder/route.ts",
+      "fn": "reorderSubtopics",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/route.ts",
+      "fn": "createSubtopic",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/route.ts",
+      "fn": "getSubtopicForEdit",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/route.ts",
+      "fn": "getSubtopics",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/[subtopicId]/publish/route.ts",
+      "fn": "publishSubtopic",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/[subtopicId]/publish/route.ts",
+      "fn": "toggleSubtopicPublished",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/[subtopicId]/publish/route.ts",
+      "fn": "unpublishSubtopic",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/[subtopicId]/route.ts",
+      "fn": "deleteSubtopic",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/subtopics/[subtopicId]/route.ts",
+      "fn": "updateSubtopic",
+      "module": "admin/subtopic"
+    },
+    {
+      "api": "src/app/api/admin/topics/bulk/route.ts",
+      "fn": "bulkDeleteTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/bulk/route.ts",
+      "fn": "bulkFeatureTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/bulk/route.ts",
+      "fn": "bulkPublishTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/bulk/route.ts",
+      "fn": "bulkUnfeatureTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/bulk/route.ts",
+      "fn": "bulkUnpublishTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/reorder/route.ts",
+      "fn": "reorderTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/route.ts",
+      "fn": "createTopic",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/route.ts",
+      "fn": "getTopicForEdit",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/route.ts",
+      "fn": "getTopics",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/publish/route.ts",
+      "fn": "publishTopic",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/publish/route.ts",
+      "fn": "toggleTopicFeatured",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/publish/route.ts",
+      "fn": "toggleTopicPublished",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/publish/route.ts",
+      "fn": "unpublishTopic",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/route.ts",
+      "fn": "deleteTopic",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/admin/topics/[topicId]/route.ts",
+      "fn": "updateTopic",
+      "module": "admin/topic"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/comments/route.ts",
+      "fn": "createPublicComment",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/comments/route.ts",
+      "fn": "getPublicCommentsByContentId",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/comments/[commentId]/upvote/route.ts",
+      "fn": "upvotePublicCommentById",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/likes/route.ts",
+      "fn": "getContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/likes/route.ts",
+      "fn": "incrementContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/route.ts",
+      "fn": "getPublishedArticleById",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/views/route.ts",
+      "fn": "getContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/articles/id/[contentId]/views/route.ts",
+      "fn": "incrementContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/articles/static-paths/route.ts",
+      "fn": "getPublishedArticleStaticPaths",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/topics/route.ts",
+      "fn": "getPublishedArticleTopics",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/topics/[topicSlug]/route.ts",
+      "fn": "getPublishedTopicTreeBySlug",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/[articleSlug]/route.ts",
+      "fn": "getPublishedArticleByPath",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/[articleSlug]/route.ts",
+      "fn": "getPublishedArticleStaticPaths",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/articles/[topicSlug]/[articleSlug]/route.ts",
+      "fn": "getPublishedArticleByPath",
+      "module": "public/content/article"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/comments/route.ts",
+      "fn": "createPublicComment",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/comments/route.ts",
+      "fn": "getPublicCommentsByContentId",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/comments/[commentId]/upvote/route.ts",
+      "fn": "upvotePublicCommentById",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/likes/route.ts",
+      "fn": "getContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/likes/route.ts",
+      "fn": "incrementContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/route.ts",
+      "fn": "getPublishedBlogById",
+      "module": "public/content/blog"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/views/route.ts",
+      "fn": "getContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/blogs/id/[contentId]/views/route.ts",
+      "fn": "incrementContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/blogs/route.ts",
+      "fn": "getPublishedBlogs",
+      "module": "public/content/blog"
+    },
+    {
+      "api": "src/app/api/content/blogs/static-paths/route.ts",
+      "fn": "getPublishedBlogStaticPaths",
+      "module": "public/content/blog"
+    },
+    {
+      "api": "src/app/api/content/blogs/[blogSlug]/route.ts",
+      "fn": "getPublishedBlogByPath",
+      "module": "public/content/blog"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/comments/route.ts",
+      "fn": "createPublicComment",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/comments/route.ts",
+      "fn": "getPublicCommentsByContentId",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/comments/[commentId]/upvote/route.ts",
+      "fn": "upvotePublicCommentById",
+      "module": "public/comments"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/likes/route.ts",
+      "fn": "getContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/likes/route.ts",
+      "fn": "incrementContentLikesById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/route.ts",
+      "fn": "getPublishedProjectById",
+      "module": "public/content/project"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/views/route.ts",
+      "fn": "getContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/projects/id/[contentId]/views/route.ts",
+      "fn": "incrementContentViewsById",
+      "module": "public/stats"
+    },
+    {
+      "api": "src/app/api/content/projects/route.ts",
+      "fn": "getPublishedProjects",
+      "module": "public/content/project"
+    },
+    {
+      "api": "src/app/api/content/projects/static-paths/route.ts",
+      "fn": "getPublishedProjectStaticPaths",
+      "module": "public/content/project"
+    },
+    {
+      "api": "src/app/api/content/projects/[projectSlug]/route.ts",
+      "fn": "getPublishedProjectByPath",
+      "module": "public/content/project"
+    }
+  ],
+  "missingApi": [
+    {
+      "file": "src/server/new/admin/comments/adminReplyToComment.ts",
+      "fn": "adminReplyToComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/approveComment.ts",
+      "fn": "approveComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkApproveComments.ts",
+      "fn": "bulkApproveComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/bulkDeleteComments.ts",
+      "fn": "bulkDeleteComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/deleteComment.ts",
+      "fn": "deleteComment"
+    },
+    {
+      "file": "src/server/new/admin/comments/getComments.ts",
+      "fn": "getComments"
+    },
+    {
+      "file": "src/server/new/admin/comments/getCommentStats.ts",
+      "fn": "getCommentStats"
+    },
+    {
+      "file": "src/server/new/admin/comments/rejectComment.ts",
+      "fn": "rejectComment"
+    },
+    {
+      "file": "src/server/new/admin/contacts/archiveContact.ts",
+      "fn": "archiveContact"
+    },
+    {
+      "file": "src/server/new/admin/contacts/bulkArchiveContacts.ts",
+      "fn": "bulkArchiveContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/bulkDeleteContacts.ts",
+      "fn": "bulkDeleteContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/deleteContact.ts",
+      "fn": "deleteContact"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactById.ts",
+      "fn": "getContactById"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContacts.ts",
+      "fn": "getContacts"
+    },
+    {
+      "file": "src/server/new/admin/contacts/getContactStats.ts",
+      "fn": "getContactStats"
+    },
+    {
+      "file": "src/server/new/admin/contacts/markContactAsRead.ts",
+      "fn": "markContactAsRead"
+    },
+    {
+      "file": "src/server/new/admin/contacts/markContactAsReplied.ts",
+      "fn": "markContactAsReplied"
+    },
+    {
+      "file": "src/server/new/admin/contacts/unarchiveContact.ts",
+      "fn": "unarchiveContact"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "toggleArticleFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkPublishArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkArchiveArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/actions.ts",
+      "fn": "bulkDraftArticles"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "changeArticlePublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticlePublished"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticleDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/article/publishArticle.ts",
+      "fn": "setArticleArchived"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "toggleBlogFeatured"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkPublishBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkArchiveBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/actions.ts",
+      "fn": "bulkDraftBlogs"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "changeBlogPublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogPublished"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/blog/publishBlog.ts",
+      "fn": "setBlogArchived"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkPublishProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkArchiveProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/actions.ts",
+      "fn": "bulkDraftProjects"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "changeProjectPublishStatus"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectPublished"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectDraft"
+    },
+    {
+      "file": "src/server/new/admin/content/project/publishProject.ts",
+      "fn": "setProjectArchived"
+    },
+    {
+      "file": "src/server/new/admin/settings/changeAdminPassword.ts",
+      "fn": "changeAdminPassword"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminProfile.ts",
+      "fn": "updateAdminProfile"
+    },
+    {
+      "file": "src/server/new/admin/settings/updateAdminRecoveryEmail.ts",
+      "fn": "updateAdminRecoveryEmail"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/bulkDeleteSubscribers.ts",
+      "fn": "bulkDeleteSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/confirmSubscriber.ts",
+      "fn": "confirmSubscriber"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/deleteSubscriber.ts",
+      "fn": "deleteSubscriber"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/exportSubscribers.ts",
+      "fn": "exportSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscribers.ts",
+      "fn": "getSubscribers"
+    },
+    {
+      "file": "src/server/new/admin/subscribers/getSubscriberStats.ts",
+      "fn": "getSubscriberStats"
+    },
+    {
+      "file": "src/server/new/public/contact/submitPublicContact.ts",
+      "fn": "submitPublicContact"
+    },
+    {
+      "file": "src/server/new/public/subscribe/subscribe.ts",
+      "fn": "subscribe"
+    },
+    {
+      "file": "src/server/new/public/subscribe/unsubscribe.ts",
+      "fn": "unsubscribe"
+    }
+  ]
+}

@@ -89,9 +89,9 @@ export const getComments = async (
 
         const match = buildCommentMatch({
             filter: params.filter ?? 'all',
-            query: params.query,
-            contentId: contentId ?? undefined,
-            parentId: parentId ?? undefined,
+            ...(typeof params.query === 'string' ? { query: params.query } : {}),
+            ...(contentId ? { contentId } : {}),
+            ...(parentId ? { parentId } : {}),
         });
 
         if (contentType) {

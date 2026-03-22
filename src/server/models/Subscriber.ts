@@ -49,6 +49,7 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
 SubscriberSchema.index({ email: 1 }, { unique: true });
 SubscriberSchema.index({ confirmed: 1 });
 SubscriberSchema.index({ subscribedAt: -1 });
+SubscriberSchema.index({ confirmed: 1, unsubscribedAt: 1, subscribedAt: -1 });
 
 // ============================================================
 // Static Methods

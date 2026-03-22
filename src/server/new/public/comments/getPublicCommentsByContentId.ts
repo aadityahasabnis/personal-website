@@ -56,7 +56,8 @@ export const getPublicCommentsByContentId = async (
                 parentId: { $in: parentIds },
                 ...(approvedOnly ? { approved: true } : {}),
             })
-                .sort({ createdAt: 1, _id: 1 })
+                .sort({ parentId: 1, createdAt: 1, _id: 1 })
+                .hint({ contentId: 1, parentId: 1, approved: 1, createdAt: 1, _id: 1 })
                 .select('_id contentId parentId author content upvotes replyCount createdAt')
                 .lean<ICommentLean[]>();
 

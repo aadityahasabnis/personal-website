@@ -58,7 +58,7 @@ PageStatsSchema.statics.incrementViews = async function (contentId: mongoose.Typ
             $setOnInsert: { likes: 0, createdAt: new Date() },
         },
         {
-            new: true,
+            returnDocument: 'after',
             upsert: true,
             runValidators: true,
         }
@@ -73,7 +73,7 @@ PageStatsSchema.statics.incrementLikes = async function (contentId: mongoose.Typ
             $setOnInsert: { views: 0, createdAt: new Date() },
         },
         {
-            new: true,
+            returnDocument: 'after',
             upsert: true,
             runValidators: true,
         }

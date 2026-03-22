@@ -63,7 +63,7 @@ export const incrementContentViewsById = async (
                 $setOnInsert: { likes: 0 },
             },
             {
-                new: true,
+                returnDocument: 'after',
                 upsert: true,
                 setDefaultsOnInsert: true,
             }

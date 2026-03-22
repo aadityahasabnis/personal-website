@@ -64,6 +64,7 @@ const ContactSchema = new Schema<IContactDocument>(
 ContactSchema.index({ createdAt: -1 });
 ContactSchema.index({ status: 1, createdAt: -1 });
 ContactSchema.index({ email: 1 });
+ContactSchema.index({ email: 1, subject: 1, createdAt: -1 });
 
 // ============================================================
 // Static Methods

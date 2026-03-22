@@ -1,263 +1,144 @@
-# Infrastructure Layer — Core Foundation
+# Infrastructure Layer (Current State)
 
-This document outlines the core infrastructure layer of the personal website project. This foundation supports all server actions, models, and business logic.
+Last updated: 2026-03-22
 
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Environment Configuration](#environment-configuration)
-3. [Database Connection Layer](#database-connection-layer)
-4. [Authentication System](#authentication-system)
-5. [Middleware / Proxy](#middleware--proxy)
-6. [Shared Utilities](#shared-utilities)
-7. [Usage Guidelines](#usage-guidelines)
+This document reflects the actual infrastructure implementation in the current codebase.
 
 ---
 
-## Overview
+## 1) Overview
 
-The infrastructure layer provides:
+Infrastructure currently consists of five production-critical parts:
 
-- **Centralized environment variable management** — single source of truth for all configuration
-- **Robust database connections** — both MongoDB native and Mongoose with connection caching
-- **Admin authentication** — NextAuth v5 with credentials provider
-- **Request middleware** — security headers, caching, and path metadata
-- **Shared utilities** — reusable helpers for database operations, validation, and serialization
-
----
-
-## Environment Configuration
-
-### File: `src/env.ts`
-
-**Purpose:** Centralized, type-safe access to all environment variables.
-
-**Rules:**
-
-- **Never** import `process.env` directly in other files
-- **Always** import from `src/env.ts`
-- All environment variables must be declared and validated here
-
-**Available Variables:**
-
-| Variable                | Required | Description                 |
-| ----------------------- | -------- | --------------------------- |
-| `MONGODB_URI`           | Yes      | MongoDB connection string   |
-| `CDN_SECRET`            | Yes      | Content delivery API secret |
-| `CLOUDINARY_CLOUD_NAME` | No       | Cloudinary cloud name       |
-| `CLOUDINARY_API_KEY`    | No       | Cloudinary API key          |
-| `CLOUDINARY_API_SECRET` | No       | Cloudinary API secret       |
-
-**Usage:**
-
-```ts
-import { env, validateEnv, isCloudinaryConfigured } from '@/env';
-
-// Access environment variables
-const mongoUri = env.MONGODB_URI;
-
-// Check if in production
-if (env.IS_PRODUCTION) {
-    // production-only logic
-}
-
-// Validate all required env vars (call once at startup)
-validateEnv();
-
-// Check if Cloudinary is configured
-if (isCloudinaryConfigured()) {
-    // use Cloudinary
-}
-```
+1. Environment access in `src/env.ts`.
+2. DB connectivity in `src/lib/db/connectDB.ts`.
+3. Admin auth in `src/lib/auth/admin.ts`.
+4. Request header/caching middleware in `src/proxy.ts`.
+5. Shared utility layer in `src/lib/utils.ts` plus domain helpers.
 
 ---
 
-## Database Connection Layer
+## 2) Environment Configuration
 
-### Files:
+Source file: `src/env.ts`
 
-- `src/lib/db/connect.ts` — MongoDB native client
-- `src/lib/db/mongoose.ts` — Mongoose connection
-- `src/lib/db/client.ts` — Client promise for NextAuth
-- `src/lib/db/utils.ts` — Database utilities
-- `src/lib/db/index.ts` — Centralized exports
+Behavior:
 
-### MongoDB Native Client
+1. Centralized env reads through a local `get()` helper.
+2. Required keys throw only in production; development logs warnings.
+3. `env` exports runtime flags (`IS_PROD`, `IS_DEV`) and integration keys.
+4. `isCloudinaryConfigured()` is the supported feature-flag check for media integrations.
 
-**Connection caching:** Uses a global singleton to prevent multiple connections during hot reloads or serverless execution.
+Key variables in active use:
 
-**Usage:**
+1. `MONGODB_URI`
+2. `DB_NAME`
+3. `NEXTAUTH_SECRET`
+4. `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
+5. `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+6. `CDN_SECRET`
 
-```ts
-import { connectDB, getCollection } from '@/lib/db';
-import { COLLECTIONS } from '@/constants/siteConstants';
-import type { IContent } from '@/interfaces/schema';
+Implementation note:
 
-// Get database instance
-const db = await connectDB();
-
-// Get a typed collection
-const contents = await getCollection<IContent>(COLLECTIONS.contents);
-const article = await contents.findOne({ slug: 'my-article' });
-```
-
-### Mongoose Connection
-
-**Usage:**
-
-```ts
-import { connectMongoose } from '@/lib/db';
-import { Content } from '@/server/models';
-
-// Ensure connection before using models
-await connectMongoose();
-
-// Use Mongoose models
-const article = await Content.findOne({ slug: 'my-article' });
-```
-
-### Database Utilities
-
-```ts
-import { toObjectId, successResponse, errorResponse, notFoundResponse, validationErrorResponse, safeDatabaseOperation, normalizePagination, buildSearchQuery } from '@/lib/db/utils';
-
-// Convert string to ObjectId
-const id = toObjectId('507f1f77bcf86cd799439011');
-
-// API response helpers
-const response = successResponse(data, { count: 10 });
-const error = errorResponse('Something went wrong', 500);
-
-// Safe operation wrapper
-const result = await safeDatabaseOperation(async () => {
-    // database operation
-    return data;
-}, 'Failed to fetch data');
-
-// Pagination
-const { page, limit, skip } = normalizePagination(1, 10);
-
-// Search query builder
-const searchQuery = buildSearchQuery('keyword', ['title', 'description']);
-```
+1. There is no exported `validateEnv()` function in current code. Validation behavior is embedded in `get()`.
 
 ---
 
-## Authentication System
+## 3) Database Connection Layer
 
-### File: `src/lib/auth/index.ts`
+Source file: `src/lib/db/connectDB.ts`
 
-**Provider:** NextAuth v5 with credentials provider  
-**Adapter:** MongoDB adapter for session storage  
-**Strategy:** JWT-based sessions  
-**Protection:** Admin routes are protected in the layout (not middleware)
+Current architecture:
 
-**Exports:**
+1. `connectDB()` returns a cached Mongoose connection for application models.
+2. `clientPromise` returns a cached native `MongoClient` for NextAuth adapter usage.
+3. Both are stored on global process state to be hot-reload safe.
 
-```ts
-import { auth, signIn, signOut, handlers } from '@/lib/auth';
+Why this design:
 
-// Get current session (Server Component)
-const session = await auth();
-if (!session) {
-    // not authenticated
-}
+1. App model operations need Mongoose behavior (schema validation, hooks, methods).
+2. NextAuth Mongo adapter requires native `MongoClient`.
+3. Shared caching prevents connection explosion in development and serverless contexts.
 
-// Sign in (Server Action)
-await signIn('credentials', { email, password });
+Important constraint:
 
-// Sign out
-await signOut();
-
-// API route handlers (for NextAuth endpoints)
-export { handlers as GET, handlers as POST };
-```
-
-**Session Type:**
-
-```ts
-interface Session {
-    user: {
-        id: string;
-        email: string;
-        name: string;
-        image: string | null;
-    };
-}
-```
-
-**Admin Model:**
-
-Authentication validates against the `admins` collection using the `IAdmin` interface.
+1. Use `connectDB()` for all business/server-action data operations.
+2. Use `clientPromise` only where an adapter requires native driver access.
 
 ---
 
-## Middleware / Proxy
+## 4) Authentication System
 
-### File: `src/proxy.ts`
+Source file: `src/lib/auth/admin.ts`
 
-**Purpose:** Request processing for both public and admin routes.
+Current implementation:
 
-**Responsibilities:**
+1. NextAuth v5 configured with MongoDB adapter (`clientPromise`).
+2. Credentials provider validates against `Admin.findByEmail()` and bcrypt password hash.
+3. Optional Google provider is enabled only when Google env vars are present.
+4. Google login is allow-listed against existing admins in DB.
+5. Session strategy is JWT and enriches `session.user` with id/email/name/image.
 
-- Security headers (XSS, frame options, content type)
-- Cache control (aggressive for static assets, none for admin)
-- Path metadata for server actions
+Export surface:
 
-**Headers Added:**
-
-| Header                   | Value                             | Purpose               |
-| ------------------------ | --------------------------------- | --------------------- |
-| `X-Content-Type-Options` | `nosniff`                         | Prevent MIME sniffing |
-| `X-Frame-Options`        | `DENY`                            | Prevent clickjacking  |
-| `X-XSS-Protection`       | `1; mode=block`                   | Enable XSS protection |
-| `Referrer-Policy`        | `strict-origin-when-cross-origin` | Control referrer      |
-| `x-pathname`             | Current pathname                  | For server actions    |
-
-**Cache Rules:**
-
-- Static assets (`/images/`, `/fonts/`, `/_next/static/`): 1 year immutable cache
-- Admin routes (`/admin`): no caching
-- Other routes: default Next.js behavior
+1. `handlers`
+2. `auth`
+3. `signIn`
+4. `signOut`
 
 ---
 
-## Shared Utilities
+## 5) Middleware / Proxy
 
-### File: `src/lib/utils.ts`
+Source file: `src/proxy.ts`
 
-**Categories:**
+Current behavior:
 
-#### Styling
+1. Adds security headers (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`).
+2. Applies `Cache-Control: no-store` for admin routes.
+3. Applies long-lived immutable cache headers for `/images/*` and `/fonts/*`.
+4. Injects `x-pathname` for downstream server use.
 
-- `cn()` — Merge Tailwind classes with clsx
+Important note:
 
-#### Date & Time
+1. Admin auth guard is not implemented in proxy middleware due edge/runtime DB constraints.
+2. Auth enforcement is handled in admin server boundaries.
 
-- `formatDate()` — Format date for display
-- `formatRelativeTime()` — "2 days ago" format
+---
 
-#### String
+## 6) Shared Utilities
 
-- `slugify()` — Convert text to URL-safe slug
-- `calculateReadingTime()` — Estimate reading time
-- `formatNumber()` — Format with K/M suffix
-- `truncate()` — Truncate text with ellipsis
+Primary file: `src/lib/utils.ts`
 
-#### Function
+Usage expectations:
 
-- `debounce()` — Debounce function calls
-- `throttle()` — Throttle function execution
+1. Generic cross-domain helper logic belongs here.
+2. Domain-specific logic belongs in domain-local `shared.ts`/`helpers.ts` modules under `src/server/new/**`.
+3. Server-action response/pagination helpers are centralized in `src/server/new/utils/helper.ts`.
 
-#### Validation
+---
 
-- `isValidEmail()` — Validate email format
-- `isValidUrl()` — Validate URL format
-- `isValidSlug()` — Validate slug format
+## 7) Infrastructure Rules
 
-#### MongoDB Serialization
+1. Do not import `process.env` directly outside `src/env.ts`.
+2. Do not create additional DB connectors unless there is a runtime-specific requirement.
+3. Keep auth/session logic in `src/lib/auth/admin.ts`; avoid reimplementing credential checks in routes.
+4. Keep middleware focused on headers/caching/path metadata; do not add DB-dependent logic there.
+5. Keep API routes thin when wrapping server actions.
+
+---
+
+## 8) Known Drift Resolved by This Rewrite
+
+This rewrite removes outdated references to files and exports that are not part of the current implementation, including:
+
+1. `src/lib/db/connect.ts`
+2. `src/lib/db/mongoose.ts`
+3. `src/lib/db/client.ts`
+4. `src/lib/db/utils.ts`
+5. `src/lib/db/index.ts`
+6. `src/lib/auth/index.ts`
+7. non-existent `validateEnv()` usage
 
 - `serializeDocument()` — Convert ObjectId and Date to strings
 - `serializeDocuments()` — Serialize array of documents

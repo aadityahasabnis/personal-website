@@ -38,23 +38,37 @@ export const subscribe = async (
             .lean<ISubscriberLookup | null>();
 
         if (!existing) {
-            const doc = await Subscriber.create({
-                email,
-                name: nameValidation.name,
-                confirmed: false,
-            });
+            try {
+                const doc = await Subscriber.create({
+                    email,
+                    name: nameValidation.name,
+                    confirmed: false,
+                });
 
-            return created(
-                {
-                    email: doc.email,
-                    confirmed: doc.confirmed,
-                    state: 'created',
-                },
-                'Subscription saved. You will receive updates soon.',
-            );
+                return created(
+                    {
+                        email: doc.email,
+                        confirmed: doc.confirmed,
+                        state: 'created',
+                    },
+                    'Subscription saved. You will receive updates soon.',
+                );
+            } catch (err) {
+                const maybeDuplicate = err as { code?: number };
+                if (maybeDuplicate.code !== 11000) throw err;
+            }
         }
 
-        const subscriber = await Subscriber.findById(existing._id).select('email name confirmed unsubscribedAt');
+        const targetId = existing?._id
+            ?? (
+                await Subscriber.findOne({ email })
+                    .select('_id')
+                    .lean<{ _id: ISubscriberDocument['_id'] } | null>()
+            )?._id;
+
+        if (!targetId) return error('Subscriber not found', 404);
+
+        const subscriber = await Subscriber.findById(targetId).select('email name confirmed unsubscribedAt');
         if (!subscriber) return error('Subscriber not found', 404);
 
         if (subscriber.unsubscribedAt) {

@@ -150,6 +150,9 @@ const BaseContentSchema = new Schema(
 
 BaseContentSchema.index({ type: 1, slug: 1 }, { unique: true });
 BaseContentSchema.index({ type: 1, publishStatus: 1, publishedAt: -1 });
+BaseContentSchema.index({ type: 1, publishStatus: 1, featured: -1, publishedAt: -1, updatedAt: -1 });
+BaseContentSchema.index({ type: 1, publishStatus: 1, order: 1, featured: -1, updatedAt: -1 });
+BaseContentSchema.index({ type: 1, publishStatus: 1, status: 1, order: 1, featured: -1, updatedAt: -1 });
 BaseContentSchema.index({ publishStatus: 1, featured: 1 });
 BaseContentSchema.index({ tags: 1 });
 BaseContentSchema.index({ createdBy: 1 });

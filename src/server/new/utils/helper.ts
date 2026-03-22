@@ -29,7 +29,7 @@ export const created = <T>(data: T, message?: string): IApiResponse<T> => ({
     ...(message && { message }),
 });
 
-export const error = ( message: string, status: 400 | 401 | 403 | 404 | 409 | 500 = 400 ): IApiResponse<never> => ({
+export const error = ( message: string, status: 400 | 401 | 403 | 404 | 409 | 429 | 500 = 400 ): IApiResponse<never> => ({
     success: false,
     status,
     error: message,

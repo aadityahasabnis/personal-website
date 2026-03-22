@@ -269,7 +269,7 @@ export const syncParentReplyCounts = async (parentIds: ObjectId[]): Promise<void
     const uniqueParents = uniqueObjectIds(parentIds);
     if (!uniqueParents.length) return;
 
-    const counts = await Comment.aggregate<Array<{ _id: ObjectId; count: number }>>([
+    const counts = await Comment.aggregate<{ _id: ObjectId; count: number }>([
         {
             $match: {
                 parentId: { $in: uniqueParents },

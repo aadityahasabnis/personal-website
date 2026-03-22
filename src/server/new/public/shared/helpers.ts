@@ -95,7 +95,6 @@ export const consumePublicRateLimit = async (
                 $setOnInsert: {
                     scope: input.scope,
                     key: input.key,
-                    hits: 0,
                     createdAt: now,
                     expiresAt,
                 },

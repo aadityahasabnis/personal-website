@@ -63,7 +63,7 @@ export const submitPublicContact = async (
             if (!ipRateLimit.allowed) {
                 return error(
                     `Too many contact attempts. Please retry after ${String(ipRateLimit.retryAfterSeconds)} seconds.`,
-                    403,
+                    429,
                 );
             }
         }
@@ -80,18 +80,23 @@ export const submitPublicContact = async (
             if (!emailRateLimit.allowed) {
                 return error(
                     `Too many contact attempts for this email. Please retry after ${String(emailRateLimit.retryAfterSeconds)} seconds.`,
-                    403,
+                    429,
                 );
             }
         }
 
         const duplicateWindowStart = new Date(Date.now() - CONTACT_DUPLICATE_WINDOW_MS);
-        const duplicateSubmission = await Contact.findOne({
+        const duplicateCandidates = await Contact.find({
             email,
             subject,
-            message,
             createdAt: { $gte: duplicateWindowStart },
-        }).select('_id').lean();
+        })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .select('_id message')
+            .lean<Array<{ _id: unknown; message: string }>>();
+
+        const duplicateSubmission = duplicateCandidates.find((row) => row.message === message) ?? null;
 
         if (duplicateSubmission) {
             return error('A similar message was recently submitted. Please try again later.', 409);

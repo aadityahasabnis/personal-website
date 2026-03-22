@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const folder = (formData.get('folder') as string) || 'portfolio/content';
-        const resourceType = formData.get('resource_type') as string | null;
 
         if (!file) {
             return NextResponse.json(
