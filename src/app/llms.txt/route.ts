@@ -5,6 +5,10 @@ export const revalidate = 86400;
 
 export async function GET(): Promise<Response> {
     const baseUrl = SITE_CONFIG.url;
+    const preferredScope = [
+        ...SITE_CONFIG.seo.preferredCrawlScopePaths,
+        ...(SITE_CONFIG.seo.search.enabled ? [SITE_CONFIG.seo.search.path] : []),
+    ];
 
     const lines: string[] = [
         '# ' + SITE_CONFIG.name,
@@ -16,12 +20,7 @@ export async function GET(): Promise<Response> {
         '- Sitemap: ' + baseUrl + '/sitemap.xml',
         '',
         '## Preferred crawl scope',
-        '- ' + baseUrl + '/',
-        '- ' + baseUrl + '/articles',
-        '- ' + baseUrl + '/notes',
-        '- ' + baseUrl + '/projects',
-        '- ' + baseUrl + '/about',
-        '- ' + baseUrl + '/contact',
+        ...preferredScope.map((path) => '- ' + baseUrl + path),
         '',
         '## Avoid',
         '- /admin',

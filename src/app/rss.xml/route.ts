@@ -121,7 +121,7 @@ export async function GET(): Promise<Response> {
     <title>${escapeXml(SITE_CONFIG.name)}</title>
     <link>${SITE_CONFIG.url}</link>
     <description>${escapeXml(SITE_CONFIG.description)}</description>
-    <language>en-us</language>
+        <language>${escapeXml(SITE_CONFIG.seo.feedLanguage)}</language>
     <managingEditor>${escapeXml(SITE_CONFIG.author.email)} (${escapeXml(SITE_CONFIG.author.name)})</managingEditor>
     <webMaster>${escapeXml(SITE_CONFIG.author.email)} (${escapeXml(SITE_CONFIG.author.name)})</webMaster>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>

@@ -1,19 +1,20 @@
-import { after } from 'next/server';
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 
-import { getArticleByTopicSlug, getAllPublishedArticles } from '@/server/queries/content';
-import { getTopic } from '@/server/queries/topics';
-import { getSubtopic } from '@/server/queries/subtopics';
-import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
-import { incrementViews } from '@/server/actions/stats';
-import { ArticleHeader } from '@/components/content/ArticleHeader';
-import { ArticleContent } from '@/components/content/ArticleContent';
-import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
+import { ContentStats } from '@/components/common/ContentStats';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { JsonLd, generateArticleSchema, generateBreadcrumbSchema, combineSchemas, generateOrganizationSchema } from '@/lib/seo';
+import { ArticleContent } from '@/components/content/ArticleContent';
+import { ArticleHeader } from '@/components/content/ArticleHeader';
 import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
+import { JsonLd, combineSchemas, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
+import { incrementViews } from '@/server/actions/stats';
+import { getAllPublishedArticles, getArticleByTopicSlug } from '@/server/queries/content';
+import { getArticleCommentCount, getArticleStats } from '@/server/queries/stats';
+import { getSubtopic } from '@/server/queries/subtopics';
+import { getTopic } from '@/server/queries/topics';
 
 export const revalidate = 3600;
 
@@ -41,8 +42,7 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
     const readingTime = article.readingTime ?? Math.ceil((article.body?.split(/\s+/).length ?? 0) / 200);
     const seoTitle = article.seo?.title ?? article.title;
     const seoDescription = article.seo?.description ?? article.description;
-    const url = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
-    const imageUrl = article.seo?.ogImage ?? article.coverImage ?? `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
+    const imageUrl = article.seo?.ogImage ?? article.coverImage;
     const keywords = [
         ...(article.seo?.keywords ?? article.tags ?? []),
         topic?.title ?? topicSlug,
@@ -50,35 +50,23 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
         SITE_CONFIG.author.name,
         'tutorial', 'guide', 'learn',
     ];
+    const publishedTime = article.publishedAt?.toISOString();
+    const modifiedTime = article.updatedAt?.toISOString();
 
-    return {
+    return createPageMetadata({
         title: seoTitle,
         description: seoDescription,
-        keywords: keywords.join(', '),
-        authors: [{ name: SITE_CONFIG.author.name, url: SITE_CONFIG.url }],
-        creator: SITE_CONFIG.author.name,
-        publisher: SITE_CONFIG.author.name,
-        alternates: { canonical: url },
+        canonicalPath: `/articles/${topicSlug}/${articleSlug}`,
+        keywords,
+        includeAuthor: true,
+        includeSocial: true,
+        socialType: 'article',
+        imageUrl,
         openGraph: {
-            title: seoTitle,
-            description: seoDescription,
-            type: 'article',
-            url,
-            siteName: SITE_CONFIG.name,
-            locale: 'en_US',
-            publishedTime: article.publishedAt?.toISOString(),
-            modifiedTime: article.updatedAt?.toISOString(),
+            publishedTime,
+            modifiedTime,
             authors: [SITE_CONFIG.author.name],
             tags: keywords,
-            images: [{ url: imageUrl, width: 1200, height: 630, alt: seoTitle }],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title: seoTitle,
-            description: seoDescription,
-            creator: SITE_CONFIG.seo.twitterHandle,
-            site: SITE_CONFIG.seo.twitterHandle,
-            images: [imageUrl],
         },
         robots: {
             index: true,
@@ -88,15 +76,15 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
         other: {
             'article:author': SITE_CONFIG.author.name,
             'article:section': topic?.title ?? topicSlug,
-            ...(article.publishedAt && { 'article:published_time': article.publishedAt.toISOString() }),
-            ...(article.updatedAt && { 'article:modified_time': article.updatedAt.toISOString() }),
+            ...(publishedTime && { 'article:published_time': publishedTime }),
+            ...(modifiedTime && { 'article:modified_time': modifiedTime }),
             'article:tag': keywords.join(', '),
             'twitter:label1': 'Reading time',
             'twitter:data1': `${readingTime} min read`,
             'twitter:label2': 'Written by',
             'twitter:data2': SITE_CONFIG.author.name,
         },
-    };
+    });
 };
 
 const ArticlePage = async ({ params }: IArticlePageProps) => {

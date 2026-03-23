@@ -1,18 +1,19 @@
-import { after } from 'next/server';
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { after } from 'next/server';
 
-import { getNote, getAllNoteSlugs } from '@/server/queries/content';
-import { getArticleStats, getArticleCommentCount } from '@/server/queries/stats';
-import { incrementViews } from '@/server/actions/stats';
-import { calculateReadingTime } from '@/lib/utils';
-import { NoteHeader } from '@/components/content/NoteHeader';
-import { ArticleContent } from '@/components/content/ArticleContent';
-import { ContentStats } from '@/components/common/ContentStats';
 import { CommentSection } from '@/components/common/CommentSection';
+import { ContentStats } from '@/components/common/ContentStats';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { JsonLd, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema, combineSchemas } from '@/lib/seo';
+import { ArticleContent } from '@/components/content/ArticleContent';
+import { NoteHeader } from '@/components/content/NoteHeader';
 import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
+import { JsonLd, combineSchemas, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
+import { calculateReadingTime } from '@/lib/utils';
+import { incrementViews } from '@/server/actions/stats';
+import { getAllNoteSlugs, getNote } from '@/server/queries/content';
+import { getArticleCommentCount, getArticleStats } from '@/server/queries/stats';
 
 export const revalidate = false;
 
@@ -30,39 +31,26 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
     const note = await getNote(slug);
     if (!note) return { title: 'Note Not Found' };
 
-    const url = `${SITE_CONFIG.url}/notes/${slug}`;
-    const imageUrl = `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
+    const imageUrl = SITE_CONFIG.seo.ogImage;
     const readingTime = note.readingTime ?? calculateReadingTime(note.body ?? '');
     const keywords = [...(note.tags ?? []), SITE_CONFIG.author.name, 'notes', 'learning', 'knowledge'];
+    const publishedTime = note.publishedAt?.toISOString();
+    const modifiedTime = note.updatedAt?.toISOString();
 
-    return {
+    return createPageMetadata({
         title: note.title,
         description: note.description,
-        keywords: keywords.join(', '),
-        authors: [{ name: SITE_CONFIG.author.name, url: SITE_CONFIG.url }],
-        creator: SITE_CONFIG.author.name,
-        publisher: SITE_CONFIG.author.name,
-        alternates: { canonical: url },
+        canonicalPath: `/notes/${slug}`,
+        keywords,
+        includeAuthor: true,
+        includeSocial: true,
+        socialType: 'article',
+        imageUrl,
         openGraph: {
-            title: note.title,
-            description: note.description,
-            type: 'article',
-            url,
-            siteName: SITE_CONFIG.name,
-            locale: 'en_US',
-            publishedTime: note.publishedAt?.toISOString(),
-            modifiedTime: note.updatedAt?.toISOString(),
+            publishedTime,
+            modifiedTime,
             authors: [SITE_CONFIG.author.name],
             tags: keywords,
-            images: [{ url: imageUrl, width: 1200, height: 630, alt: note.title }],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title: note.title,
-            description: note.description,
-            creator: SITE_CONFIG.seo.twitterHandle,
-            site: SITE_CONFIG.seo.twitterHandle,
-            images: [imageUrl],
         },
         robots: {
             index: true,
@@ -72,15 +60,15 @@ export const generateMetadata = async ({ params }: INotePageProps): Promise<Meta
         other: {
             'article:author': SITE_CONFIG.author.name,
             'article:section': 'Notes',
-            ...(note.publishedAt && { 'article:published_time': note.publishedAt.toISOString() }),
-            ...(note.updatedAt && { 'article:modified_time': note.updatedAt.toISOString() }),
+            ...(publishedTime && { 'article:published_time': publishedTime }),
+            ...(modifiedTime && { 'article:modified_time': modifiedTime }),
             'article:tag': keywords.join(', '),
             'twitter:label1': 'Reading time',
             'twitter:data1': `${readingTime} min read`,
             'twitter:label2': 'Written by',
             'twitter:data2': SITE_CONFIG.author.name,
         },
-    };
+    });
 };
 
 const NotePage = async ({ params }: INotePageProps) => {

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { ArticleContent } from '@/components/content/ArticleContent';
-import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
 import {
     getPublishedBlogByPath,
     getPublishedBlogStaticPaths,
@@ -32,37 +32,20 @@ export const generateMetadata = async ({ params }: IBlogDetailPageProps): Promis
     const blog = blogResult.data;
     const title = blog.seo?.title ?? blog.title;
     const description = blog.seo?.description ?? blog.description;
-    const image = blog.seo?.ogImage ?? blog.coverImage ?? `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
-    const canonical = `${SITE_CONFIG.url}/blogs/${blogSlug}`;
+    const image = blog.seo?.ogImage ?? blog.coverImage ?? undefined;
 
-    return {
+    return createPageMetadata({
         title,
         description,
-        alternates: {
-            canonical,
-        },
-        openGraph: {
-            title,
-            description,
-            url: canonical,
-            siteName: SITE_CONFIG.name,
-            locale: 'en_US',
-            type: 'article',
-            images: [{ url: image, width: 1200, height: 630, alt: title }],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description,
-            creator: SITE_CONFIG.seo.twitterHandle,
-            site: SITE_CONFIG.seo.twitterHandle,
-            images: [image],
-        },
+        canonicalPath: `/blogs/${blogSlug}`,
+        includeSocial: true,
+        socialType: 'article',
+        ...(image ? { imageUrl: image } : {}),
         robots: {
             index: true,
             follow: true,
         },
-    };
+    });
 };
 
 export default async function BlogDetailPage({ params }: IBlogDetailPageProps) {

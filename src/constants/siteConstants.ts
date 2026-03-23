@@ -36,13 +36,19 @@ export const SITE_CONFIG = {
   seo: {
     twitterHandle: '@aadityahasabnis',
     ogImage: '/og-default.png',
+    ogLocale: 'en_US',
+    feedLanguage: 'en-us',
     rssEnabled: true,
+    defaultKeywords: ['developer', 'writer', 'portfolio', 'articles', 'notes'],
+    preferredCrawlScopePaths: ['/', '/articles', '/notes', '/blogs', '/projects', '/about', '/contact'],
     keywordAliasCap: 2,
     websiteAlternateNames: ['Aaditya Hasabnis', 'Aditya Hasabnis'],
     search: {
       enabled: true,
       path: '/search',
       queryParam: 'q',
+      minQueryLength: 2,
+      resultLimit: 20,
     },
   },
 } as const;

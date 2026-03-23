@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 import { ArticleContent } from '@/components/content/ArticleContent';
-import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
 import {
     getPublishedProjectByPath,
     getPublishedProjectStaticPaths,
@@ -33,37 +33,20 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
     const project = projectResult.data;
     const title = project.seo?.title ?? project.title;
     const description = project.seo?.description ?? project.description;
-    const image = project.seo?.ogImage ?? project.coverImage ?? `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
-    const canonical = `${SITE_CONFIG.url}/projects/${projectSlug}`;
+    const image = project.seo?.ogImage ?? project.coverImage;
 
-    return {
+    return createPageMetadata({
         title,
         description,
-        alternates: {
-            canonical,
-        },
-        openGraph: {
-            title,
-            description,
-            url: canonical,
-            siteName: SITE_CONFIG.name,
-            locale: 'en_US',
-            type: 'article',
-            images: [{ url: image, width: 1200, height: 630, alt: title }],
-        },
-        twitter: {
-            card: 'summary_large_image',
-            title,
-            description,
-            creator: SITE_CONFIG.seo.twitterHandle,
-            site: SITE_CONFIG.seo.twitterHandle,
-            images: [image],
-        },
+        canonicalPath: `/projects/${projectSlug}`,
+        includeSocial: true,
+        socialType: 'article',
+        imageUrl: image,
         robots: {
             index: true,
             follow: true,
         },
-    };
+    });
 };
 
 export default async function ProjectDetailPage({ params }: IProjectDetailPageProps) {
