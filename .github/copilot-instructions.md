@@ -86,6 +86,29 @@ Use this order in every className string:
 - Avoid adding new dependencies on legacy action/query paths; use canonical `src/server/new/**` paths for new work.
 
 // =============================================================
+// SERVER ACTION CONSUMPTION MATRIX (MANDATORY)
+// =============================================================
+
+- Public server action implementation files (`src/server/new/public/**`) must use helper contracts from `src/server/new/utils/helper.ts`:
+    - `success`, `created`, `error`, `handleError`, `tryCatch`
+- Server pages (`src/app/**/page.tsx`, Server Components) should call server actions directly with `await`.
+- For server orchestration, instrumentation, or reusable wrapped execution in server contexts, use `src/lib/api.ts`:
+    - `executeServerAction`
+    - `createServerActionExecutor`
+- Client components must not call server orchestration wrappers directly.
+- Client interactive reads must use `useActionQuery` (`src/hooks/useActionQuery.ts`).
+- Client interactive mutations must use `useAction` (`src/hooks/useAction.ts`).
+- Debounced query inputs should use `useDebounce` (`src/hooks/useDebounce.ts`) before query args and query keys.
+- In-memory pagination should use `usePagination` or `useInfiniteScroll` (`src/hooks/usePagination.ts`).
+- `useLegacyAPIAction` is compatibility-only and should not be used for new implementations.
+
+Decision rule:
+
+- If server page only: call action directly, optionally wrapped by `executeServerAction`.
+- If client interactivity required: split into client island and use `useActionQuery` / `useAction`.
+- Keep response envelopes aligned to `IApiResponse<T>` from `src/interfaces/actionHelper.ts`.
+
+// =============================================================
 // PERFORMANCE RULES
 // =============================================================
 

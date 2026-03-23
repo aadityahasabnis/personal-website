@@ -47,6 +47,32 @@ user-invocable: true
 - Prefer SSG for stable public routes.
 - Use ISR via revalidate when freshness is required.
 
+### Project Addendum: Server Action And Hook Placement
+
+Use this exact layering for this repository:
+
+- Public server action implementation (`src/server/new/public/**`):
+    - Return typed `IApiResponse<T>`.
+    - Use helper wrappers from `src/server/new/utils/helper.ts` (`success`, `created`, `error`, `handleError`, `tryCatch`).
+- Server pages (`src/app/**/page.tsx`, Server Components):
+    - Call public server actions directly with `await`.
+    - Optional: use `executeServerAction` / `createServerActionExecutor` from `src/lib/api.ts` for instrumentation.
+- Client interactive components:
+    - Read data via `useActionQuery` (`src/hooks/useActionQuery.ts`).
+    - Mutate data via `useAction` (`src/hooks/useAction.ts`).
+    - Use `useDebounce` (`src/hooks/useDebounce.ts`) for search/filter-driven queries.
+    - Use `usePagination` / `useInfiniteScroll` (`src/hooks/usePagination.ts`) for in-memory list rendering.
+
+Why this split:
+
+- Hooks own UI lifecycle and cache concerns.
+- Server utilities own execution instrumentation and error normalization.
+- Action files own domain validation and response contracts.
+
+Migration note:
+
+- `useLegacyAPIAction` in `src/hooks/useAction.ts` is compatibility-only. Prefer `useAction` for new work.
+
 ## Step 3: Define Types, Constants, And Boundaries
 
 - Add strict prop and data types.
@@ -116,6 +142,21 @@ user-invocable: true
 - If data is shared across client surfaces: use a typed TanStack Query hook.
 - If a pattern repeats across features: extract a generic typed reusable component.
 - If extraction increases complexity without reuse: keep implementation local.
+
+### Public Route Decision Branch (Project-Specific)
+
+- If route is public and cacheable:
+    - Implement read in server page with direct action call.
+    - Use ISR/SSG strategy as required.
+- If route needs client filters/search:
+    - Keep initial payload server-rendered.
+    - Move live filtering/query refresh to client island with `useActionQuery`.
+- If route needs mutation (likes/comments/subscriptions):
+    - Keep mutation in server action.
+    - Trigger from client with `useAction`.
+    - Invalidate related query keys.
+- If same server action is orchestrated in many server contexts:
+    - Use `createServerActionExecutor` to avoid repeated try/catch and metrics boilerplate.
 
 ## Output Contract
 

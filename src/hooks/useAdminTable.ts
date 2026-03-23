@@ -1,11 +1,24 @@
 'use client';
 
-import { useState, useMemo, useCallback, useTransition, useEffect, useRef } from 'react';
+import { useAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
-// ===== TYPES =====
+import { useDebounce } from '@/hooks/useDebounce';
+import { useInfiniteScroll } from '@/hooks/usePagination';
+import {
+    createTableFiltersAtom,
+    createTablePageSizeAtom,
+    createTableSearchAtom,
+    createTableSelectedIdsAtom,
+    createTableSortAtom,
+    createTableViewAtom,
+    type ITableSortState,
+    type TableViewMode,
+} from '@/jotai/atoms';
 
 export interface IUseAdminTableOptions<T> {
+    tableKey: string;
     data: T[];
     keyExtractor: (item: T) => string;
     searchFields?: (keyof T)[];
@@ -13,65 +26,51 @@ export interface IUseAdminTableOptions<T> {
 }
 
 export interface IUseAdminTableReturn<T> {
-    // Data
     items: T[];
     filteredItems: T[];
     displayedItems: T[];
-    
-    // Search
     searchQuery: string;
     setSearchQuery: (query: string) => void;
-    
-    // Filters
     filters: Record<string, string>;
     setFilter: (key: string, value: string) => void;
     setFilters: (filters: Record<string, string>) => void;
     clearFilters: () => void;
     activeFiltersCount: number;
-    
-    // Selection
     selectedIds: string[];
     setSelectedIds: (ids: string[]) => void;
     toggleSelection: (id: string) => void;
     selectAll: () => void;
     clearSelection: () => void;
     isSelected: (id: string) => boolean;
-    
-    // Pagination / Infinite scroll
     displayCount: number;
     hasMore: boolean;
     loadMore: () => void;
-    
-    // Optimistic updates (skipRefresh parameter allows skipping router.refresh() for better UX)
+    pageSize: number;
+    setPageSize: (size: number) => void;
+    viewMode: TableViewMode;
+    setViewMode: (mode: TableViewMode) => void;
+    sort: ITableSortState | null;
+    setSort: (sort: ITableSortState | null) => void;
     optimisticUpdate: <R>(
         id: string,
         updateFn: (item: T) => T,
         serverAction: () => Promise<R>,
-        skipRefresh?: boolean
+        skipRefresh?: boolean,
     ) => Promise<R>;
-    optimisticDelete: <R>(
-        id: string,
-        serverAction: () => Promise<R>,
-        skipRefresh?: boolean
-    ) => Promise<R>;
+    optimisticDelete: <R>(id: string, serverAction: () => Promise<R>, skipRefresh?: boolean) => Promise<R>;
     optimisticBulkUpdate: <R>(
         ids: string[],
         updateFn: (item: T) => T,
         serverAction: () => Promise<R>,
-        skipRefresh?: boolean
+        skipRefresh?: boolean,
     ) => Promise<R>;
-    
-    // State
     isPending: boolean;
     startTransition: React.TransitionStartFunction;
     refresh: () => void;
 }
 
-const ITEMS_PER_PAGE = 15;
-
-// ===== HOOK =====
-
 export function useAdminTable<T>({
+    tableKey,
     data,
     keyExtractor,
     searchFields = [],
@@ -79,18 +78,26 @@ export function useAdminTable<T>({
 }: IUseAdminTableOptions<T>): IUseAdminTableReturn<T> {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
-    
-    // Local state for optimistic updates
-    const [items, setItems] = useState<T[]>(data);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filters, setFiltersState] = useState<Record<string, string>>({});
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
-    // Track the previous data prop to detect actual server data changes
-    const prevDataRef = useRef<T[]>(data);
-    
-    // Sync with server data only when prop reference actually changes
+    const searchAtom = useMemo(() => createTableSearchAtom(tableKey), [tableKey]);
+    const filtersAtom = useMemo(() => createTableFiltersAtom(tableKey), [tableKey]);
+    const selectedIdsAtom = useMemo(() => createTableSelectedIdsAtom(tableKey), [tableKey]);
+    const pageSizeAtom = useMemo(() => createTablePageSizeAtom(tableKey), [tableKey]);
+    const viewAtom = useMemo(() => createTableViewAtom(tableKey), [tableKey]);
+    const sortAtom = useMemo(() => createTableSortAtom(tableKey), [tableKey]);
+
+    const [searchQuery, setSearchQuery] = useAtom(searchAtom);
+    const [filters, setFiltersState] = useAtom(filtersAtom);
+    const [selectedIds, setSelectedIdsState] = useAtom(selectedIdsAtom);
+    const [pageSize, setPageSizeState] = useAtom(pageSizeAtom);
+    const [viewMode, setViewMode] = useAtom(viewAtom);
+    const [sort, setSort] = useAtom(sortAtom);
+
+    const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+    const [items, setItems] = useState<T[]>(data);
+    const prevDataRef = useRef(data);
+
     useEffect(() => {
         if (prevDataRef.current !== data) {
             prevDataRef.current = data;
@@ -98,26 +105,31 @@ export function useAdminTable<T>({
         }
     }, [data]);
 
-    // ===== SEARCH & FILTER =====
+    useEffect(() => {
+        if (!selectedIds.length) return;
+        const itemIds = new Set(items.map((item) => keyExtractor(item)));
+        const nextSelected = selectedIds.filter((id) => itemIds.has(id));
+        if (nextSelected.length !== selectedIds.length) {
+            setSelectedIdsState(nextSelected);
+        }
+    }, [items, keyExtractor, selectedIds, setSelectedIdsState]);
 
     const filteredItems = useMemo(() => {
         let result = [...items];
 
-        // Search
-        if (searchQuery) {
-            const query = searchQuery.toLowerCase();
+        if (debouncedSearchQuery) {
+            const query = debouncedSearchQuery.toLowerCase();
             result = result.filter((item) => {
                 if (searchFn) return searchFn(item, query);
                 return searchFields.some((field) => {
                     const value = item[field];
                     if (typeof value === 'string') return value.toLowerCase().includes(query);
-                    if (Array.isArray(value)) return value.some((v) => String(v).toLowerCase().includes(query));
+                    if (Array.isArray(value)) return value.some((entry) => String(entry).toLowerCase().includes(query));
                     return false;
                 });
             });
         }
 
-        // Apply filters
         Object.entries(filters).forEach(([key, value]) => {
             if (!value || value === 'all') return;
             result = result.filter((item) => {
@@ -128,137 +140,147 @@ export function useAdminTable<T>({
         });
 
         return result;
-    }, [items, searchQuery, filters, searchFields, searchFn]);
+    }, [items, debouncedSearchQuery, filters, searchFields, searchFn]);
 
-    const displayedItems = useMemo(() => 
-        filteredItems.slice(0, displayCount), 
-        [filteredItems, displayCount]
+    const { visibleData: displayedItems, hasMore, loadMore, reset, limit } = useInfiniteScroll(filteredItems, {
+        initialLimit: pageSize,
+        step: pageSize,
+    });
+
+    useEffect(() => {
+        reset();
+    }, [debouncedSearchQuery, filters, pageSize, reset]);
+
+    const setSelectedIds = useCallback(
+        (ids: string[]) => {
+            setSelectedIdsState(ids);
+        },
+        [setSelectedIdsState],
     );
 
-    const hasMore = displayedItems.length < filteredItems.length;
+    const setFilter = useCallback(
+        (key: string, value: string) => {
+            setFiltersState({ ...filters, [key]: value });
+        },
+        [filters, setFiltersState],
+    );
 
-    // ===== FILTERS =====
-
-    const setFilter = useCallback((key: string, value: string) => {
-        setFiltersState((prev) => ({ ...prev, [key]: value }));
-    }, []);
-
-    const setFilters = useCallback((newFilters: Record<string, string>) => {
-        setFiltersState(newFilters);
-    }, []);
+    const setFilters = useCallback(
+        (nextFilters: Record<string, string>) => {
+            setFiltersState(nextFilters);
+        },
+        [setFiltersState],
+    );
 
     const clearFilters = useCallback(() => {
         setFiltersState({});
         setSearchQuery('');
-    }, []);
+    }, [setFiltersState, setSearchQuery]);
 
-    const activeFiltersCount = useMemo(() => 
-        Object.values(filters).filter((v) => v && v !== 'all').length,
-        [filters]
+    const activeFiltersCount = useMemo(
+        () => Object.values(filters).filter((value) => value && value !== 'all').length,
+        [filters],
     );
-
-    // ===== SELECTION =====
 
     const isSelected = useCallback((id: string) => selectedIds.includes(id), [selectedIds]);
 
-    const toggleSelection = useCallback((id: string) => {
-        setSelectedIds((prev) => 
-            prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-        );
-    }, []);
+    const toggleSelection = useCallback(
+        (id: string) => {
+            const nextSelected = selectedIds.includes(id) ? selectedIds.filter((entry) => entry !== id) : [...selectedIds, id];
+            setSelectedIdsState(nextSelected);
+        },
+        [selectedIds, setSelectedIdsState],
+    );
 
     const selectAll = useCallback(() => {
-        setSelectedIds(filteredItems.map(keyExtractor));
-    }, [filteredItems, keyExtractor]);
+        setSelectedIdsState(filteredItems.map(keyExtractor));
+    }, [filteredItems, keyExtractor, setSelectedIdsState]);
 
-    const clearSelection = useCallback(() => setSelectedIds([]), []);
+    const clearSelection = useCallback(() => {
+        setSelectedIdsState([]);
+    }, [setSelectedIdsState]);
 
-    // ===== PAGINATION =====
+    const setPageSize = useCallback(
+        (size: number) => {
+            if (!Number.isFinite(size) || size <= 0) return;
+            setPageSizeState(Math.trunc(size));
+        },
+        [setPageSizeState],
+    );
 
-    const loadMore = useCallback(() => {
-        setDisplayCount((prev) => prev + ITEMS_PER_PAGE);
-    }, []);
+    const optimisticUpdate = useCallback(
+        async <R,>(id: string, updateFn: (item: T) => T, serverAction: () => Promise<R>, skipRefresh = false): Promise<R> => {
+            setItems((prev) => prev.map((item) => (keyExtractor(item) === id ? updateFn(item) : item)));
 
-    // ===== OPTIMISTIC UPDATES =====
-    // Note: These methods perform optimistic updates and optionally refresh from server.
-    // The refresh is wrapped in startTransition to keep the UI responsive.
-    // For most CRUD operations, the optimistic state is sufficient and refresh
-    // is mainly for ensuring eventual consistency.
-
-    const optimisticUpdate = useCallback(async <R,>(
-        id: string,
-        updateFn: (item: T) => T,
-        serverAction: () => Promise<R>,
-        skipRefresh = false
-    ): Promise<R> => {
-        // Optimistically update local state
-        setItems((prev) => prev.map((item) => 
-            keyExtractor(item) === id ? updateFn(item) : item
-        ));
-
-        try {
-            const result = await serverAction();
-            // Only refresh if not skipped - optimistic state is often sufficient
-            if (!skipRefresh) {
-                startTransition(() => router.refresh());
+            try {
+                const result = await serverAction();
+                if (!skipRefresh) {
+                    startTransition(() => {
+                        router.refresh();
+                    });
+                }
+                return result;
+            } catch (error) {
+                setItems(data);
+                throw error;
             }
-            return result;
-        } catch (error) {
-            // Revert on error
-            setItems(data);
-            throw error;
-        }
-    }, [data, keyExtractor, router]);
+        },
+        [data, keyExtractor, router],
+    );
 
-    const optimisticDelete = useCallback(async <R,>(
-        id: string,
-        serverAction: () => Promise<R>,
-        skipRefresh = false
-    ): Promise<R> => {
-        // Optimistically remove from local state
-        const previousItems = items;
-        setItems((prev) => prev.filter((item) => keyExtractor(item) !== id));
-        setSelectedIds((prev) => prev.filter((i) => i !== id));
+    const optimisticDelete = useCallback(
+        async <R,>(id: string, serverAction: () => Promise<R>, skipRefresh = false): Promise<R> => {
+            const previousItems = items;
+            setItems((prev) => prev.filter((item) => keyExtractor(item) !== id));
+            setSelectedIdsState(selectedIds.filter((entry) => entry !== id));
 
-        try {
-            const result = await serverAction();
-            if (!skipRefresh) {
-                startTransition(() => router.refresh());
+            try {
+                const result = await serverAction();
+                if (!skipRefresh) {
+                    startTransition(() => {
+                        router.refresh();
+                    });
+                }
+                return result;
+            } catch (error) {
+                setItems(previousItems);
+                throw error;
             }
-            return result;
-        } catch (error) {
-            // Revert on error
-            setItems(previousItems);
-            throw error;
-        }
-    }, [items, keyExtractor, router]);
+        },
+        [items, keyExtractor, router, selectedIds, setSelectedIdsState],
+    );
 
-    const optimisticBulkUpdate = useCallback(async <R,>(
-        ids: string[],
-        updateFn: (item: T) => T,
-        serverAction: () => Promise<R>,
-        skipRefresh = false
-    ): Promise<R> => {
-        const idSet = new Set(ids);
-        setItems((prev) => prev.map((item) => 
-            idSet.has(keyExtractor(item)) ? updateFn(item) : item
-        ));
+    const optimisticBulkUpdate = useCallback(
+        async <R,>(
+            ids: string[],
+            updateFn: (item: T) => T,
+            serverAction: () => Promise<R>,
+            skipRefresh = false,
+        ): Promise<R> => {
+            const idSet = new Set(ids);
+            setItems((prev) => prev.map((item) => (idSet.has(keyExtractor(item)) ? updateFn(item) : item)));
 
-        try {
-            const result = await serverAction();
-            if (!skipRefresh) {
-                startTransition(() => router.refresh());
+            try {
+                const result = await serverAction();
+                if (!skipRefresh) {
+                    startTransition(() => {
+                        router.refresh();
+                    });
+                }
+                clearSelection();
+                return result;
+            } catch (error) {
+                setItems(data);
+                throw error;
             }
-            clearSelection();
-            return result;
-        } catch (error) {
-            setItems(data);
-            throw error;
-        }
-    }, [data, keyExtractor, router, clearSelection]);
+        },
+        [clearSelection, data, keyExtractor, router],
+    );
 
     const refresh = useCallback(() => {
-        startTransition(() => router.refresh());
+        startTransition(() => {
+            router.refresh();
+        });
     }, [router]);
 
     return {
@@ -278,9 +300,15 @@ export function useAdminTable<T>({
         selectAll,
         clearSelection,
         isSelected,
-        displayCount,
+        displayCount: limit,
         hasMore,
         loadMore,
+        pageSize,
+        setPageSize,
+        viewMode,
+        setViewMode,
+        sort,
+        setSort,
         optimisticUpdate,
         optimisticDelete,
         optimisticBulkUpdate,

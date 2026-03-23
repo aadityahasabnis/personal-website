@@ -1,9 +1,9 @@
-import { getArticleSidebarData, getArticleByTopicSlug } from '@/server/queries/content';
-import { getTopic } from '@/server/queries/topics';
-import { ArticleSidebar } from '@/components/content/ArticleSidebar';
+import { ArticleSidebar } from '@/components/content/article/ArticleSidebar';
 import { TableOfContents } from '@/components/content/TableOfContents';
+import type { IArticle, ISubtopic } from '@/interfaces/schema';
 import { extractHeadingsFromAuthorlyHtml, stampHeadingIds } from '@/lib/markdown/toc';
-import type { ISubtopic, IArticle } from '@/interfaces/schema';
+import { getArticleByTopicSlug, getArticleSidebarData } from '@/server/queries/content';
+import { getTopic } from '@/server/queries/topics';
 
 interface IArticleLayoutProps {
     children: React.ReactNode;
@@ -32,9 +32,7 @@ function transformSubtopic(subtopic: ISubtopic): ISubtopic {
 /**
  * Transform article for client component
  */
-function transformArticle(
-    article: Pick<IArticle, 'slug' | 'title' | 'subtopicSlug' | 'order'>
-) {
+function transformArticle(article: Pick<IArticle, 'slug' | 'title' | 'subtopicSlug' | 'order'>) {
     return {
         slug: article.slug,
         title: article.title,
@@ -45,23 +43,16 @@ function transformArticle(
 
 /**
  * Article Layout - 3-column layout for article pages
- * 
+ *
  * Left: Navigation sidebar with subtopics/articles
  * Center: Article content (children)
  * Right: Table of contents
  */
-export default async function ArticleLayout({
-    children,
-    params,
-}: IArticleLayoutProps) {
+export default async function ArticleLayout({ children, params }: IArticleLayoutProps) {
     const { topicSlug, articleSlug } = await params;
 
     // Fetch sidebar data + article body for TOC in parallel
-    const [topic, sidebarData, article] = await Promise.all([
-        getTopic(topicSlug),
-        getArticleSidebarData(topicSlug),
-        getArticleByTopicSlug(topicSlug, articleSlug),
-    ]);
+    const [topic, sidebarData, article] = await Promise.all([getTopic(topicSlug), getArticleSidebarData(topicSlug), getArticleByTopicSlug(topicSlug, articleSlug)]);
 
     const topicTitle = topic?.title || 'Articles';
     const transformedSubtopics = sidebarData.subtopics.map(transformSubtopic);
@@ -74,29 +65,21 @@ export default async function ArticleLayout({
     const tocHeadings = extractHeadingsFromAuthorlyHtml(stampedHtml);
 
     return (
-        <div className="max-w-[1400px] mx-auto px-4 lg:px-8 py-12 md:py-16">
-            <div className="flex gap-8">
+        <div className='max-w-[1400px] mx-auto px-4 lg:px-8 py-12 md:py-16'>
+            <div className='flex gap-8'>
                 {/* Left Sidebar - Navigation */}
-                <aside className="hidden lg:block w-64 shrink-0">
-                    <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 pb-8">
-                        <ArticleSidebar
-                            topicSlug={topicSlug}
-                            topicTitle={topicTitle}
-                            subtopics={transformedSubtopics}
-                            articles={transformedArticles}
-                            currentSlug={articleSlug}
-                        />
+                <aside className='hidden lg:block w-64 shrink-0'>
+                    <div className='sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-4 pb-8'>
+                        <ArticleSidebar topicSlug={topicSlug} topicTitle={topicTitle} subtopics={transformedSubtopics} articles={transformedArticles} currentSlug={articleSlug} />
                     </div>
                 </aside>
 
                 {/* Main Content */}
-                <main className="flex-1 min-w-0 max-w-3xl">
-                    {children}
-                </main>
+                <main className='flex-1 min-w-0 max-w-3xl'>{children}</main>
 
                 {/* Right Sidebar - Table of Contents */}
-                <aside className="hidden xl:block w-56 shrink-0">
-                    <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pl-4 pb-8">
+                <aside className='hidden xl:block w-56 shrink-0'>
+                    <div className='sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pl-4 pb-8'>
                         <TableOfContents headings={tocHeadings} />
                     </div>
                 </aside>

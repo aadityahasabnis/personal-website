@@ -1,3 +1,5 @@
+import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
+
 // ============================================================
 // Site Configuration
 // ============================================================
@@ -58,10 +60,10 @@ export const SITE_CONFIG = {
 // ============================================================
 
 export const NAV_LINKS = [
-  { label: 'Articles', href: '/articles' },
-  { label: 'Blogs', href: '/blogs' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'About', href: '/about' },
+  { label: 'Articles', href: '/articles', hideOnDesktop: false },
+  { label: 'Blogs', href: '/blogs', hideOnDesktop: false },
+  { label: 'Projects', href: '/projects', hideOnDesktop: false },
+  { label: 'About', href: '/about', hideOnDesktop: false },
 ] as const;
 
 export const FOOTER_LINKS = {
@@ -76,10 +78,38 @@ export const FOOTER_LINKS = {
 // ============================================================
 
 export const SOCIAL_LINKS = [
-  { platform: 'GitHub', url: 'https://github.com/aadityahasabnis' },
-  { platform: 'Twitter', url: 'https://twitter.com/aadityahasabnis' },
-  { platform: 'LinkedIn', url: 'https://linkedin.com/in/aadityahasabnis' },
-  { platform: 'Email', url: 'mailto:aaditya.hasabnis@gmail.com' },
+  {
+    id: 'github',
+    platform: 'GitHub',
+    url: 'https://github.com/aadityahasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on GitHub',
+    icon: Github,
+  },
+  {
+    id: 'X',
+    platform: 'X',
+    url: 'https://x.com/aadityahasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on X',
+    icon: Twitter,
+  },
+  {
+    id: 'linkedin',
+    platform: 'LinkedIn',
+    url: 'https://linkedin.com/in/aadityahasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on LinkedIn',
+    icon: Linkedin,
+  },
+  {
+    id: 'email',
+    platform: 'Email',
+    url: 'mailto:aaditya.hasabnis@gmail.com',
+    isExternal: false,
+    ariaLabel: 'Send email to Aaditya Hasabnis',
+    icon: Mail,
+  },
 ] as const;
 
 // ============================================================

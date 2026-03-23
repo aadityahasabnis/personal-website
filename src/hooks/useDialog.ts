@@ -1,48 +1,22 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useContext } from 'react';
 
-interface IDialogState<TData = unknown> {
-    open: boolean;
-    data?: TData;
-    id?: string;
-}
+import { DialogContext, type IDialogContextValue } from '@/providers/DialogProvider';
+
+export type IUseDialogReturn = IDialogContextValue;
 
 /**
- * Hook for managing dialog state
- * Adapted from refer-2 useDialog
+ * Global dialog API from DialogProvider.
  */
-export const useDialog = <TData = unknown>(defaultId?: string) => {
-    const [state, setState] = useState<IDialogState<TData>>({
-        open: false,
-        id: defaultId,
-    });
+export const useDialog = (): IUseDialogReturn => {
+    const dialog = useContext(DialogContext);
 
-    const openDialog = useCallback((data?: TData, id?: string) => {
-        setState({ open: true, data, id: id ?? defaultId });
-    }, [defaultId]);
+    if (!dialog) {
+        throw new Error('useDialog must be used within DialogProvider');
+    }
 
-    const closeDialog = useCallback(() => {
-        setState((prev) => ({ ...prev, open: false }));
-    }, []);
-
-    const toggleDialog = useCallback(() => {
-        setState((prev) => ({ ...prev, open: !prev.open }));
-    }, []);
-
-    const setDialogData = useCallback((data: TData) => {
-        setState((prev) => ({ ...prev, data }));
-    }, []);
-
-    return {
-        isOpen: state.open,
-        data: state.data,
-        id: state.id,
-        openDialog,
-        closeDialog,
-        toggleDialog,
-        setDialogData,
-    };
+    return dialog;
 };
 
 export default useDialog;

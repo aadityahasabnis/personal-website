@@ -1,106 +1,90 @@
-import React from "react";
-import Link from "next/link";
-import { Github, Linkedin, Twitter, Mail } from "lucide-react";
-import { SITE_CONFIG, NAV_LINKS, SOCIAL_LINKS } from "@/constants/siteConstants";
-
-const iconMap: Record<string, React.ReactNode> = {
-  github: <Github className="size-5" />,
-  linkedin: <Linkedin className="size-5" />,
-  twitter: <Twitter className="size-5" />,
-  email: <Mail className="size-5" />,
-};
+import { FOOTER_LINKS, NAV_LINKS, SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
+import Link from 'next/link';
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
+    const currentYear = new Date().getFullYear();
+    const quickLinksHeading = 'Quick Links';
+    const contactHeading = 'Get in Touch';
+    const contactDescription = 'Open for freelance projects and collaboration opportunities.';
+    const copyrightText = `© ${currentYear} ${SITE_CONFIG.name}. All rights reserved.`;
 
-  return (
-    <footer className="bg-muted/30 border-t">
-      <div className="max-w-7xl mx-auto px-5 md:px-10 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Brand Section */}
-          <div className="flex flex-col gap-4">
-            <Link href="/" className="text-xl font-bold text-foreground">
-              {SITE_CONFIG.name}
-            </Link>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {SITE_CONFIG.description}
-            </p>
-            <div className="flex gap-3">
-              {SOCIAL_LINKS.map((link) => (
-                <Link
-                  key={link.platform}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 rounded-md bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                  aria-label={link.platform}
-                >
-                  {iconMap[link.platform] ?? <Mail className="size-5" />}
-                </Link>
-              ))}
+    return (
+        <footer className='relative border-t border-border bg-background' role='contentinfo'>
+            <div className='mx-auto grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-7xl'>
+                <section className='flex flex-col gap-4'>
+                    <Link
+                        href='/'
+                        className='inline-flex text-h4 font-semibold text-foreground transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                    >
+                        {SITE_CONFIG.name}
+                    </Link>
+                    <p className='max-w-xs text-body text-muted-foreground'>{SITE_CONFIG.description}</p>
+                    <nav className='flex items-center gap-3' aria-label='Footer social links'>
+                        {SOCIAL_LINKS.map((link) => {
+                            const Icon = link.icon;
+
+                            return (
+                                <Link
+                                    key={link.id}
+                                    href={link.url}
+                                    target={link.isExternal ? '_blank' : undefined}
+                                    rel={link.isExternal ? 'noopener noreferrer' : undefined}
+                                    className='inline-flex items-center justify-center p-2 size-10 text-muted-foreground bg-secondary border border-border rounded-md transition-base hover:text-foreground hover:bg-secondary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                                    aria-label={link.ariaLabel}
+                                    title={link.platform}
+                                >
+                                    <Icon className='size-5' aria-hidden='true' />
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </section>
+
+                <section className='flex flex-col gap-4'>
+                    <h2 className='text-label font-semibold uppercase tracking-widest text-foreground'>{quickLinksHeading}</h2>
+                    <nav className='flex flex-col gap-2' aria-label='Footer quick links'>
+                        {NAV_LINKS.map((link) => (
+                            <Link
+                                key={link.href}
+                                href={link.href}
+                                className='inline-flex text-body text-muted-foreground transition-base hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            >
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
+                </section>
+
+                <section className='flex flex-col gap-4'>
+                    <h2 className='text-label font-semibold uppercase tracking-widest text-foreground'>{contactHeading}</h2>
+                    <div className='flex flex-col gap-2'>
+                        <Link
+                            href={`mailto:${SITE_CONFIG.email}`}
+                            className='inline-flex text-body text-muted-foreground transition-base hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                        >
+                            {SITE_CONFIG.email}
+                        </Link>
+                        <p className='text-body text-muted-foreground'>{contactDescription}</p>
+                    </div>
+                </section>
             </div>
-          </div>
 
-          {/* Quick Links */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              Quick Links
-            </h3>
-            <nav className="flex flex-col gap-2">
-              {NAV_LINKS.map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
-
-          {/* Contact Section */}
-          <div className="flex flex-col gap-4">
-            <h3 className="text-sm font-semibold text-foreground uppercase tracking-wider">
-              Get in Touch
-            </h3>
-            <div className="flex flex-col gap-2">
-              <Link
-                href={`mailto:${SITE_CONFIG.email}`}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {SITE_CONFIG.email}
-              </Link>
-              <p className="text-sm text-muted-foreground">
-                Open for freelance projects and collaboration opportunities.
-              </p>
+            <div className='mx-auto flex flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row md:px-10 max-w-7xl border-t border-border'>
+                <p className='text-center text-small text-muted-foreground sm:text-left'>{copyrightText}</p>
+                <nav className='flex items-center gap-6' aria-label='Footer legal links'>
+                    {FOOTER_LINKS.legal.map((link) => (
+                        <Link
+                            key={link.href}
+                            href={link.href}
+                            className='inline-flex text-small text-muted-foreground transition-base hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                        >
+                            {link.label}
+                        </Link>
+                    ))}
+                </nav>
             </div>
-          </div>
-        </div>
-
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground text-center sm:text-left">
-            © {currentYear} {SITE_CONFIG.name}. All rights reserved.
-          </p>
-          <div className="flex gap-6">
-            <Link
-              href="/privacy"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Terms
-            </Link>
-          </div>
-        </div>
-      </div>
-    </footer>
-  );
+        </footer>
+    );
 };
 
 export default Footer;

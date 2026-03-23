@@ -20,11 +20,7 @@ const Views = async ({ slug, className }: IViewsProps) => {
     const stats = await getArticleStats(slug);
     const count = stats?.views ?? 0;
 
-    return (
-        <span className={className ?? 'text-sm text-muted-foreground'}>
-            {count.toLocaleString()} views
-        </span>
-    );
+    return <span className={className ?? 'text-sm text-muted-foreground'}>{count.toLocaleString()} views</span>;
 };
 
 export { Views };

@@ -1,5 +1,5 @@
 import { getArticlesByTag } from '@/server/queries/content';
-import { ArticleCard } from './ArticleCard';
+import { ArticleCard } from '../article/ArticleCard';
 
 interface IRelatedPostsProps {
     currentSlug: string;
@@ -9,9 +9,9 @@ interface IRelatedPostsProps {
 
 /**
  * RelatedPosts - Server Component that fetches and displays related articles
- * 
+ *
  * Streams via Suspense - doesn't block main content render
- * 
+ *
  * Usage:
  * <Suspense fallback={<Skeleton className="h-48" />}>
  *   <RelatedPosts currentSlug={slug} tags={tags} />
@@ -24,24 +24,16 @@ const RelatedPosts = async ({ currentSlug, tags, limit = 3 }: IRelatedPostsProps
     const articles = await getArticlesByTag(tags[0], limit + 1);
 
     // Filter out current article
-    const relatedArticles = articles
-        .filter((article) => article.slug !== currentSlug)
-        .slice(0, limit);
+    const relatedArticles = articles.filter((article) => article.slug !== currentSlug).slice(0, limit);
 
     if (relatedArticles.length === 0) return null;
 
     return (
-        <section className="mt-12 border-t pt-8">
-            <h2 className="mb-6 text-2xl font-semibold tracking-tight">
-                Related Articles
-            </h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <section className='mt-12 border-t pt-8'>
+            <h2 className='mb-6 text-2xl font-semibold tracking-tight'>Related Articles</h2>
+            <div className='grid gap-6 sm:grid-cols-2 lg:grid-cols-3'>
                 {relatedArticles.map((article) => (
-                    <ArticleCard
-                        key={article.slug}
-                        article={article}
-                        variant="compact"
-                    />
+                    <ArticleCard key={article.slug} article={article} variant='compact' />
                 ))}
             </div>
         </section>

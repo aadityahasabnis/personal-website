@@ -1,26 +1,26 @@
 'use client';
 
+import { Calendar, Download, Mail } from 'lucide-react';
 import { useCallback } from 'react';
-import { Mail, Calendar, Download } from 'lucide-react';
 
-import { formatDate } from '@/lib/utils';
-import type { ISubscriber } from '@/interfaces/schema';
-import { useAdminTable } from '@/hooks';
 import {
-    DataTable,
-    TableSearch,
     BulkActionsBar,
-    StatusBadge,
+    DataTable,
     DataTableActions,
-    createDeleteAction,
+    StatusBadge,
+    TableSearch,
     createBulkDeleteActionNew,
-    type IDataTableColumn,
-    type IDataTableAction,
+    createDeleteAction,
     type IBulkActionNew,
+    type IDataTableAction,
+    type IDataTableColumn,
     type ITableFilter,
 } from '@/components/admin';
-import { deleteSubscriber, confirmSubscriber, exportSubscribers } from '@/server/actions/subscribers';
 import { Button } from '@/components/ui/button';
+import { useAdminTable } from '@/hooks';
+import type { ISubscriber } from '@/interfaces/schema';
+import { formatDate } from '@/lib/utils';
+import { confirmSubscriber, deleteSubscriber, exportSubscribers } from '@/server/actions/subscribers';
 
 // ===== FILTERS CONFIG =====
 
@@ -55,22 +55,23 @@ interface ISubscribersTableProps {
 
 export function SubscribersTable({ subscribers }: ISubscribersTableProps): React.ReactElement {
     const table = useAdminTable({
+        tableKey: 'admin-subscribers',
         data: subscribers,
         keyExtractor: (s) => s._id || s.email,
-        searchFn: (subscriber, query) =>
-            subscriber.email.toLowerCase().includes(query) ||
-            subscriber.name?.toLowerCase().includes(query) || false,
+        searchFn: (subscriber, query) => subscriber.email.toLowerCase().includes(query) || subscriber.name?.toLowerCase().includes(query) || false,
     });
 
     // Custom filter logic for subscriber status
-    const filteredByStatus = table.filteredItems.filter((s) => {
-        const status = table.filters.status;
-        if (!status || status === 'all') return true;
-        if (status === 'confirmed') return s.confirmed && !s.unsubscribedAt;
-        if (status === 'pending') return !s.confirmed;
-        if (status === 'unsubscribed') return !!s.unsubscribedAt;
-        return true;
-    }).sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime());
+    const filteredByStatus = table.filteredItems
+        .filter((s) => {
+            const status = table.filters.status;
+            if (!status || status === 'all') return true;
+            if (status === 'confirmed') return s.confirmed && !s.unsubscribedAt;
+            if (status === 'pending') return !s.confirmed;
+            if (status === 'unsubscribed') return !!s.unsubscribedAt;
+            return true;
+        })
+        .sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime());
 
     // ===== EXPORT HANDLER =====
 
@@ -105,18 +106,13 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
                     await table.optimisticUpdate(
                         subscriber._id || subscriber.email,
                         (s) => ({ ...s, confirmed: true }),
-                        () => confirmSubscriber(subscriber._id!)
+                        () => confirmSubscriber(subscriber._id!),
                     );
                 },
             });
         }
 
-        actions.push(
-            createDeleteAction(
-                () => table.optimisticDelete(subscriber._id || subscriber.email, () => deleteSubscriber(subscriber._id!)),
-                subscriber.email
-            )
-        );
+        actions.push(createDeleteAction(() => table.optimisticDelete(subscriber._id || subscriber.email, () => deleteSubscriber(subscriber._id!)), subscriber.email));
 
         return actions;
     };
@@ -128,11 +124,9 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
             id: 'subscriber',
             header: 'Subscriber',
             accessor: (subscriber) => (
-                <div className="min-w-0 max-w-md">
-                    <p className="font-medium line-clamp-1">{subscriber.email}</p>
-                    {subscriber.name && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">{subscriber.name}</p>
-                    )}
+                <div className='min-w-0 max-w-md'>
+                    <p className='font-medium line-clamp-1'>{subscriber.email}</p>
+                    {subscriber.name && <p className='mt-0.5 text-sm text-muted-foreground line-clamp-1'>{subscriber.name}</p>}
                 </div>
             ),
             width: '350px',
@@ -141,8 +135,8 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
             id: 'status',
             header: 'Status',
             cell: (subscriber) => {
-                if (subscriber.unsubscribedAt) return <StatusBadge status="unsubscribed" />;
-                return subscriber.confirmed ? <StatusBadge status="confirmed" /> : <StatusBadge status="pending" />;
+                if (subscriber.unsubscribedAt) return <StatusBadge status='unsubscribed' />;
+                return subscriber.confirmed ? <StatusBadge status='confirmed' /> : <StatusBadge status='pending' />;
             },
             align: 'center',
             width: '120px',
@@ -151,8 +145,8 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
             id: 'subscribed',
             header: 'Subscribed',
             cell: (subscriber) => (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
+                <div className='flex items-center gap-1 text-sm text-muted-foreground'>
+                    <Calendar className='h-3 w-3' />
                     {formatDate(new Date(subscriber.subscribedAt))}
                 </div>
             ),
@@ -173,18 +167,17 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
         {
             id: 'confirm',
             label: 'Confirm Selected',
-            icon: <Mail className="h-4 w-4" />,
+            icon: <Mail className='h-4 w-4' />,
             variant: 'default',
-            action: (ids) => table.optimisticBulkUpdate(
-                ids,
-                (s) => ({ ...s, confirmed: true }),
-                async () => {
-                    const toConfirm = ids
-                        .map((id) => table.items.find((s) => (s._id || s.email) === id))
-                        .filter((s) => s && !s.confirmed);
-                    await Promise.all(toConfirm.map((s) => confirmSubscriber(s!._id!)));
-                }
-            ),
+            action: (ids) =>
+                table.optimisticBulkUpdate(
+                    ids,
+                    (s) => ({ ...s, confirmed: true }),
+                    async () => {
+                        const toConfirm = ids.map((id) => table.items.find((s) => (s._id || s.email) === id)).filter((s) => s && !s.confirmed);
+                        await Promise.all(toConfirm.map((s) => confirmSubscriber(s!._id!)));
+                    },
+                ),
         },
         createBulkDeleteActionNew(async (ids) => {
             await Promise.all(ids.map((id) => table.optimisticDelete(id, () => deleteSubscriber(id))));
@@ -194,24 +187,19 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
     // ===== RENDER =====
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
+        <div className='space-y-6'>
+            <div className='flex flex-col sm:flex-row gap-4'>
+                <div className='flex-1'>
                     <TableSearch
-                        placeholder="Search subscribers by email or name..."
+                        placeholder='Search subscribers by email or name...'
                         onSearch={table.setSearchQuery}
                         filters={TABLE_FILTERS}
                         onFilterChange={table.setFilters}
                         activeFiltersCount={table.activeFiltersCount}
                     />
                 </div>
-                <Button
-                    variant="outline"
-                    onClick={handleExport}
-                    disabled={table.isPending || filteredByStatus.length === 0}
-                    className="shrink-0"
-                >
-                    <Download className="h-4 w-4 mr-2" />
+                <Button variant='outline' onClick={handleExport} disabled={table.isPending || filteredByStatus.length === 0} className='shrink-0'>
+                    <Download className='h-4 w-4 mr-2' />
                     Export CSV
                 </Button>
             </div>
@@ -228,13 +216,11 @@ export function SubscribersTable({ subscribers }: ISubscribersTableProps): React
                 onLoadMore={async () => table.loadMore()}
                 isLoading={table.isPending}
                 emptyState={
-                    <div className="p-12 text-center">
-                        <Mail className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">No subscribers found</h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {table.searchQuery || table.activeFiltersCount > 0
-                                ? 'Try adjusting your search or filters'
-                                : 'Subscribers will appear here once they sign up'}
+                    <div className='p-12 text-center'>
+                        <Mail className='mx-auto h-12 w-12 text-muted-foreground/50' />
+                        <h3 className='mt-4 text-lg font-semibold'>No subscribers found</h3>
+                        <p className='mt-2 text-muted-foreground'>
+                            {table.searchQuery || table.activeFiltersCount > 0 ? 'Try adjusting your search or filters' : 'Subscribers will appear here once they sign up'}
                         </p>
                     </div>
                 }

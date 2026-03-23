@@ -57,14 +57,14 @@ importers:
         specifier: ^9.5.0
         version: 9.5.0(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(three@0.183.2)
       '@tanstack/react-query':
-        specifier: ^5.95.0
-        version: 5.95.0(react@19.2.4)
+        specifier: ^5.95.1
+        version: 5.95.1(react@19.2.4)
       '@tanstack/react-query-devtools':
-        specifier: ^5.95.0
-        version: 5.95.0(@tanstack/react-query@5.95.0(react@19.2.4))(react@19.2.4)
+        specifier: ^5.95.1
+        version: 5.95.1(@tanstack/react-query@5.95.1(react@19.2.4))(react@19.2.4)
       authorly-editor:
         specifier: ^0.1.19
-        version: 0.1.19(@excalidraw/excalidraw@0.18.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(lucide-react@0.577.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 0.1.19(@excalidraw/excalidraw@0.18.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(lucide-react@1.0.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
@@ -86,12 +86,15 @@ importers:
       highlight.js:
         specifier: ^11.11.1
         version: 11.11.1
+      jotai:
+        specifier: ^2.18.1
+        version: 2.18.1(@babel/core@7.29.0)(@babel/template@7.28.6)(@types/react@19.2.14)(react@19.2.4)
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
       lenis:
-        specifier: ^1.3.19
-        version: 1.3.19(react@19.2.4)
+        specifier: ^1.3.20
+        version: 1.3.20(react@19.2.4)
       lightningcss:
         specifier: ^1.32.0
         version: 1.32.0
@@ -102,8 +105,8 @@ importers:
         specifier: ^3.3.0
         version: 3.3.0
       lucide-react:
-        specifier: ^0.577.0
-        version: 0.577.0(react@19.2.4)
+        specifier: ^1.0.0
+        version: 1.0.0(react@19.2.4)
       mongodb:
         specifier: ^7.1.0
         version: 7.1.0
@@ -1939,20 +1942,20 @@ packages:
     peerDependencies:
       tailwindcss: '>=3.0.0 || insiders || >=4.0.0-alpha.20 || >=4.0.0-beta.1'
 
-  '@tanstack/query-core@5.95.0':
-    resolution: {integrity: sha512-H1/CWCe8tGL3YIVeo770Z6kPbt0B3M1d/iQXIIK1qlFiFt6G2neYdkHgLapOC8uMYNt9DmHjmGukEKgdMk1P+A==}
+  '@tanstack/query-core@5.95.1':
+    resolution: {integrity: sha512-RTa+CECs9hNMDR2qH4x6bZEjXXDqnjolwecCgwk7ItW1K9WDjUrnyTrtGv4o6aZc1/6uUMkF6DWlYt78uJpgxw==}
 
-  '@tanstack/query-devtools@5.95.0':
-    resolution: {integrity: sha512-i8IzjIsZSE9y9XGndeVYeUusrZpKyhOnOPIzWKao8iAVzmk8ZesPe5URt02aLwC5A0Rg72N+vgqolXXCXm4fFg==}
+  '@tanstack/query-devtools@5.95.1':
+    resolution: {integrity: sha512-YkKrHSp2qLw9wTRr2XufvkAZzernq9/ZlDU2C5euzWGydxd1w9PMvP4D8mIItmROYjhrAkj0VeLQIPkMj0LRxg==}
 
-  '@tanstack/react-query-devtools@5.95.0':
-    resolution: {integrity: sha512-w4lYQTuyGM6l8C32UDIvxeodCrOwbw0JGSK6sQXYlF24CJnTcNmCxvfvrW2L3f3NObyvEQYcGTfjOr0Vw8jaWA==}
+  '@tanstack/react-query-devtools@5.95.1':
+    resolution: {integrity: sha512-A6IDsRQdhEBdmSDNrCz0MqsgLmEiPqA/3KsJY3EAL2D1OEtsin+c8p89oRdcGL2wOPVKNz54qDOImm6pl1dD3Q==}
     peerDependencies:
-      '@tanstack/react-query': ^5.95.0
+      '@tanstack/react-query': ^5.95.1
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.95.0':
-    resolution: {integrity: sha512-EMP8B+BK9zvnAemT8M/y3z/WO0NjZ7fIUY3T3wnHYK6AA3qK/k33i7tPgCXCejhX0cd4I6bJIXN2GmjrHjDBzg==}
+  '@tanstack/react-query@5.95.1':
+    resolution: {integrity: sha512-lqWkRuVtcz9p68/LxxKlWS+M4ACuizJUkVPZryKj0RKE8Se6TD8HU7FNy1c1Mv9C1CPBfzj/p/xiXWK9VCsKJQ==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -3506,6 +3509,24 @@ packages:
       react:
         optional: true
 
+  jotai@2.18.1:
+    resolution: {integrity: sha512-e0NOzK+yRFwHo7DOp0DS0Ycq74KMEAObDWFGmfEL28PD9nLqBTt3/Ug7jf9ca72x0gC9LQZG9zH+0ISICmy3iA==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@babel/core': '>=7.0.0'
+      '@babel/template': '>=7.0.0'
+      '@types/react': '>=17.0.0'
+      react: '>=17.0.0'
+    peerDependenciesMeta:
+      '@babel/core':
+        optional: true
+      '@babel/template':
+        optional: true
+      '@types/react':
+        optional: true
+      react:
+        optional: true
+
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
 
@@ -3574,8 +3595,8 @@ packages:
   layout-base@1.0.2:
     resolution: {integrity: sha512-8h2oVEZNktL4BH2JCOI90iD1yXwL6iNW7KcCKT2QZgQJR2vbqDsldCTPRU9NifTCqHZci57XvQQ15YTu+sTYPg==}
 
-  lenis@1.3.19:
-    resolution: {integrity: sha512-SFSAWnkGWFyOryfnxc8MtLZiaxDt/vhTJ//7F/nGhrdzDjdqYeCpRk3ZBrqfmdNcjSYuJE4zsIY2x8ypiW01Uw==}
+  lenis@1.3.20:
+    resolution: {integrity: sha512-sN5+fCQjovD/KZcClwmVLqLIufiHM9w9I/wXPHKUuRLtRa370qdHI2r2WIetSBS/9Sn5yTAGdhxb7W9AtD9x8g==}
     peerDependencies:
       '@nuxt/kit': '>=3.0.0'
       react: '>=17.0.0'
@@ -3723,8 +3744,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@0.577.0:
-    resolution: {integrity: sha512-4LjoFv2eEPwYDPg/CUdBJQSDfPyzXCRrVW1X7jrx/trgxnxkHFjnVZINbzvzxjN70dxychOfg+FTYwBiS3pQ5A==}
+  lucide-react@1.0.0:
+    resolution: {integrity: sha512-pdRRtv5WhKSBMU+8jc4yyk0hagCpiE1P/6GgSwV5nOUoJUu8u4E9IE3cmEs/YDK9W1KpEANcJGbDuVm9B4X0Sw==}
     peerDependencies:
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
@@ -4686,8 +4707,8 @@ packages:
   tailwindcss@4.2.2:
     resolution: {integrity: sha512-KWBIxs1Xb6NoLdMVqhbhgwZf2PGBpPEiwOqgI4pFIYbNTfBXiKYyWoTsXgBQ9WFg/OlhnvHaY+AEpW7wSmFo2Q==}
 
-  tapable@2.3.0:
-    resolution: {integrity: sha512-g9ljZiwki/LfxmQADO3dEY1CbpmXT5Hm2fJ+QaGKwSXUylMybePR7/67YW7jOrrvjEgL1Fmz5kzyAjWVWLlucg==}
+  tapable@2.3.1:
+    resolution: {integrity: sha512-b+u3CEM6FjDHru+nhUSjDofpWSBp2rINziJWgApm72wwGasQ/wKXftZe4tI2Y5HPv6OpzXSZHOFq87H4vfsgsw==}
     engines: {node: '>=6'}
 
   tar-stream@3.1.8:
@@ -6640,19 +6661,19 @@ snapshots:
       postcss-selector-parser: 6.0.10
       tailwindcss: 4.2.2
 
-  '@tanstack/query-core@5.95.0': {}
+  '@tanstack/query-core@5.95.1': {}
 
-  '@tanstack/query-devtools@5.95.0': {}
+  '@tanstack/query-devtools@5.95.1': {}
 
-  '@tanstack/react-query-devtools@5.95.0(@tanstack/react-query@5.95.0(react@19.2.4))(react@19.2.4)':
+  '@tanstack/react-query-devtools@5.95.1(@tanstack/react-query@5.95.1(react@19.2.4))(react@19.2.4)':
     dependencies:
-      '@tanstack/query-devtools': 5.95.0
-      '@tanstack/react-query': 5.95.0(react@19.2.4)
+      '@tanstack/query-devtools': 5.95.1
+      '@tanstack/react-query': 5.95.1(react@19.2.4)
       react: 19.2.4
 
-  '@tanstack/react-query@5.95.0(react@19.2.4)':
+  '@tanstack/react-query@5.95.1(react@19.2.4)':
     dependencies:
-      '@tanstack/query-core': 5.95.0
+      '@tanstack/query-core': 5.95.1
       react: 19.2.4
 
   '@tsconfig/node10@1.0.12': {}
@@ -7101,10 +7122,10 @@ snapshots:
 
   attr-accept@2.2.5: {}
 
-  authorly-editor@0.1.19(@excalidraw/excalidraw@0.18.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(lucide-react@0.577.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  authorly-editor@0.1.19(@excalidraw/excalidraw@0.18.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(lucide-react@1.0.0(react@19.2.4))(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@excalidraw/excalidraw': 0.18.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(immer@11.1.3)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      lucide-react: 0.577.0(react@19.2.4)
+      lucide-react: 1.0.0(react@19.2.4)
       prism-react-renderer: 2.4.1(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
@@ -7583,7 +7604,7 @@ snapshots:
   enhanced-resolve@5.20.1:
     dependencies:
       graceful-fs: 4.2.11
-      tapable: 2.3.0
+      tapable: 2.3.1
 
   es-abstract@1.24.1:
     dependencies:
@@ -8370,6 +8391,13 @@ snapshots:
       '@types/react': 19.2.14
       react: 19.2.4
 
+  jotai@2.18.1(@babel/core@7.29.0)(@babel/template@7.28.6)(@types/react@19.2.14)(react@19.2.4):
+    optionalDependencies:
+      '@babel/core': 7.29.0
+      '@babel/template': 7.28.6
+      '@types/react': 19.2.14
+      react: 19.2.4
+
   js-tokens@4.0.0: {}
 
   jsesc@3.1.0: {}
@@ -8439,7 +8467,7 @@ snapshots:
 
   layout-base@1.0.2: {}
 
-  lenis@1.3.19(react@19.2.4):
+  lenis@1.3.20(react@19.2.4):
     optionalDependencies:
       react: 19.2.4
 
@@ -8547,7 +8575,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@0.577.0(react@19.2.4):
+  lucide-react@1.0.0(react@19.2.4):
     dependencies:
       react: 19.2.4
 
@@ -9959,7 +9987,7 @@ snapshots:
 
   tailwindcss@4.2.2: {}
 
-  tapable@2.3.0: {}
+  tapable@2.3.1: {}
 
   tar-stream@3.1.8:
     dependencies:

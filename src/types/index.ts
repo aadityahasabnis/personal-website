@@ -1,11 +1,5 @@
 export type {
-    StrongOmit,
-    MakeOptional,
-    DotNestedScalarKeys,
-    DotNestedBooleanKeys,
-    DeepPartial,
-    IApiResponse,
-    IFormData,
-    IHandleChangeEvent,
-    IHandleChange,
-} from './form';
+    DeepPartial, DotNestedBooleanKeys, DotNestedScalarKeys, IApiResponse,
+    IFormData, IHandleChange, IHandleChangeEvent, MakeOptional, StrongOmit
+} from '../components/form/form';
+

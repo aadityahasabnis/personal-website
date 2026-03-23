@@ -1,122 +1,82 @@
-"use client";
+'use client';
 
-import React from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { useFormOperations } from "@/hooks";
-import { renderField, type IFieldConfig } from "@/components/form";
-import { cn } from "@/lib/utils";
-import type { IFormData, IHandleChange } from "@/types/form";
-import type { MaxWidthDialogType } from "./DialogWrapper";
+import { useMemo, useState, type FormEvent } from 'react';
 
-const maxWidthMap: Record<MaxWidthDialogType, string> = {
-  sm: "max-w-sm",
-  md: "max-w-md",
-  lg: "max-w-lg",
-  xl: "max-w-xl",
-  "2xl": "max-w-2xl",
-};
+import { renderField, type IFieldConfig } from '@/components/form';
+import { Button } from '@/components/ui/button';
+import { useFormOperations } from '@/hooks/useFormOperations';
+import { type IFormData } from '@/interfaces/actionHelper';
+import { cn } from '@/lib/utils';
 
-export interface IFormDialogProps<TFormBody extends IFormData> {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (data: TFormBody) => void | Promise<void>;
-  title: string;
-  description?: string;
-  fields:
-    | Array<IFieldConfig<TFormBody>>
-    | ((
-        formData: TFormBody,
-        handleChange: IHandleChange,
-      ) => Array<IFieldConfig<TFormBody>>);
-  defaultValues?: Partial<TFormBody>;
-  submitLabel?: string;
-  cancelLabel?: string;
-  maxWidth?: MaxWidthDialogType;
-  isLoading?: boolean;
-  requireModification?: boolean;
-  className?: string;
+import { DialogWrapper } from './DialogWrapper';
+import { type IControlledDialogProps, type IFormDialogConfig } from './types';
+
+export interface IFormDialogProps<TFormBody extends IFormData> extends IControlledDialogProps, Omit<IFormDialogConfig<TFormBody>, 'type'> {}
+
+export function FormDialog<TFormBody extends IFormData>({
+    open,
+    onClose,
+    onSubmit,
+    title,
+    description,
+    fields,
+    defaultValues,
+    submitLabel = 'Submit',
+    cancelLabel = 'Cancel',
+    width = 'md',
+    requireModification = true,
+    className,
+    closeOnOutsideClick = true,
+}: IFormDialogProps<TFormBody>) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { formData, handleChange, isModified, resetForm } = useFormOperations<TFormBody>(defaultValues ?? {});
+
+    const resolvedFields = useMemo<Array<IFieldConfig<TFormBody>>>(() => (typeof fields === 'function' ? fields(formData, handleChange) : fields), [fields, formData, handleChange]);
+
+    const handleClose = (force = false) => {
+        if (!force && isSubmitting) {
+            return;
+        }
+
+        resetForm();
+        onClose();
+    };
+
+    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (isSubmitting) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await onSubmit(formData);
+            handleClose(true);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const descriptionProps = description !== undefined ? { description } : {};
+
+    return (
+        <DialogWrapper open={open} onClose={handleClose} title={title} width={width} closeOnOutsideClick={closeOnOutsideClick && !isSubmitting} bodyClassName='px-0 pb-0' {...descriptionProps}>
+            <form onSubmit={handleSubmit} className='flex flex-col'>
+                <div className={cn('grid max-h-[50vh] gap-x-5 gap-y-3 overflow-y-auto px-5 no-scrollbar sm:grid-cols-2 md:grid-cols-6', className)}>
+                    {resolvedFields.map((field, index) => renderField(formData, handleChange, field, index))}
+                </div>
+                <div className='mt-4 flex flex-col-reverse gap-2 border-t border-border px-5 py-4 sm:flex-row sm:justify-end'>
+                    <Button type='button' variant='outline' onClick={() => handleClose()} disabled={isSubmitting}>
+                        {cancelLabel}
+                    </Button>
+                    <Button type='submit' disabled={isSubmitting || (requireModification && !isModified)}>
+                        {isSubmitting ? 'Saving...' : submitLabel}
+                    </Button>
+                </div>
+            </form>
+        </DialogWrapper>
+    );
 }
-
-export const FormDialog = <TFormBody extends IFormData>({
-  open,
-  onClose,
-  onSubmit,
-  title,
-  description,
-  fields,
-  defaultValues,
-  submitLabel = "Submit",
-  cancelLabel = "Cancel",
-  maxWidth = "md",
-  isLoading = false,
-  requireModification = true,
-  className,
-}: IFormDialogProps<TFormBody>): React.ReactElement => {
-  const { formData, handleChange, isModified, resetForm } =
-    useFormOperations<TFormBody>(defaultValues as Partial<TFormBody>);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    await onSubmit(formData);
-  };
-
-  const handleClose = () => {
-    resetForm();
-    onClose();
-  };
-
-  const resolvedFields =
-    typeof fields === "function" ? fields(formData, handleChange) : fields;
-
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
-      <DialogContent className={cn("p-0 w-full", maxWidthMap[maxWidth])}>
-        <form onSubmit={handleSubmit} className="flex flex-col">
-          <DialogHeader className="p-5 pb-3">
-            <DialogTitle>{title}</DialogTitle>
-            {description && (
-              <DialogDescription>{description}</DialogDescription>
-            )}
-          </DialogHeader>
-
-          <div
-            className={cn(
-              "grid sm:grid-cols-2 md:grid-cols-6 gap-x-5 gap-y-3 px-5 overflow-y-auto no-scrollbar max-h-[50vh]",
-              className,
-            )}
-          >
-            {resolvedFields?.map((field, index) =>
-              renderField(formData, handleChange, field, index),
-            )}
-          </div>
-
-          <div className="flex items-center justify-end gap-3 p-5 pt-4 border-t mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isLoading}
-            >
-              {cancelLabel}
-            </Button>
-            <Button
-              type="submit"
-              disabled={isLoading || (requireModification && !isModified)}
-            >
-              {isLoading ? "Saving..." : submitLabel}
-            </Button>
-          </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 export default FormDialog;

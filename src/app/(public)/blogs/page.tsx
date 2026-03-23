@@ -1,30 +1,24 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
+import { BlogCard } from '@/components/content/blog/BlogCard';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { SITE_CONFIG } from '@/constants/siteConstants';
-import { getPublishedBlogs } from '@/server/new/public/content/blog';
+import { createPageMetadata } from '@/lib/metadata';
+import { getPublishedBlogs, type IPublicBlogListItem } from '@/server/new/public/content/blog';
 
 const description = `Blog posts by ${SITE_CONFIG.author.name} on engineering, web development, and continuous learning.`;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = createPageMetadata({
     title: 'Blogs',
     description,
-    alternates: {
-        canonical: `${SITE_CONFIG.url}/blogs`,
-    },
-    openGraph: {
-        title: `Blogs | ${SITE_CONFIG.name}`,
-        description,
-        url: `${SITE_CONFIG.url}/blogs`,
-        siteName: SITE_CONFIG.name,
-        locale: 'en_US',
-        type: 'website',
-    },
+    canonicalPath: '/blogs',
+    includeSocial: true,
+    socialType: 'website',
     robots: {
         index: true,
         follow: true,
     },
-};
+});
 
 export const revalidate = 3600;
 
@@ -32,33 +26,23 @@ export default async function BlogsPage() {
     const blogsResult = await getPublishedBlogs({
         pagination: {
             offset: 0,
-            limit: 200,
+            limit: 60,
         },
     });
 
-    const blogs = blogsResult.success ? blogsResult.data : [];
+    const blogs: IPublicBlogListItem[] = blogsResult.success ? blogsResult.data : [];
 
     return (
-        <main className="max-w-4xl mx-auto px-6 lg:px-8 py-20">
-            <header className="mb-10">
-                <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-(--fg)">Blogs</h1>
-                <p className="mt-4 text-(--fg-muted)">
-                    Thoughts on software engineering, systems, and building on the web.
-                </p>
-            </header>
+        <main className='mx-auto px-6 py-20 max-w-4xl lg:px-8'>
+            <PageHeader label='Writing' title='Blogs' description='Thoughts on software engineering, systems, and building reliable products on the web.' />
 
             {blogs.length === 0 ? (
-                <p className="text-(--fg-muted)">No blogs published yet.</p>
+                <p className='text-body text-muted-foreground'>No blogs published yet.</p>
             ) : (
-                <ul className="space-y-6">
+                <ul className='grid gap-6'>
                     {blogs.map((blog) => (
-                        <li key={blog.id} className="border border-(--border-color) rounded-xl p-5">
-                            <Link href={`/blogs/${blog.slug}`} className="group block">
-                                <h2 className="text-xl font-medium text-(--fg) group-hover:text-(--accent) transition-colors">
-                                    {blog.title}
-                                </h2>
-                                <p className="mt-2 text-(--fg-muted)">{blog.description}</p>
-                            </Link>
+                        <li key={blog.id}>
+                            <BlogCard blog={blog} />
                         </li>
                     ))}
                 </ul>

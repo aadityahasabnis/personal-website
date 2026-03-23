@@ -14,26 +14,13 @@ interface ISeriesNavWrapperProps {
  *   <SeriesNavWrapper seriesSlug={article.seriesSlug} currentSlug={slug} />
  * </Suspense>
  */
-const SeriesNavWrapper = async ({
-    seriesSlug,
-    currentSlug,
-}: ISeriesNavWrapperProps) => {
+const SeriesNavWrapper = async ({ seriesSlug, currentSlug }: ISeriesNavWrapperProps) => {
     // Fetch series and articles in parallel
-    const [series, articles] = await Promise.all([
-        getSeries(seriesSlug),
-        getSeriesArticles(seriesSlug),
-    ]);
+    const [series, articles] = await Promise.all([getSeries(seriesSlug), getSeriesArticles(seriesSlug)]);
 
     if (!series || articles.length === 0) return null;
 
-    return (
-        <SeriesNav
-            seriesTitle={series.title}
-            seriesSlug={seriesSlug}
-            articles={articles}
-            currentSlug={currentSlug}
-        />
-    );
+    return <SeriesNav seriesTitle={series.title} seriesSlug={seriesSlug} articles={articles} currentSlug={currentSlug} />;
 };
 
 export { SeriesNavWrapper };

@@ -2,7 +2,7 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
 import { Providers } from '@/providers';
 import 'authorly-editor/styles.css';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Nunito } from 'next/font/google';
+import { Geist, Geist_Mono, Nunito, Delius } from 'next/font/google';
 import './globals.css';
 
 const geistSans = Geist({
@@ -19,6 +19,13 @@ const geistMono = Geist_Mono({
 
 const nunito = Nunito({
     variable: '--font-nunito',
+    subsets: ['latin'],
+    display: 'swap',
+});
+
+const delius = Delius({
+    weight: '400',
+    variable: '--font-delius',
     subsets: ['latin'],
     display: 'swap',
 });
@@ -100,7 +107,7 @@ interface IRootLayoutProps {
 const RootLayout = ({ children }: IRootLayoutProps) => {
     return (
         <html lang='en' suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} min-h-screen bg-background font-sans antialiased`}>
+            <body className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${delius.variable} min-h-screen bg-background font-sans antialiased`}>
                 <Providers>{children}</Providers>
             </body>
         </html>

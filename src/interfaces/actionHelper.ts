@@ -21,6 +21,9 @@ type ApiError = {
 // Combined API response (discriminated union)
 export type IApiResponse<T> = ApiSuccess<T> | ApiError;
 
+// Canonical form payload shape for client hooks/forms
+export type IFormData = Record<string, unknown>;
+
 // Paginated response
 export type IPaginatedResponse<T> = {
     success: true;

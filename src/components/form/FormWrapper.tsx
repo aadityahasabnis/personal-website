@@ -1,309 +1,348 @@
-"use client";
+'use client';
 
-import React, {
-  memo,
-  type FormEvent,
-  type Dispatch,
-  type SetStateAction,
-  type RefObject,
-} from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { get } from "lodash";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import CustomInput, { type ICustomInputProps } from "./CustomInput";
-import CustomTextArea, { type ICustomTextAreaProps } from "./CustomTextArea";
-import CustomSelect, {
-  type ICustomSelectProps,
-  type ISelectFieldValue,
-} from "./CustomSelect";
-import CustomCheckbox, { type ICustomCheckboxProps } from "./CustomCheckbox";
-import CustomToggle, { type ICustomToggleProps } from "./CustomToggle";
-import type { IFormData, IHandleChange, MakeOptional } from "@/types/form";
+import { type Dispatch, type FormEvent, type HTMLInputTypeAttribute, memo, type ReactElement, type ReactNode, type RefObject, type SetStateAction } from 'react';
 
-// ============ Field Size Formatter ============
+import { get } from 'lodash';
+import { ArrowLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+
+import type { DotNestedBooleanKeys, DotNestedScalarKeys, IFormData, IHandleChange } from '@/components/form/form';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+import CustomCheckbox from './CustomCheckbox';
+import CustomInput, { type InputType } from './CustomInput';
+import CustomRichText from './CustomRichText';
+import CustomSelect, { type ISelectFieldValue, type ISelectOption } from './CustomSelect';
+import CustomTextArea from './CustomTextArea';
+import CustomToggle from './CustomToggle';
+
 export type SizeVariant = keyof typeof fieldSizeFormatter;
+
 export const fieldSizeFormatter = {
-  full: "col-span-full",
-  4: "col-span-full sm:col-span-2 md:col-span-4",
-  3: "col-span-full sm:col-span-2 md:col-span-3",
-  2: "col-span-full sm:col-span-1 md:col-span-2",
+    full: 'col-span-full',
+    4: 'col-span-full sm:col-span-2 md:col-span-4',
+    3: 'col-span-full sm:col-span-2 md:col-span-3',
+    2: 'col-span-full sm:col-span-1 md:col-span-2',
 } as const;
 
-// ============ Field Config Types ============
-interface IBaseField {
-  key?: number | string;
-  colsize?: SizeVariant;
-  hidden?: boolean;
+type TScalarPath<TFormBody extends IFormData> = DotNestedScalarKeys<TFormBody> | string;
+type TBooleanPath<TFormBody extends IFormData> = DotNestedBooleanKeys<TFormBody> | string;
+
+interface IBaseFieldConfig {
+    key?: number | string | undefined;
+    colsize?: SizeVariant | undefined;
+    hidden?: boolean | undefined;
+    className?: string | undefined;
 }
 
-interface IInputFieldConfig<TFormBody extends IFormData | undefined>
-  extends
-    MakeOptional<ICustomInputProps<TFormBody>, "onChange" | "value">,
-    IBaseField {
-  fieldtype: "input";
+interface ISharedFieldConfig {
+    info?: string | undefined;
+    hint?: string | undefined;
+    errorMessage?: string | undefined;
+    required?: boolean | undefined;
+    disabled?: boolean | undefined;
 }
 
-interface ITextAreaFieldConfig<TFormBody extends IFormData | undefined>
-  extends
-    MakeOptional<ICustomTextAreaProps<TFormBody>, "onChange" | "value">,
-    IBaseField {
-  fieldtype: "textArea";
-}
-
-interface ISelectFieldConfig<TFormBody extends IFormData | undefined>
-  extends
-    MakeOptional<ICustomSelectProps<TFormBody>, "onChange" | "value">,
-    IBaseField {
-  fieldtype: "select";
-}
-
-interface ICheckboxFieldConfig<TFormBody extends IFormData | undefined>
-  extends
-    MakeOptional<ICustomCheckboxProps<TFormBody>, "onChange" | "value">,
-    IBaseField {
-  fieldtype: "checkbox";
-}
-
-interface IToggleFieldConfig<TFormBody extends IFormData | undefined>
-  extends
-    MakeOptional<ICustomToggleProps<TFormBody>, "onChange" | "value">,
-    IBaseField {
-  fieldtype: "toggle";
-}
-
-interface IDividerFieldConfig extends IBaseField {
-  fieldtype: "divider";
-  type?: "gap" | "line";
-  name?: string;
-  size?: "xs" | "md" | "lg";
-}
-
-interface IGroupFieldConfig<
-  TFormBody extends IFormData | undefined,
-> extends IBaseField {
-  fieldtype: "group";
-  fields: Array<IFieldConfig<TFormBody>>;
-  label?: string;
-  subText?: string;
-  className?: string;
-}
-
-export type IFieldConfig<TFormBody extends IFormData | undefined> =
-  | IInputFieldConfig<TFormBody>
-  | ITextAreaFieldConfig<TFormBody>
-  | ISelectFieldConfig<TFormBody>
-  | ICheckboxFieldConfig<TFormBody>
-  | IToggleFieldConfig<TFormBody>
-  | IDividerFieldConfig
-  | IGroupFieldConfig<TFormBody>;
-
-// ============ Render Field Function ============
-export const renderField = <TFormBody extends IFormData | undefined>(
-  formData: TFormBody,
-  handleChange: IHandleChange,
-  field: IFieldConfig<TFormBody>,
-  index?: number,
-): React.ReactNode => {
-  if (field.hidden) return null;
-
-  const className = cn(
-    fieldSizeFormatter[field?.colsize ?? 2],
-    "className" in field && field?.className,
-  );
-  const key = "name" in field ? field.name : `field-${index}`;
-
-  switch (field.fieldtype) {
-    case "input":
-      return (
-        <CustomInput
-          {...field}
-          key={key}
-          className={className}
-          value={field?.value ?? (get(formData, field?.name, "") as string)}
-          onChange={field?.onChange ?? handleChange}
-          required={field.required ?? true}
-        />
-      );
-    case "textArea":
-      return (
-        <CustomTextArea
-          {...field}
-          key={key}
-          className={className}
-          value={field?.value ?? (get(formData, field?.name, "") as string)}
-          onChange={field?.onChange ?? handleChange}
-          required={field.required ?? true}
-        />
-      );
-    case "select":
-      return (
-        <CustomSelect
-          {...field}
-          key={key}
-          className={className}
-          value={
-            field?.value ??
-            (get(formData, field?.name, "") as ISelectFieldValue)
+export interface IInputFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'input';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
+    value?: string | number | undefined;
+    placeholder?: string | undefined;
+    type?: HTMLInputTypeAttribute | undefined;
+    inputType?: InputType | undefined;
+    startIcon?: ReactElement<{ className?: string }> | undefined;
+    endIcon?: ReactElement<{ className?: string }> | undefined;
+    supplementaryLink?:
+        | {
+              href: string;
+              text: string;
+              target?: '_self' | '_blank' | undefined;
           }
-          onChange={field?.onChange ?? handleChange}
-          required={field.required ?? true}
-        />
-      );
-    case "checkbox":
-      return (
-        <CustomCheckbox
-          {...field}
-          key={key}
-          className={className}
-          value={field?.value ?? (get(formData, field?.name, false) as boolean)}
-          onChange={field?.onChange ?? handleChange}
-        />
-      );
-    case "toggle":
-      return (
-        <CustomToggle
-          {...field}
-          key={key}
-          className={className}
-          value={field?.value ?? (get(formData, field?.name, false) as boolean)}
-          onChange={field?.onChange ?? handleChange}
-        />
-      );
-    case "divider":
-      return (
-        <div
-          key={field?.name ?? `divider-${index}`}
-          className={cn(
-            "col-span-full flex items-center w-full",
-            field?.size === "xs" ? "h-3" : field.size === "lg" ? "h-8" : "h-5",
-          )}
-        >
-          {field?.type === "line" && <hr className="w-full border-border" />}
-        </div>
-      );
-    case "group":
-      return (
-        <div
-          key={field?.label ?? `group-${index}`}
-          className={cn(
-            "col-span-full flex flex-col gap-3 pb-3",
-            field?.className,
-          )}
-        >
-          {(field?.label || field?.subText) && (
-            <div className="flex flex-col gap-1">
-              {field?.label && (
-                <h5 className="text-h5 text-foreground">{field.label}</h5>
-              )}
-              {field?.subText && (
-                <span className="text-regular text-muted-foreground">
-                  {field.subText}
-                </span>
-              )}
-            </div>
-          )}
-          <div className="grid sm:grid-cols-2 md:grid-cols-6 gap-5">
-            {field?.fields?.map((subField, i) =>
-              renderField(formData as TFormBody, handleChange, subField, i),
-            )}
-          </div>
-        </div>
-      );
-    default:
-      return null;
-  }
+        | undefined;
+    autoComplete?: string | undefined;
+}
+
+export interface ITextAreaFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'textArea';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
+    value?: string | undefined;
+    placeholder?: string | undefined;
+    rows?: number | undefined;
+}
+
+export interface ISelectFieldConfig<TFormBody extends IFormData, TValue extends ISelectFieldValue = ISelectFieldValue> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'select';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
+    value?: TValue | undefined;
+    options: Array<ISelectOption<TValue>>;
+    placeholder?: string | undefined;
+    isLoading?: boolean | undefined;
+    isSearchable?: boolean | undefined;
+    noOptionsMessage?: string | undefined;
+}
+
+export interface ICheckboxFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'checkbox';
+    name: TBooleanPath<TFormBody>;
+    value?: boolean;
+    label: ReactNode;
+}
+
+export interface IToggleFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'toggle';
+    name: TBooleanPath<TFormBody>;
+    label?: string | undefined;
+    value?: boolean | undefined;
+    icon?: ReactElement<{ className?: string }> | undefined;
+}
+
+export interface IRichTextFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'authorly';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
+    value?: string | undefined;
+    placeholder?: string | undefined;
+    minHeight?: string | undefined;
+}
+
+export interface IDividerFieldConfig extends IBaseFieldConfig {
+    fieldtype: 'divider';
+    type?: 'gap' | 'line' | undefined;
+    size?: 'xs' | 'md' | 'lg' | undefined;
+    name?: string | undefined;
+}
+
+export interface IGroupFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig {
+    fieldtype: 'group';
+    title?: string | undefined;
+    subText?: string | undefined;
+    fields: Array<IFieldConfig<TFormBody>>;
+}
+
+export type IFieldConfig<TFormBody extends IFormData> =
+    | IInputFieldConfig<TFormBody>
+    | ITextAreaFieldConfig<TFormBody>
+    | ISelectFieldConfig<TFormBody>
+    | ICheckboxFieldConfig<TFormBody>
+    | IToggleFieldConfig<TFormBody>
+    | IRichTextFieldConfig<TFormBody>
+    | IDividerFieldConfig
+    | IGroupFieldConfig<TFormBody>;
+
+const getResolvedValue = <TFormBody extends IFormData, TValue>(formData: TFormBody, name: string, fallback: TValue): TValue => {
+    const dataValue = get(formData, name);
+    return (dataValue ?? fallback) as TValue;
 };
 
-// ============ Form Wrapper Props ============
+export const renderField = <TFormBody extends IFormData>(formData: TFormBody, handleChange: IHandleChange, field: IFieldConfig<TFormBody>, index?: number): ReactNode => {
+    if (field.hidden) {
+        return null;
+    }
+
+    const colClassName = fieldSizeFormatter[field.colsize ?? 2];
+    const containerClassName = cn(colClassName, field.className);
+    const key = field.key ?? ('name' in field ? field.name : `${field.fieldtype}-${index ?? 0}`);
+
+    switch (field.fieldtype) {
+        case 'input':
+            return (
+                <CustomInput
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, '')}
+                    onChange={handleChange}
+                    type={field.type}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    info={field.info}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    placeholder={field.placeholder}
+                    inputType={field.inputType}
+                    startIcon={field.startIcon}
+                    endIcon={field.endIcon}
+                    supplementaryLink={field.supplementaryLink}
+                    autoComplete={field.autoComplete}
+                    containerClassName={containerClassName}
+                />
+            );
+        case 'textArea':
+            return (
+                <CustomTextArea
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, '')}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    info={field.info}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    placeholder={field.placeholder}
+                    rows={field.rows}
+                    containerClassName={containerClassName}
+                />
+            );
+        case 'select':
+            return (
+                <CustomSelect
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, undefined)}
+                    options={field.options}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    info={field.info}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    placeholder={field.placeholder}
+                    isLoading={field.isLoading}
+                    isSearchable={field.isSearchable}
+                    noOptionsMessage={field.noOptionsMessage}
+                    containerClassName={containerClassName}
+                />
+            );
+        case 'checkbox':
+            return (
+                <CustomCheckbox
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, false)}
+                    label={field.label}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    className={containerClassName}
+                />
+            );
+        case 'toggle':
+            return (
+                <CustomToggle
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, false)}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    icon={field.icon}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    className={containerClassName}
+                />
+            );
+        case 'authorly':
+            return (
+                <CustomRichText
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, '')}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    info={field.info}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    placeholder={field.placeholder}
+                    minHeight={field.minHeight}
+                    className={containerClassName}
+                />
+            );
+        case 'divider': {
+            const dividerHeight = field.size === 'xs' ? 'h-3' : field.size === 'lg' ? 'h-8' : 'h-5';
+            return (
+                <div key={key} className={cn('col-span-full flex items-center', dividerHeight, field.className)}>
+                    {field.type === 'line' ? <hr className='w-full border-border' /> : null}
+                </div>
+            );
+        }
+        case 'group':
+            return (
+                <div key={key} className={cn('col-span-full flex flex-col gap-3', field.className)}>
+                    {field.title || field.subText ? (
+                        <div className='flex flex-col gap-0.5'>
+                            {field.title ? <h4 className='text-title text-foreground'>{field.title}</h4> : null}
+                            {field.subText ? <p className='text-regular text-muted-foreground'>{field.subText}</p> : null}
+                        </div>
+                    ) : null}
+                    <div className='grid gap-5 sm:grid-cols-2 md:grid-cols-6'>{field.fields.map((subField, subIndex) => renderField(formData, handleChange, subField, subIndex))}</div>
+                </div>
+            );
+        default:
+            return null;
+    }
+};
+
 export interface IFormWrapperProps<TFormBody extends IFormData> {
-  formConfig: Array<IFieldConfig<TFormBody>>;
-  handleSubmit: (event: FormEvent) => void;
-  handleSecondaryClick?: () => void;
-  className?: string;
-  submitLabel?: string;
-  cancelLabel?: string;
-  handleChange: IHandleChange;
-  setFormData: Dispatch<SetStateAction<TFormBody>>;
-  formData: TFormBody;
-  isModified: boolean;
-  isSubmitting: boolean;
-  hideActionable?: boolean;
-  navigateBackRequired?: boolean;
-  submitBtnRef?: RefObject<HTMLButtonElement>;
-  disabled?: boolean;
+    formConfig: Array<IFieldConfig<TFormBody>>;
+    handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
+    handleSecondaryClick?: (() => void) | undefined;
+    className?: string | undefined;
+    submitLabel?: string | undefined;
+    cancelLabel?: string | undefined;
+    handleChange: IHandleChange;
+    setFormData: Dispatch<SetStateAction<TFormBody>>;
+    formData: TFormBody;
+    isModified: boolean;
+    isSubmitting: boolean;
+    hideActionable?: boolean | undefined;
+    navigateBackRequired?: boolean | undefined;
+    submitBtnRef?: RefObject<HTMLButtonElement | null> | undefined;
+    disabled?: boolean | undefined;
 }
 
-// ============ Form Wrapper Component ============
 const FormWrapper = <TFormBody extends IFormData>({
-  className,
-  cancelLabel = "Discard",
-  formConfig,
-  submitBtnRef,
-  submitLabel = "Submit",
-  handleSubmit,
-  handleSecondaryClick,
-  handleChange,
-  formData,
-  hideActionable = false,
-  isModified,
-  isSubmitting,
-  navigateBackRequired = true,
-  disabled,
+    formConfig,
+    handleSubmit,
+    handleSecondaryClick,
+    className,
+    submitLabel = 'Submit',
+    cancelLabel = 'Discard',
+    handleChange,
+    formData,
+    isModified,
+    isSubmitting,
+    hideActionable = false,
+    navigateBackRequired = true,
+    submitBtnRef,
+    disabled,
 }: IFormWrapperProps<TFormBody>) => {
-  const router = useRouter();
+    const router = useRouter();
 
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className={cn(
-        "flex flex-col gap-8 h-full transition-transform duration-300 pb-5",
-        className,
-      )}
-    >
-      <div className="grid sm:grid-cols-2 md:grid-cols-6 gap-5 h-full">
-        {formConfig?.map((field, index) =>
-          renderField(formData, handleChange, field, index),
-        )}
-      </div>
+    return (
+        <form onSubmit={handleSubmit} className={cn('flex h-full flex-col gap-8 pb-5', className)}>
+            <div className='grid h-full gap-5 sm:grid-cols-2 md:grid-cols-6'>{formConfig.map((field, index) => renderField(formData, handleChange, field, index))}</div>
 
-      {!hideActionable && (
-        <div className="flex flex-col-reverse sm:flex-row gap-3 sm:gap-5 w-full sm:w-fit sm:self-end">
-          <div className="flex gap-3 sm:gap-5">
-            {navigateBackRequired && (
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => router.back()}
-                className="group shrink-0"
-              >
-                <ArrowLeft className="size-4 transition-transform group-hover:-translate-x-1" />
-              </Button>
+            {hideActionable ? null : (
+                <div className='flex w-full flex-col-reverse gap-3 sm:w-fit sm:flex-row sm:self-end'>
+                    <div className='flex gap-3'>
+                        {navigateBackRequired ? (
+                            <Button type='button' variant='outline' size='icon' onClick={() => router.back()} className='group'>
+                                <ArrowLeft className='size-4 transition-fast group-hover:-translate-x-0.5' />
+                            </Button>
+                        ) : null}
+                        <Button type='reset' variant='outline' disabled={!isModified || isSubmitting} onClick={handleSecondaryClick} className='w-full sm:w-44'>
+                            {cancelLabel}
+                        </Button>
+                    </div>
+                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='w-full sm:w-44'>
+                        {isSubmitting ? 'Saving...' : submitLabel}
+                    </Button>
+                </div>
             )}
-            <Button
-              type="reset"
-              variant="outline"
-              disabled={!isModified}
-              onClick={handleSecondaryClick}
-              className="w-full sm:w-48"
-            >
-              {cancelLabel}
-            </Button>
-          </div>
-          <Button
-            ref={submitBtnRef}
-            disabled={!isModified || disabled || isSubmitting}
-            className="w-full sm:w-48"
-            type="submit"
-          >
-            {isSubmitting ? "Saving..." : submitLabel}
-          </Button>
-        </div>
-      )}
-    </form>
-  );
+        </form>
+    );
 };
 
 export default memo(FormWrapper) as typeof FormWrapper;

@@ -1,55 +1,41 @@
-import React, { useEffect, useRef } from 'react';
+'use client';
 
-import { usePathname } from 'next/navigation';
+import { type ReactNode } from 'react';
 
-import { CircleX } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-import { DialogTitle } from '../ui/dialog';
+import { DialogWrapper } from './DialogWrapper';
+import { type IControlledDialogProps, type IViewDialogConfig } from './types';
 
-import { type MaxWidthDialogType } from './DialogWrapper';
+export interface IViewDialogProps extends IControlledDialogProps, Omit<IViewDialogConfig, 'type'> {}
 
-export interface IViewDialogStructure {
-    type: 'view';
-
-    title: string;
-    icon?: React.ComponentType<{ className?: string }>;
-    subText?: string;
-
-    description?: React.JSX.Element;
-    onClose: () => void;
-    onCloseCallback?: () => void;
-    maxWidth?: MaxWidthDialogType;
-}
-
-const ViewDialog: React.FC<IViewDialogStructure> = ({ title, subText, description, onClose, onCloseCallback, icon: Icon }) => {
-    const pathname = usePathname();
-    const initialPathRef = useRef(pathname);
-
-    useEffect(() => {
-        if (pathname !== initialPathRef.current) onClose();
-    }, [pathname]);
-
-    const handleClose = () => { onClose(); if (onCloseCallback) onCloseCallback(); };
+export function ViewDialog({ open, onClose, title, description, subText, content, icon: Icon, closeLabel = 'Close', width = 'lg', closeOnOutsideClick = true }: IViewDialogProps): ReactNode {
+    const descriptionProps = description !== undefined ? { description } : {};
 
     return (
-        <div className="relative flex flex-col p-5 gap-5 w-full">
-            <button type='button' className="absolute right-4 top-4" onClick={handleClose}>
-                <CircleX className="size-4 text-status-error transform transition-transform duration-300 hover:rotate-180" />
-            </button>
+        <DialogWrapper open={open} onClose={onClose} title={title} width={width} closeOnOutsideClick={closeOnOutsideClick} {...descriptionProps}>
+            <div className='flex flex-col gap-4'>
+                {Icon || subText ? (
+                    <div className='flex items-start gap-3'>
+                        {Icon ? (
+                            <span className='flex size-10 shrink-0 items-center justify-center rounded-full bg-muted text-primary'>
+                                <Icon className='size-5' />
+                            </span>
+                        ) : null}
+                        {subText ? <p className='pt-1 text-small text-muted-foreground'>{subText}</p> : null}
+                    </div>
+                ) : null}
 
-            <div className="flex flex-col xs:flex-row w-full gap-3">
-                {Icon ? <Icon className="size-8 xs:size-12 shrink-0" /> : null}
-                <div className='flex flex-col gap-1 w-full'>
-                    <DialogTitle>{title}</DialogTitle>
-                    {subText ? <p className="text-regular text-neutral-light">{subText}</p> : null}
+                <div className='max-h-[60vh] overflow-y-auto pr-1 no-scrollbar'>{content}</div>
+
+                <div className='flex justify-end'>
+                    <Button type='button' onClick={onClose}>
+                        {closeLabel}
+                    </Button>
                 </div>
             </div>
-
-            <div className='overflow-y-scroll no-scrollbar'>
-                {description}
-            </div>
-        </div>
+        </DialogWrapper>
     );
-};
+}
 
 export default ViewDialog;

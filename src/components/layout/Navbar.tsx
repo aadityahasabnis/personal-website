@@ -1,275 +1,223 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, ArrowUpRight } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useScrollPosition } from "@/hooks";
-import { NAV_LINKS } from "@/constants/siteConstants";
-import ThemeToggle from "./ThemeToggle";
+import { NAV_LINKS, SITE_CONFIG } from '@/constants/siteConstants';
+import { useScrollPosition } from '@/hooks';
+import { cn } from '@/lib/utils';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowUpRight, Menu, X } from 'lucide-react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import ThemeToggle from './ThemeToggle';
 
-/**
- * Premium Navbar - Minimal, transparent, abstract design
- * Truly transparent so particles/stars show through
- */
 const Navbar = () => {
-  const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const scrolled = useScrollPosition(50);
-  const pathname = usePathname();
+    const mobileFooterDomain = SITE_CONFIG.url.replace(/^https?:\/\//, '');
 
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [pathname]);
+    const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const scrolled = useScrollPosition(50);
+    const pathname = usePathname();
+    const currentYear = new Date().getFullYear();
 
-  // Prevent scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
+    const isActivePath = (href: string): boolean => pathname === href || (href !== '/' && pathname.startsWith(href));
 
-  return (
-    <>
-      <motion.header
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
-        className="fixed top-0 left-0 right-0 z-50 pointer-events-none"
-      >
-        {/* Subtle gradient fade - only when scrolled */}
-        <div
-          className={cn(
-            "absolute inset-0 transition-opacity duration-500",
-            scrolled ? "opacity-100" : "opacity-0",
-          )}
-          style={{
-            background:
-              "linear-gradient(to bottom, var(--bg) 0%, transparent 100%)",
-          }}
-        />
+    useEffect(() => {
+        setMobileMenuOpen(false);
+    }, [pathname]);
 
-        {/* Navbar content */}
-        <nav className="relative pointer-events-auto">
-          <div className="max-w-7xl mx-auto px-6 md:px-8 lg:px-12">
-            <div className="flex items-center justify-between h-20 md:h-24">
-              {/* Logo - Minimal wordmark */}
-              <Link href="/" className="group relative">
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="relative"
-                >
-                  {/* Minimal text logo */}
-                  <span className="text-xl md:text-2xl font-semibold tracking-tight text-[var(--fg)]">
-                    aadizz
-                  </span>
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobileMenuOpen]);
 
-                  {/* Subtle underline on hover */}
-                  <motion.span
-                    className="absolute -bottom-1 left-0 h-px bg-gradient-to-r from-[var(--accent)] to-transparent"
-                    initial={{ width: 0 }}
-                    whileHover={{ width: "100%" }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.div>
-              </Link>
+    return (
+        <>
+            <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className='fixed inset-x-0 top-0 z-50 pointer-events-none'>
+                <div className={cn('absolute inset-0 opacity-0 bg-linear-to-b from-background to-transparent transition-slow', scrolled && 'opacity-100')} aria-hidden='true' />
 
-              {/* Desktop Navigation - Minimal links */}
-              <div className="hidden md:flex items-center gap-1">
-                {NAV_LINKS.filter((link) => !link.hideOnDesktop).map((link) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href));
+                <nav className='relative pointer-events-auto' aria-label='Primary navigation'>
+                    <div className='mx-auto flex items-center justify-between px-6 h-20 max-w-7xl md:px-8 md:h-24 lg:px-12'>
+                        <Link
+                            href='/'
+                            aria-label='Go to homepage'
+                            className='group relative inline-flex rounded-sm text-h4 font-semibold tracking-tight text-foreground transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                        >
+                            <motion.span whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className='relative'>
+                                {SITE_CONFIG.shortName}
+                                <motion.span
+                                    className='absolute inset-x-0 -bottom-1 h-px bg-linear-to-r from-primary to-transparent'
+                                    initial={{ width: 0 }}
+                                    whileHover={{ width: '100%' }}
+                                    transition={{ duration: 0.3 }}
+                                />
+                            </motion.span>
+                        </Link>
 
-                  return (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="group relative px-5 py-2"
-                    >
-                      <span
-                        className={cn(
-                          "relative z-10 text-sm tracking-wide transition-colors duration-300",
-                          isActive
-                            ? "text-[var(--fg)] font-medium"
-                            : "text-[var(--fg-muted)] group-hover:text-[var(--fg)]",
-                        )}
-                      >
-                        {link.label}
-                      </span>
+                        <div className='hidden md:flex md:items-center md:gap-1'>
+                            {NAV_LINKS.filter((link) => !link.hideOnDesktop).map((link) => {
+                                const isActive = isActivePath(link.href);
 
-                      {/* Active indicator - subtle dot */}
-                      {isActive && (
-                        <motion.span
-                          layoutId="nav-dot"
-                          className="absolute bottom-1 left-1/2 -translate-x-1/2 size-1 rounded-full bg-[var(--accent)]"
-                          transition={{
-                            type: "spring",
-                            stiffness: 400,
-                            damping: 30,
-                          }}
-                        />
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
+                                return (
+                                    <Link
+                                        key={link.href}
+                                        href={link.href}
+                                        aria-current={isActive ? 'page' : undefined}
+                                        className={cn(
+                                            'relative px-5 py-2 rounded-full text-small font-medium transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                            isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                        )}
+                                    >
+                                        {link.label}
 
-              {/* Desktop Actions */}
-              <div className="hidden md:flex items-center gap-6">
-                <ThemeToggle />
+                                        {isActive && (
+                                            <motion.span
+                                                layoutId='nav-active-dot'
+                                                className='absolute left-1/2 bottom-1 size-1 -translate-x-1/2 rounded-full bg-primary'
+                                                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                            />
+                                        )}
+                                    </Link>
+                                );
+                            })}
+                        </div>
 
-                {/* CTA - Minimal border button */}
-                <Link
-                  href="/contact"
-                  className="group relative flex items-center gap-2 px-5 py-2.5 rounded-full border border-[var(--fg)]/20 hover:border-[var(--fg)]/40 transition-all duration-300"
-                >
-                  <span className="text-sm font-medium text-[var(--fg)]">
-                    Contact
-                  </span>
-                  <ArrowUpRight className="size-4 text-[var(--fg)] transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                </Link>
-              </div>
+                        <div className='hidden md:flex md:items-center md:gap-5'>
+                            <ThemeToggle />
 
-              {/* Mobile Menu Button */}
-              <div className="md:hidden flex items-center gap-4">
-                <ThemeToggle />
-                <button
-                  onClick={() => setMobileMenuOpen(!isMobileMenuOpen)}
-                  className="relative size-10 flex items-center justify-center"
-                  aria-label="Toggle menu"
-                >
-                  <AnimatePresence mode="wait">
-                    {isMobileMenuOpen ? (
-                      <motion.div
-                        key="close"
-                        initial={{ opacity: 0, rotate: -90 }}
-                        animate={{ opacity: 1, rotate: 0 }}
-                        exit={{ opacity: 0, rotate: 90 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <X className="size-6 text-[var(--fg)]" />
-                      </motion.div>
-                    ) : (
-                      <motion.div
-                        key="menu"
-                        initial={{ opacity: 0, rotate: 90 }}
-                        animate={{ opacity: 1, rotate: 0 }}
-                        exit={{ opacity: 0, rotate: -90 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Menu className="size-6 text-[var(--fg)]" />
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </button>
-              </div>
-            </div>
-          </div>
-        </nav>
-      </motion.header>
+                            <Link
+                                href='/contact'
+                                aria-label='Go to contact page'
+                                className='group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-small font-medium text-foreground border border-border transition-base hover:border-primary/40 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            >
+                                <span>Contact</span>
+                                <ArrowUpRight className='size-4 transition-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5' aria-hidden='true' />
+                            </Link>
+                        </div>
 
-      {/* Mobile Menu - Full screen overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 md:hidden"
-          >
-            {/* Background */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-[var(--bg)]/95 backdrop-blur-2xl"
-              onClick={() => setMobileMenuOpen(false)}
-            />
+                        <div className='flex items-center gap-4 md:hidden'>
+                            <ThemeToggle />
+                            <button
+                                type='button'
+                                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                                aria-controls='mobile-navigation-menu'
+                                aria-expanded={isMobileMenuOpen}
+                                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                                className='inline-flex items-center justify-center size-10 rounded-md text-foreground transition-base hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            >
+                                <AnimatePresence mode='wait'>
+                                    {isMobileMenuOpen ? (
+                                        <motion.span
+                                            key='close'
+                                            initial={{ opacity: 0, rotate: -90 }}
+                                            animate={{ opacity: 1, rotate: 0 }}
+                                            exit={{ opacity: 0, rotate: 90 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <X className='size-6' aria-hidden='true' />
+                                        </motion.span>
+                                    ) : (
+                                        <motion.span
+                                            key='menu'
+                                            initial={{ opacity: 0, rotate: 90 }}
+                                            animate={{ opacity: 1, rotate: 0 }}
+                                            exit={{ opacity: 0, rotate: -90 }}
+                                            transition={{ duration: 0.2 }}
+                                        >
+                                            <Menu className='size-6' aria-hidden='true' />
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+                            </button>
+                        </div>
+                    </div>
+                </nav>
+            </motion.header>
 
-            {/* Menu Content */}
-            <motion.nav
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-              className="relative h-full flex flex-col justify-center px-8"
-            >
-              <div className="space-y-2">
-                {NAV_LINKS.map((link, index) => {
-                  const isActive =
-                    pathname === link.href ||
-                    (link.href !== "/" && pathname.startsWith(link.href));
-
-                  return (
+            <AnimatePresence>
+                {isMobileMenuOpen && (
                     <motion.div
-                      key={link.href}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.1 + index * 0.05 }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className='fixed inset-0 z-40 md:hidden'
+                        role='dialog'
+                        aria-modal='true'
+                        aria-label='Mobile navigation'
                     >
-                      <Link
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "block py-4 text-3xl font-light tracking-tight transition-colors",
-                          isActive
-                            ? "text-[var(--fg)]"
-                            : "text-[var(--fg-muted)] hover:text-[var(--fg)]",
-                        )}
-                      >
-                        {link.label}
-                        {isActive && (
-                          <span className="inline-block ml-3 size-2 rounded-full bg-[var(--accent)]" />
-                        )}
-                      </Link>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className='absolute inset-0 bg-background/95 backdrop-blur-2xl'
+                            onClick={() => setMobileMenuOpen(false)}
+                            aria-hidden='true'
+                        />
+
+                        <motion.nav
+                            id='mobile-navigation-menu'
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            transition={{ duration: 0.3, delay: 0.1 }}
+                            className='relative flex h-full flex-col justify-center px-8'
+                            aria-label='Mobile navigation'
+                        >
+                            <div className='flex flex-col gap-2'>
+                                {NAV_LINKS.map((link, index) => {
+                                    const isActive = isActivePath(link.href);
+
+                                    return (
+                                        <motion.div key={link.href} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
+                                            <Link
+                                                href={link.href}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                                aria-current={isActive ? 'page' : undefined}
+                                                className={cn(
+                                                    'inline-flex items-center gap-3 py-4 text-title font-light tracking-tight transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                                    isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                                )}
+                                            >
+                                                {link.label}
+                                                {isActive && <span className='inline-flex size-2 rounded-full bg-primary' aria-hidden='true' />}
+                                            </Link>
+                                        </motion.div>
+                                    );
+                                })}
+                            </div>
+
+                            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className='mt-12'>
+                                <Link
+                                    href='/contact'
+                                    onClick={() => setMobileMenuOpen(false)}
+                                    aria-label='Go to contact page'
+                                    className='inline-flex items-center gap-3 pb-1 text-h3 font-medium text-foreground border-b border-foreground transition-base hover:text-primary hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                                >
+                                    Contact
+                                    <ArrowUpRight className='size-5' aria-hidden='true' />
+                                </Link>
+                            </motion.div>
+
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ delay: 0.4 }}
+                                className='absolute inset-x-8 bottom-12 flex items-center justify-between text-small text-muted-foreground'
+                            >
+                                <span>{`© ${currentYear}`}</span>
+                                <span>{mobileFooterDomain}</span>
+                            </motion.div>
+                        </motion.nav>
                     </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* Mobile CTA */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
-                className="mt-12"
-              >
-                <Link
-                  href="/contact"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="inline-flex items-center gap-3 text-lg font-medium text-[var(--fg)] border-b border-[var(--fg)] pb-1"
-                >
-                  Get in touch
-                  <ArrowUpRight className="size-5" />
-                </Link>
-              </motion.div>
-
-              {/* Bottom info */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="absolute bottom-12 left-8 right-8 flex justify-between items-center text-sm text-[var(--fg-muted)]"
-              >
-                <span>© 2024</span>
-                <span>aaditya.dev</span>
-              </motion.div>
-            </motion.nav>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
+                )}
+            </AnimatePresence>
+        </>
+    );
 };
 
 export default Navbar;

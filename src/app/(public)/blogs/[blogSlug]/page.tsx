@@ -1,12 +1,10 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { ArticleContent } from '@/components/content/ArticleContent';
+import { ArticleContent, BlogHeader } from '@/components/content';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
-import {
-    getPublishedBlogByPath,
-    getPublishedBlogStaticPaths,
-} from '@/server/new/public/content/blog';
+import { getPublishedBlogByPath, getPublishedBlogStaticPaths, type IPublicBlogDetail } from '@/server/new/public/content/blog';
 
 interface IBlogDetailPageProps {
     params: Promise<{ blogSlug: string }>;
@@ -33,14 +31,24 @@ export const generateMetadata = async ({ params }: IBlogDetailPageProps): Promis
     const title = blog.seo?.title ?? blog.title;
     const description = blog.seo?.description ?? blog.description;
     const image = blog.seo?.ogImage ?? blog.coverImage ?? undefined;
+    const keywords = Array.from(new Set([...(blog.tags ?? []), SITE_CONFIG.author.name, 'blog', 'engineering']));
+    const publishedTime = blog.publishedAt;
 
     return createPageMetadata({
         title,
         description,
         canonicalPath: `/blogs/${blogSlug}`,
+        keywords,
+        includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
         ...(image ? { imageUrl: image } : {}),
+        openGraph: {
+            ...(publishedTime ? { publishedTime } : {}),
+            modifiedTime: blog.updatedAt,
+            authors: [SITE_CONFIG.author.name],
+            tags: keywords,
+        },
         robots: {
             index: true,
             follow: true,
@@ -56,22 +64,15 @@ export default async function BlogDetailPage({ params }: IBlogDetailPageProps) {
         notFound();
     }
 
-    const blog = blogResult.data;
+    const blog: IPublicBlogDetail = blogResult.data;
     const content = blog.html ?? blog.body ?? '';
 
     return (
-        <main className="max-w-4xl mx-auto px-6 lg:px-8 py-16">
+        <main className='mx-auto px-6 py-16 max-w-4xl lg:px-8'>
             <article>
-                <header className="mb-10">
-                    <h1 className="text-4xl md:text-5xl font-semibold tracking-tight text-(--fg)">{blog.title}</h1>
-                    <p className="mt-4 text-lg text-(--fg-muted)">{blog.description}</p>
-                </header>
+                <BlogHeader title={blog.title} description={blog.description} tags={blog.tags} publishedAt={blog.publishedAt} readingTime={blog.readingTime} updatedAt={blog.updatedAt} />
 
-                {content ? (
-                    <ArticleContent content={content} />
-                ) : (
-                    <p className="text-(--fg-muted)">This blog post is being prepared.</p>
-                )}
+                {content ? <ArticleContent content={content} className='px-0' /> : <p className='text-body text-muted-foreground'>This blog post is being prepared.</p>}
             </article>
         </main>
     );

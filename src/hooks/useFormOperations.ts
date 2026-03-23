@@ -1,8 +1,8 @@
 'use client';
 
-import { useCallback, useState, useMemo, useRef } from 'react';
-import { cloneDeep, get, set, isEqual } from 'lodash';
-import type { IFormData, IHandleChange, IHandleChangeEvent } from '@/types/form';
+import type { IFormData, IHandleChange, IHandleChangeEvent } from '@/components/form/form';
+import { cloneDeep, get, isEqual, set } from 'lodash';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 interface IFormResult<TData extends IFormData> {
     formData: TData;

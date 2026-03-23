@@ -5,8 +5,8 @@ import { after } from 'next/server';
 import { CommentSection } from '@/components/common/CommentSection';
 import { ContentStats } from '@/components/common/ContentStats';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { ArticleContent } from '@/components/content/ArticleContent';
-import { ArticleHeader } from '@/components/content/ArticleHeader';
+import { ArticleContent } from '@/components/content/article/ArticleContent';
+import { ArticleHeader } from '@/components/content/article/ArticleHeader';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { JsonLd, combineSchemas, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
@@ -24,9 +24,7 @@ interface IArticlePageProps {
 
 export const generateStaticParams = async () => {
     const articles = await getAllPublishedArticles();
-    return articles
-        .filter((a) => a.topicSlug && a.slug)
-        .map(({ topicSlug, slug }) => ({ topicSlug, articleSlug: slug }));
+    return articles.filter((a) => a.topicSlug && a.slug).map(({ topicSlug, slug }) => ({ topicSlug, articleSlug: slug }));
 };
 
 export const generateMetadata = async ({ params }: IArticlePageProps): Promise<Metadata> => {
@@ -34,22 +32,13 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
     const article = await getArticleByTopicSlug(topicSlug, articleSlug);
     if (!article) return { title: 'Article Not Found' };
 
-    const [topic, subtopic] = await Promise.all([
-        getTopic(topicSlug),
-        article.subtopicSlug ? getSubtopic(article.subtopicSlug) : Promise.resolve(null),
-    ]);
+    const [topic, subtopic] = await Promise.all([getTopic(topicSlug), article.subtopicSlug ? getSubtopic(article.subtopicSlug) : Promise.resolve(null)]);
 
     const readingTime = article.readingTime ?? Math.ceil((article.body?.split(/\s+/).length ?? 0) / 200);
     const seoTitle = article.seo?.title ?? article.title;
     const seoDescription = article.seo?.description ?? article.description;
     const imageUrl = article.seo?.ogImage ?? article.coverImage;
-    const keywords = [
-        ...(article.seo?.keywords ?? article.tags ?? []),
-        topic?.title ?? topicSlug,
-        ...(subtopic ? [subtopic.title] : []),
-        SITE_CONFIG.author.name,
-        'tutorial', 'guide', 'learn',
-    ];
+    const keywords = [...(article.seo?.keywords ?? article.tags ?? []), topic?.title ?? topicSlug, ...(subtopic ? [subtopic.title] : []), SITE_CONFIG.author.name, 'tutorial', 'guide', 'learn'];
     const publishedTime = article.publishedAt?.toISOString();
     const modifiedTime = article.updatedAt?.toISOString();
 
@@ -94,10 +83,7 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
     after(() => incrementViews(fullSlug));
 
     // Stage 1: article + topic in parallel (need subtopicSlug before stage 2)
-    const [article, topic] = await Promise.all([
-        getArticleByTopicSlug(topicSlug, articleSlug),
-        getTopic(topicSlug),
-    ]);
+    const [article, topic] = await Promise.all([getArticleByTopicSlug(topicSlug, articleSlug), getTopic(topicSlug)]);
 
     if (!article) notFound();
 
@@ -128,7 +114,7 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
         <>
             <JsonLd data={combinedSchema} />
             <ScrollToTop />
-            <article className="article-content" itemScope itemType="https://schema.org/TechArticle">
+            <article className='article-content' itemScope itemType='https://schema.org/TechArticle'>
                 <ArticleHeader
                     breadcrumbs={breadcrumbs}
                     title={article.title}
@@ -141,22 +127,17 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
                 {content ? (
                     <ArticleContent content={content} />
                 ) : (
-                    <div className="max-w-4xl mx-auto px-6 lg:px-8 py-12 text-[var(--fg-muted)]">
+                    <div className='max-w-4xl mx-auto px-6 lg:px-8 py-12 text-[var(--fg-muted)]'>
                         <p>This article is being prepared. Check back soon.</p>
                     </div>
                 )}
-                <footer className="mt-12 pt-8 border-t border-[var(--border-color)]">
-                    <div className="max-w-4xl mx-auto px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <p className="text-[var(--fg-muted)]">Enjoyed this article? Show some love!</p>
-                        <ContentStats
-                            slug={fullSlug}
-                            contentType="articles"
-                            initialViews={stats?.views ?? 0}
-                            initialLikes={stats?.likes ?? 0}
-                        />
+                <footer className='mt-12 pt-8 border-t border-[var(--border-color)]'>
+                    <div className='max-w-4xl mx-auto px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
+                        <p className='text-[var(--fg-muted)]'>Enjoyed this article? Show some love!</p>
+                        <ContentStats slug={fullSlug} contentType='articles' initialViews={stats?.views ?? 0} initialLikes={stats?.likes ?? 0} />
                     </div>
                 </footer>
-                <CommentSection slug={fullSlug} contentType="articles" />
+                <CommentSection slug={fullSlug} contentType='articles' />
             </article>
         </>
     );

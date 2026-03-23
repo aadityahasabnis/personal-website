@@ -2,6 +2,7 @@
 
 import { type ReactNode } from 'react';
 import { Toaster } from 'sonner';
+import { DialogProvider } from './DialogProvider';
 import { LenisProvider } from './LenisProvider';
 import { QueryProvider } from './QueryProvider';
 import { ThemeProvider } from './ThemeProvider';
@@ -20,19 +21,21 @@ export const Providers = ({ children }: IProvidersProps) => {
         <QueryProvider>
             <ThemeProvider>
                 <LenisProvider>
-                    {children}
-                    <Toaster
-                        position='bottom-right'
-                        toastOptions={{
-                            classNames: {
-                                toast: 'bg-background border border-border shadow-lg',
-                                title: 'text-foreground font-semibold',
-                                description: 'text-muted-foreground',
-                                actionButton: 'bg-primary text-primary-foreground',
-                                cancelButton: 'bg-muted text-muted-foreground',
-                            },
-                        }}
-                    />
+                    <DialogProvider>
+                        {children}
+                        <Toaster
+                            position='bottom-right'
+                            toastOptions={{
+                                classNames: {
+                                    toast: 'bg-background border border-border shadow-lg',
+                                    title: 'text-foreground font-semibold',
+                                    description: 'text-muted-foreground',
+                                    actionButton: 'bg-primary text-primary-foreground',
+                                    cancelButton: 'bg-muted text-muted-foreground',
+                                },
+                            }}
+                        />
+                    </DialogProvider>
                 </LenisProvider>
             </ThemeProvider>
         </QueryProvider>

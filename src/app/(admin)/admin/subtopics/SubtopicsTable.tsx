@@ -1,29 +1,29 @@
 'use client';
 
+import { Calendar, Layers } from 'lucide-react';
 import Link from 'next/link';
-import { Layers, Calendar } from 'lucide-react';
 
-import { formatDate } from '@/lib/utils';
-import type { ISubtopic, ITopic } from '@/interfaces/schema';
-import { useAdminTable } from '@/hooks';
 import {
-    DataTable,
-    TableSearch,
     BulkActionsBar,
-    StatusBadge,
+    DataTable,
     DataTableActions,
-    createEditAction,
-    createDeleteAction,
-    createTogglePublishedAction,
+    StatusBadge,
+    TableSearch,
     createBulkDeleteActionNew,
     createBulkPublishAction,
     createBulkUnpublishAction,
-    type IDataTableColumn,
+    createDeleteAction,
+    createEditAction,
+    createTogglePublishedAction,
     type IBulkActionNew,
+    type IDataTableColumn,
     type ITableFilter,
 } from '@/components/admin';
-import { deleteSubtopic, toggleSubtopicPublished } from '@/server/actions/subtopics';
 import { Button } from '@/components/ui/button';
+import { useAdminTable } from '@/hooks';
+import type { ISubtopic, ITopic } from '@/interfaces/schema';
+import { formatDate } from '@/lib/utils';
+import { deleteSubtopic, toggleSubtopicPublished } from '@/server/actions/subtopics';
 
 // ===== COMPONENT =====
 
@@ -37,12 +37,10 @@ const getSubtopicKey = (subtopic: ISubtopic): string => `${subtopic.topicSlug}/$
 
 export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): React.ReactElement {
     const table = useAdminTable({
+        tableKey: 'admin-subtopics',
         data: subtopics,
         keyExtractor: getSubtopicKey,
-        searchFn: (subtopic, query) =>
-            subtopic.title.toLowerCase().includes(query) ||
-            subtopic.slug.toLowerCase().includes(query) ||
-            subtopic.description?.toLowerCase().includes(query) || false,
+        searchFn: (subtopic, query) => subtopic.title.toLowerCase().includes(query) || subtopic.slug.toLowerCase().includes(query) || subtopic.description?.toLowerCase().includes(query) || false,
     });
 
     // ===== FILTERS CONFIG =====
@@ -52,10 +50,7 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
             id: 'topicSlug',
             label: 'Parent Topic',
             type: 'select',
-            options: [
-                { label: 'All Topics', value: 'all' },
-                ...topics.map((t) => ({ label: t.title, value: t.slug })),
-            ],
+            options: [{ label: 'All Topics', value: 'all' }, ...topics.map((t) => ({ label: t.title, value: t.slug }))],
         },
         {
             id: 'published',
@@ -79,13 +74,10 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
                 table.optimisticUpdate(
                     key,
                     (s) => ({ ...s, published: !s.published }),
-                    () => toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug)
-                )
+                    () => toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug),
+                ),
             ),
-            createDeleteAction(
-                () => table.optimisticDelete(key, () => deleteSubtopic(subtopic.topicSlug, subtopic.slug)),
-                `"${subtopic.title}"`
-            ),
+            createDeleteAction(() => table.optimisticDelete(key, () => deleteSubtopic(subtopic.topicSlug, subtopic.slug)), `"${subtopic.title}"`),
         ];
     };
 
@@ -96,16 +88,11 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
             id: 'subtopic',
             header: 'Subtopic',
             accessor: (subtopic) => (
-                <div className="min-w-0 max-w-md">
-                    <Link
-                        href={`/admin/subtopics/${subtopic.topicSlug}/${subtopic.slug}/edit`}
-                        className="font-medium hover:underline hover:text-foreground line-clamp-1 block"
-                    >
+                <div className='min-w-0 max-w-md'>
+                    <Link href={`/admin/subtopics/${subtopic.topicSlug}/${subtopic.slug}/edit`} className='font-medium hover:underline hover:text-foreground line-clamp-1 block'>
                         {subtopic.title}
                     </Link>
-                    {subtopic.description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">{subtopic.description}</p>
-                    )}
+                    {subtopic.description && <p className='mt-0.5 text-sm text-muted-foreground line-clamp-1'>{subtopic.description}</p>}
                 </div>
             ),
             width: '300px',
@@ -116,14 +103,11 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
             cell: (subtopic) => {
                 const topic = topics.find((t) => t.slug === subtopic.topicSlug);
                 return topic ? (
-                    <Link
-                        href={`/admin/topics/${topic.slug}/edit`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <Link href={`/admin/topics/${topic.slug}/edit`} className='text-sm text-muted-foreground hover:text-foreground transition-colors'>
                         {topic.title}
                     </Link>
                 ) : (
-                    <span className="text-sm text-muted-foreground">{subtopic.topicSlug}</span>
+                    <span className='text-sm text-muted-foreground'>{subtopic.topicSlug}</span>
                 );
             },
             width: '180px',
@@ -131,18 +115,14 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
         {
             id: 'published',
             header: 'Status',
-            cell: (subtopic) => <StatusBadge variant="published" value={subtopic.published || false} />,
+            cell: (subtopic) => <StatusBadge variant='published' value={subtopic.published || false} />,
             align: 'center',
             width: '120px',
         },
         {
             id: 'articles',
             header: 'Articles',
-            cell: (subtopic) => (
-                <span className="text-sm text-center text-muted-foreground">
-                    {subtopic.metadata?.articleCount || 0}
-                </span>
-            ),
+            cell: (subtopic) => <span className='text-sm text-center text-muted-foreground'>{subtopic.metadata?.articleCount || 0}</span>,
             align: 'center',
             width: '100px',
         },
@@ -150,8 +130,8 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
             id: 'updated',
             header: 'Last Updated',
             cell: (subtopic) => (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
+                <div className='flex items-center gap-1 text-sm text-muted-foreground'>
+                    <Calendar className='h-3 w-3' />
                     {formatDate(subtopic.updatedAt)}
                 </div>
             ),
@@ -178,8 +158,8 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
                         const subtopic = table.items.find((s) => getSubtopicKey(s) === id);
                         if (subtopic && !subtopic.published) await toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug);
                     }
-                }
-            )
+                },
+            ),
         ),
         createBulkUnpublishAction((ids) =>
             table.optimisticBulkUpdate(
@@ -190,8 +170,8 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
                         const subtopic = table.items.find((s) => getSubtopicKey(s) === id);
                         if (subtopic?.published) await toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug);
                     }
-                }
-            )
+                },
+            ),
         ),
         createBulkDeleteActionNew(async (ids) => {
             for (const id of ids) {
@@ -204,9 +184,9 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
     // ===== RENDER =====
 
     return (
-        <div className="space-y-6">
+        <div className='space-y-6'>
             <TableSearch
-                placeholder="Search subtopics by title or slug..."
+                placeholder='Search subtopics by title or slug...'
                 onSearch={table.setSearchQuery}
                 filters={tableFilters}
                 onFilterChange={table.setFilters}
@@ -225,17 +205,15 @@ export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): Rea
                 onLoadMore={async () => table.loadMore()}
                 isLoading={table.isPending}
                 emptyState={
-                    <div className="p-12 text-center">
-                        <Layers className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">No subtopics found</h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {table.searchQuery || table.activeFiltersCount > 0
-                                ? 'Try adjusting your search or filters'
-                                : 'Create your first subtopic to get started'}
+                    <div className='p-12 text-center'>
+                        <Layers className='mx-auto h-12 w-12 text-muted-foreground/50' />
+                        <h3 className='mt-4 text-lg font-semibold'>No subtopics found</h3>
+                        <p className='mt-2 text-muted-foreground'>
+                            {table.searchQuery || table.activeFiltersCount > 0 ? 'Try adjusting your search or filters' : 'Create your first subtopic to get started'}
                         </p>
                         {!table.searchQuery && table.activeFiltersCount === 0 && (
-                            <Link href="/admin/subtopics/new">
-                                <Button className="mt-6">Create Subtopic</Button>
+                            <Link href='/admin/subtopics/new'>
+                                <Button className='mt-6'>Create Subtopic</Button>
                             </Link>
                         )}
                     </div>
