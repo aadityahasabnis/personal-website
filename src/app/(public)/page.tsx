@@ -1,9 +1,15 @@
 import {
-  HeroSection,
   AboutPreview,
+  HeroSection,
   NewsletterSection,
 } from '@/components/sections';
-import { JsonLd, generateWebSiteSchema, generateOrganizationSchema, combineSchemas } from '@/lib/seo';
+import {
+  JsonLd,
+  combineSchemas,
+  generateHomeWebPageSchema,
+  generateOrganizationSchema,
+  generateWebSiteSchema,
+} from '@/lib/seo';
 
 // Force static generation - no DB calls needed for core page
 export const dynamic = 'force-static';
@@ -16,7 +22,11 @@ export const dynamic = 'force-static';
  * or can be added later once DB is configured properly.
  */
 const HomePage = () => {
-  const schema = combineSchemas(generateWebSiteSchema(), generateOrganizationSchema());
+  const schema = combineSchemas(
+    generateWebSiteSchema(),
+    generateOrganizationSchema(),
+    generateHomeWebPageSchema()
+  );
 
   return (
     <>

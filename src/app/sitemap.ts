@@ -61,6 +61,16 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
             changeFrequency: 'monthly',
             priority: 0.5,
         },
+        ...(SITE_CONFIG.seo.search.enabled
+            ? [
+                {
+                    url: `${baseUrl}${SITE_CONFIG.seo.search.path}`,
+                    lastModified: now,
+                    changeFrequency: 'weekly' as const,
+                    priority: 0.4,
+                },
+            ]
+            : []),
     ];
 
     const [topicResult, articlePathsResult, blogPathsResult, projectPathsResult] = await Promise.all([

@@ -13,6 +13,9 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
  */
 const robots = (): MetadataRoute.Robots => {
     const baseUrl = SITE_CONFIG.url;
+    const allowPaths: string | string[] = SITE_CONFIG.seo.search.enabled
+        ? ['/', SITE_CONFIG.seo.search.path]
+        : '/';
     const protectedPaths = [
         '/admin/',
         '/admin',
@@ -30,12 +33,12 @@ const robots = (): MetadataRoute.Robots => {
         rules: [
             {
                 userAgent: '*',
-                allow: '/',
+                allow: allowPaths,
                 disallow: protectedPaths,
             },
             {
                 userAgent: ['GPTBot', 'CCBot', 'OAI-SearchBot', 'ChatGPT-User', 'PerplexityBot'],
-                allow: '/',
+                allow: allowPaths,
                 disallow: protectedPaths,
             }
         ],

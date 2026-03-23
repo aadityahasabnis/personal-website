@@ -40,7 +40,7 @@ export const SITE_CONFIG = {
     keywordAliasCap: 2,
     websiteAlternateNames: ['Aaditya Hasabnis', 'Aditya Hasabnis'],
     search: {
-      enabled: false,
+      enabled: true,
       path: '/search',
       queryParam: 'q',
     },

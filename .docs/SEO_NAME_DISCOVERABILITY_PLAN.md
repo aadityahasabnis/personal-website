@@ -8,14 +8,13 @@ Improve discoverability for these name queries:
 - Aditya Hasabnis (variant)
 - Aditya
 - Hasabnis
-- Aaditya Hasabins (typo variant requested)
 
 This document extends the existing SEO plan with a complete JSON-LD graph strategy (Person + WebSite + WebPage), SearchAction support, and implementation guidance for this codebase.
 
 ## Canonical Identity Rules
 
 - Canonical person name remains: Aaditya Hasabnis
-- Variants and typo variants are added as alternate names (not canonical replacements)
+- Variants are added as alternate names (not canonical replacements)
 - Keep all links real and verifiable (no placeholder profiles)
 
 ## Complete Schema Graph (Project-Ready)
@@ -31,7 +30,7 @@ Use this structure (values aligned to current constants and real links):
                 "@type": "Person",
                 "@id": "https://aadityahasabnis.com/#person",
                 "name": "Aaditya Hasabnis",
-                "alternateName": ["Aditya Hasabnis", "Aditya", "Hasabnis", "Aaditya Hasabins"],
+                "alternateName": ["Aditya Hasabnis", "Aditya", "Hasabnis", "AH"],
                 "url": "https://aadityahasabnis.com",
                 "image": "https://aadityahasabnis.com/og-default.png",
                 "email": "aaditya.hasabnis@gmail.com",
@@ -118,41 +117,67 @@ Implement the graph in utilities rather than hardcoding script JSON in page file
 Add alias fields in src/constants/siteConstants.ts under author and SEO:
 
 - author.aliasesExact: exact variants
-- author.aliasesTypo: typo variants requested for on-page schema
 - seo.keywordAliasCap: numeric cap for metadata keyword usage
 
-Use aliasesTypo primarily inside JSON-LD alternateName to avoid visible keyword stuffing.
+Use aliasesExact in JSON-LD alternateName and keep metadata keywords controlled.
 
 ## Metadata and Anti-Stuffing Guardrails
 
 - Keep canonical title and description natural and user-first
 - Do not inject every alias into every title/description
 - Prefer this distribution:
-    - JSON-LD alternateName: full exact + typo coverage
+    - JSON-LD alternateName: exact variant coverage
     - Metadata keywords: at most 1-2 variants per page
     - Body copy: natural mention once in About page intro only
 
 ## Rollout Checklist
 
+Status date: 2026-03-23
+
 1. Phase 1: Schema Foundation
 
-- Update site constants for aliases
-- Update Person and WebSite schema utilities
-- Add homepage WebPage schema utility
-- Render updated graph on homepage
+- [Done] Update site constants for aliases.
+- [Done] Update Person and WebSite schema utilities.
+- [Done] Add homepage WebPage schema utility.
+- [Pending] Render updated graph on homepage (currently homepage renders WebSite + Person, not WebPage node).
 
 2. Phase 2: Search Surface
 
-- Build /search route
-- Enable SearchAction in WebSite schema
-- Update robots/sitemap if needed for search base route
+- [Pending] Build /search route under App Router.
+- [Pending] Enable SearchAction in WebSite schema (currently gated by seo.search.enabled=false).
+- [Pending] Update robots/sitemap for search base route once /search exists.
+- [Done] Backend search foundation implemented: /api/content/search and server search query layer.
 
 3. Phase 3: Coverage and Validation
 
-- Add schema utility tests (alternateName, SearchAction, stable IDs)
-- Add metadata tests for homepage and detail pages
-- Validate with Rich Results Test and Schema Validator
-- Submit sitemap in Search Console
+- [Pending] Add schema utility tests (alternateName, SearchAction gating, stable IDs).
+- [Pending] Add metadata tests for homepage and detail pages.
+- [Pending] Validate with Rich Results Test and Schema Validator (manual run pending).
+- [Pending] Submit sitemap and key URLs in Search Console.
+- [Done] Existing API suite passes after backend changes (128/128).
+
+## Next Implementation Plan
+
+1. Backend test coverage first (no frontend hooks/components):
+
+- Add tests for `generatePersonSchema` and `generateWebSiteSchema` to verify alternateName output and SearchAction gating.
+- Add API tests for `/api/content/search` query validation, filtering by contentTypes, and path formatting.
+
+2. SEO graph completion:
+
+- Update homepage schema composition to include `generateHomeWebPageSchema` with `combineSchemas`.
+
+3. Search route enablement:
+
+- Build minimal `/search` page route.
+- Set `seo.search.enabled=true` only when route is live.
+- Add sitemap entry for `/search`; keep query result pages noindex.
+
+4. Production validation:
+
+- Run Rich Results tests on home, one article, one blog, one project.
+- Submit sitemap in Search Console.
+- Track query performance for aaditya hasabnis, aditya hasabnis, aditya, hasabnis.
 
 ## Validation Targets
 
@@ -162,7 +187,6 @@ Track impressions/clicks for:
 - aditya hasabnis
 - aditya
 - hasabnis
-- aaditya hasabins
 
 Evaluate after 2-4 weeks before further tuning.
 

@@ -18,8 +18,7 @@ const getAuthorAlternateNames = (): string[] => {
  * - Breadcrumbs
  * - Person
  * - WebSite
- * - FAQ sections
- * - Course and HowTo schemas
+ * - Topic lists and collection pages
  * 
  * This helps:
  * 1. Search engines understand content structure
@@ -266,99 +265,6 @@ export function generateTopicSchema(topic: ITopic, articleCount: number) {
             name: topic.title,
             description: topic.description,
         },
-    };
-}
-
-// ===== FAQ SCHEMAS =====
-
-interface IFAQItem {
-    question: string;
-    answer: string;
-}
-
-/**
- * Generate FAQ schema for articles with Q&A sections
- */
-export function generateFAQSchema(faqs: IFAQItem[]) {
-    return {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: faqs.map((faq) => ({
-            '@type': 'Question',
-            name: faq.question,
-            acceptedAnswer: {
-                '@type': 'Answer',
-                text: faq.answer,
-            },
-        })),
-    };
-}
-
-// ===== HOW-TO SCHEMAS =====
-
-interface IHowToStep {
-    name: string;
-    text: string;
-    image?: string;
-}
-
-/**
- * Generate HowTo schema for tutorial articles
- */
-export function generateHowToSchema(
-    title: string,
-    description: string,
-    steps: IHowToStep[],
-    totalTime?: string
-) {
-    return {
-        '@context': 'https://schema.org',
-        '@type': 'HowTo',
-        name: title,
-        description: description,
-        totalTime: totalTime || 'PT10M',
-        step: steps.map((step, index) => ({
-            '@type': 'HowToStep',
-            position: index + 1,
-            name: step.name,
-            text: step.text,
-            image: step.image,
-        })),
-    };
-}
-
-// ===== COURSE SCHEMAS =====
-
-/**
- * Generate Course schema for tutorial series
- */
-export function generateCourseSchema(
-    topicTitle: string,
-    topicDescription: string,
-    topicSlug: string,
-    articles: Array<{ slug: string; title: string; order: number }>
-) {
-    return {
-        '@context': 'https://schema.org',
-        '@type': 'Course',
-        name: topicTitle,
-        description: topicDescription,
-        provider: {
-            '@id': `${SITE_CONFIG.url}/#person`,
-        },
-        hasCourseInstance: {
-            '@type': 'CourseInstance',
-            courseMode: 'online',
-            courseWorkload: `PT${articles.length * 10}M`,
-        },
-        educationalLevel: 'Beginner to Advanced',
-        teaches: topicDescription,
-        syllabusSections: articles.map((article, index) => ({
-            '@type': 'Syllabus',
-            position: article.order || index + 1,
-            name: article.title,
-            url: `${SITE_CONFIG.url}/articles/${topicSlug}/${article.slug}`,
-        })),
     };
 }
 
