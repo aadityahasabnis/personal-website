@@ -8,6 +8,8 @@ import {
 import { getPublishedBlogStaticPaths } from '@/server/new/public/content/blog';
 import { getPublishedProjectStaticPaths } from '@/server/new/public/content/project';
 
+export const revalidate = 3600;
+
 /**
  * Dynamic Sitemap Generation
  *
@@ -17,6 +19,7 @@ import { getPublishedProjectStaticPaths } from '@/server/new/public/content/proj
 const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
     const baseUrl = SITE_CONFIG.url;
     const now = new Date();
+    const toSafeDate = (value: string | Date | undefined) => (value ? new Date(value) : now);
 
     const staticPages: MetadataRoute.Sitemap = [
         {
@@ -63,13 +66,13 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
         },
         ...(SITE_CONFIG.seo.search.enabled
             ? [
-                {
-                    url: `${baseUrl}${SITE_CONFIG.seo.search.path}`,
-                    lastModified: now,
-                    changeFrequency: 'weekly' as const,
-                    priority: 0.4,
-                },
-            ]
+                  {
+                      url: `${baseUrl}${SITE_CONFIG.seo.search.path}`,
+                      lastModified: now,
+                      changeFrequency: 'weekly' as const,
+                      priority: 0.4,
+                  },
+              ]
             : []),
     ];
 
@@ -92,7 +95,7 @@ const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
 
     const topicPages: MetadataRoute.Sitemap = topics.map((topic) => ({
         url: `${baseUrl}/articles/${topic.slug}`,
-        lastModified: new Date(topic.updatedAt),
+        lastModified: toSafeDate(topic.updatedAt),
         changeFrequency: 'weekly' as const,
         priority: 0.8,
     }));
