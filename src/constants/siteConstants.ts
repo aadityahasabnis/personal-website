@@ -13,6 +13,9 @@ export const SITE_CONFIG = {
 
   author: {
     name: 'Aaditya Hasabnis',
+    givenName: 'Aaditya',
+    familyName: 'Hasabnis',
+    aliasesExact: ['Aditya Hasabnis', 'Aditya', 'Hasabnis'],
     email: 'aaditya.hasabnis@gmail.com',
     bio: 'Developer, writer, and lifelong learner.',
     jobTitle: 'Software Engineer',
@@ -34,6 +37,13 @@ export const SITE_CONFIG = {
     twitterHandle: '@aadityahasabnis',
     ogImage: '/og-default.png',
     rssEnabled: true,
+    keywordAliasCap: 2,
+    websiteAlternateNames: ['Aaditya Hasabnis', 'Aditya Hasabnis'],
+    search: {
+      enabled: false,
+      path: '/search',
+      queryParam: 'q',
+    },
   },
 } as const;
 

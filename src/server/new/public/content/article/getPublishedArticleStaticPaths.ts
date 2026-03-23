@@ -1,5 +1,6 @@
 'use server';
 
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
@@ -21,7 +22,7 @@ export const getPublishedArticleStaticPaths = async (): Promise<IApiResponse<IAr
             articleSlug: string;
         }>([
             {
-                $match: buildPublishedContentMatch('article', { topicId: { $ne: null } }),
+                $match: buildPublishedContentMatch(CONTENT_TYPES.ARTICLE, { topicId: { $ne: null } }),
             },
             {
                 $lookup: {

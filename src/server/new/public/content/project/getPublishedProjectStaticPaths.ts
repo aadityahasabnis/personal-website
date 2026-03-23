@@ -1,5 +1,6 @@
 'use server';
 
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
@@ -15,7 +16,7 @@ export const getPublishedProjectStaticPaths = async (): Promise<IApiResponse<IPr
     try {
         await connectDB();
 
-        const rows = await Content.find(buildPublishedContentMatch('project'))
+        const rows = await Content.find(buildPublishedContentMatch(CONTENT_TYPES.PROJECT))
             .sort(toStableSort({ slug: 1 }))
             .select('_id slug')
             .lean<{ _id: { toString(): string }; slug: string }[]>();

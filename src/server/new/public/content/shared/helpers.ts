@@ -1,4 +1,4 @@
-import { PUBLISH_STATUS, type ContentType } from '@/constants/schemaConstants';
+import { PUBLISH_STATUS, type PublicReadContentType } from '@/constants/schemaConstants';
 import { toObjectIdOrNull } from '../../shared';
 
 const STABLE_TIE_BREAKER = '_id';
@@ -21,7 +21,7 @@ export const toStableSort = (
 };
 
 export const buildPublishedContentMatch = (
-    type: Extract<ContentType, 'article' | 'blog' | 'project'>,
+    type: PublicReadContentType,
     extra: Record<string, unknown> = {},
 ): Record<string, unknown> => ({
     type,

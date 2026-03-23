@@ -1,5 +1,6 @@
 'use server';
 
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
@@ -34,7 +35,7 @@ export const getPublishedTopicTreeBySlug = async (
                 .select('_id slug title description order contentCount')
                 .lean<ISubtopicLean[]>(),
             Content.find(
-                buildPublishedContentMatch('article', {
+                buildPublishedContentMatch(CONTENT_TYPES.ARTICLE, {
                     topicId: topic._id,
                 })
             )

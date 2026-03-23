@@ -1,6 +1,15 @@
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 import type { IArticle, ITopic } from '@/interfaces/schema';
 
+const toUnique = (values: readonly string[]): string[] => Array.from(new Set(values.filter(Boolean)));
+
+const getAuthorAlternateNames = (): string[] => {
+    return toUnique([
+        ...SITE_CONFIG.author.aliasesExact,
+        SITE_CONFIG.shortName,
+    ]);
+};
+
 /**
  * SEO Utilities for Enhanced Search Engine Optimization
  * 
@@ -30,12 +39,18 @@ export function generatePersonSchema() {
         .map((link) => link.url)
         .filter((url) => /^https?:\/\//.test(url));
 
+    const alternateNames = getAuthorAlternateNames();
+
     return {
         '@context': 'https://schema.org',
         '@type': 'Person',
         '@id': `${SITE_CONFIG.url}/#person`,
         name: SITE_CONFIG.author.name,
+        givenName: SITE_CONFIG.author.givenName,
+        familyName: SITE_CONFIG.author.familyName,
+        ...(alternateNames.length > 0 ? { alternateName: alternateNames } : {}),
         url: SITE_CONFIG.url,
+        image: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`,
         email: SITE_CONFIG.author.email,
         description: SITE_CONFIG.author.bio,
         sameAs,
@@ -50,17 +65,49 @@ export const generateOrganizationSchema = generatePersonSchema;
 /**
  * Website Schema
  * Describes the overall site to search engines.
- * SearchAction is omitted — no /search route exists.
+ * SearchAction is conditional and enabled only when a public search route exists.
  */
 export function generateWebSiteSchema() {
+    const searchTarget = `${SITE_CONFIG.url}${SITE_CONFIG.seo.search.path}?${SITE_CONFIG.seo.search.queryParam}={search_term_string}`;
+
     return {
         '@context': 'https://schema.org',
         '@type': 'WebSite',
         '@id': `${SITE_CONFIG.url}/#website`,
         url: SITE_CONFIG.url,
         name: SITE_CONFIG.name,
+        alternateName: SITE_CONFIG.seo.websiteAlternateNames,
         description: SITE_CONFIG.description,
         publisher: {
+            '@id': `${SITE_CONFIG.url}/#person`,
+        },
+        ...(SITE_CONFIG.seo.search.enabled
+            ? {
+                potentialAction: {
+                    '@type': 'SearchAction',
+                    target: searchTarget,
+                    'query-input': 'required name=search_term_string',
+                },
+            }
+            : {}),
+    };
+}
+
+/**
+ * Home WebPage schema to complete the identity graph.
+ */
+export function generateHomeWebPageSchema() {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'WebPage',
+        '@id': `${SITE_CONFIG.url}/#webpage`,
+        url: SITE_CONFIG.url,
+        name: SITE_CONFIG.title,
+        description: SITE_CONFIG.description,
+        isPartOf: {
+            '@id': `${SITE_CONFIG.url}/#website`,
+        },
+        about: {
             '@id': `${SITE_CONFIG.url}/#person`,
         },
     };

@@ -1,4 +1,5 @@
 import type { ProjectStatusType } from '@/constants/schemaConstants';
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
@@ -62,7 +63,7 @@ export const toPublicProjectDetail = (row: IProjectLean): IPublicProjectDetail =
 
 export const getPublishedProjectBySlug = async (projectSlug: string): Promise<IProjectLean | null> => {
     return Content.findOne(
-        buildPublishedContentMatch('project', {
+        buildPublishedContentMatch(CONTENT_TYPES.PROJECT, {
             slug: projectSlug,
         })
     )
@@ -74,7 +75,7 @@ export const getPublishedProjectBySlug = async (projectSlug: string): Promise<IP
 
 export const getPublishedProjectByObjectId = async (projectId: ObjectId): Promise<IProjectLean | null> => {
     return Content.findOne(
-        buildPublishedContentMatch('project', {
+        buildPublishedContentMatch(CONTENT_TYPES.PROJECT, {
             _id: projectId,
         })
     )

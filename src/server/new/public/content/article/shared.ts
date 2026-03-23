@@ -1,3 +1,4 @@
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import Content from '@/server/models/Content';
 import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
@@ -104,7 +105,7 @@ export const getPublishedTopicById = async (topicId: ObjectId) => {
 
 export const getPublishedArticleRecordByPath = async (topicId: ObjectId, articleSlug: string) => {
     return Content.findOne(
-        buildPublishedContentMatch('article', {
+        buildPublishedContentMatch(CONTENT_TYPES.ARTICLE, {
             topicId,
             slug: articleSlug,
         })
@@ -115,7 +116,7 @@ export const getPublishedArticleRecordByPath = async (topicId: ObjectId, article
 
 export const getPublishedArticleRecordById = async (contentId: ObjectId) => {
     return Content.findOne(
-        buildPublishedContentMatch('article', {
+        buildPublishedContentMatch(CONTENT_TYPES.ARTICLE, {
             _id: contentId,
         })
     )

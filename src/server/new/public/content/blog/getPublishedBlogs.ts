@@ -1,5 +1,6 @@
 'use server';
 
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Content from '@/server/models/Content';
@@ -19,7 +20,7 @@ export const getPublishedBlogs = async (
         await connectDB();
 
         const { offset, limit } = normalizePagination(params.pagination);
-        const match: Record<string, unknown> = buildPublishedContentMatch('blog');
+        const match: Record<string, unknown> = buildPublishedContentMatch(CONTENT_TYPES.BLOG);
 
         if (params.featuredOnly === true) {
             match.featured = true;

@@ -4,7 +4,8 @@
 // General utilities are in lib/utils.ts
 // =================================================
 
-import type { ContentType } from '@/constants/schemaConstants';
+import { CONTENT_TYPES, type ContentType } from '@/constants/schemaConstants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import type { IApiResponse, IPaginatedResponse, IPaginationParams, ISortParams } from '@/interfaces/actionHelper';
 import { revalidatePath } from 'next/cache';
 
@@ -84,9 +85,12 @@ export const buildSort = ( params?: ISortParams, defaults: Record<string, 1 | -1
 
 export const revalidateContent = ( type: ContentType, slug?: string, topicSlug?: string): void => {
     const paths: string[] = ['/sitemap.xml', '/'];
+    if (SITE_CONFIG.seo.search.enabled) {
+        paths.push(SITE_CONFIG.seo.search.path);
+    }
 
     switch (type) {
-        case 'article':
+        case CONTENT_TYPES.ARTICLE:
             paths.push('/articles', '/admin/articles');
             if (topicSlug) {
                 paths.push(`/articles/${topicSlug}`);
@@ -96,14 +100,14 @@ export const revalidateContent = ( type: ContentType, slug?: string, topicSlug?:
                 }
             }
             break;
-        case 'blog':
+        case CONTENT_TYPES.BLOG:
             paths.push('/blogs', '/admin/blogs');
             if (slug) {
                 paths.push(`/blogs/${slug}`);
                 paths.push(`/admin/blogs/${slug}/edit`);
             }
             break;
-        case 'project':
+        case CONTENT_TYPES.PROJECT:
             paths.push('/projects', '/admin/projects');
             if (slug) {
                 paths.push(`/projects/${slug}`);

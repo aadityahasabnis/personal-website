@@ -1,3 +1,4 @@
+import { CONTENT_TYPES } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema';
 import Content from '@/server/models/Content';
 import { ObjectId } from 'mongodb';
@@ -43,7 +44,7 @@ export const toPublicBlogDetail = (row: IBlogLean): IPublicBlogDetail => ({
 
 export const getPublishedBlogBySlug = async (blogSlug: string): Promise<IBlogLean | null> => {
     return Content.findOne(
-        buildPublishedContentMatch('blog', {
+        buildPublishedContentMatch(CONTENT_TYPES.BLOG, {
             slug: blogSlug,
         })
     )
@@ -53,7 +54,7 @@ export const getPublishedBlogBySlug = async (blogSlug: string): Promise<IBlogLea
 
 export const getPublishedBlogByObjectId = async (blogId: ObjectId): Promise<IBlogLean | null> => {
     return Content.findOne(
-        buildPublishedContentMatch('blog', {
+        buildPublishedContentMatch(CONTENT_TYPES.BLOG, {
             _id: blogId,
         })
     )

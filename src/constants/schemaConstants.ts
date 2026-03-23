@@ -5,6 +5,27 @@
 export const CONTENT_TYPES = { ARTICLE: 'article', BLOG: 'blog', PROJECT: 'project' } as const;
 export type ContentType = (typeof CONTENT_TYPES)[keyof typeof CONTENT_TYPES];
 
+export type PublicReadContentType = Extract<ContentType, 'article' | 'blog' | 'project'>;
+export const PUBLIC_READ_CONTENT_TYPE_VALUES: readonly PublicReadContentType[] = [
+  CONTENT_TYPES.ARTICLE,
+  CONTENT_TYPES.BLOG,
+  CONTENT_TYPES.PROJECT,
+];
+
+export const CONTENT_ROUTE_SEGMENTS = {
+  ARTICLE: 'articles',
+  BLOG: 'blogs',
+  PROJECT: 'projects',
+} as const;
+export type PublicReadContentRouteSegment =
+  (typeof CONTENT_ROUTE_SEGMENTS)[keyof typeof CONTENT_ROUTE_SEGMENTS];
+
+export const CONTENT_TYPE_TO_ROUTE_SEGMENT: Record<PublicReadContentType, PublicReadContentRouteSegment> = {
+  [CONTENT_TYPES.ARTICLE]: CONTENT_ROUTE_SEGMENTS.ARTICLE,
+  [CONTENT_TYPES.BLOG]: CONTENT_ROUTE_SEGMENTS.BLOG,
+  [CONTENT_TYPES.PROJECT]: CONTENT_ROUTE_SEGMENTS.PROJECT,
+};
+
 // ============================================================
 // Project Status
 // ============================================================
