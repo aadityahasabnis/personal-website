@@ -6,7 +6,7 @@ import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
 
 export const SITE_CONFIG = {
   name: 'Aaditya Hasabnis',
-  shortName: 'AH',
+  shortName: 'Aadizz',
   title: 'Aaditya Hasabnis | Developer & Writer',
   description: 'Personal site for articles, blogs, and projects',
   url: 'https://aadityahasabnis.com',

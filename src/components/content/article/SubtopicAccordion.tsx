@@ -1,30 +1,15 @@
 'use client';
 
-import Link from 'next/link';
-import { FileText, Clock, Eye } from 'lucide-react';
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from '@/components/ui/accordion';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
-import type { ISubtopic, IArticle } from '@/interfaces/schema';
-
-interface IArticleItem {
-    slug: string;
-    title: string;
-    description?: string;
-    subtopicSlug?: string;
-    order: number;
-    readingTime?: number;
-    publishedAt?: Date;
-}
+import { Clock, FileText } from 'lucide-react';
+import Link from 'next/link';
+import type { IArticleListItem, IArticleSubtopicSection } from './types';
 
 interface ISubtopicAccordionProps {
     topicSlug: string;
-    subtopics: ISubtopic[];
-    articles: IArticleItem[];
+    sections: IArticleSubtopicSection[];
+    uncategorizedArticles?: IArticleListItem[];
     /** Default open subtopic slugs */
     defaultOpen?: string[];
     /** Additional className */
@@ -33,37 +18,17 @@ interface ISubtopicAccordionProps {
 
 /**
  * SubtopicAccordion - Client Component for displaying subtopics with articles
- * 
+ *
  * Used on the topic detail page to show a collapsible list of subtopics
  * with their articles inside.
  */
-const SubtopicAccordion = ({
-    topicSlug,
-    subtopics,
-    articles,
-    defaultOpen,
-    className,
-}: ISubtopicAccordionProps) => {
-    // Group articles by subtopic
-    const articlesBySubtopic = articles.reduce<Record<string, IArticleItem[]>>(
-        (acc, article) => {
-            const key = article.subtopicSlug || '__uncategorized__';
-            if (!acc[key]) acc[key] = [];
-            acc[key].push(article);
-            return acc;
-        },
-        {}
-    );
+const SubtopicAccordion = ({ topicSlug, sections, uncategorizedArticles, defaultOpen, className }: ISubtopicAccordionProps) => {
+    const standaloneArticles = uncategorizedArticles ?? [];
 
-    // Articles without subtopic (directly under topic)
-    const uncategorizedArticles = articlesBySubtopic['__uncategorized__'] || [];
-
-    if (subtopics.length === 0 && uncategorizedArticles.length === 0) {
+    if (sections.length === 0 && standaloneArticles.length === 0) {
         return (
-            <div className="text-center py-12">
-                <p className="text-[var(--fg-muted)]">
-                    No articles available in this topic yet.
-                </p>
+            <div className='py-12 text-center'>
+                <p className='text-body text-muted-foreground'>No articles available in this topic yet.</p>
             </div>
         );
     }
@@ -71,62 +36,38 @@ const SubtopicAccordion = ({
     return (
         <div className={cn('space-y-6', className)}>
             {/* Uncategorized articles (if any) */}
-            {uncategorizedArticles.length > 0 && (
-                <div className="space-y-2">
-                    <h3 className="text-sm font-medium text-[var(--fg-muted)] mb-4">
-                        General Articles
-                    </h3>
-                    <div className="space-y-1">
-                        {uncategorizedArticles.map((article) => (
-                            <ArticleListItem
-                                key={article.slug}
-                                topicSlug={topicSlug}
-                                article={article}
-                            />
+            {standaloneArticles.length > 0 && (
+                <section className='space-y-2'>
+                    <h3 className='mb-4 text-small font-medium text-muted-foreground'>General Articles</h3>
+                    <div className='space-y-1'>
+                        {standaloneArticles.map((article) => (
+                            <ArticleListItem key={article.id} topicSlug={topicSlug} article={article} />
                         ))}
                     </div>
-                </div>
+                </section>
             )}
 
             {/* Subtopics with accordion */}
-            {subtopics.length > 0 && (
-                <Accordion
-                    type="multiple"
-                    defaultValue={defaultOpen || [subtopics[0]?.slug]}
-                    className="space-y-2"
-                >
-                    {subtopics.map((subtopic) => {
-                        const subtopicArticles = articlesBySubtopic[subtopic.slug] || [];
-
+            {sections.length > 0 && (
+                <Accordion type='multiple' defaultValue={defaultOpen ?? [sections[0]?.slug]} className='space-y-2'>
+                    {sections.map((section) => {
                         return (
-                            <AccordionItem
-                                key={subtopic.slug}
-                                value={subtopic.slug}
-                                className="border border-[var(--border-color)] rounded-xl overflow-hidden bg-[var(--card-bg)]"
-                            >
-                                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-[var(--surface-hover)]">
-                                    <div className="flex items-center gap-3 text-left">
-                                        <span className="font-medium text-[var(--fg)]">
-                                            {subtopic.title}
-                                        </span>
-                                        <span className="text-xs text-[var(--fg-subtle)] bg-[var(--surface)] px-2 py-0.5 rounded-full">
-                                            {subtopicArticles.length} article{subtopicArticles.length !== 1 ? 's' : ''}
+                            <AccordionItem key={section.id} value={section.slug} className='overflow-hidden rounded-xl border border-border bg-card'>
+                                <AccordionTrigger className='px-4 py-3 hover:bg-muted hover:no-underline'>
+                                    <div className='flex items-center gap-3 text-left'>
+                                        <span className='font-medium text-foreground'>{section.title}</span>
+                                        <span className='rounded-full bg-muted px-2 py-0.5 text-label text-muted-foreground'>
+                                            {section.articles.length} article{section.articles.length !== 1 ? 's' : ''}
                                         </span>
                                     </div>
                                 </AccordionTrigger>
-                                <AccordionContent className="px-2 pb-2">
-                                    {subtopicArticles.length === 0 ? (
-                                        <p className="text-sm text-[var(--fg-muted)] px-2 py-3">
-                                            No articles in this section yet.
-                                        </p>
+                                <AccordionContent className='px-2 pb-2'>
+                                    {section.articles.length === 0 ? (
+                                        <p className='px-2 py-3 text-body text-muted-foreground'>No articles in this section yet.</p>
                                     ) : (
-                                        <div className="space-y-1">
-                                            {subtopicArticles.map((article) => (
-                                                <ArticleListItem
-                                                    key={article.slug}
-                                                    topicSlug={topicSlug}
-                                                    article={article}
-                                                />
+                                        <div className='space-y-1'>
+                                            {section.articles.map((article) => (
+                                                <ArticleListItem key={article.id} topicSlug={topicSlug} article={article} />
                                             ))}
                                         </div>
                                     )}
@@ -143,36 +84,18 @@ const SubtopicAccordion = ({
 /**
  * ArticleListItem - Individual article link in the accordion
  */
-function ArticleListItem({
-    topicSlug,
-    article,
-}: {
-    topicSlug: string;
-    article: IArticleItem;
-}) {
+function ArticleListItem({ topicSlug, article }: { topicSlug: string; article: IArticleListItem }) {
     return (
-        <Link
-            href={`/articles/${topicSlug}/${article.slug}`}
-            className={cn(
-                'group flex items-start gap-3 px-3 py-2.5 rounded-lg transition-colors',
-                'hover:bg-[var(--surface-hover)]'
-            )}
-        >
-            <FileText className="size-4 mt-0.5 text-[var(--fg-subtle)] group-hover:text-[var(--accent)] transition-colors shrink-0" />
-            <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-[var(--fg)] group-hover:text-[var(--accent)] transition-colors line-clamp-1">
-                    {article.title}
-                </span>
-                {article.description && (
-                    <p className="text-xs text-[var(--fg-muted)] line-clamp-1 mt-0.5">
-                        {article.description}
-                    </p>
-                )}
+        <Link href={`/articles/${topicSlug}/${article.slug}`} className={cn('group flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors', 'hover:bg-muted')}>
+            <FileText className='mt-0.5 size-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary' />
+            <div className='min-w-0 flex-1'>
+                <span className='line-clamp-1 text-body font-medium text-foreground transition-colors group-hover:text-primary'>{article.title}</span>
+                {article.description && <p className='mt-0.5 line-clamp-1 text-small text-muted-foreground'>{article.description}</p>}
             </div>
-            <div className="flex items-center gap-3 text-xs text-[var(--fg-subtle)] shrink-0">
-                {article.readingTime && (
-                    <span className="flex items-center gap-1">
-                        <Clock className="size-3" />
+            <div className='flex shrink-0 items-center gap-3 text-label text-muted-foreground'>
+                {article.readingTime > 0 && (
+                    <span className='flex items-center gap-1'>
+                        <Clock className='size-3' />
                         {article.readingTime}m
                     </span>
                 )}

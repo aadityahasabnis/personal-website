@@ -1,7 +1,7 @@
-export { HeroSection } from './HeroSection';
+export { AboutPreview } from './AboutPreview';
+export { ContactForm } from './ContactForm';
 export { FeaturedArticles } from './FeaturedArticles';
 export { FeaturedProjects } from './FeaturedProjects';
-export { AboutPreview } from './AboutPreview';
+export { HeroSection } from './HeroSection';
 export { NewsletterSection } from './NewsletterSection';
-export { default as SubscribeForm } from './SubscribeForm';
-export { ContactForm } from './ContactForm';
+

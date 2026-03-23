@@ -89,7 +89,10 @@ ContentSchema.index({ updatedBy: 1 });
 ### PageStats
 
 ```ts
-PageStatsSchema.index({ contentId: 1 }, { unique: true });
+PageStatsSchema.index(
+    { contentId: 1 },
+    { unique: true, partialFilterExpression: { contentId: { $type: 'objectId' } } }
+);
 PageStatsSchema.index({ views: -1 });
 PageStatsSchema.index({ likes: -1 });
 PageStatsSchema.index({ lastViewedAt: -1 });
@@ -97,7 +100,7 @@ PageStatsSchema.index({ lastViewedAt: -1 });
 
 **Purpose:**
 
-- `contentId` - One stats doc per content (unique)
+- `contentId` - One stats doc per content for valid ObjectId refs (partial unique)
 - `views/likes` - Top content queries (descending)
 - `lastViewedAt` - Recently viewed content
 

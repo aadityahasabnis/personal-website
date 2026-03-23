@@ -1,20 +1,15 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { after } from 'next/server';
 
-import { CommentSection } from '@/components/common/CommentSection';
-import { ContentStats } from '@/components/common/ContentStats';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
-import { ArticleContent } from '@/components/content/article/ArticleContent';
 import { ArticleHeader } from '@/components/content/article/ArticleHeader';
+import { ArticleContent } from '@/components/content/common/ArticleContent';
+import { ContentComment } from '@/components/content/common/comment/ContentComment';
+import { ContentLikes, ContentViews } from '@/components/content/common/stats';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
-import { JsonLd, combineSchemas, generateArticleSchema, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
-import { incrementViews } from '@/server/actions/stats';
-import { getAllPublishedArticles, getArticleByTopicSlug } from '@/server/queries/content';
-import { getArticleCommentCount, getArticleStats } from '@/server/queries/stats';
-import { getSubtopic } from '@/server/queries/subtopics';
-import { getTopic } from '@/server/queries/topics';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
+import { getPublishedArticleByPath, getPublishedArticleStaticPaths, type IPublicArticleDetail } from '@/server/new/public/content/article';
 
 export const revalidate = 3600;
 
@@ -22,54 +17,66 @@ interface IArticlePageProps {
     params: Promise<{ topicSlug: string; articleSlug: string }>;
 }
 
-export const generateStaticParams = async () => {
-    const articles = await getAllPublishedArticles();
-    return articles.filter((a) => a.topicSlug && a.slug).map(({ topicSlug, slug }) => ({ topicSlug, articleSlug: slug }));
+export const generateStaticParams = async (): Promise<Array<{ topicSlug: string; articleSlug: string }>> => {
+    const pathsResult = await getPublishedArticleStaticPaths();
+    if (!pathsResult.success) return [];
+
+    return pathsResult.data.map((item) => ({
+        topicSlug: item.topicSlug,
+        articleSlug: item.articleSlug,
+    }));
 };
 
 export const generateMetadata = async ({ params }: IArticlePageProps): Promise<Metadata> => {
     const { topicSlug, articleSlug } = await params;
-    const article = await getArticleByTopicSlug(topicSlug, articleSlug);
-    if (!article) return { title: 'Article Not Found' };
+    const articleResult = await getPublishedArticleByPath(topicSlug, articleSlug);
 
-    const [topic, subtopic] = await Promise.all([getTopic(topicSlug), article.subtopicSlug ? getSubtopic(article.subtopicSlug) : Promise.resolve(null)]);
+    if (!articleResult.success || !articleResult.data) {
+        return { title: 'Article Not Found' };
+    }
 
-    const readingTime = article.readingTime ?? Math.ceil((article.body?.split(/\s+/).length ?? 0) / 200);
-    const seoTitle = article.seo?.title ?? article.title;
-    const seoDescription = article.seo?.description ?? article.description;
-    const imageUrl = article.seo?.ogImage ?? article.coverImage;
-    const keywords = [...(article.seo?.keywords ?? article.tags ?? []), topic?.title ?? topicSlug, ...(subtopic ? [subtopic.title] : []), SITE_CONFIG.author.name, 'tutorial', 'guide', 'learn'];
-    const publishedTime = article.publishedAt?.toISOString();
-    const modifiedTime = article.updatedAt?.toISOString();
+    const article = articleResult.data;
+    const title = article.seo?.title ?? article.title;
+    const description = article.seo?.description ?? article.description;
+    const image = article.seo?.ogImage ?? article.coverImage ?? undefined;
+    const keywords = Array.from(
+        new Set([...(article.seo?.keywords ?? article.tags), article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name, 'tutorial', 'guide', 'learn']),
+    );
 
     return createPageMetadata({
-        title: seoTitle,
-        description: seoDescription,
+        title,
+        description,
         canonicalPath: `/articles/${topicSlug}/${articleSlug}`,
         keywords,
         includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
-        imageUrl,
+        ...(image ? { imageUrl: image } : {}),
         openGraph: {
-            publishedTime,
-            modifiedTime,
+            ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
+            modifiedTime: article.updatedAt,
             authors: [SITE_CONFIG.author.name],
             tags: keywords,
         },
         robots: {
             index: true,
             follow: true,
-            googleBot: { index: true, follow: true, 'max-video-preview': -1, 'max-image-preview': 'large', 'max-snippet': -1 },
+            googleBot: {
+                index: true,
+                follow: true,
+                'max-video-preview': -1,
+                'max-image-preview': 'large',
+                'max-snippet': -1,
+            },
         },
         other: {
             'article:author': SITE_CONFIG.author.name,
-            'article:section': topic?.title ?? topicSlug,
-            ...(publishedTime && { 'article:published_time': publishedTime }),
-            ...(modifiedTime && { 'article:modified_time': modifiedTime }),
+            'article:section': article.topic.title,
+            ...(article.publishedAt && { 'article:published_time': article.publishedAt }),
+            ...(article.updatedAt && { 'article:modified_time': article.updatedAt }),
             'article:tag': keywords.join(', '),
             'twitter:label1': 'Reading time',
-            'twitter:data1': `${readingTime} min read`,
+            'twitter:data1': `${article.readingTime} min read`,
             'twitter:label2': 'Written by',
             'twitter:data2': SITE_CONFIG.author.name,
         },
@@ -78,67 +85,90 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
 
 const ArticlePage = async ({ params }: IArticlePageProps) => {
     const { topicSlug, articleSlug } = await params;
-    const fullSlug = `${topicSlug}/${articleSlug}`;
+    const articleResult = await getPublishedArticleByPath(topicSlug, articleSlug);
 
-    after(() => incrementViews(fullSlug));
+    if (!articleResult.success || !articleResult.data) {
+        notFound();
+    }
 
-    // Stage 1: article + topic in parallel (need subtopicSlug before stage 2)
-    const [article, topic] = await Promise.all([getArticleByTopicSlug(topicSlug, articleSlug), getTopic(topicSlug)]);
-
-    if (!article) notFound();
-
-    // Stage 2: remaining data in parallel
-    const [stats, commentCount, subtopic] = await Promise.all([
-        getArticleStats(fullSlug),
-        getArticleCommentCount(fullSlug),
-        article.subtopicSlug ? getSubtopic(article.subtopicSlug) : Promise.resolve(null),
-    ]);
-
+    const article: IPublicArticleDetail = articleResult.data;
     const breadcrumbs = [
         { label: 'Articles', href: '/articles' },
-        { label: topic?.title ?? topicSlug, href: `/articles/${topicSlug}` },
-        ...(subtopic ? [{ label: subtopic.title, href: `/articles/${topicSlug}#${subtopic.slug}` }] : []),
+        { label: article.topic.title, href: `/articles/${topicSlug}` },
+        ...(article.subtopic ? [{ label: article.subtopic.title, href: `/articles/${topicSlug}#${article.subtopic.slug}` }] : []),
         { label: article.title, href: `/articles/${topicSlug}/${articleSlug}` },
     ];
 
+    const articleUrl = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
+    const schemaKeywords = Array.from(new Set([...article.tags, article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name]));
+
+    const articleSchema = {
+        '@type': ['TechArticle', 'BlogPosting'],
+        '@id': articleUrl,
+        url: articleUrl,
+        headline: article.title,
+        description: article.description,
+        image: article.seo?.ogImage ?? article.coverImage ?? `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`,
+        author: {
+            '@id': `${SITE_CONFIG.url}/#person`,
+        },
+        publisher: {
+            '@id': `${SITE_CONFIG.url}/#person`,
+        },
+        ...(article.publishedAt ? { datePublished: article.publishedAt } : {}),
+        dateModified: article.updatedAt,
+        articleSection: article.topic.title,
+        keywords: schemaKeywords.join(', '),
+        inLanguage: 'en-US',
+        isAccessibleForFree: true,
+    };
+
     const combinedSchema = combineSchemas(
-        generateArticleSchema({ article, topicSlug, articleSlug, topicTitle: topic?.title ?? topicSlug, subtopicTitle: subtopic?.title, commentCount }),
-        generateBreadcrumbSchema(breadcrumbs.map((b) => ({ name: b.label, url: `${SITE_CONFIG.url}${b.href}` }))),
+        articleSchema,
+        generateBreadcrumbSchema(
+            breadcrumbs.map((crumb) => ({
+                name: crumb.label,
+                url: `${SITE_CONFIG.url}${crumb.href}`,
+            })),
+        ),
         generateOrganizationSchema(),
     );
 
-    // Prefer pre-rendered html to skip the markdown pipeline on every request
     const content = article.html ?? article.body ?? '';
 
     return (
         <>
             <JsonLd data={combinedSchema} />
             <ScrollToTop />
-            <article className='article-content' itemScope itemType='https://schema.org/TechArticle'>
-                <ArticleHeader
-                    breadcrumbs={breadcrumbs}
-                    title={article.title}
-                    description={article.description}
-                    readingTime={article.readingTime}
-                    publishedAt={article.publishedAt}
-                    updatedAt={article.updatedAt}
-                    tags={article.tags}
-                />
-                {content ? (
-                    <ArticleContent content={content} />
-                ) : (
-                    <div className='max-w-4xl mx-auto px-6 lg:px-8 py-12 text-[var(--fg-muted)]'>
-                        <p>This article is being prepared. Check back soon.</p>
-                    </div>
-                )}
-                <footer className='mt-12 pt-8 border-t border-[var(--border-color)]'>
-                    <div className='max-w-4xl mx-auto px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-                        <p className='text-[var(--fg-muted)]'>Enjoyed this article? Show some love!</p>
-                        <ContentStats slug={fullSlug} contentType='articles' initialViews={stats?.views ?? 0} initialLikes={stats?.likes ?? 0} />
-                    </div>
-                </footer>
-                <CommentSection slug={fullSlug} contentType='articles' />
-            </article>
+
+            <main className='mx-auto px-6 py-12 max-w-4xl lg:px-8'>
+                <article className='article-content' itemScope itemType='https://schema.org/TechArticle'>
+                    <ArticleHeader
+                        breadcrumbs={breadcrumbs}
+                        title={article.title}
+                        description={article.description}
+                        readingTime={article.readingTime}
+                        {...(article.publishedAt ? { publishedAt: article.publishedAt } : {})}
+                        updatedAt={article.updatedAt}
+                        tags={article.tags}
+                    />
+
+                    {content ? (
+                        <ArticleContent content={content} />
+                    ) : (
+                        <div className='py-12 text-body text-muted-foreground'>
+                            <p>This article is being prepared. Check back soon.</p>
+                        </div>
+                    )}
+
+                    <section className='flex items-center gap-3 mt-8' aria-label='Article engagement stats'>
+                        <ContentViews contentType='articles' contentId={article.id} />
+                        <ContentLikes contentType='articles' contentId={article.id} />
+                    </section>
+                </article>
+
+                <ContentComment contentType='articles' contentId={article.id} />
+            </main>
         </>
     );
 };

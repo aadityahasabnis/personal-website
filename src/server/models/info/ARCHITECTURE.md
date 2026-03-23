@@ -6,16 +6,16 @@ MongoDB/Mongoose schema with ObjectId references, TypeScript interfaces, and dis
 
 ## Collections (8 Total)
 
-| Collection | Purpose | Key References |
-|-----------|---------|----------------|
-| **topics** | Top-level categories | → Subtopic, Content |
-| **subtopics** | Nested categories | Topic._id → Content |
-| **content** | Articles/Blogs/Projects (discriminated) | Topic._id, Subtopic._id, Admin._id |
-| **pageStats** | Views/Likes counters | Content._id |
-| **comments** | Threaded comments | Content._id, Comment._id |
-| **admins** | Site administrators | → Content audit |
-| **subscribers** | Email subscribers | Standalone |
-| **contacts** | Contact submissions | Standalone |
+| Collection      | Purpose                                 | Key References                        |
+| --------------- | --------------------------------------- | ------------------------------------- |
+| **topics**      | Top-level categories                    | → Subtopic, Content                   |
+| **subtopics**   | Nested categories                       | Topic.\_id → Content                  |
+| **content**     | Articles/Blogs/Projects (discriminated) | Topic.\_id, Subtopic.\_id, Admin.\_id |
+| **pageStats**   | Views/Likes counters                    | Content.\_id                          |
+| **comments**    | Threaded comments                       | Content.\_id, Comment.\_id            |
+| **admins**      | Site administrators                     | → Content audit                       |
+| **subscribers** | Email subscribers                       | Standalone                            |
+| **contacts**    | Contact submissions                     | Standalone                            |
 
 ---
 
@@ -60,6 +60,7 @@ schema/
 Single `content` collection with 3 types:
 
 ### Common Base
+
 ```typescript
 interface IContentBase {
     type: 'article' | 'blog' | 'project';
@@ -67,12 +68,13 @@ interface IContentBase {
     title: string;
     body: string;
     published: boolean;
-    createdBy: ObjectId;  // Admin._id
-    updatedBy: ObjectId;  // Admin._id
+    createdBy: ObjectId; // Admin._id
+    updatedBy: ObjectId; // Admin._id
 }
 ```
 
 ### Article
+
 ```typescript
 interface IArticle extends IContentBase {
     type: 'article';
@@ -83,6 +85,7 @@ interface IArticle extends IContentBase {
 ```
 
 ### Blog
+
 ```typescript
 interface IBlog extends IContentBase {
     type: 'blog';
@@ -91,6 +94,7 @@ interface IBlog extends IContentBase {
 ```
 
 ### Project
+
 ```typescript
 interface IProject extends IContentBase {
     type: 'project';
@@ -115,7 +119,7 @@ interface IProject extends IContentBase {
 { topicId: 1, slug: 1 }                        // Unique within topic
 
 // PageStats
-{ contentId: 1 }                               // Unique (ObjectId!)
+{ contentId: 1 }                               // Unique for valid ObjectId values (partial unique index)
 
 // Comment
 { contentId: 1, parentId: 1, createdAt: -1 }   // Threaded comments
@@ -128,10 +132,11 @@ interface IProject extends IContentBase {
 ## Key Patterns
 
 ### 1. ObjectId References (Best Practice)
+
 ```typescript
 // ✅ Correct: ObjectId reference
 interface IPageStats {
-    contentId: ObjectId;  // References Content._id
+    contentId: ObjectId; // References Content._id
 }
 
 // ❌ Wrong: String reference (breaks on slug change)
@@ -141,27 +146,26 @@ interface IPageStats {
 ```
 
 ### 2. Denormalization (Performance)
+
 ```typescript
 // Cached counts - avoid aggregation
-Topic.contentCount      // Updated on article publish
-Comment.replyCount      // Updated on reply create
+Topic.contentCount; // Updated on article publish
+Comment.replyCount; // Updated on reply create
 ```
 
 ### 3. Audit Trail
+
 ```typescript
 // All content tracked
-Content.createdBy  // Admin._id (who created)
-Content.updatedBy  // Admin._id (who last edited)
+Content.createdBy; // Admin._id (who created)
+Content.updatedBy; // Admin._id (who last edited)
 ```
 
 ### 4. Atomic Operations
+
 ```typescript
 // PageStats updates
-await PageStats.findOneAndUpdate(
-    { contentId },
-    { $inc: { views: 1 } },
-    { upsert: true }
-);
+await PageStats.findOneAndUpdate({ contentId }, { $inc: { views: 1 } }, { upsert: true });
 ```
 
 ---
@@ -179,7 +183,7 @@ interface IAdmin {
 // Constants
 export const ADMIN_ROLES = {
     OWNER: 'owner',
-    EDITOR: 'editor'
+    EDITOR: 'editor',
 } as const;
 ```
 
@@ -190,41 +194,42 @@ export const ADMIN_ROLES = {
 ## Common Query Patterns
 
 ### Get Articles by Topic
+
 ```typescript
 const articles = await Content.find({
     type: 'article',
     topicId,
-    published: true
+    published: true,
 }).sort({ order: 1 });
 ```
 
 ### Get Content with Hierarchy
+
 ```typescript
-const article = await Content.findOne({ slug })
-    .populate('topicId')
-    .populate('subtopicId')
-    .populate('createdBy', 'name email');
+const article = await Content.findOne({ slug }).populate('topicId').populate('subtopicId').populate('createdBy', 'name email');
 ```
 
 ### Get Threaded Comments
+
 ```typescript
 // Top-level
 const comments = await Comment.find({
     contentId,
     parentId: null,
-    approved: true
+    approved: true,
 }).sort({ createdAt: -1 });
 
 // Replies
 const replies = await Comment.find({
     parentId: commentId,
-    approved: true
+    approved: true,
 }).sort({ createdAt: 1 });
 ```
 
 ### Increment Stats (Atomic)
+
 ```typescript
-await PageStats.incrementViews(contentId);  // Uses ObjectId!
+await PageStats.incrementViews(contentId); // Uses ObjectId!
 await PageStats.incrementLikes(contentId);
 ```
 
@@ -232,12 +237,12 @@ await PageStats.incrementLikes(contentId);
 
 ## Migration Summary
 
-| Change | Before | After |
-|--------|--------|-------|
-| **References** | `topicSlug: string` | `topicId: ObjectId` |
-| **Admin Model** | `User` collection | `Admin` collection |
-| **PageStats** | `slug: string` | `contentId: ObjectId` ✅ |
-| **Comment** | `contentSlug: string` | `contentId: ObjectId` ✅ |
-| **Interfaces** | `schema.ts` (1 file) | `schema/` (9 files) |
+| Change          | Before                | After                    |
+| --------------- | --------------------- | ------------------------ |
+| **References**  | `topicSlug: string`   | `topicId: ObjectId`      |
+| **Admin Model** | `User` collection     | `Admin` collection       |
+| **PageStats**   | `slug: string`        | `contentId: ObjectId` ✅ |
+| **Comment**     | `contentSlug: string` | `contentId: ObjectId` ✅ |
+| **Interfaces**  | `schema.ts` (1 file)  | `schema/` (9 files)      |
 
 **Critical Fix**: ObjectId references ensure data integrity when slugs change

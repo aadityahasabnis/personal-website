@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { ArticleContent } from '@/components/content/article/ArticleContent';
+import { ProjectContent, ProjectHeader } from '@/components/content';
+import { ContentComment } from '@/components/content/common/comment/ContentComment';
+import { ContentLikes, ContentViews } from '@/components/content/common/stats';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
-import { getPublishedProjectByPath, getPublishedProjectStaticPaths } from '@/server/new/public/content/project';
+import { getPublishedProjectByPath, getPublishedProjectStaticPaths, type IPublicProjectDetail } from '@/server/new/public/content/project';
 
 interface IProjectDetailPageProps {
     params: Promise<{ projectSlug: string }>;
@@ -12,7 +14,7 @@ interface IProjectDetailPageProps {
 
 export const revalidate = 3600;
 
-export const generateStaticParams = async () => {
+export const generateStaticParams = async (): Promise<Array<{ projectSlug: string }>> => {
     const pathsResult = await getPublishedProjectStaticPaths();
     if (!pathsResult.success) return [];
 
@@ -30,15 +32,25 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
     const project = projectResult.data;
     const title = project.seo?.title ?? project.title;
     const description = project.seo?.description ?? project.description;
-    const image = project.seo?.ogImage ?? project.coverImage;
+    const image = project.seo?.ogImage ?? project.coverImage ?? undefined;
+    const keywords = Array.from(new Set([...(project.tags ?? []), ...(project.techStack ?? []), SITE_CONFIG.author.name, 'project', 'portfolio']));
+    const publishedTime = project.publishedAt;
 
     return createPageMetadata({
         title,
         description,
         canonicalPath: `/projects/${projectSlug}`,
+        keywords,
+        includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
-        imageUrl: image,
+        ...(image ? { imageUrl: image } : {}),
+        openGraph: {
+            ...(publishedTime ? { publishedTime } : {}),
+            modifiedTime: project.updatedAt,
+            authors: [SITE_CONFIG.author.name],
+            tags: keywords,
+        },
         robots: {
             index: true,
             follow: true,
@@ -54,31 +66,22 @@ export default async function ProjectDetailPage({ params }: IProjectDetailPagePr
         notFound();
     }
 
-    const project = projectResult.data;
+    const project: IPublicProjectDetail = projectResult.data;
     const content = project.html ?? project.body ?? '';
 
     return (
-        <main className='max-w-4xl mx-auto px-6 lg:px-8 py-16'>
+        <main className='mx-auto px-6 py-16 max-w-4xl lg:px-8'>
             <article>
-                <header className='mb-10'>
-                    <h1 className='text-4xl md:text-5xl font-semibold tracking-tight text-(--fg)'>{project.title}</h1>
-                    <p className='mt-4 text-lg text-(--fg-muted)'>{project.description}</p>
+                <ProjectHeader project={project} />
 
-                    <div className='mt-5 flex flex-wrap gap-3 text-sm'>
-                        {project.githubUrl && (
-                            <Link href={project.githubUrl} target='_blank' rel='noopener noreferrer' className='text-(--accent) hover:underline'>
-                                View source
-                            </Link>
-                        )}
-                        {project.liveUrl && (
-                            <Link href={project.liveUrl} target='_blank' rel='noopener noreferrer' className='text-(--accent) hover:underline'>
-                                Live demo
-                            </Link>
-                        )}
-                    </div>
-                </header>
+                {content ? <ProjectContent content={content} /> : <p className='text-body text-muted-foreground'>This project write-up is being prepared.</p>}
 
-                {content ? <ArticleContent content={content} /> : <p className='text-(--fg-muted)'>This project write-up is being prepared.</p>}
+                <section className='flex items-center gap-3 mt-8' aria-label='Project engagement stats'>
+                    <ContentViews contentType='projects' contentId={project.id} />
+                    <ContentLikes contentType='projects' contentId={project.id} />
+                </section>
+
+                <ContentComment contentType='projects' contentId={project.id} className='mt-12' />
             </article>
         </main>
     );

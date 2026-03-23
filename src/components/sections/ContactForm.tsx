@@ -1,21 +1,38 @@
 'use client';
 
+import { CustomInput, CustomSelect, CustomTextArea } from '@/components/form';
+import type { IFormData, IHandleChangeEvent } from '@/components/form/form';
+import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import { useAction } from '@/hooks/useAction';
+import { useFormOperations } from '@/hooks/useFormOperations';
+import {
+    submitPublicContact,
+    type IPublicContactSubmission,
+    type ISubmitPublicContactInput,
+} from '@/server/new/public/contact';
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-import { submitContact } from '@/server/actions/contact';
 
-interface IContactFormData {
-    name: string;
-    email: string;
-    subject: string;
-    message: string;
-    type: 'general' | 'collaboration' | 'hiring' | 'feedback';
+type ContactIntent = 'general' | 'collaboration' | 'hiring' | 'feedback';
+
+interface IContactFormData extends IFormData {
+    name?: string;
+    email?: string;
+    subject?: string;
+    message?: string;
+    type?: ContactIntent;
 }
 
-type FormStatus = 'idle' | 'submitting' | 'success' | 'error';
+type FormStatus = 'idle' | 'success' | 'error';
+
+interface IContactFieldErrors {
+    name?: string;
+    email?: string;
+    subject?: string;
+    message?: string;
+}
 
 const CONTACT_TYPES = [
     { value: 'general', label: 'General' },
@@ -24,50 +41,166 @@ const CONTACT_TYPES = [
     { value: 'feedback', label: 'Feedback' },
 ] as const;
 
+const CONTACT_TYPE_OPTIONS = CONTACT_TYPES.map((type) => ({
+    label: type.label,
+    value: type.value,
+}));
+
+const CONTACT_TYPE_LABELS: Record<ContactIntent, string> = {
+    general: 'General',
+    collaboration: 'Collaboration',
+    hiring: 'Hiring',
+    feedback: 'Feedback',
+};
+
+const getStringValue = (value: unknown): string => (typeof value === 'string' ? value : '');
+
+const getContactIntent = (value: unknown): ContactIntent => {
+    if (value === 'collaboration' || value === 'hiring' || value === 'feedback') return value;
+    return 'general';
+};
+
+const withContactTypePrefix = (subject: string, type: ContactIntent): string => {
+    const prefix = `[${CONTACT_TYPE_LABELS[type]}]`;
+    if (subject.startsWith(`${prefix} `) || subject === prefix) return subject;
+    return `${prefix} ${subject}`;
+};
+
+const validateContactForm = (data: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+}): IContactFieldErrors => {
+    const errors: IContactFieldErrors = {};
+
+    if (data.name.length < 2) {
+        errors.name = 'Name must be at least 2 characters';
+    } else if (data.name.length > SCHEMA_LIMITS.CONTACT_NAME_MAX_LENGTH) {
+        errors.name = `Name cannot exceed ${String(SCHEMA_LIMITS.CONTACT_NAME_MAX_LENGTH)} characters`;
+    }
+
+    if (!VALIDATION_PATTERNS.EMAIL.test(data.email)) {
+        errors.email = 'Please enter a valid email address';
+    }
+
+    if (data.subject.length < 5) {
+        errors.subject = 'Subject must be at least 5 characters';
+    } else if (data.subject.length > SCHEMA_LIMITS.CONTACT_SUBJECT_MAX_LENGTH) {
+        errors.subject = `Subject cannot exceed ${String(SCHEMA_LIMITS.CONTACT_SUBJECT_MAX_LENGTH)} characters`;
+    }
+
+    if (data.message.length < 10) {
+        errors.message = 'Message must be at least 10 characters';
+    } else if (data.message.length > SCHEMA_LIMITS.CONTACT_MESSAGE_MAX_LENGTH) {
+        errors.message = `Message cannot exceed ${String(SCHEMA_LIMITS.CONTACT_MESSAGE_MAX_LENGTH)} characters`;
+    }
+
+    return errors;
+};
+
 /**
  * ContactForm - Premium contact form with validation and status feedback
  */
 const ContactForm = () => {
     const [status, setStatus] = useState<FormStatus>('idle');
-    const [errorMessage, setErrorMessage] = useState<string>('');
+    const [message, setMessage] = useState<string>('');
+    const [fieldErrors, setFieldErrors] = useState<IContactFieldErrors>({});
 
-    const {
-        register,
-        handleSubmit,
-        reset,
-        formState: { errors },
-    } = useForm<IContactFormData>({
-        defaultValues: {
-            type: 'general',
-        },
+    const { formData, handleChange, resetForm } = useFormOperations<IContactFormData>({
+        type: 'general',
+        name: '',
+        email: '',
+        subject: '',
+        message: '',
     });
 
-    const onSubmit = async (data: IContactFormData) => {
-        setStatus('submitting');
-        setErrorMessage('');
+    const { mutateAsync, pending } = useAction<IPublicContactSubmission, [ISubmitPublicContactInput]>({
+        action: submitPublicContact,
+    });
 
-        const result = await submitContact(data);
+    const handleFormChange = (event: IHandleChangeEvent) => {
+        handleChange(event);
 
-        if (result.success) {
-            setStatus('success');
-            reset();
-        } else {
-            setStatus('error');
-            setErrorMessage(result.error ?? 'Something went wrong.');
+        const field = event.target.name;
+        if (field === 'name' || field === 'email' || field === 'subject' || field === 'message') {
+            setFieldErrors((prev) => {
+                if (!prev[field]) return prev;
+                const next = { ...prev };
+                delete next[field];
+                return next;
+            });
         }
     };
 
+    const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (pending) return;
+
+        setMessage('');
+
+        const name = getStringValue(formData.name).trim();
+        const email = getStringValue(formData.email).trim();
+        const subject = getStringValue(formData.subject).trim();
+        const messageBody = getStringValue(formData.message).trim();
+        const type = getContactIntent(formData.type);
+
+        const nextErrors = validateContactForm({
+            name,
+            email,
+            subject,
+            message: messageBody,
+        });
+
+        setFieldErrors(nextErrors);
+
+        if (Object.keys(nextErrors).length > 0) {
+            setStatus('error');
+            setMessage('Please fix the highlighted fields and try again.');
+            return;
+        }
+
+        const result = await mutateAsync({
+            name,
+            email,
+            subject: withContactTypePrefix(subject, type),
+            message: messageBody,
+        });
+
+        if (result.success) {
+            setStatus('success');
+            setFieldErrors({});
+            setMessage(result.message ?? 'Message sent successfully');
+            resetForm();
+            return;
+        }
+
+        setStatus('error');
+        setMessage(result.error ?? 'Something went wrong.');
+    };
+
+    const formType = getContactIntent(formData.type);
+    const formName = getStringValue(formData.name);
+    const formEmail = getStringValue(formData.email);
+    const formSubject = getStringValue(formData.subject);
+    const formMessage = getStringValue(formData.message);
+
     if (status === 'success') {
         return (
-            <div className="p-8 text-center rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)]">
-                <CheckCircle className="mx-auto size-12 text-[var(--success)]" />
-                <h3 className="mt-4 text-xl font-semibold text-[var(--fg)]">Message Sent!</h3>
-                <p className="mt-2 text-[var(--fg-muted)]">
+            <div className='rounded-2xl border border-border bg-card p-8 text-center'>
+                <CheckCircle className='mx-auto size-12 text-success' />
+                <h3 className='mt-4 text-title font-semibold text-foreground'>Message Sent!</h3>
+                <p className='mt-2 text-body text-muted-foreground'>
                     Thank you for reaching out. I&apos;ll get back to you as soon as possible.
                 </p>
                 <button
-                    className="mt-6 px-6 py-3 rounded-full border border-[var(--border-color)] text-[var(--fg)] font-medium hover:border-[var(--border-hover)] transition-colors"
-                    onClick={() => setStatus('idle')}
+                    type='button'
+                    className='mt-6 inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-label font-medium text-foreground transition-fast hover:border-primary/40'
+                    onClick={() => {
+                        setStatus('idle');
+                        setMessage('');
+                    }}
                 >
                     Send Another Message
                 </button>
@@ -76,185 +209,93 @@ const ContactForm = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            {/* Error Alert */}
+        <form onSubmit={onSubmit} className='space-y-6'>
             {status === 'error' && (
-                <div className="flex items-center gap-3 rounded-xl border border-[var(--error)]/30 bg-[var(--error)]/10 p-4 text-sm text-[var(--error)]">
-                    <AlertCircle className="size-5 shrink-0" />
-                    {errorMessage}
+                <div className='flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-small text-destructive'>
+                    <AlertCircle className='size-5 shrink-0' />
+                    {message || 'Please review your message and try again.'}
                 </div>
             )}
 
-            {/* Contact Type */}
-            <div className="space-y-3">
-                <label className="text-sm font-medium text-[var(--fg)]">
-                    What is this regarding?
-                </label>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                    {CONTACT_TYPES.map((type) => (
-                        <label
-                            key={type.value}
-                            className={cn(
-                                'flex cursor-pointer items-center justify-center rounded-xl border border-[var(--border-color)] p-3 text-sm transition-all',
-                                'hover:border-[var(--border-hover)] hover:bg-[var(--surface)]',
-                                'has-[:checked]:border-[var(--accent)] has-[:checked]:bg-[var(--accent)]/10 has-[:checked]:text-[var(--accent)]'
-                            )}
-                        >
-                            <input
-                                type="radio"
-                                value={type.value}
-                                {...register('type')}
-                                className="sr-only"
-                            />
-                            {type.label}
-                        </label>
-                    ))}
-                </div>
-            </div>
+            <CustomSelect<IContactFormData, ContactIntent>
+                name='type'
+                label='What is this regarding?'
+                value={formType}
+                options={CONTACT_TYPE_OPTIONS}
+                onChange={handleFormChange}
+                containerClassName='w-full'
+                disabled={pending}
+            />
 
-            {/* Name & Email Row */}
-            <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                    <label htmlFor="name" className="text-sm font-medium text-[var(--fg)]">
-                        Name <span className="text-[var(--error)]">*</span>
-                    </label>
-                    <input
-                        id="name"
-                        type="text"
-                        placeholder="Your name"
-                        className={cn(
-                            'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
-                            'placeholder:text-[var(--fg-subtle)]',
-                            'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
-                            'transition-colors',
-                            errors.name && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
-                        )}
-                        {...register('name', {
-                            required: 'Name is required',
-                            minLength: {
-                                value: 2,
-                                message: 'Name must be at least 2 characters',
-                            },
-                        })}
-                    />
-                    {errors.name && (
-                        <p className="text-xs text-[var(--error)]">
-                            {errors.name.message}
-                        </p>
-                    )}
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-[var(--fg)]">
-                        Email <span className="text-[var(--error)]">*</span>
-                    </label>
-                    <input
-                        id="email"
-                        type="email"
-                        placeholder="you@example.com"
-                        className={cn(
-                            'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
-                            'placeholder:text-[var(--fg-subtle)]',
-                            'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
-                            'transition-colors',
-                            errors.email && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
-                        )}
-                        {...register('email', {
-                            required: 'Email is required',
-                            pattern: {
-                                value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                                message: 'Please enter a valid email',
-                            },
-                        })}
-                    />
-                    {errors.email && (
-                        <p className="text-xs text-[var(--error)]">
-                            {errors.email.message}
-                        </p>
-                    )}
-                </div>
-            </div>
-
-            {/* Subject */}
-            <div className="space-y-2">
-                <label htmlFor="subject" className="text-sm font-medium text-[var(--fg)]">
-                    Subject <span className="text-[var(--error)]">*</span>
-                </label>
-                <input
-                    id="subject"
-                    type="text"
-                    placeholder="What is this about?"
-                    className={cn(
-                        'w-full rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
-                        'placeholder:text-[var(--fg-subtle)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
-                        'transition-colors',
-                        errors.subject && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
-                    )}
-                    {...register('subject', {
-                        required: 'Subject is required',
-                        minLength: {
-                            value: 5,
-                            message: 'Subject must be at least 5 characters',
-                        },
-                    })}
+            <div className='grid gap-4 sm:grid-cols-2'>
+                <CustomInput<IContactFormData>
+                    name='name'
+                    label='Name'
+                    value={formName}
+                    onChange={handleFormChange}
+                    placeholder='Your name'
+                    required
+                    disabled={pending}
+                    errorMessage={fieldErrors.name}
+                    inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
                 />
-                {errors.subject && (
-                    <p className="text-xs text-[var(--error)]">
-                        {errors.subject.message}
-                    </p>
-                )}
-            </div>
 
-            {/* Message */}
-            <div className="space-y-2">
-                <label htmlFor="message" className="text-sm font-medium text-[var(--fg)]">
-                    Message <span className="text-[var(--error)]">*</span>
-                </label>
-                <textarea
-                    id="message"
-                    rows={6}
-                    placeholder="Your message..."
-                    className={cn(
-                        'w-full resize-none rounded-xl border border-[var(--border-color)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]',
-                        'placeholder:text-[var(--fg-subtle)]',
-                        'focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]',
-                        'transition-colors',
-                        errors.message && 'border-[var(--error)] focus:ring-[var(--error)]/50 focus:border-[var(--error)]'
-                    )}
-                    {...register('message', {
-                        required: 'Message is required',
-                        minLength: {
-                            value: 20,
-                            message: 'Message must be at least 20 characters',
-                        },
-                    })}
+                <CustomInput<IContactFormData>
+                    name='email'
+                    label='Email'
+                    type='email'
+                    value={formEmail}
+                    onChange={handleFormChange}
+                    placeholder='you@example.com'
+                    required
+                    disabled={pending}
+                    errorMessage={fieldErrors.email}
+                    inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
                 />
-                {errors.message && (
-                    <p className="text-xs text-[var(--error)]">
-                        {errors.message.message}
-                    </p>
-                )}
             </div>
 
-            {/* Submit Button */}
+            <CustomInput<IContactFormData>
+                name='subject'
+                label='Subject'
+                value={formSubject}
+                onChange={handleFormChange}
+                placeholder='What is this about?'
+                required
+                disabled={pending}
+                errorMessage={fieldErrors.subject}
+                inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
+            />
+
+            <CustomTextArea<IContactFormData>
+                name='message'
+                label='Message'
+                value={formMessage}
+                onChange={handleFormChange}
+                placeholder='Your message...'
+                rows={6}
+                required
+                disabled={pending}
+                errorMessage={fieldErrors.message}
+                textAreaClassName='min-h-36 resize-y rounded-xl border-border bg-background px-4 py-3 text-regular text-foreground placeholder:text-muted-foreground focus:ring-primary'
+            />
+
             <button
-                type="submit"
-                disabled={status === 'submitting'}
+                type='submit'
+                disabled={pending}
                 className={cn(
-                    'inline-flex items-center gap-2 px-8 py-3 rounded-full font-medium transition-all',
-                    'bg-[var(--fg)] text-[var(--bg)]',
+                    'inline-flex items-center gap-2 rounded-full px-8 py-3 text-label font-medium transition-all',
+                    'bg-foreground text-background',
                     'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
                 )}
             >
-                {status === 'submitting' ? (
+                {pending ? (
                     <>
-                        <Loader2 className="size-4 animate-spin" />
+                        <Loader2 className='size-4 animate-spin' />
                         Sending...
                     </>
                 ) : (
                     <>
-                        <Send className="size-4" />
+                        <Send className='size-4' />
                         Send Message
                     </>
                 )}

@@ -1,19 +1,6 @@
-/**
- * Server-safe HTML processor for Authorly content.
- *
- * Replicates the regex-based path from authorly-editor's processHtml (the Jl function)
- * so we can process HTML at build/request time on the server without importing the
- * full authorly-editor bundle (which has browser-only dependencies).
- *
- * This eliminates the FOUC caused by client-side processing in useEffect.
- */
-
 export interface ProcessHtmlServerOptions {
-    /** Wrap <pre><code> in .cbr-code-wrapper with toolbar + copy button */
     enableCodeCopy?: boolean;
-    /** Add .cbr-checked-item class to checked checklist items */
     enableChecklistStyles?: boolean;
-    /** Add target="_blank" rel="noopener noreferrer" to links */
     enableExternalLinks?: boolean;
 }
 
@@ -23,10 +10,6 @@ const DEFAULT_OPTIONS: ProcessHtmlServerOptions = {
     enableExternalLinks: true,
 };
 
-/**
- * Process HTML server-side to match what authorly-editor's processHtml does.
- * Safe to run in Node.js — uses only regex/string manipulation.
- */
 export function processHtmlServer(
     html: string,
     options: ProcessHtmlServerOptions = {}
@@ -34,7 +17,6 @@ export function processHtmlServer(
     const opts = { ...DEFAULT_OPTIONS, ...options };
     let result = html;
 
-    // 1. Remove editor-only UI elements (these shouldn't be in saved HTML, but clean up just in case)
     const editorClasses = [
         'cb-image-controls',
         'cb-image-placeholder',
@@ -44,7 +26,6 @@ export function processHtmlServer(
     ];
 
     for (const cls of editorClasses) {
-        // Match elements with this class and remove them (including content)
         result = result.replace(
             new RegExp(
                 `<[^>]+class="[^"]*\\b${cls}\\b[^"]*"[^>]*>[\\s\\S]*?<\\/[a-z][a-z0-9]*>`,
@@ -54,26 +35,21 @@ export function processHtmlServer(
         );
     }
 
-    // 2. Wrap code blocks in .cbr-code-wrapper with toolbar
     if (opts.enableCodeCopy) {
         result = result.replace(
             /<pre([^>]*)><code([^>]*)>([\s\S]*?)<\/code><\/pre>/gi,
             (_match, preAttrs: string, codeAttrs: string, content: string) => {
-                // Extract language from data-language or class="language-xxx"
                 let lang =
                     preAttrs.match(/data-language="([^"]*)"/i)?.[1] ||
                     codeAttrs.match(/language-(\w+)/i)?.[1] ||
                     '';
 
-                // Capitalize first letter for display, default to "Code"
                 if (lang) {
                     lang = lang.charAt(0).toUpperCase() + lang.slice(1);
                 } else {
                     lang = 'Code';
                 }
 
-                // Build the wrapper HTML
-                // Note: onclick handler uses inline script for copy functionality
                 return `<div class="cbr-code-wrapper">
   <div class="cbr-code-toolbar">
     <div class="cbr-code-toolbar-left">
@@ -93,17 +69,14 @@ export function processHtmlServer(
         );
     }
 
-    // 3. Add .cbr-checked-item class to checked checklist items
     if (opts.enableChecklistStyles) {
         result = result.replace(
             /<li([^>]*)>([\s\S]*?)<\/li>/gi,
             (match, attrs: string, content: string) => {
-                // Check if this is a checklist item with a checked checkbox
                 if (
                     /type=["']checkbox["']/i.test(content) &&
                     /\bchecked\b/i.test(content)
                 ) {
-                    // Add cbr-checked-item class to existing classes or create class attr
                     if (/\bclass=["'][^"']*["']/i.test(attrs)) {
                         attrs = attrs.replace(
                             /class=["']([^"']*)["']/i,
@@ -119,10 +92,8 @@ export function processHtmlServer(
         );
     }
 
-    // 4. Add target="_blank" rel="noopener noreferrer" to links without target
     if (opts.enableExternalLinks) {
         result = result.replace(/<a(\s[^>]*)>/gi, (match, attrs: string) => {
-            // Skip if already has target attribute
             if (/\btarget=/i.test(attrs)) {
                 return match;
             }

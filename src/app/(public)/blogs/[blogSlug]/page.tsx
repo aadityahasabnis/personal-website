@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
-import { ArticleContent, BlogHeader } from '@/components/content';
+import { BlogContent, BlogHeader } from '@/components/content';
+import { ContentComment } from '@/components/content/common/comment/ContentComment';
+import { ContentLikes, ContentViews } from '@/components/content/common/stats';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { getPublishedBlogByPath, getPublishedBlogStaticPaths, type IPublicBlogDetail } from '@/server/new/public/content/blog';
@@ -12,7 +14,7 @@ interface IBlogDetailPageProps {
 
 export const revalidate = 3600;
 
-export const generateStaticParams = async () => {
+export const generateStaticParams = async (): Promise<Array<{ blogSlug: string }>> => {
     const pathsResult = await getPublishedBlogStaticPaths();
     if (!pathsResult.success) return [];
 
@@ -72,7 +74,14 @@ export default async function BlogDetailPage({ params }: IBlogDetailPageProps) {
             <article>
                 <BlogHeader title={blog.title} description={blog.description} tags={blog.tags} publishedAt={blog.publishedAt} readingTime={blog.readingTime} updatedAt={blog.updatedAt} />
 
-                {content ? <ArticleContent content={content} className='px-0' /> : <p className='text-body text-muted-foreground'>This blog post is being prepared.</p>}
+                {content ? <BlogContent content={content} /> : <p className='text-body text-muted-foreground'>This blog post is being prepared.</p>}
+
+                <section className='flex items-center gap-3 mt-8' aria-label='Blog engagement stats'>
+                    <ContentViews contentType='blogs' contentId={blog.id} />
+                    <ContentLikes contentType='blogs' contentId={blog.id} />
+                </section>
+
+                <ContentComment contentType='blogs' contentId={blog.id} className='mt-12' />
             </article>
         </main>
     );

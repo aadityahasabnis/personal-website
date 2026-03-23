@@ -1,1245 +1,869 @@
 /**
- * Seed Script - Populate database with sample content
- * 
- * Run with: npx tsx scripts/seed.ts
+ * Canonical Seed Script
+ *
+ * Seeds all current collections with schema-valid sample data:
+ * - admins
+ * - topics
+ * - subtopics
+ * - content (article/blog/project)
+ * - pageStats
+ * - comments
+ * - subscribers
+ * - contacts
+ * - media
+ *
+ * Usage:
+ * npx tsx src/scripts/seed.ts
+ * npx tsx src/scripts/seed.ts --no-drop
+ * npx tsx src/scripts/seed.ts --adminEmail=admin@example.com --adminPassword=Admin@123 --adminName="Admin User"
  */
 
-import { env } from '@/env';
-import { MongoClient } from 'mongodb';
+import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
+import fs from 'node:fs';
+import path from 'node:path';
 
-const MONGODB_URI = process.env.MONGODB_URI || env.MONGODB_URI;
-const DB_NAME = 'portfolio';
+import { MEDIA_FILE_TYPES, MEDIA_FOLDERS } from '@/constants/mediaConstants';
+import { CONTACT_STATUS, CONTENT_TYPES, PROJECT_STATUS, PUBLISH_STATUS } from '@/constants/schemaConstants';
+import Admin from '@/server/models/Admin';
+import Comment from '@/server/models/Comment';
+import Contact from '@/server/models/Contact';
+import Content from '@/server/models/Content';
+import Media from '@/server/models/Media';
+import PageStats from '@/server/models/PageStats';
+import Subscriber from '@/server/models/Subscriber';
+import Subtopic from '@/server/models/Subtopic';
+import Topic from '@/server/models/Topic';
 
-// ===== TOPICS =====
-const SAMPLE_TOPICS = [
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const ENV_FILES = ['.env.local', '.env'];
+
+const loadEnvFile = (fileName: string): void => {
+    const filePath = path.resolve(process.cwd(), fileName);
+    if (!fs.existsSync(filePath)) return;
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    for (const rawLine of content.split(/\r?\n/)) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith('#')) continue;
+
+        const equalsIndex = line.indexOf('=');
+        if (equalsIndex <= 0) continue;
+
+        const key = line.slice(0, equalsIndex).trim();
+        const valueRaw = line.slice(equalsIndex + 1).trim();
+        if (!key || process.env[key] !== undefined) continue;
+
+        const value = valueRaw.replace(/^['\"]|['\"]$/g, '');
+        process.env[key] = value;
+    }
+};
+
+const bootstrapEnv = (): void => {
+    for (const envFile of ENV_FILES) {
+        loadEnvFile(envFile);
+    }
+};
+
+bootstrapEnv();
+
+const MONGODB_URI = process.env.MONGODB_URI ?? '';
+const DB_NAME = process.env.DB_NAME || 'portfolio';
+
+const daysAgo = (days: number): Date => new Date(Date.now() - days * DAY_MS);
+
+const getArg = (name: string, fallback: string): string => {
+    const arg = process.argv.find((entry) => entry.startsWith(`--${name}=`));
+    if (arg) return arg.slice(arg.indexOf('=') + 1);
+    return process.env[`SEED_${name.replace(/[A-Z]/g, (m) => `_${m}`).toUpperCase()}`] ?? fallback;
+};
+
+const shouldDropDatabase = !process.argv.includes('--no-drop');
+
+const ADMIN_EMAIL = getArg('adminEmail', 'aaditya.hasabnis@gmail.com');
+const ADMIN_PASSWORD = getArg('adminPassword', 'Admin@123');
+const ADMIN_NAME = getArg('adminName', 'Aaditya Hasabnis');
+
+type TopicKey = 'dsa' | 'web-development' | 'devops';
+type SubtopicKey =
+    | 'dsa-fundamentals'
+    | 'dsa-patterns'
+    | 'web-react'
+    | 'web-nextjs'
+    | 'devops-docker'
+    | 'devops-cicd';
+
+const topicSeeds: Array<{
+    key: TopicKey;
+    slug: string;
+    title: string;
+    description: string;
+    order: number;
+    featured: boolean;
+    published: boolean;
+}> = [
     {
+        key: 'dsa',
         slug: 'dsa',
         title: 'Data Structures & Algorithms',
-        description: 'Master the fundamentals of computer science with comprehensive tutorials on data structures, algorithms, and problem-solving patterns.',
-        icon: 'Code',
+        description: 'Foundational problem solving, complexity analysis, and interview-grade coding patterns.',
         order: 0,
-        published: true,
         featured: true,
-        metadata: {
-            articleCount: 4,
-            lastUpdated: new Date(),
-        },
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date(),
+        published: true,
     },
     {
+        key: 'web-development',
         slug: 'web-development',
         title: 'Web Development',
-        description: 'Modern web development tutorials covering React, Next.js, TypeScript, and full-stack development best practices.',
-        icon: 'Globe',
+        description: 'Modern React and Next.js engineering patterns for production-grade applications.',
         order: 1,
-        published: true,
         featured: true,
-        metadata: {
-            articleCount: 3,
-            lastUpdated: new Date(),
-        },
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date(),
+        published: true,
     },
     {
+        key: 'devops',
         slug: 'devops',
-        title: 'DevOps & Infrastructure',
-        description: 'Learn about CI/CD pipelines, containerization, cloud infrastructure, and deployment strategies for modern applications.',
-        icon: 'Server',
+        title: 'DevOps & Platform',
+        description: 'Delivery pipelines, containerization, and deployment strategy for reliable shipping.',
         order: 2,
-        published: true,
         featured: false,
-        metadata: {
-            articleCount: 2,
-            lastUpdated: new Date(),
-        },
-        createdAt: new Date('2024-01-05'),
-        updatedAt: new Date(),
-    },
-    {
-        slug: 'system-design',
-        title: 'System Design',
-        description: 'Architecture patterns, scalability principles, and design decisions for building robust distributed systems.',
-        icon: 'Network',
-        order: 3,
         published: true,
-        featured: false,
-        metadata: {
-            articleCount: 2,
-            lastUpdated: new Date(),
-        },
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date(),
     },
 ];
 
-// ===== SUBTOPICS =====
-const SAMPLE_SUBTOPICS = [
-    // DSA Subtopics
+const subtopicSeeds: Array<{
+    key: SubtopicKey;
+    topicKey: TopicKey;
+    slug: string;
+    title: string;
+    description: string;
+    order: number;
+    published: boolean;
+}> = [
     {
-        topicSlug: 'dsa',
+        key: 'dsa-fundamentals',
+        topicKey: 'dsa',
         slug: 'fundamentals',
-        title: 'DSA Fundamentals',
-        description: 'Core concepts and foundational knowledge for DSA',
+        title: 'Fundamentals',
+        description: 'Core concepts, complexity, and baseline data structures.',
         order: 0,
         published: true,
-        metadata: { articleCount: 2 },
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date(),
     },
     {
-        topicSlug: 'dsa',
-        slug: 'problem-solving',
-        title: 'Problem Solving Patterns',
-        description: 'Common patterns and techniques for solving algorithmic problems',
+        key: 'dsa-patterns',
+        topicKey: 'dsa',
+        slug: 'patterns',
+        title: 'Problem Patterns',
+        description: 'Sliding window, two pointers, prefix sums, and more.',
         order: 1,
         published: true,
-        metadata: { articleCount: 2 },
-        createdAt: new Date('2024-01-02'),
-        updatedAt: new Date(),
     },
-    // Web Development Subtopics
     {
-        topicSlug: 'web-development',
+        key: 'web-react',
+        topicKey: 'web-development',
         slug: 'react',
         title: 'React',
-        description: 'React patterns, hooks, and best practices',
+        description: 'Component architecture, hooks, and rendering strategy.',
         order: 0,
         published: true,
-        metadata: { articleCount: 2 },
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date(),
     },
     {
-        topicSlug: 'web-development',
+        key: 'web-nextjs',
+        topicKey: 'web-development',
         slug: 'nextjs',
         title: 'Next.js',
-        description: 'Building production-ready applications with Next.js',
+        description: 'App Router, streaming, caching, and server actions.',
         order: 1,
         published: true,
-        metadata: { articleCount: 1 },
-        createdAt: new Date('2024-01-02'),
-        updatedAt: new Date(),
     },
-    // DevOps Subtopics
     {
-        topicSlug: 'devops',
+        key: 'devops-docker',
+        topicKey: 'devops',
         slug: 'docker',
-        title: 'Docker & Containers',
-        description: 'Containerization with Docker and container orchestration',
+        title: 'Docker',
+        description: 'Container fundamentals and image/build hygiene.',
         order: 0,
         published: true,
-        metadata: { articleCount: 1 },
-        createdAt: new Date('2024-01-05'),
-        updatedAt: new Date(),
     },
     {
-        topicSlug: 'devops',
+        key: 'devops-cicd',
+        topicKey: 'devops',
         slug: 'ci-cd',
-        title: 'CI/CD Pipelines',
-        description: 'Continuous integration and deployment automation',
+        title: 'CI/CD',
+        description: 'Automation pipelines, checks, and release confidence.',
         order: 1,
         published: true,
-        metadata: { articleCount: 1 },
-        createdAt: new Date('2024-01-06'),
-        updatedAt: new Date(),
-    },
-    // System Design Subtopics
-    {
-        topicSlug: 'system-design',
-        slug: 'fundamentals',
-        title: 'Design Fundamentals',
-        description: 'Core principles of system design',
-        order: 0,
-        published: true,
-        metadata: { articleCount: 2 },
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date(),
     },
 ];
 
-// ===== TOPIC-BASED ARTICLES =====
-const SAMPLE_TOPIC_ARTICLES = [
-    // DSA - Fundamentals
+const articleSeeds: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    topicKey: TopicKey;
+    subtopicKey: SubtopicKey;
+    order: number;
+    featured: boolean;
+    publishStatus: 'draft' | 'published';
+    readingTime: number;
+}> = [
     {
-        type: 'article',
-        topicSlug: 'dsa',
-        subtopicSlug: 'fundamentals',
         slug: 'big-o-notation-explained',
         title: 'Big O Notation Explained',
-        description: 'Understanding time and space complexity analysis with practical examples.',
-        body: `# Big O Notation Explained
-
-Big O notation is a mathematical notation that describes the limiting behavior of a function. In computer science, we use it to classify algorithms according to how their run time or space requirements grow as the input size grows.
-
-## Why Does It Matter?
-
-Understanding Big O helps you:
-- **Compare algorithms** objectively
-- **Predict performance** at scale
-- **Make informed decisions** about data structure choices
-
-## Common Complexities
-
-### O(1) - Constant Time
-\`\`\`javascript
-function getFirst(arr) {
-  return arr[0]; // Always one operation
-}
-\`\`\`
-
-### O(n) - Linear Time
-\`\`\`javascript
-function findMax(arr) {
-  let max = arr[0];
-  for (let i = 1; i < arr.length; i++) {
-    if (arr[i] > max) max = arr[i];
-  }
-  return max;
-}
-\`\`\`
-
-### O(n²) - Quadratic Time
-\`\`\`javascript
-function bubbleSort(arr) {
-  for (let i = 0; i < arr.length; i++) {
-    for (let j = 0; j < arr.length - 1; j++) {
-      if (arr[j] > arr[j + 1]) {
-        [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
-      }
-    }
-  }
-  return arr;
-}
-\`\`\`
-
-### O(log n) - Logarithmic Time
-\`\`\`javascript
-function binarySearch(arr, target) {
-  let left = 0, right = arr.length - 1;
-  while (left <= right) {
-    const mid = Math.floor((left + right) / 2);
-    if (arr[mid] === target) return mid;
-    if (arr[mid] < target) left = mid + 1;
-    else right = mid - 1;
-  }
-  return -1;
-}
-\`\`\`
-
-## Conclusion
-
-Master Big O notation early - it's the foundation for all algorithm analysis.`,
-        tags: ['DSA', 'Algorithms', 'Complexity'],
-        published: true,
+        description: 'Practical complexity analysis for everyday algorithm design.',
+        body: '# Big O Notation Explained\n\nComplexity helps you reason about scaling behavior before production pain arrives.',
+        tags: ['dsa', 'algorithms', 'complexity'],
+        topicKey: 'dsa',
+        subtopicKey: 'dsa-fundamentals',
+        order: 0,
         featured: true,
-        order: 0,
+        publishStatus: 'published',
         readingTime: 6,
-        publishedAt: new Date('2024-01-15'),
-        createdAt: new Date('2024-01-10'),
-        updatedAt: new Date('2024-01-15'),
     },
     {
-        type: 'article',
-        topicSlug: 'dsa',
-        subtopicSlug: 'fundamentals',
-        slug: 'arrays-and-strings',
-        title: 'Arrays and Strings: The Foundation',
-        description: 'Deep dive into array and string manipulation techniques every developer should know.',
-        body: `# Arrays and Strings: The Foundation
-
-Arrays and strings are the most fundamental data structures. Mastering them is essential for technical interviews and everyday programming.
-
-## Array Fundamentals
-
-### Key Operations
-- Access: O(1)
-- Search: O(n)
-- Insert at end: O(1) amortized
-- Insert at index: O(n)
-
-### Common Patterns
-
-#### Two Pointers
-\`\`\`javascript
-function isPalindrome(s) {
-  let left = 0, right = s.length - 1;
-  while (left < right) {
-    if (s[left] !== s[right]) return false;
-    left++;
-    right--;
-  }
-  return true;
-}
-\`\`\`
-
-#### Sliding Window
-\`\`\`javascript
-function maxSum(arr, k) {
-  let sum = 0;
-  for (let i = 0; i < k; i++) sum += arr[i];
-  
-  let maxSum = sum;
-  for (let i = k; i < arr.length; i++) {
-    sum = sum - arr[i - k] + arr[i];
-    maxSum = Math.max(maxSum, sum);
-  }
-  return maxSum;
-}
-\`\`\`
-
-## String Manipulation
-
-### Essential Methods
-\`\`\`javascript
-const s = "hello world";
-s.split(' ');        // ['hello', 'world']
-s.substring(0, 5);   // 'hello'
-s.includes('world'); // true
-s.indexOf('o');      // 4
-\`\`\`
-
-## Practice Problems
-1. Reverse a string in-place
-2. Find all anagrams in a string
-3. Longest substring without repeating characters
-
-Master these patterns and you'll handle 80% of array/string problems.`,
-        tags: ['DSA', 'Arrays', 'Strings'],
-        published: true,
-        featured: false,
-        order: 1,
-        readingTime: 5,
-        publishedAt: new Date('2024-01-18'),
-        createdAt: new Date('2024-01-16'),
-        updatedAt: new Date('2024-01-18'),
-    },
-    // DSA - Problem Solving
-    {
-        type: 'article',
-        topicSlug: 'dsa',
-        subtopicSlug: 'problem-solving',
-        slug: 'two-pointer-technique',
-        title: 'Mastering the Two Pointer Technique',
-        description: 'Learn when and how to use the two pointer pattern to solve array problems efficiently.',
-        body: `# Mastering the Two Pointer Technique
-
-The two pointer technique is a pattern that uses two pointers to iterate through a data structure. It's incredibly versatile and efficient.
-
-## When to Use Two Pointers
-
-- Sorted arrays
-- Finding pairs with specific conditions
-- In-place array modifications
-- Palindrome problems
-
-## Pattern Variations
-
-### Opposite Direction
-\`\`\`javascript
-function twoSum(arr, target) {
-  let left = 0, right = arr.length - 1;
-  while (left < right) {
-    const sum = arr[left] + arr[right];
-    if (sum === target) return [left, right];
-    if (sum < target) left++;
-    else right--;
-  }
-  return [-1, -1];
-}
-\`\`\`
-
-### Same Direction (Fast/Slow)
-\`\`\`javascript
-function removeDuplicates(arr) {
-  if (arr.length === 0) return 0;
-  let slow = 0;
-  for (let fast = 1; fast < arr.length; fast++) {
-    if (arr[fast] !== arr[slow]) {
-      slow++;
-      arr[slow] = arr[fast];
-    }
-  }
-  return slow + 1;
-}
-\`\`\`
-
-## Classic Problems
-
-1. **Container With Most Water** - Opposite direction
-2. **Remove Duplicates** - Same direction
-3. **Three Sum** - Two pointers + iteration
-
-Practice these patterns until they become second nature!`,
-        tags: ['DSA', 'Patterns', 'Algorithms'],
-        published: true,
-        featured: false,
-        order: 0,
-        readingTime: 5,
-        publishedAt: new Date('2024-01-22'),
-        createdAt: new Date('2024-01-20'),
-        updatedAt: new Date('2024-01-22'),
-    },
-    {
-        type: 'article',
-        topicSlug: 'dsa',
-        subtopicSlug: 'problem-solving',
         slug: 'sliding-window-pattern',
         title: 'Sliding Window Pattern Deep Dive',
-        description: 'Master the sliding window technique for solving subarray and substring problems.',
-        body: `# Sliding Window Pattern Deep Dive
-
-The sliding window pattern is used for problems involving contiguous sequences (subarrays or substrings).
-
-## Types of Sliding Windows
-
-### Fixed Size Window
-\`\`\`javascript
-function maxSumSubarray(arr, k) {
-  let windowSum = 0;
-  for (let i = 0; i < k; i++) {
-    windowSum += arr[i];
-  }
-  
-  let maxSum = windowSum;
-  for (let i = k; i < arr.length; i++) {
-    windowSum = windowSum - arr[i - k] + arr[i];
-    maxSum = Math.max(maxSum, windowSum);
-  }
-  return maxSum;
-}
-\`\`\`
-
-### Dynamic Size Window
-\`\`\`javascript
-function minSubArrayLen(target, nums) {
-  let left = 0, sum = 0, minLen = Infinity;
-  
-  for (let right = 0; right < nums.length; right++) {
-    sum += nums[right];
-    
-    while (sum >= target) {
-      minLen = Math.min(minLen, right - left + 1);
-      sum -= nums[left];
-      left++;
-    }
-  }
-  
-  return minLen === Infinity ? 0 : minLen;
-}
-\`\`\`
-
-## When to Use
-
-- Maximum/minimum sum of k elements
-- Longest/shortest substring with condition
-- Count of subarrays meeting criteria
-
-The key insight: instead of recalculating, we slide!`,
-        tags: ['DSA', 'Patterns', 'Algorithms'],
-        published: true,
+        description: 'Efficient fixed and dynamic window techniques for array/string problems.',
+        body: '# Sliding Window Pattern\n\nUse incremental updates instead of repeated full-range recomputation.',
+        tags: ['dsa', 'patterns'],
+        topicKey: 'dsa',
+        subtopicKey: 'dsa-patterns',
+        order: 1,
         featured: false,
-        order: 1,
-        readingTime: 6,
-        publishedAt: new Date('2024-01-25'),
-        createdAt: new Date('2024-01-23'),
-        updatedAt: new Date('2024-01-25'),
-    },
-    // Web Development - React
-    {
-        type: 'article',
-        topicSlug: 'web-development',
-        subtopicSlug: 'react',
-        slug: 'react-hooks-deep-dive',
-        title: 'React Hooks: A Complete Deep Dive',
-        description: 'Understanding React hooks from basics to advanced patterns with practical examples.',
-        body: `# React Hooks: A Complete Deep Dive
-
-Hooks revolutionized React development. Let's explore them from basics to advanced patterns.
-
-## Essential Hooks
-
-### useState
-\`\`\`tsx
-const [count, setCount] = useState(0);
-
-// Functional update
-setCount(prev => prev + 1);
-\`\`\`
-
-### useEffect
-\`\`\`tsx
-useEffect(() => {
-  const subscription = subscribe();
-  return () => subscription.unsubscribe();
-}, [dependency]);
-\`\`\`
-
-### useCallback & useMemo
-\`\`\`tsx
-const memoizedCallback = useCallback(() => {
-  doSomething(a, b);
-}, [a, b]);
-
-const memoizedValue = useMemo(() => computeExpensive(a), [a]);
-\`\`\`
-
-## Custom Hooks
-
-\`\`\`tsx
-function useLocalStorage<T>(key: string, initial: T) {
-  const [value, setValue] = useState<T>(() => {
-    const stored = localStorage.getItem(key);
-    return stored ? JSON.parse(stored) : initial;
-  });
-
-  useEffect(() => {
-    localStorage.setItem(key, JSON.stringify(value));
-  }, [key, value]);
-
-  return [value, setValue] as const;
-}
-\`\`\`
-
-## Best Practices
-
-1. **Keep hooks at the top level** - Never inside conditions
-2. **Use the dependency array correctly** - Include all dependencies
-3. **Extract logic into custom hooks** - Reuse and test
-
-Hooks make functional components powerful and composable!`,
-        tags: ['React', 'Hooks', 'JavaScript'],
-        published: true,
-        featured: true,
-        order: 0,
+        publishStatus: 'published',
         readingTime: 7,
-        publishedAt: new Date('2024-01-20'),
-        createdAt: new Date('2024-01-18'),
-        updatedAt: new Date('2024-01-20'),
     },
     {
-        type: 'article',
-        topicSlug: 'web-development',
-        subtopicSlug: 'react',
-        slug: 'react-server-components',
-        title: 'Understanding React Server Components',
-        description: 'A complete guide to React Server Components and the new mental model for React.',
-        body: `# Understanding React Server Components
-
-React Server Components (RSC) represent a paradigm shift in how we build React applications.
-
-## The Core Concept
-
-Server Components run only on the server:
-- Zero client-side JavaScript
-- Direct database access
-- Automatic code splitting
-
-## Server vs Client
-
-\`\`\`tsx
-// Server Component (default)
-async function ArticleList() {
-  const articles = await db.articles.findMany();
-  return (
-    <ul>
-      {articles.map(a => <li key={a.id}>{a.title}</li>)}
-    </ul>
-  );
-}
-
-// Client Component
-'use client';
-function LikeButton({ id }) {
-  const [liked, setLiked] = useState(false);
-  return (
-    <button onClick={() => setLiked(!liked)}>
-      {liked ? '❤️' : '🤍'}
-    </button>
-  );
-}
-\`\`\`
-
-## Composition Patterns
-
-\`\`\`tsx
-// Server Component with Client island
-function Article({ article }) {
-  return (
-    <article>
-      <h1>{article.title}</h1>
-      <p>{article.content}</p>
-      {/* Client island */}
-      <LikeButton id={article.id} />
-    </article>
-  );
-}
-\`\`\`
-
-## Benefits
-
-1. **Smaller bundles** - Server-only code doesn't ship
-2. **Better SEO** - Full HTML on first paint
-3. **Simpler data fetching** - No useEffect waterfall
-
-Embrace the new model - it's the future of React!`,
-        tags: ['React', 'Next.js', 'Server Components'],
-        published: true,
-        featured: true,
-        order: 1,
-        readingTime: 6,
-        publishedAt: new Date('2024-01-25'),
-        createdAt: new Date('2024-01-22'),
-        updatedAt: new Date('2024-01-25'),
-    },
-    // Web Development - Next.js
-    {
-        type: 'article',
-        topicSlug: 'web-development',
-        subtopicSlug: 'nextjs',
-        slug: 'nextjs-app-router-guide',
-        title: 'Next.js App Router: Complete Guide',
-        description: 'Everything you need to know about the Next.js App Router and its powerful features.',
-        body: `# Next.js App Router: Complete Guide
-
-The App Router is Next.js's new paradigm for building React applications with server-first rendering.
-
-## File-Based Routing
-
-\`\`\`
-app/
-  page.tsx           # /
-  about/page.tsx     # /about
-  blog/[slug]/page.tsx  # /blog/:slug
-  (auth)/login/page.tsx # /login (grouped)
-\`\`\`
-
-## Layouts
-
-\`\`\`tsx
-// app/layout.tsx
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        <Header />
-        {children}
-        <Footer />
-      </body>
-    </html>
-  );
-}
-\`\`\`
-
-## Data Fetching
-
-\`\`\`tsx
-// Server Component - direct fetch
-async function Page() {
-  const data = await fetch('https://api.example.com/data');
-  return <div>{data.title}</div>;
-}
-
-// With revalidation
-export const revalidate = 3600; // Revalidate every hour
-\`\`\`
-
-## Server Actions
-
-\`\`\`tsx
-'use server';
-
-async function createPost(formData: FormData) {
-  const title = formData.get('title');
-  await db.posts.create({ title });
-  revalidatePath('/posts');
-}
-\`\`\`
-
-## Streaming & Suspense
-
-\`\`\`tsx
-<Suspense fallback={<Loading />}>
-  <SlowComponent />
-</Suspense>
-\`\`\`
-
-The App Router makes full-stack React development simple and performant!`,
-        tags: ['Next.js', 'React', 'App Router'],
-        published: true,
-        featured: true,
+        slug: 'react-hooks-performance-guide',
+        title: 'React Hooks Performance Guide',
+        description: 'Where hooks help, where they hurt, and how to measure render churn.',
+        body: '# React Hooks Performance Guide\n\nPrefer data-flow clarity first, optimization only with evidence.',
+        tags: ['react', 'performance', 'frontend'],
+        topicKey: 'web-development',
+        subtopicKey: 'web-react',
         order: 0,
+        featured: true,
+        publishStatus: 'published',
         readingTime: 8,
-        publishedAt: new Date('2024-01-28'),
-        createdAt: new Date('2024-01-26'),
-        updatedAt: new Date('2024-01-28'),
-    },
-    // DevOps - Docker
-    {
-        type: 'article',
-        topicSlug: 'devops',
-        subtopicSlug: 'docker',
-        slug: 'docker-for-developers',
-        title: 'Docker for Developers: A Practical Guide',
-        description: 'Learn Docker fundamentals and how to containerize your applications effectively.',
-        body: `# Docker for Developers: A Practical Guide
-
-Docker makes it easy to package and run applications in isolated containers.
-
-## Key Concepts
-
-- **Image**: Blueprint for containers
-- **Container**: Running instance of an image
-- **Dockerfile**: Instructions to build an image
-
-## Basic Dockerfile
-
-\`\`\`dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-\`\`\`
-
-## Essential Commands
-
-\`\`\`bash
-# Build an image
-docker build -t myapp .
-
-# Run a container
-docker run -p 3000:3000 myapp
-
-# List containers
-docker ps
-
-# Stop a container
-docker stop <container-id>
-\`\`\`
-
-## Docker Compose
-
-\`\`\`yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgres://db:5432/myapp
-  db:
-    image: postgres:15
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-volumes:
-  pgdata:
-\`\`\`
-
-Start with Docker locally, then scale to production!`,
-        tags: ['Docker', 'DevOps', 'Containers'],
-        published: true,
-        featured: false,
-        order: 0,
-        readingTime: 6,
-        publishedAt: new Date('2024-01-30'),
-        createdAt: new Date('2024-01-28'),
-        updatedAt: new Date('2024-01-30'),
-    },
-    // DevOps - CI/CD
-    {
-        type: 'article',
-        topicSlug: 'devops',
-        subtopicSlug: 'ci-cd',
-        slug: 'github-actions-guide',
-        title: 'GitHub Actions: Automate Everything',
-        description: 'Set up CI/CD pipelines with GitHub Actions for testing, building, and deploying.',
-        body: `# GitHub Actions: Automate Everything
-
-GitHub Actions lets you automate your software development workflows directly in your repository.
-
-## Basic Workflow
-
-\`\`\`yaml
-name: CI
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm ci
-      - run: npm test
-\`\`\`
-
-## Matrix Builds
-
-\`\`\`yaml
-strategy:
-  matrix:
-    node: [18, 20, 22]
-    os: [ubuntu-latest, macos-latest]
-\`\`\`
-
-## Deploy to Vercel
-
-\`\`\`yaml
-deploy:
-  needs: test
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
-    - uses: amondnet/vercel-action@v25
-      with:
-        vercel-token: \${{ secrets.VERCEL_TOKEN }}
-        vercel-org-id: \${{ secrets.ORG_ID }}
-        vercel-project-id: \${{ secrets.PROJECT_ID }}
-\`\`\`
-
-## Best Practices
-
-1. Cache dependencies for faster builds
-2. Use secrets for sensitive data
-3. Run tests before deployment
-
-Automate early and often!`,
-        tags: ['GitHub Actions', 'CI/CD', 'DevOps'],
-        published: true,
-        featured: false,
-        order: 0,
-        readingTime: 5,
-        publishedAt: new Date('2024-02-01'),
-        createdAt: new Date('2024-01-30'),
-        updatedAt: new Date('2024-02-01'),
-    },
-    // System Design - Fundamentals
-    {
-        type: 'article',
-        topicSlug: 'system-design',
-        subtopicSlug: 'fundamentals',
-        slug: 'caching-strategies',
-        title: 'Caching Strategies for Web Applications',
-        description: 'Learn different caching strategies and when to use them in your applications.',
-        body: `# Caching Strategies for Web Applications
-
-Caching is one of the most effective ways to improve application performance.
-
-## Cache Layers
-
-1. **Browser Cache** - Client-side
-2. **CDN Cache** - Edge network
-3. **Application Cache** - Redis/Memcached
-4. **Database Cache** - Query cache
-
-## Common Strategies
-
-### Cache-Aside (Lazy Loading)
-\`\`\`typescript
-async function getData(key: string) {
-  let data = await cache.get(key);
-  if (!data) {
-    data = await db.query(key);
-    await cache.set(key, data, { ttl: 3600 });
-  }
-  return data;
-}
-\`\`\`
-
-### Write-Through
-\`\`\`typescript
-async function saveData(key: string, data: any) {
-  await db.save(key, data);
-  await cache.set(key, data);
-}
-\`\`\`
-
-### Write-Behind (Write-Back)
-- Queue writes to cache
-- Async flush to database
-
-## Invalidation Strategies
-
-1. **TTL (Time To Live)** - Expire after time
-2. **Event-based** - Invalidate on write
-3. **LRU (Least Recently Used)** - Evict old entries
-
-## Key Decisions
-
-- What to cache?
-- How long to cache?
-- When to invalidate?
-
-Cache wisely - it's not just about speed, it's about consistency!`,
-        tags: ['System Design', 'Caching', 'Performance'],
-        published: true,
-        featured: false,
-        order: 0,
-        readingTime: 6,
-        publishedAt: new Date('2024-02-03'),
-        createdAt: new Date('2024-02-01'),
-        updatedAt: new Date('2024-02-03'),
     },
     {
-        type: 'article',
-        topicSlug: 'system-design',
-        subtopicSlug: 'fundamentals',
-        slug: 'database-scaling',
-        title: 'Database Scaling: From Zero to Millions',
-        description: 'Strategies for scaling databases as your application grows.',
-        body: `# Database Scaling: From Zero to Millions
-
-As your application grows, your database strategy must evolve.
-
-## Scaling Strategies
-
-### Vertical Scaling (Scale Up)
-- Add more CPU/RAM
-- Simple but limited
-- Good for: < 100K users
-
-### Horizontal Scaling (Scale Out)
-- Add more machines
-- Complex but unlimited
-- Good for: 100K+ users
-
-## Read Scaling
-
-\`\`\`
-Primary DB (writes) 
-    ├── Replica 1 (reads)
-    ├── Replica 2 (reads)
-    └── Replica 3 (reads)
-\`\`\`
-
-## Write Scaling: Sharding
-
-\`\`\`typescript
-function getShard(userId: string) {
-  const hash = hashFunction(userId);
-  return hash % NUM_SHARDS;
-}
-\`\`\`
-
-## Common Patterns
-
-### Connection Pooling
-\`\`\`typescript
-const pool = new Pool({
-  max: 20,
-  idleTimeoutMillis: 30000
-});
-\`\`\`
-
-### Read Replicas
-- Route reads to replicas
-- Route writes to primary
-- Handle replication lag
-
-## When to Scale
-
-1. Response time increasing
-2. CPU/Memory > 70%
-3. Connection limits hit
-
-Scale before you need to - reactive scaling is expensive!`,
-        tags: ['System Design', 'Database', 'Scaling'],
-        published: true,
-        featured: false,
+        slug: 'nextjs-cache-invalidation-strategies',
+        title: 'Next.js Cache Invalidation Strategies',
+        description: 'How to use route-level revalidation and deterministic content freshness.',
+        body: '# Next.js Cache Invalidation\n\nTreat cache invalidation as a product requirement, not a deployment side-effect.',
+        tags: ['nextjs', 'cache', 'ssg', 'isr'],
+        topicKey: 'web-development',
+        subtopicKey: 'web-nextjs',
         order: 1,
+        featured: true,
+        publishStatus: 'published',
+        readingTime: 9,
+    },
+    {
+        slug: 'docker-multi-stage-builds',
+        title: 'Docker Multi-Stage Builds',
+        description: 'Smaller, safer production images using build/runtime separation.',
+        body: '# Docker Multi-Stage Builds\n\nSplit dependency compilation from runtime delivery for cleaner artifacts.',
+        tags: ['docker', 'devops'],
+        topicKey: 'devops',
+        subtopicKey: 'devops-docker',
+        order: 0,
+        featured: false,
+        publishStatus: 'published',
+        readingTime: 6,
+    },
+    {
+        slug: 'github-actions-release-pipeline',
+        title: 'GitHub Actions Release Pipeline',
+        description: 'Build, test, and deploy workflows with policy-enforced merge gates.',
+        body: '# GitHub Actions Release Pipeline\n\nMake CI predictable by narrowing workflow responsibilities and failure blast radius.',
+        tags: ['github-actions', 'ci-cd'],
+        topicKey: 'devops',
+        subtopicKey: 'devops-cicd',
+        order: 1,
+        featured: false,
+        publishStatus: 'draft',
         readingTime: 7,
-        publishedAt: new Date('2024-02-05'),
-        createdAt: new Date('2024-02-03'),
-        updatedAt: new Date('2024-02-05'),
     },
 ];
 
-// Sample Notes (unchanged from original)
-const SAMPLE_NOTES = [
+const blogSeeds: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    featured: boolean;
+    publishStatus: 'draft' | 'published';
+    readingTime: number;
+}> = [
     {
-        type: 'note',
-        slug: 'til-css-has-selector',
-        title: 'TIL: The CSS :has() Selector',
-        description: 'Finally, a parent selector in CSS! The :has() pseudo-class lets you style elements based on their children.',
-        body: `The \`:has()\` selector is a game-changer for CSS:
-
-\`\`\`css
-/* Style a card that contains an image */
-.card:has(img) {
-  padding: 0;
-}
-
-/* Style a form with invalid inputs */
-form:has(:invalid) {
-  border-color: red;
-}
-\`\`\`
-
-Browser support is now excellent across all modern browsers.`,
-        tags: ['CSS', 'TIL'],
-        published: true,
-        publishedAt: new Date('2024-01-28'),
-        createdAt: new Date('2024-01-28'),
-        updatedAt: new Date('2024-01-28'),
-    },
-    {
-        type: 'note',
-        slug: 'git-amend-without-editing',
-        title: 'Git: Amend Without Editing Message',
-        description: 'Quick tip for amending the last commit without changing the commit message.',
-        body: `To add changes to the last commit without editing the message:
-
-\`\`\`bash
-git commit --amend --no-edit
-\`\`\`
-
-Useful when you forgot to add a file or made a quick fix.`,
-        tags: ['Git', 'CLI', 'TIL'],
-        published: true,
-        publishedAt: new Date('2024-01-26'),
-        createdAt: new Date('2024-01-26'),
-        updatedAt: new Date('2024-01-26'),
-    },
-    {
-        type: 'note',
-        slug: 'typescript-satisfies-operator',
-        title: 'TypeScript: The satisfies Operator',
-        description: 'Using satisfies for better type inference while still validating types.',
-        body: `The \`satisfies\` operator validates a type without widening it:
-
-\`\`\`typescript
-const config = {
-  port: 3000,
-  host: 'localhost'
-} satisfies Record<string, string | number>;
-
-// config.port is number, not string | number!
-\`\`\`
-
-This gives you both validation AND precise inference.`,
-        tags: ['TypeScript', 'TIL'],
-        published: true,
-        publishedAt: new Date('2024-01-24'),
-        createdAt: new Date('2024-01-24'),
-        updatedAt: new Date('2024-01-24'),
-    },
-];
-
-// Article Stats for topic-based articles
-const SAMPLE_ARTICLE_STATS = [
-    { slug: 'dsa/big-o-notation-explained', views: 1547, likes: 98, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'dsa/arrays-and-strings', views: 892, likes: 67, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'dsa/two-pointer-technique', views: 734, likes: 52, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'dsa/sliding-window-pattern', views: 621, likes: 45, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'web-development/react-hooks-deep-dive', views: 1823, likes: 134, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'web-development/react-server-components', views: 2145, likes: 156, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'web-development/nextjs-app-router-guide', views: 1567, likes: 112, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'devops/docker-for-developers', views: 987, likes: 76, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'devops/github-actions-guide', views: 756, likes: 58, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'system-design/caching-strategies', views: 534, likes: 42, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'system-design/database-scaling', views: 478, likes: 38, createdAt: new Date(), updatedAt: new Date() },
-];
-
-// Page Stats for notes
-const SAMPLE_PAGE_STATS = [
-    { slug: 'til-css-has-selector', views: 234, likes: 23, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'git-amend-without-editing', views: 189, likes: 15, createdAt: new Date(), updatedAt: new Date() },
-    { slug: 'typescript-satisfies-operator', views: 312, likes: 28, createdAt: new Date(), updatedAt: new Date() },
-];
-
-// Sample Projects (unchanged from original)
-const SAMPLE_PROJECTS = [
-    {
-        slug: 'personal-website',
-        title: 'Personal Website',
-        description: 'A fast, minimal, SEO-first personal knowledge system built with Next.js, MongoDB, and Tailwind CSS.',
-        longDescription: 'This website showcases my work and writing. Built with Next.js 16 App Router, featuring Server Components, ISR, and streaming for optimal performance.',
-        tags: ['Next.js', 'TypeScript', 'MongoDB', 'Tailwind CSS'],
-        github: 'https://github.com/aadityahasabnis/portfolio',
-        live: 'https://aadityahasabnis.com',
+        slug: 'cache-invalidation',
+        title: 'Cache Invalidation Notes from Production Incidents',
+        description: 'Pragmatic lessons from stale reads and race conditions in real systems.',
+        body: '# Cache Invalidation Notes\n\nEvery stale read has a user-facing cost. Model freshness intentionally.',
+        tags: ['cache', 'incident', 'backend'],
         featured: true,
-        status: 'active',
-        order: 1,
-        createdAt: new Date('2024-01-01'),
-        updatedAt: new Date('2024-01-30'),
+        publishStatus: 'published',
+        readingTime: 5,
     },
     {
-        slug: 'react-component-library',
-        title: 'React Component Library',
-        description: 'A collection of reusable, accessible React components with TypeScript support and Storybook documentation.',
-        longDescription: 'Built with accessibility in mind, this component library provides a solid foundation for React applications.',
-        tags: ['React', 'TypeScript', 'Storybook', 'Accessibility'],
-        github: 'https://github.com/aadityahasabnis/react-components',
-        featured: true,
-        status: 'active',
-        order: 2,
-        createdAt: new Date('2023-08-15'),
-        updatedAt: new Date('2024-01-15'),
-    },
-    {
-        slug: 'cli-productivity-tools',
-        title: 'CLI Productivity Tools',
-        description: 'A suite of command-line tools to automate repetitive development tasks and boost productivity.',
-        tags: ['Node.js', 'CLI', 'Automation'],
-        github: 'https://github.com/aadityahasabnis/cli-tools',
+        slug: 'shipping-with-confidence',
+        title: 'Shipping with Confidence',
+        description: 'Reducing release anxiety with deterministic checks and observability baselines.',
+        body: '# Shipping with Confidence\n\nFast release cycles need strong rollback and clear runtime signals.',
+        tags: ['release', 'quality'],
         featured: false,
-        status: 'active',
-        order: 3,
-        createdAt: new Date('2023-06-01'),
-        updatedAt: new Date('2023-12-01'),
+        publishStatus: 'published',
+        readingTime: 4,
+    },
+    {
+        slug: 'draft-notes-on-agentic-workflows',
+        title: 'Draft Notes on Agentic Workflows',
+        description: 'Early thinking on task decomposition and review loops.',
+        body: '# Draft Notes\n\nWork in progress on practical agent collaboration patterns.',
+        tags: ['ai', 'workflow'],
+        featured: false,
+        publishStatus: 'draft',
+        readingTime: 3,
     },
 ];
 
-// Sample Comments
-const SAMPLE_COMMENTS = [
+const projectSeeds: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    body: string;
+    tags: string[];
+    techStack: string[];
+    githubUrl: string | null;
+    liveUrl: string | null;
+    status: string;
+    order: number;
+    featured: boolean;
+    publishStatus: 'draft' | 'published';
+    readingTime: number;
+}> = [
     {
-        articleSlug: 'dsa/big-o-notation-explained',
-        author: { name: 'Alex Chen', email: 'alex@example.com' },
-        content: 'Great explanation! The visual examples really helped me understand the differences between O(n) and O(log n).',
-        approved: true,
-        likes: 12,
-        createdAt: new Date('2024-01-16'),
-        updatedAt: new Date('2024-01-16'),
+        slug: 'portfolio-rebuild',
+        title: 'Portfolio Rebuild',
+        description: 'A static-first personal platform with modular server actions and CMS workflows.',
+        body: '# Portfolio Rebuild\n\nNext.js App Router system focused on SEO, ISR, and maintainable backend contracts.',
+        tags: ['nextjs', 'mongodb', 'typescript'],
+        techStack: ['Next.js', 'TypeScript', 'MongoDB', 'Tailwind CSS'],
+        githubUrl: 'https://github.com/aadityahasabnis/personal-website',
+        liveUrl: 'https://aadityahasabnis.com',
+        status: PROJECT_STATUS.LIVE,
+        order: 0,
+        featured: true,
+        publishStatus: 'published',
+        readingTime: 6,
     },
     {
-        articleSlug: 'dsa/big-o-notation-explained',
-        author: { name: 'Sarah Johnson', email: 'sarah@example.com' },
-        content: 'Could you add more examples for O(n!) factorial time complexity?',
-        approved: true,
-        likes: 5,
-        createdAt: new Date('2024-01-17'),
-        updatedAt: new Date('2024-01-17'),
+        slug: 'query-profiler',
+        title: 'Query Profiler Toolkit',
+        description: 'Scripts and diagnostics for query-plan verification and index hardening.',
+        body: '# Query Profiler Toolkit\n\nWorkflow for spotting in-memory sorts and validating index strategy.',
+        tags: ['performance', 'mongodb'],
+        techStack: ['Node.js', 'MongoDB', 'TypeScript'],
+        githubUrl: 'https://github.com/aadityahasabnis/query-profiler-toolkit',
+        liveUrl: null,
+        status: PROJECT_STATUS.IN_PROGRESS,
+        order: 1,
+        featured: false,
+        publishStatus: 'published',
+        readingTime: 5,
     },
     {
-        articleSlug: 'web-development/react-hooks-deep-dive',
-        author: { name: 'Mike Wilson', email: 'mike@example.com' },
-        content: 'The custom hook example is exactly what I needed for my project. Thanks!',
-        approved: true,
-        likes: 8,
-        createdAt: new Date('2024-01-21'),
-        updatedAt: new Date('2024-01-21'),
+        slug: 'design-system-lab',
+        title: 'Design System Lab',
+        description: 'Reusable token-driven component primitives for consistent product UI.',
+        body: '# Design System Lab\n\nExploration of semantic tokens, component variants, and accessibility defaults.',
+        tags: ['design-system', 'ui'],
+        techStack: ['React', 'TypeScript'],
+        githubUrl: null,
+        liveUrl: null,
+        status: PROJECT_STATUS.ARCHIVED,
+        order: 2,
+        featured: false,
+        publishStatus: 'draft',
+        readingTime: 4,
     },
 ];
 
-async function seed() {
-    console.log('🌱 Seeding database...\n');
+const buildSeo = (title: string, description: string, keywords: string[], ogImage: string | null = null) => ({
+    title,
+    description,
+    keywords,
+    ogImage,
+    canonicalUrl: null,
+    noIndex: false,
+});
 
-    const client = await MongoClient.connect(MONGODB_URI);
-    const db = client.db(DB_NAME);
-
-    try {
-        // Clear existing data
-        console.log('🗑️  Clearing existing data...');
-        await db.collection('content').deleteMany({});
-        await db.collection('topics').deleteMany({});
-        await db.collection('subtopics').deleteMany({});
-        await db.collection('article_stats').deleteMany({});
-        await db.collection('pageStats').deleteMany({});
-        await db.collection('projects').deleteMany({});
-        await db.collection('comments').deleteMany({});
-
-        // Insert topics
-        console.log('📂 Inserting topics...');
-        await db.collection('topics').insertMany(SAMPLE_TOPICS);
-        console.log(`   ✓ Inserted ${SAMPLE_TOPICS.length} topics`);
-
-        // Insert subtopics
-        console.log('📁 Inserting subtopics...');
-        await db.collection('subtopics').insertMany(SAMPLE_SUBTOPICS);
-        console.log(`   ✓ Inserted ${SAMPLE_SUBTOPICS.length} subtopics`);
-
-        // Insert topic-based articles
-        console.log('📝 Inserting topic articles...');
-        await db.collection('content').insertMany(SAMPLE_TOPIC_ARTICLES);
-        console.log(`   ✓ Inserted ${SAMPLE_TOPIC_ARTICLES.length} articles`);
-
-        // Insert notes
-        console.log('📌 Inserting notes...');
-        await db.collection('content').insertMany(SAMPLE_NOTES);
-        console.log(`   ✓ Inserted ${SAMPLE_NOTES.length} notes`);
-
-        // Insert projects
-        console.log('🚀 Inserting projects...');
-        await db.collection('projects').insertMany(SAMPLE_PROJECTS);
-        console.log(`   ✓ Inserted ${SAMPLE_PROJECTS.length} projects`);
-
-        // Insert article stats
-        console.log('📊 Inserting article stats...');
-        await db.collection('article_stats').insertMany(SAMPLE_ARTICLE_STATS);
-        console.log(`   ✓ Inserted ${SAMPLE_ARTICLE_STATS.length} article stats`);
-
-        // Insert page stats (for notes)
-        console.log('📈 Inserting page stats...');
-        await db.collection('pageStats').insertMany(SAMPLE_PAGE_STATS);
-        console.log(`   ✓ Inserted ${SAMPLE_PAGE_STATS.length} page stats`);
-
-        // Insert comments
-        console.log('💬 Inserting comments...');
-        await db.collection('comments').insertMany(SAMPLE_COMMENTS);
-        console.log(`   ✓ Inserted ${SAMPLE_COMMENTS.length} comments`);
-
-        // Create indexes
-        console.log('🔍 Creating indexes...');
-        
-        // Topics indexes
-        await db.collection('topics').createIndex({ slug: 1 }, { unique: true });
-        await db.collection('topics').createIndex({ published: 1, order: 1 });
-        await db.collection('topics').createIndex({ featured: 1, order: 1 });
-        
-        // Subtopics indexes
-        await db.collection('subtopics').createIndex({ topicSlug: 1, slug: 1 }, { unique: true });
-        await db.collection('subtopics').createIndex({ topicSlug: 1, order: 1 });
-        
-        // Content indexes
-        await db.collection('content').createIndex({ type: 1, slug: 1 });
-        await db.collection('content').createIndex({ type: 1, topicSlug: 1, slug: 1 });
-        await db.collection('content').createIndex({ type: 1, published: 1, publishedAt: -1 });
-        await db.collection('content').createIndex({ type: 1, featured: 1 });
-        await db.collection('content').createIndex({ topicSlug: 1, subtopicSlug: 1, order: 1 });
-        await db.collection('content').createIndex({ tags: 1 });
-        
-        // Stats indexes
-        await db.collection('article_stats').createIndex({ slug: 1 }, { unique: true });
-        await db.collection('pageStats').createIndex({ slug: 1 }, { unique: true });
-        
-        // Projects indexes
-        await db.collection('projects').createIndex({ slug: 1 }, { unique: true });
-        await db.collection('projects').createIndex({ featured: 1, order: 1 });
-        
-        // Comments indexes
-        await db.collection('comments').createIndex({ articleSlug: 1, approved: 1, createdAt: -1 });
-        
-        console.log('   ✓ Indexes created');
-
-        console.log('\n✅ Database seeded successfully!');
-        console.log('\n📋 Summary:');
-        console.log(`   - ${SAMPLE_TOPICS.length} topics`);
-        console.log(`   - ${SAMPLE_SUBTOPICS.length} subtopics`);
-        console.log(`   - ${SAMPLE_TOPIC_ARTICLES.length} articles`);
-        console.log(`   - ${SAMPLE_NOTES.length} notes`);
-        console.log(`   - ${SAMPLE_PROJECTS.length} projects`);
-        console.log(`   - ${SAMPLE_ARTICLE_STATS.length + SAMPLE_PAGE_STATS.length} stats records`);
-        console.log(`   - ${SAMPLE_COMMENTS.length} comments`);
-        console.log('\n🚀 You can now start the dev server: npm run dev');
-
-    } catch (error) {
-        console.error('❌ Seed failed:', error);
-        throw error;
-    } finally {
-        await client.close();
-    }
+async function syncAllIndexes(): Promise<void> {
+    await Promise.all([
+        Admin.syncIndexes(),
+        Topic.syncIndexes(),
+        Subtopic.syncIndexes(),
+        Content.syncIndexes(),
+        PageStats.syncIndexes(),
+        Comment.syncIndexes(),
+        Subscriber.syncIndexes(),
+        Contact.syncIndexes(),
+        Media.syncIndexes(),
+    ]);
 }
 
-seed().catch(console.error);
+async function clearAllCollections(): Promise<void> {
+    await Promise.all([
+        Media.deleteMany({}),
+        Contact.deleteMany({}),
+        Subscriber.deleteMany({}),
+        Comment.deleteMany({}),
+        PageStats.deleteMany({}),
+        Content.deleteMany({}),
+        Subtopic.deleteMany({}),
+        Topic.deleteMany({}),
+        Admin.deleteMany({}),
+    ]);
+}
+
+async function seed(): Promise<void> {
+    console.log('🌱 Starting canonical seed...');
+
+    if (!MONGODB_URI || !(MONGODB_URI.startsWith('mongodb://') || MONGODB_URI.startsWith('mongodb+srv://'))) {
+        throw new Error('Missing or invalid MONGODB_URI. Set it in .env.local (or .env), or pass it inline before running the seed script.');
+    }
+
+    await mongoose.connect(MONGODB_URI, {
+        dbName: DB_NAME,
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+    });
+    const db = mongoose.connection.db;
+    if (!db) throw new Error('Database connection is not available');
+
+    if (shouldDropDatabase) {
+        console.log('🗑️ Dropping database before seed...');
+        await db.dropDatabase();
+    } else {
+        console.log('🧹 Clearing seeded collections...');
+        await clearAllCollections();
+    }
+
+    console.log('🔍 Syncing indexes from models...');
+    await syncAllIndexes();
+
+    console.log('👤 Creating admin...');
+    const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
+    const admin = await Admin.create({
+        email: ADMIN_EMAIL,
+        name: ADMIN_NAME,
+        passwordHash,
+        lastLoginAt: null,
+        recoveryEmail: null,
+        image: null,
+    });
+
+    const publishedArticles = articleSeeds.filter((seed) => seed.publishStatus === PUBLISH_STATUS.PUBLISHED);
+
+    const topicContentCountByKey = new Map<TopicKey, number>();
+    for (const seed of topicSeeds) topicContentCountByKey.set(seed.key, 0);
+    for (const seed of publishedArticles) {
+        topicContentCountByKey.set(seed.topicKey, (topicContentCountByKey.get(seed.topicKey) ?? 0) + 1);
+    }
+
+    const subtopicCountByTopicKey = new Map<TopicKey, number>();
+    for (const seed of topicSeeds) subtopicCountByTopicKey.set(seed.key, 0);
+    for (const seed of subtopicSeeds) {
+        if (!seed.published) continue;
+        subtopicCountByTopicKey.set(seed.topicKey, (subtopicCountByTopicKey.get(seed.topicKey) ?? 0) + 1);
+    }
+
+    const subtopicContentCountByKey = new Map<SubtopicKey, number>();
+    for (const seed of subtopicSeeds) subtopicContentCountByKey.set(seed.key, 0);
+    for (const seed of publishedArticles) {
+        subtopicContentCountByKey.set(seed.subtopicKey, (subtopicContentCountByKey.get(seed.subtopicKey) ?? 0) + 1);
+    }
+
+    console.log('📂 Creating topics...');
+    const topics = await Topic.insertMany(
+        topicSeeds.map((seed) => ({
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            coverImage: null,
+            order: seed.order,
+            published: seed.published,
+            featured: seed.featured,
+            subTopicCount: subtopicCountByTopicKey.get(seed.key) ?? 0,
+            contentCount: topicContentCountByKey.get(seed.key) ?? 0,
+            createdAt: daysAgo(120),
+            updatedAt: daysAgo(4),
+        })),
+    );
+
+    const topicIdByKey = new Map<TopicKey, mongoose.Types.ObjectId>();
+    topicSeeds.forEach((seed, idx) => {
+        topicIdByKey.set(seed.key, topics[idx]._id);
+    });
+
+    console.log('📁 Creating subtopics...');
+    const subtopics = await Subtopic.insertMany(
+        subtopicSeeds.map((seed) => ({
+            topicId: topicIdByKey.get(seed.topicKey),
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            order: seed.order,
+            published: seed.published,
+            contentCount: subtopicContentCountByKey.get(seed.key) ?? 0,
+            createdAt: daysAgo(110),
+            updatedAt: daysAgo(3),
+        })),
+    );
+
+    const subtopicIdByKey = new Map<SubtopicKey, mongoose.Types.ObjectId>();
+    subtopicSeeds.forEach((seed, idx) => {
+        subtopicIdByKey.set(seed.key, subtopics[idx]._id);
+    });
+
+    console.log('📝 Creating content (articles/blogs/projects)...');
+    const contentDocs = await Content.insertMany([
+        ...articleSeeds.map((seed, index) => ({
+            type: CONTENT_TYPES.ARTICLE,
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            body: seed.body,
+            tags: seed.tags,
+            coverImage: null,
+            readingTime: seed.readingTime,
+            publishStatus: seed.publishStatus,
+            publishedAt: seed.publishStatus === PUBLISH_STATUS.PUBLISHED ? daysAgo(40 - index) : null,
+            featured: seed.featured,
+            seo: buildSeo(seed.title, seed.description, seed.tags),
+            createdBy: admin._id,
+            updatedBy: admin._id,
+            topicId: topicIdByKey.get(seed.topicKey),
+            subtopicId: subtopicIdByKey.get(seed.subtopicKey) ?? null,
+            order: seed.order,
+            createdAt: daysAgo(70 - index),
+            updatedAt: daysAgo(5),
+        })),
+        ...blogSeeds.map((seed, index) => ({
+            type: CONTENT_TYPES.BLOG,
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            body: seed.body,
+            tags: seed.tags,
+            coverImage: null,
+            readingTime: seed.readingTime,
+            publishStatus: seed.publishStatus,
+            publishedAt: seed.publishStatus === PUBLISH_STATUS.PUBLISHED ? daysAgo(20 - index) : null,
+            featured: seed.featured,
+            seo: buildSeo(seed.title, seed.description, seed.tags),
+            createdBy: admin._id,
+            updatedBy: admin._id,
+            createdAt: daysAgo(30 - index),
+            updatedAt: daysAgo(2),
+        })),
+        ...projectSeeds.map((seed, index) => ({
+            type: CONTENT_TYPES.PROJECT,
+            slug: seed.slug,
+            title: seed.title,
+            description: seed.description,
+            body: seed.body,
+            tags: seed.tags,
+            coverImage: null,
+            readingTime: seed.readingTime,
+            publishStatus: seed.publishStatus,
+            publishedAt: seed.publishStatus === PUBLISH_STATUS.PUBLISHED ? daysAgo(10 - index) : null,
+            featured: seed.featured,
+            seo: buildSeo(seed.title, seed.description, seed.tags),
+            createdBy: admin._id,
+            updatedBy: admin._id,
+            techStack: seed.techStack,
+            githubUrl: seed.githubUrl,
+            liveUrl: seed.liveUrl,
+            demoVideo: null,
+            gallery: [],
+            status: seed.status,
+            startDate: daysAgo(90),
+            completedDate: seed.status === PROJECT_STATUS.LIVE ? daysAgo(15) : null,
+            order: seed.order,
+            createdAt: daysAgo(18 - index),
+            updatedAt: daysAgo(1),
+        })),
+    ]);
+
+    const contentBySlug = new Map<string, (typeof contentDocs)[number]>();
+    for (const doc of contentDocs) {
+        contentBySlug.set(doc.slug, doc);
+    }
+
+    console.log('📈 Creating page stats...');
+    const pageStatsPayload = contentDocs.map((doc, index) => {
+        const isPublished = doc.publishStatus === PUBLISH_STATUS.PUBLISHED;
+        return {
+            contentId: doc._id,
+            views: isPublished ? 180 + index * 37 : 0,
+            likes: isPublished ? 14 + index * 3 : 0,
+            lastViewedAt: isPublished ? daysAgo(index % 5) : null,
+            createdAt: daysAgo(7),
+            updatedAt: daysAgo(1),
+        };
+    });
+    await PageStats.insertMany(pageStatsPayload);
+
+    console.log('💬 Creating comments...');
+    const articleA = contentBySlug.get('big-o-notation-explained');
+    const blogA = contentBySlug.get('cache-invalidation');
+    const projectA = contentBySlug.get('portfolio-rebuild');
+    if (!articleA || !blogA || !projectA) {
+        throw new Error('Seeded content lookup failed while preparing comments');
+    }
+
+    const topLevelArticleComment = await Comment.create({
+        contentId: articleA._id,
+        parentId: null,
+        author: {
+            name: 'Alex Chen',
+            email: 'alex@example.com',
+            avatar: 'avatar-1',
+            website: null,
+            isOwner: false,
+        },
+        content: 'Great breakdown. The practical complexity examples make this very approachable.',
+        upvotes: 12,
+        approved: true,
+        replyCount: 0,
+        ipHash: 'seed-ip-hash-1',
+        createdAt: daysAgo(8),
+        updatedAt: daysAgo(8),
+    });
+
+    await Comment.create({
+        contentId: articleA._id,
+        parentId: topLevelArticleComment._id,
+        author: {
+            name: ADMIN_NAME,
+            email: ADMIN_EMAIL,
+            avatar: 'avatar-3',
+            website: null,
+            isOwner: true,
+        },
+        content: 'Thanks! I will add an appendix on recurrence relations next.',
+        upvotes: 4,
+        approved: true,
+        replyCount: 0,
+        ipHash: 'seed-ip-hash-owner',
+        createdAt: daysAgo(7),
+        updatedAt: daysAgo(7),
+    });
+
+    await Comment.create({
+        contentId: blogA._id,
+        parentId: null,
+        author: {
+            name: 'Priya Sharma',
+            email: 'priya@example.com',
+            avatar: 'avatar-5',
+            website: 'https://example.com',
+            isOwner: false,
+        },
+        content: 'Loved the incident-driven framing. Would like a follow-up on cache stampedes.',
+        upvotes: 6,
+        approved: true,
+        replyCount: 0,
+        ipHash: 'seed-ip-hash-2',
+        createdAt: daysAgo(5),
+        updatedAt: daysAgo(5),
+    });
+
+    await Comment.create({
+        contentId: projectA._id,
+        parentId: null,
+        author: {
+            name: 'Jordan Miller',
+            email: 'jordan@example.com',
+            avatar: 'avatar-8',
+            website: null,
+            isOwner: false,
+        },
+        content: 'Clean architecture choices. Curious about your ISR invalidation policy.',
+        upvotes: 3,
+        approved: false,
+        replyCount: 0,
+        ipHash: 'seed-ip-hash-3',
+        createdAt: daysAgo(3),
+        updatedAt: daysAgo(3),
+    });
+
+    console.log('📮 Creating subscribers...');
+    await Subscriber.insertMany([
+        {
+            email: 'reader.one@example.com',
+            name: 'Reader One',
+            confirmed: true,
+            subscribedAt: daysAgo(60),
+            unsubscribedAt: null,
+            createdAt: daysAgo(60),
+            updatedAt: daysAgo(60),
+        },
+        {
+            email: 'reader.two@example.com',
+            name: 'Reader Two',
+            confirmed: false,
+            subscribedAt: daysAgo(25),
+            unsubscribedAt: null,
+            createdAt: daysAgo(25),
+            updatedAt: daysAgo(25),
+        },
+        {
+            email: 'reader.three@example.com',
+            name: null,
+            confirmed: true,
+            subscribedAt: daysAgo(50),
+            unsubscribedAt: daysAgo(12),
+            createdAt: daysAgo(50),
+            updatedAt: daysAgo(12),
+        },
+    ]);
+
+    console.log('📨 Creating contacts...');
+    await Contact.insertMany([
+        {
+            name: 'Recruiter Team',
+            email: 'jobs@example.com',
+            subject: 'Interview Opportunity',
+            message: 'We would like to schedule a technical interview for a backend engineering role.',
+            status: CONTACT_STATUS.NEW,
+            ipHash: 'contact-ip-hash-1',
+            createdAt: daysAgo(2),
+            updatedAt: daysAgo(2),
+        },
+        {
+            name: 'Open Source Maintainer',
+            email: 'oss@example.com',
+            subject: 'Collaboration Proposal',
+            message: 'Would you be interested in contributing to a performance-focused tooling project?',
+            status: CONTACT_STATUS.READ,
+            ipHash: 'contact-ip-hash-2',
+            createdAt: daysAgo(9),
+            updatedAt: daysAgo(7),
+        },
+        {
+            name: 'Product Founder',
+            email: 'founder@example.com',
+            subject: 'Consulting Inquiry',
+            message: 'We are looking for architecture guidance on a Next.js migration project.',
+            status: CONTACT_STATUS.REPLIED,
+            ipHash: 'contact-ip-hash-3',
+            createdAt: daysAgo(16),
+            updatedAt: daysAgo(12),
+        },
+    ]);
+
+    console.log('🖼️ Creating media records...');
+    await Media.insertMany([
+        {
+            fileKey: 'articles/cache-invalidation/cover-hero.png',
+            publicUrl: 'https://cdn.example.com/articles/cache-invalidation/cover-hero.png',
+            fileName: 'cache-invalidation-cover.png',
+            fileType: MEDIA_FILE_TYPES.IMAGE,
+            mimeType: 'image/png',
+            size: 245_120,
+            folder: MEDIA_FOLDERS.ARTICLES,
+            tags: ['cache', 'blog', 'cover'],
+            uploadedBy: admin._id,
+            description: 'Hero image for cache invalidation writeup.',
+            altText: 'Abstract cache network diagram',
+            width: 1600,
+            height: 900,
+            duration: null,
+            createdAt: daysAgo(14),
+            updatedAt: daysAgo(14),
+        },
+        {
+            fileKey: 'projects/portfolio-rebuild/screenshot-dashboard.webp',
+            publicUrl: 'https://cdn.example.com/projects/portfolio-rebuild/screenshot-dashboard.webp',
+            fileName: 'portfolio-dashboard.webp',
+            fileType: MEDIA_FILE_TYPES.IMAGE,
+            mimeType: 'image/webp',
+            size: 188_432,
+            folder: MEDIA_FOLDERS.PROJECTS,
+            tags: ['project', 'dashboard'],
+            uploadedBy: admin._id,
+            description: 'Admin dashboard snapshot.',
+            altText: 'CMS dashboard screen',
+            width: 1440,
+            height: 900,
+            duration: null,
+            createdAt: daysAgo(11),
+            updatedAt: daysAgo(11),
+        },
+        {
+            fileKey: 'documents/portfolio-architecture.pdf',
+            publicUrl: 'https://cdn.example.com/documents/portfolio-architecture.pdf',
+            fileName: 'portfolio-architecture.pdf',
+            fileType: MEDIA_FILE_TYPES.FILE,
+            mimeType: 'application/pdf',
+            size: 502_112,
+            folder: MEDIA_FOLDERS.DOCUMENTS,
+            tags: ['architecture', 'reference'],
+            uploadedBy: admin._id,
+            description: 'Architecture overview reference document.',
+            altText: null,
+            width: null,
+            height: null,
+            duration: null,
+            createdAt: daysAgo(6),
+            updatedAt: daysAgo(6),
+        },
+    ]);
+
+    const [topicCount, subtopicCount, contentCount, pageStatsCount, commentCount, subscriberCount, contactCount, mediaCount, adminCount] = await Promise.all([
+        Topic.countDocuments(),
+        Subtopic.countDocuments(),
+        Content.countDocuments(),
+        PageStats.countDocuments(),
+        Comment.countDocuments(),
+        Subscriber.countDocuments(),
+        Contact.countDocuments(),
+        Media.countDocuments(),
+        Admin.countDocuments(),
+    ]);
+
+    console.log('\n✅ Canonical seed completed successfully!');
+    console.log(`   - admins: ${adminCount}`);
+    console.log(`   - topics: ${topicCount}`);
+    console.log(`   - subtopics: ${subtopicCount}`);
+    console.log(`   - content: ${contentCount}`);
+    console.log(`   - pageStats: ${pageStatsCount}`);
+    console.log(`   - comments: ${commentCount}`);
+    console.log(`   - subscribers: ${subscriberCount}`);
+    console.log(`   - contacts: ${contactCount}`);
+    console.log(`   - media: ${mediaCount}`);
+    console.log('\nℹ️ Admin login seed values:');
+    console.log(`   - email: ${ADMIN_EMAIL}`);
+    console.log(`   - password: ${ADMIN_PASSWORD}`);
+}
+
+seed()
+    .then(async () => {
+        await mongoose.disconnect();
+        process.exit(0);
+    })
+    .catch(async (error: unknown) => {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('❌ Seed failed:', message);
+        await mongoose.disconnect();
+        process.exit(1);
+    });

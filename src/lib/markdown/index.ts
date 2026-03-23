@@ -1,10 +1,5 @@
-export {
-    parseMarkdown,
-    calculateReadingTime,
-    stripMarkdown,
-    generateExcerpt,
-} from './parse';
+export { parseMarkdown } from './parse';
 
-export { extractHeadings, extractHeadingsFromHtml } from './toc';
+export { extractHeadings, extractHeadingsFromAuthorlyHtml, stampHeadingIds } from './toc';
 
 export type { ITocItem } from './toc';

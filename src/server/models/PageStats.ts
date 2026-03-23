@@ -40,7 +40,13 @@ const PageStatsSchema = new Schema<IPageStatsDocument>(
 // Indexes
 // ============================================================
 
-PageStatsSchema.index({ contentId: 1 }, { unique: true });
+PageStatsSchema.index(
+    { contentId: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { contentId: { $type: 'objectId' } },
+    },
+);
 PageStatsSchema.index({ views: -1 });
 PageStatsSchema.index({ likes: -1 });
 PageStatsSchema.index({ lastViewedAt: -1 });

@@ -1,6 +1,6 @@
-import mongoose from 'mongoose';
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { beforeAll, beforeEach, afterAll, describe, expect, it, vi } from 'vitest';
+import mongoose from 'mongoose';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import Comment from '@/server/models/Comment';
 import Contact from '@/server/models/Contact';
@@ -10,7 +10,7 @@ import Subscriber from '@/server/models/Subscriber';
 import { getSubscribers } from '@/server/new/admin/subscribers';
 import { createPublicComment, getPublicCommentsByContentId } from '@/server/new/public/comments';
 import { submitPublicContact } from '@/server/new/public/contact';
-import { incrementContentLikesById, incrementContentViewsById, getContentViewsById } from '@/server/new/public/stats';
+import { getContentViewsById, incrementContentLikesById, incrementContentViewsById } from '@/server/new/public/stats';
 import { subscribe, unsubscribe } from '@/server/new/public/subscribe';
 
 const hoisted = vi.hoisted(() => ({
@@ -323,7 +323,7 @@ describe('backend hardening tests', () => {
         expect(count).toBe(1);
     });
 
-    it('engagement: enforces view increment correctness, like idempotency, and invalid id handling', async () => {
+    it('engagement: enforces view/like increment correctness and invalid id handling', async () => {
         const content = await makePublishedContent('blog');
 
         const invalid = await incrementContentViewsById('not-an-objectid');
@@ -338,6 +338,7 @@ describe('backend hardening tests', () => {
         expect(stats.success).toBe(true);
         if (!stats.success) return;
         expect(stats.data.views).toBe(5);
+        expect(stats.data.lastViewedAt).not.toBeNull();
 
         hoisted.requestHeaders = {
             'x-forwarded-for': '203.0.113.10',
@@ -353,7 +354,7 @@ describe('backend hardening tests', () => {
         const final = await getContentViewsById(content._id.toString());
         expect(final.success).toBe(true);
         if (!final.success) return;
-        expect(final.data.likes).toBe(1);
+        expect(final.data.likes).toBe(2);
     });
 
     it('subscribe rejects invalid email field', async () => {

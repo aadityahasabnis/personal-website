@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { likePost } from '@/server/actions/like';
+import { Heart } from 'lucide-react';
+import { useState, useTransition } from 'react';
 
 interface ILikeButtonProps {
     slug: string;
@@ -50,7 +50,7 @@ const LikeButton = ({ slug, initialLikes, className }: ILikeButtonProps) => {
 
     return (
         <button
-            type="button"
+            type='button'
             onClick={handleLike}
             disabled={hasLiked || isPending}
             aria-label={hasLiked ? 'You liked this post' : 'Like this post'}
@@ -63,25 +63,11 @@ const LikeButton = ({ slug, initialLikes, className }: ILikeButtonProps) => {
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 'disabled:cursor-not-allowed',
                 hasLiked && 'border-primary/30 bg-primary/10',
-                className
+                className,
             )}
         >
-            <Heart
-                className={cn(
-                    'h-4 w-4 transition-all duration-200',
-                    hasLiked
-                        ? 'fill-red-500 text-red-500 scale-110'
-                        : 'text-muted-foreground group-hover:text-red-500'
-                )}
-            />
-            <span
-                className={cn(
-                    'text-sm font-medium tabular-nums',
-                    hasLiked ? 'text-foreground' : 'text-muted-foreground'
-                )}
-            >
-                {likes.toLocaleString()}
-            </span>
+            <Heart className={cn('h-4 w-4 transition-all duration-200', hasLiked ? 'fill-red-500 text-red-500 scale-110' : 'text-muted-foreground group-hover:text-red-500')} />
+            <span className={cn('text-sm font-medium tabular-nums', hasLiked ? 'text-foreground' : 'text-muted-foreground')}>{likes.toLocaleString()}</span>
         </button>
     );
 };
