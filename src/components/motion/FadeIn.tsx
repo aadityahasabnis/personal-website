@@ -1,7 +1,9 @@
 'use client';
 
-import { motion, useInView, UseInViewOptions, Variants } from 'framer-motion';
-import { ReactNode, useRef } from 'react';
+import type { UseInViewOptions, Variants } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import type { ReactNode } from 'react';
+import { useRef } from 'react';
 
 type TDirection = 'up' | 'down' | 'left' | 'right' | 'none';
 
@@ -23,6 +25,8 @@ interface IFadeInProps {
     className?: string;
     /** Whether to include blur effect */
     blur?: boolean;
+    /** Trigger mode for animation */
+    trigger?: 'inView' | 'always';
 }
 
 const getVariants = (direction: TDirection, distance: number, blur: boolean): Variants => {
@@ -64,9 +68,10 @@ const getVariants = (direction: TDirection, distance: number, blur: boolean): Va
 /**
  * Fade-in animation wrapper with scroll trigger
  */
-export const FadeIn = ({ children, direction = 'up', delay = 0, duration = 0.5, distance = 30, once = true, margin = '-50px', className = '', blur = false }: IFadeInProps) => {
+export const FadeIn = ({ children, direction = 'up', delay = 0, duration = 0.5, distance = 30, once = true, margin = '-50px', className = '', blur = false, trigger = 'inView' }: IFadeInProps) => {
     const ref = useRef<HTMLDivElement>(null);
     const isInView = useInView(ref, { once, margin });
+    const shouldAnimate = trigger === 'always' ? true : isInView;
 
     const variants = getVariants(direction, distance, blur);
 
@@ -74,7 +79,7 @@ export const FadeIn = ({ children, direction = 'up', delay = 0, duration = 0.5, 
         <motion.div
             ref={ref}
             initial='hidden'
-            animate={isInView ? 'visible' : 'hidden'}
+            animate={shouldAnimate ? 'visible' : 'hidden'}
             variants={variants}
             transition={{
                 duration,

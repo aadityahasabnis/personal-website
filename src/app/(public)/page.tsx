@@ -1,4 +1,6 @@
-import { AboutPreview, HeroSection, NewsletterSection } from '@/components/sections';
+import AboutPreview from '@/components/sections/AboutPreview';
+import HeroSection from '@/components/sections/HeroSection';
+import NewsletterSection from '@/components/sections/NewsletterSection';
 import { JsonLd, combineSchemas, generateHomeWebPageSchema, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/seo';
 
 export const dynamic = 'force-static';

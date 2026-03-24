@@ -1,5 +1,12 @@
 /* ===== GLASSMORPHISM ===== */
 @layer utilities {
+    .font-delius {
+        font-family: var(--font-delius-family, var(--font-delius)), system-ui, serif;
+    }
+}
+
+/* ===== GLASSMORPHISM ===== */
+@layer utilities {
     .glass-card {
         background: var(--card-bg);
         backdrop-filter: blur(10px);
@@ -288,7 +295,6 @@
 
 /* ===== KEYFRAMES ===== */
 @keyframes float {
-
     0%,
     100% {
         transform: translate(0, 0) scale(1);
@@ -390,7 +396,6 @@
 }
 
 @keyframes pulse-glow {
-
     0%,
     100% {
         box-shadow: 0 0 20px -5px var(--glow-color);
@@ -422,7 +427,6 @@
 }
 
 @keyframes bounce-subtle {
-
     0%,
     100% {
         transform: translateY(0);
@@ -434,7 +438,6 @@
 }
 
 @keyframes wiggle {
-
     0%,
     100% {
         transform: rotate(0deg);
@@ -476,7 +479,6 @@
 }
 
 @keyframes blink {
-
     0%,
     100% {
         opacity: 1;
@@ -597,7 +599,6 @@
 
 /* ===== REDUCED MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {

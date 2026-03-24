@@ -2,7 +2,7 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
 import { Providers } from '@/providers';
 import 'authorly-editor/styles.css';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Nunito, Delius } from 'next/font/google';
+import { Delius, Geist, Geist_Mono, Nunito, Tiro_Devanagari_Marathi } from 'next/font/google';
 import './globals.css';
 
 const geistSans = Geist({
@@ -25,8 +25,15 @@ const nunito = Nunito({
 
 const delius = Delius({
     weight: '400',
-    variable: '--font-delius',
+    variable: '--font-delius-family',
     subsets: ['latin'],
+    display: 'swap',
+});
+
+const tiroDevanagariMarathi = Tiro_Devanagari_Marathi({
+    weight: '400',
+    variable: '--font-tiro-devanagari-marathi',
+    subsets: ['latin', 'devanagari'],
     display: 'swap',
 });
 
@@ -107,7 +114,7 @@ interface IRootLayoutProps {
 const RootLayout = ({ children }: IRootLayoutProps) => {
     return (
         <html lang='en' suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${delius.variable} min-h-screen bg-background font-sans antialiased`}>
+            <body className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${delius.variable} ${tiroDevanagariMarathi.variable} min-h-screen bg-background font-sans antialiased`}>
                 <Providers>{children}</Providers>
             </body>
         </html>

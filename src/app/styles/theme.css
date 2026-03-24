@@ -171,7 +171,8 @@
     --font-sans: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
     --font-mono: var(--font-geist-mono), 'SF Mono', 'Fira Code', monospace;
     --font-nunito: var(--font-nunito), system-ui, sans-serif;
-    /* --font-delius: var(--font-delius), system-ui, serif; noo need -. directly use this font-delius */
+    --font-delius: var(--font-delius-family), system-ui, serif;
+    --font-tiro-devanagari-marathi: var(--font-tiro-devanagari-marathi), system-ui, sans-serif;
 
     /* Shadows */
     --shadow-glow-sm: 0 0 20px -5px var(--glow-color);

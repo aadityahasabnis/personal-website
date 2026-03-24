@@ -6,6 +6,7 @@ import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
 
 export const SITE_CONFIG = {
   name: 'Aaditya Hasabnis',
+  marathiName: 'आदित्य हसबनीस',
   shortName: 'Aadizz',
   title: 'Aaditya Hasabnis | Developer & Writer',
   description: 'Personal site for articles, blogs, and projects',
@@ -16,6 +17,7 @@ export const SITE_CONFIG = {
   author: {
     name: 'Aaditya Hasabnis',
     givenName: 'Aaditya',
+    marathiGivenName: 'आदित्य',
     familyName: 'Hasabnis',
     aliasesExact: ['Aditya Hasabnis', 'Aditya', 'Hasabnis'],
     email: 'aaditya.hasabnis@gmail.com',

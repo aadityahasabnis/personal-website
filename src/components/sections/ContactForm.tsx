@@ -2,20 +2,15 @@
 
 import { CustomInput, CustomSelect, CustomTextArea } from '@/components/form';
 import type { IFormData, IHandleChangeEvent } from '@/components/form/form';
+import { CONTACT_FORM_COPY, CONTACT_INTENT_VALUES, CONTACT_TYPE_LABELS, CONTACT_TYPE_OPTIONS, type ContactIntent } from '@/constants/contactConstants';
 import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import { useAction } from '@/hooks/useAction';
 import { useFormOperations } from '@/hooks/useFormOperations';
-import {
-    submitPublicContact,
-    type IPublicContactSubmission,
-    type ISubmitPublicContactInput,
-} from '@/server/new/public/contact';
+import { submitPublicContact, type IPublicContactSubmission, type ISubmitPublicContactInput } from '@/server/new/public/contact';
+import { AlertCircle, CheckCircle, Loader2, Send } from 'lucide-react';
 import { useState } from 'react';
-import { Send, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
-
-type ContactIntent = 'general' | 'collaboration' | 'hiring' | 'feedback';
 
 interface IContactFormData extends IFormData {
     name?: string;
@@ -34,29 +29,10 @@ interface IContactFieldErrors {
     message?: string;
 }
 
-const CONTACT_TYPES = [
-    { value: 'general', label: 'General' },
-    { value: 'collaboration', label: 'Collaboration' },
-    { value: 'hiring', label: 'Hiring' },
-    { value: 'feedback', label: 'Feedback' },
-] as const;
-
-const CONTACT_TYPE_OPTIONS = CONTACT_TYPES.map((type) => ({
-    label: type.label,
-    value: type.value,
-}));
-
-const CONTACT_TYPE_LABELS: Record<ContactIntent, string> = {
-    general: 'General',
-    collaboration: 'Collaboration',
-    hiring: 'Hiring',
-    feedback: 'Feedback',
-};
-
 const getStringValue = (value: unknown): string => (typeof value === 'string' ? value : '');
 
 const getContactIntent = (value: unknown): ContactIntent => {
-    if (value === 'collaboration' || value === 'hiring' || value === 'feedback') return value;
+    if (typeof value === 'string' && CONTACT_INTENT_VALUES.includes(value as ContactIntent)) return value as ContactIntent;
     return 'general';
 };
 
@@ -66,12 +42,7 @@ const withContactTypePrefix = (subject: string, type: ContactIntent): string => 
     return `${prefix} ${subject}`;
 };
 
-const validateContactForm = (data: {
-    name: string;
-    email: string;
-    subject: string;
-    message: string;
-}): IContactFieldErrors => {
+const validateContactForm = (data: { name: string; email: string; subject: string; message: string }): IContactFieldErrors => {
     const errors: IContactFieldErrors = {};
 
     if (data.name.length < 2) {
@@ -99,9 +70,6 @@ const validateContactForm = (data: {
     return errors;
 };
 
-/**
- * ContactForm - Premium contact form with validation and status feedback
- */
 const ContactForm = () => {
     const [status, setStatus] = useState<FormStatus>('idle');
     const [message, setMessage] = useState<string>('');
@@ -157,7 +125,7 @@ const ContactForm = () => {
 
         if (Object.keys(nextErrors).length > 0) {
             setStatus('error');
-            setMessage('Please fix the highlighted fields and try again.');
+            setMessage(CONTACT_FORM_COPY.status.validationError);
             return;
         }
 
@@ -171,13 +139,13 @@ const ContactForm = () => {
         if (result.success) {
             setStatus('success');
             setFieldErrors({});
-            setMessage(result.message ?? 'Message sent successfully');
+            setMessage(result.message ?? CONTACT_FORM_COPY.status.successTitle);
             resetForm();
             return;
         }
 
         setStatus('error');
-        setMessage(result.error ?? 'Something went wrong.');
+        setMessage(result.error ?? CONTACT_FORM_COPY.status.genericError);
     };
 
     const formType = getContactIntent(formData.type);
@@ -188,21 +156,19 @@ const ContactForm = () => {
 
     if (status === 'success') {
         return (
-            <div className='rounded-2xl border border-border bg-card p-8 text-center'>
+            <div className='p-8 text-center bg-card border border-border rounded-2xl'>
                 <CheckCircle className='mx-auto size-12 text-success' />
-                <h3 className='mt-4 text-title font-semibold text-foreground'>Message Sent!</h3>
-                <p className='mt-2 text-body text-muted-foreground'>
-                    Thank you for reaching out. I&apos;ll get back to you as soon as possible.
-                </p>
+                <h3 className='mt-4 text-title font-semibold text-foreground'>{CONTACT_FORM_COPY.status.successTitle}</h3>
+                <p className='mt-2 text-body text-muted-foreground'>{CONTACT_FORM_COPY.status.successDescription}</p>
                 <button
                     type='button'
-                    className='mt-6 inline-flex items-center justify-center rounded-full border border-border px-6 py-3 text-label font-medium text-foreground transition-fast hover:border-primary/40'
+                    className='inline-flex items-center justify-center gap-2 mt-6 px-6 py-3 text-label font-medium text-foreground bg-card border border-border rounded-full transition-fast hover:border-primary/40'
                     onClick={() => {
                         setStatus('idle');
                         setMessage('');
                     }}
                 >
-                    Send Another Message
+                    {CONTACT_FORM_COPY.status.sendAnotherAction}
                 </button>
             </div>
         );
@@ -211,15 +177,15 @@ const ContactForm = () => {
     return (
         <form onSubmit={onSubmit} className='space-y-6'>
             {status === 'error' && (
-                <div className='flex items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-small text-destructive'>
+                <div className='flex items-center gap-3 p-4 text-small text-destructive bg-destructive/10 border border-destructive/30 rounded-xl'>
                     <AlertCircle className='size-5 shrink-0' />
-                    {message || 'Please review your message and try again.'}
+                    {message || CONTACT_FORM_COPY.status.errorFallback}
                 </div>
             )}
 
             <CustomSelect<IContactFormData, ContactIntent>
                 name='type'
-                label='What is this regarding?'
+                label={CONTACT_FORM_COPY.typeLabel}
                 value={formType}
                 options={CONTACT_TYPE_OPTIONS}
                 onChange={handleFormChange}
@@ -230,73 +196,73 @@ const ContactForm = () => {
             <div className='grid gap-4 sm:grid-cols-2'>
                 <CustomInput<IContactFormData>
                     name='name'
-                    label='Name'
+                    label={CONTACT_FORM_COPY.fields.name.label}
                     value={formName}
                     onChange={handleFormChange}
-                    placeholder='Your name'
+                    placeholder={CONTACT_FORM_COPY.fields.name.placeholder}
                     required
                     disabled={pending}
                     errorMessage={fieldErrors.name}
-                    inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
+                    inputClassName='px-4 h-12 text-foreground placeholder:text-muted-foreground bg-background border-border rounded-xl focus:ring-primary'
                 />
 
                 <CustomInput<IContactFormData>
                     name='email'
-                    label='Email'
+                    label={CONTACT_FORM_COPY.fields.email.label}
                     type='email'
                     value={formEmail}
                     onChange={handleFormChange}
-                    placeholder='you@example.com'
+                    placeholder={CONTACT_FORM_COPY.fields.email.placeholder}
                     required
                     disabled={pending}
                     errorMessage={fieldErrors.email}
-                    inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
+                    inputClassName='px-4 h-12 text-foreground placeholder:text-muted-foreground bg-background border-border rounded-xl focus:ring-primary'
                 />
             </div>
 
             <CustomInput<IContactFormData>
                 name='subject'
-                label='Subject'
+                label={CONTACT_FORM_COPY.fields.subject.label}
                 value={formSubject}
                 onChange={handleFormChange}
-                placeholder='What is this about?'
+                placeholder={CONTACT_FORM_COPY.fields.subject.placeholder}
                 required
                 disabled={pending}
                 errorMessage={fieldErrors.subject}
-                inputClassName='h-12 rounded-xl border-border bg-background px-4 text-foreground placeholder:text-muted-foreground focus:ring-primary'
+                inputClassName='px-4 h-12 text-foreground placeholder:text-muted-foreground bg-background border-border rounded-xl focus:ring-primary'
             />
 
             <CustomTextArea<IContactFormData>
                 name='message'
-                label='Message'
+                label={CONTACT_FORM_COPY.fields.message.label}
                 value={formMessage}
                 onChange={handleFormChange}
-                placeholder='Your message...'
+                placeholder={CONTACT_FORM_COPY.fields.message.placeholder}
                 rows={6}
                 required
                 disabled={pending}
                 errorMessage={fieldErrors.message}
-                textAreaClassName='min-h-36 resize-y rounded-xl border-border bg-background px-4 py-3 text-regular text-foreground placeholder:text-muted-foreground focus:ring-primary'
+                textAreaClassName='px-4 py-3 min-h-36 resize-y text-regular text-foreground placeholder:text-muted-foreground bg-background border-border rounded-xl focus:ring-primary'
             />
 
             <button
                 type='submit'
                 disabled={pending}
                 className={cn(
-                    'inline-flex items-center gap-2 rounded-full px-8 py-3 text-label font-medium transition-all',
-                    'bg-foreground text-background',
-                    'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed'
+                    'inline-flex items-center gap-2 px-8 py-3 text-label font-medium rounded-full transition-fast',
+                    'text-primary-foreground bg-primary',
+                    'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed',
                 )}
             >
                 {pending ? (
                     <>
                         <Loader2 className='size-4 animate-spin' />
-                        Sending...
+                        {CONTACT_FORM_COPY.status.submittingLabel}
                     </>
                 ) : (
                     <>
                         <Send className='size-4' />
-                        Send Message
+                        {CONTACT_FORM_COPY.status.submitLabel}
                     </>
                 )}
             </button>
