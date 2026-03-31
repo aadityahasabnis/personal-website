@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ArrowUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { ArrowUp } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface IScrollToTopProps {
     /** Show button after scrolling this many pixels (default: 400) */
@@ -13,7 +13,7 @@ interface IScrollToTopProps {
 
 /**
  * ScrollToTop - Smooth scroll to top button
- * 
+ *
  * Features:
  * - Appears after scrolling down
  * - Smooth scroll animation
@@ -55,25 +55,23 @@ export function ScrollToTop({ showAfter = 400, className }: IScrollToTopProps) {
     return (
         <button
             onClick={scrollToTop}
-            aria-label="Scroll to top"
+            aria-label='Scroll to top'
             className={cn(
                 'fixed bottom-8 right-8 z-50',
                 'size-12 rounded-full',
                 'flex items-center justify-center',
-                'bg-[var(--accent)] text-white',
-                'shadow-lg shadow-[var(--glow-color)]',
-                'border-2 border-[var(--accent)]',
-                'hover:bg-[var(--accent-hover)] hover:border-[var(--accent-hover)]',
+                'border-2 border-primary',
+                'bg-primary text-primary-foreground',
+                'shadow-glow-sm',
+                'hover:border-primary/90 hover:bg-primary/90',
                 'hover:scale-110 active:scale-95',
-                'focus:outline-none focus:ring-2 focus:ring-[var(--accent)] focus:ring-offset-2',
+                'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2',
                 'transition-all duration-300',
-                isVisible
-                    ? 'opacity-100 translate-y-0 pointer-events-auto'
-                    : 'opacity-0 translate-y-4 pointer-events-none',
-                className
+                isVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none',
+                className,
             )}
         >
-            <ArrowUp className="size-5" />
+            <ArrowUp className='size-5' />
         </button>
     );
 }

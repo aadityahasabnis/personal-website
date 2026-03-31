@@ -28,7 +28,7 @@ export interface ITableSearchProps {
 
 // ===== TABLE SEARCH COMPONENT (MINIMAL INLINE DESIGN) =====
 
-export function TableSearch({ placeholder = 'Search...', onSearch, filters = [], onFilterChange, activeFiltersCount = 0, className }: ITableSearchProps): React.ReactElement {
+export function TableSearch({ placeholder = 'Search...', onSearch, filters = [], onFilterChange, activeFiltersCount: _activeFiltersCount = 0, className }: ITableSearchProps): React.ReactElement {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterValues, setFilterValues] = useState<Record<string, string>>({});
     const debouncedQuery = useDebounce(searchQuery, 300);
@@ -86,7 +86,7 @@ export function TableSearch({ placeholder = 'Search...', onSearch, filters = [],
             {filters.length > 0 && (
                 <>
                     {filters.map((filter) => (
-                        <div key={filter.id} className='min-w-[160px]'>
+                        <div key={filter.id} className='min-w-40'>
                             {filter.type === 'select' && filter.options && (
                                 <Select value={filterValues[filter.id] || filter.options[0]?.value || ''} onValueChange={(value) => handleFilterValueChange(filter.id, value)}>
                                     <SelectTrigger className='h-9 w-full'>

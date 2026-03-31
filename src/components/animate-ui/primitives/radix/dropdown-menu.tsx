@@ -25,13 +25,19 @@ const [DropdownMenuProvider, useDropdownMenu] = getStrictContext<DropdownMenuCon
 
 const [DropdownMenuSubProvider, useDropdownMenuSub] = getStrictContext<DropdownMenuSubContextType>('DropdownMenuSubContext');
 
+function omitUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
+    return Object.fromEntries(Object.entries(value).filter(([, current]) => current !== undefined)) as Partial<T>;
+}
+
 type DropdownMenuProps = React.ComponentProps<typeof DropdownMenuPrimitive.Root>;
 
 function DropdownMenu(props: DropdownMenuProps) {
     const [isOpen, setIsOpen] = useControlledState({
-        value: props?.open,
-        defaultValue: props?.defaultOpen,
-        onChange: props?.onOpenChange,
+        ...omitUndefined({
+            value: props.open,
+            defaultValue: props.defaultOpen,
+            onChange: props.onOpenChange,
+        }),
     });
     const [highlightedValue, setHighlightedValue] = React.useState<string | null>(null);
 
@@ -64,9 +70,11 @@ type DropdownMenuSubProps = React.ComponentProps<typeof DropdownMenuPrimitive.Su
 
 function DropdownMenuSub(props: DropdownMenuSubProps) {
     const [isOpen, setIsOpen] = useControlledState({
-        value: props?.open,
-        defaultValue: props?.defaultOpen,
-        onChange: props?.onOpenChange,
+        ...omitUndefined({
+            value: props.open,
+            defaultValue: props.defaultOpen,
+            onChange: props.onOpenChange,
+        }),
     });
 
     return (
@@ -94,9 +102,15 @@ function DropdownMenuSubTrigger({ disabled, textValue, ...props }: DropdownMenuS
         }
     });
 
+    const subTriggerProps = omitUndefined({
+        disabled,
+        textValue,
+    });
+    const disabledDataProps = disabled !== undefined ? { 'data-disabled': disabled } : {};
+
     return (
-        <DropdownMenuPrimitive.SubTrigger ref={highlightedRef} disabled={disabled} textValue={textValue} asChild>
-            <motion.div data-slot='dropdown-menu-sub-trigger' data-disabled={disabled} {...props} />
+        <DropdownMenuPrimitive.SubTrigger ref={highlightedRef} asChild {...subTriggerProps}>
+            <motion.div data-slot='dropdown-menu-sub-trigger' {...disabledDataProps} {...props} />
         </DropdownMenuPrimitive.SubTrigger>
     );
 }
@@ -125,28 +139,28 @@ function DropdownMenuSubContent({
     ...props
 }: DropdownMenuSubContentProps) {
     const { isOpen } = useDropdownMenuSub();
+    const portalProps = omitUndefined({ container });
+    const subContentProps = omitUndefined({
+        loop,
+        onEscapeKeyDown,
+        onPointerDownOutside,
+        onFocusOutside,
+        onInteractOutside,
+        sideOffset,
+        alignOffset,
+        avoidCollisions,
+        collisionBoundary,
+        collisionPadding,
+        arrowPadding,
+        sticky,
+        hideWhenDetached,
+    });
 
     return (
         <AnimatePresence>
             {isOpen && (
-                <DropdownMenuPortal forceMount container={container}>
-                    <DropdownMenuPrimitive.SubContent
-                        asChild
-                        forceMount
-                        loop={loop}
-                        onEscapeKeyDown={onEscapeKeyDown}
-                        onPointerDownOutside={onPointerDownOutside}
-                        onFocusOutside={onFocusOutside}
-                        onInteractOutside={onInteractOutside}
-                        sideOffset={sideOffset}
-                        alignOffset={alignOffset}
-                        avoidCollisions={avoidCollisions}
-                        collisionBoundary={collisionBoundary}
-                        collisionPadding={collisionPadding}
-                        arrowPadding={arrowPadding}
-                        sticky={sticky}
-                        hideWhenDetached={hideWhenDetached}
-                    >
+                <DropdownMenuPortal forceMount {...portalProps}>
+                    <DropdownMenuPrimitive.SubContent asChild forceMount {...subContentProps}>
                         <motion.div
                             key='dropdown-menu-sub-content'
                             data-slot='dropdown-menu-sub-content'
@@ -201,30 +215,31 @@ function DropdownMenuContent({
     ...props
 }: DropdownMenuContentProps) {
     const { isOpen } = useDropdownMenu();
+    const portalProps = omitUndefined({ container });
+    const contentProps = omitUndefined({
+        loop,
+        onCloseAutoFocus,
+        onEscapeKeyDown,
+        onPointerDownOutside,
+        onFocusOutside,
+        onInteractOutside,
+        side,
+        sideOffset,
+        align,
+        alignOffset,
+        avoidCollisions,
+        collisionBoundary,
+        collisionPadding,
+        arrowPadding,
+        sticky,
+        hideWhenDetached,
+    });
 
     return (
         <AnimatePresence>
             {isOpen && (
-                <DropdownMenuPortal forceMount container={container}>
-                    <DropdownMenuPrimitive.Content
-                        asChild
-                        loop={loop}
-                        onCloseAutoFocus={onCloseAutoFocus}
-                        onEscapeKeyDown={onEscapeKeyDown}
-                        onPointerDownOutside={onPointerDownOutside}
-                        onFocusOutside={onFocusOutside}
-                        onInteractOutside={onInteractOutside}
-                        side={side}
-                        sideOffset={sideOffset}
-                        align={align}
-                        alignOffset={alignOffset}
-                        avoidCollisions={avoidCollisions}
-                        collisionBoundary={collisionBoundary}
-                        collisionPadding={collisionPadding}
-                        arrowPadding={arrowPadding}
-                        sticky={sticky}
-                        hideWhenDetached={hideWhenDetached}
-                    >
+                <DropdownMenuPortal forceMount {...portalProps}>
+                    <DropdownMenuPrimitive.Content asChild {...contentProps}>
                         <motion.div
                             key='dropdown-menu-content'
                             data-slot='dropdown-menu-content'
@@ -260,9 +275,16 @@ function DropdownMenuItem({ disabled, onSelect, textValue, ...props }: DropdownM
         }
     });
 
+    const itemProps = omitUndefined({
+        disabled,
+        onSelect,
+        textValue,
+    });
+    const disabledDataProps = disabled !== undefined ? { 'data-disabled': disabled } : {};
+
     return (
-        <DropdownMenuPrimitive.Item ref={highlightedRef} disabled={disabled} onSelect={onSelect} textValue={textValue} asChild>
-            <motion.div data-slot='dropdown-menu-item' data-disabled={disabled} {...props} />
+        <DropdownMenuPrimitive.Item ref={highlightedRef} asChild {...itemProps}>
+            <motion.div data-slot='dropdown-menu-item' {...disabledDataProps} {...props} />
         </DropdownMenuPrimitive.Item>
     );
 }
@@ -279,9 +301,18 @@ function DropdownMenuCheckboxItem({ checked, onCheckedChange, disabled, onSelect
         }
     });
 
+    const checkboxItemProps = omitUndefined({
+        checked,
+        onCheckedChange,
+        disabled,
+        onSelect,
+        textValue,
+    });
+    const disabledDataProps = disabled !== undefined ? { 'data-disabled': disabled } : {};
+
     return (
-        <DropdownMenuPrimitive.CheckboxItem ref={highlightedRef} checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} onSelect={onSelect} textValue={textValue} asChild>
-            <motion.div data-slot='dropdown-menu-checkbox-item' data-disabled={disabled} {...props} />
+        <DropdownMenuPrimitive.CheckboxItem ref={highlightedRef} asChild {...checkboxItemProps}>
+            <motion.div data-slot='dropdown-menu-checkbox-item' {...disabledDataProps} {...props} />
         </DropdownMenuPrimitive.CheckboxItem>
     );
 }
@@ -298,9 +329,16 @@ function DropdownMenuRadioItem({ value, disabled, onSelect, textValue, ...props 
         }
     });
 
+    const radioItemProps = omitUndefined({
+        disabled,
+        onSelect,
+        textValue,
+    });
+    const disabledDataProps = disabled !== undefined ? { 'data-disabled': disabled } : {};
+
     return (
-        <DropdownMenuPrimitive.RadioItem ref={highlightedRef} value={value} disabled={disabled} onSelect={onSelect} textValue={textValue} asChild>
-            <motion.div data-slot='dropdown-menu-radio-item' data-disabled={disabled} {...props} />
+        <DropdownMenuPrimitive.RadioItem ref={highlightedRef} value={value} asChild {...radioItemProps}>
+            <motion.div data-slot='dropdown-menu-radio-item' {...disabledDataProps} {...props} />
         </DropdownMenuPrimitive.RadioItem>
     );
 }

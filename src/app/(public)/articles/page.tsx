@@ -1,13 +1,17 @@
 import type { Metadata } from 'next';
 
-import { TopicGrid } from '@/components/content/article/TopicGrid';
+import { ScrollToTop } from '@/components/common/ScrollToTop';
+import { TopicGroup } from '@/components/content/article/TopicGroup';
 import { PageHeader } from '@/components/layout/PageHeader';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
+import { FileText, StarIcon } from 'lucide-react';
+
+export const revalidate = 600;
 
 const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
-const FEATURED_TOPICS_DEFAULT_COUNT = 5;
+const FEATURED_TOPICS_DEFAULT_COUNT = 6;
 const TOPICS_PAGE_LIMIT = 200;
 
 export const metadata: Metadata = createPageMetadata({
@@ -23,18 +27,9 @@ export const metadata: Metadata = createPageMetadata({
     },
 });
 
-// ISR: articles listing regenerates every 10 minutes; on-demand via /api/revalidate
-export const revalidate = 600;
+// Load featured and all topic collections for the hub page.
 
-/**
- * Load featured and all topic collections for the hub page.
- */
-const getArticlesHubData = async (
-    featuredCount = FEATURED_TOPICS_DEFAULT_COUNT,
-): Promise<{
-    featuredTopics: IPublicTopicSummary[];
-    allTopics: IPublicTopicSummary[];
-}> => {
+const getArticlesHubData = async (featuredCount = FEATURED_TOPICS_DEFAULT_COUNT): Promise<{ featuredTopics: IPublicTopicSummary[]; allTopics: IPublicTopicSummary[] }> => {
     const [featuredResult, allResult] = await Promise.all([
         getPublishedArticleTopics({
             featuredOnly: true,
@@ -61,45 +56,24 @@ const getArticlesHubData = async (
     };
 };
 
-/**
- * Articles Page - Topics Grid
- *
- * Fully static page listing all topics with their article counts.
- * No loading states - content is pre-rendered at build time.
- */
-export default async function ArticlesPage() {
+export default async function Page() {
     const { featuredTopics, allTopics } = await getArticlesHubData();
 
     return (
         <main className='mx-auto px-6 py-20 max-w-6xl md:py-28 lg:px-8'>
             {/* Page Header */}
             <PageHeader
-                label='Knowledge Base'
                 title='Articles'
+                label='Knowledge Base'
                 description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
             />
 
-            {/* Featured Topics */}
-            {featuredTopics.length > 0 && (
-                <section className='mb-14'>
-                    <h2 className='mb-6 text-small font-medium uppercase tracking-wide text-muted-foreground'>Featured Topics</h2>
-                    <TopicGrid topics={featuredTopics} />
-                </section>
-            )}
-
-            {/* All Topics Grid */}
-            <section>
-                {allTopics.length === 0 ? (
-                    <div className='py-16 text-center'>
-                        <p className='text-body text-muted-foreground'>No topics yet. Check back soon.</p>
-                    </div>
-                ) : (
-                    <>
-                        <h2 className='mb-6 text-small font-medium uppercase tracking-wide text-muted-foreground'>All Topics</h2>
-                        <TopicGrid topics={allTopics} />
-                    </>
-                )}
+            <section className='flex flex-col gap-14'>
+                {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
+                <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
             </section>
+
+            <ScrollToTop />
         </main>
     );
 }

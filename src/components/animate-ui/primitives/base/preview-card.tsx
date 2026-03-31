@@ -1,7 +1,7 @@
 'use client';
 
 import { PreviewCard as PreviewCardPrimitive } from '@base-ui-components/react/preview-card';
-import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProps, type MotionValue, type SpringOptions } from 'motion/react';
+import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProps, type MotionStyle, type MotionValue, type SpringOptions } from 'motion/react';
 import * as React from 'react';
 
 import { useControlledState } from '@/hooks/use-controlled-state';
@@ -25,9 +25,9 @@ type PreviewCardProps = React.ComponentProps<typeof PreviewCardPrimitive.Root> &
 
 function PreviewCard({ followCursor = false, followCursorSpringOptions = { stiffness: 200, damping: 17 }, ...props }: PreviewCardProps) {
     const [isOpen, setIsOpen] = useControlledState({
-        value: props?.open,
-        defaultValue: props?.defaultOpen,
-        onChange: props?.onOpenChange,
+        ...(props.open !== undefined ? { value: props.open } : {}),
+        ...(props.defaultOpen !== undefined ? { defaultValue: props.defaultOpen } : {}),
+        ...(props.onOpenChange !== undefined ? { onChange: props.onOpenChange } : {}),
     });
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -95,6 +95,12 @@ function PreviewCardPopup({ transition = { type: 'spring', stiffness: 300, dampi
     const translateX = useSpring(x, followCursorSpringOptions);
     const translateY = useSpring(y, followCursorSpringOptions);
 
+    const popupStyle = {
+        ...(followCursor === 'x' || followCursor === true ? { x: translateX } : {}),
+        ...(followCursor === 'y' || followCursor === true ? { y: translateY } : {}),
+        ...(style ?? {}),
+    } as MotionStyle;
+
     return (
         <PreviewCardPrimitive.Popup
             render={
@@ -105,11 +111,7 @@ function PreviewCardPopup({ transition = { type: 'spring', stiffness: 300, dampi
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.5 }}
                     transition={transition}
-                    style={{
-                        x: followCursor === 'x' || followCursor === true ? translateX : undefined,
-                        y: followCursor === 'y' || followCursor === true ? translateY : undefined,
-                        ...style,
-                    }}
+                    style={popupStyle}
                     {...props}
                 />
             }

@@ -27,12 +27,6 @@ const AuthorSchema = new Schema(
             default: null,
             trim: true,
         },
-        website: {
-            type: String,
-            default: null,
-            trim: true,
-            match: [VALIDATION_PATTERNS.URL, 'Website must be a valid URL'],
-        },
         isOwner: {
             type: Boolean,
             default: false,

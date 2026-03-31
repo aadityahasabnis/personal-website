@@ -9,7 +9,6 @@ export interface ICommentAuthor {
     name: string;
     email: string;
     avatar: string | null;
-    website: string | null;
     isOwner: boolean; // Site owner flag
 }
 

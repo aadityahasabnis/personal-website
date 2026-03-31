@@ -31,7 +31,7 @@ export default async function ArticleLayout({ children, params }: IArticleLayout
     const tocHeadings = extractHeadingsFromAuthorlyHtml(stampedHtml);
 
     return (
-        <div className='mx-auto px-4 py-12 max-w-350 md:py-16 lg:px-8'>
+        <div className='mx-auto px-4 max-w-350 lg:px-8'>
             <div className='flex gap-8'>
                 {/* Left Sidebar - Navigation */}
                 <aside className='shrink-0 hidden w-64 lg:block'>
@@ -47,7 +47,7 @@ export default async function ArticleLayout({ children, params }: IArticleLayout
                 </aside>
 
                 {/* Main Content */}
-                <main className='flex-1 min-w-0 max-w-3xl'>{children}</main>
+                <main className='flex-1 min-w-0'>{children}</main>
 
                 {/* Right Sidebar - Table of Contents */}
                 <aside className='shrink-0 hidden w-56 xl:block'>

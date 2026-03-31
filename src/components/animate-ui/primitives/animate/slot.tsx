@@ -6,7 +6,7 @@ import * as React from 'react';
 
 type AnyProps = Record<string, unknown>;
 
-type DOMMotionProps<T extends HTMLElement = HTMLElement> = Omit<HTMLMotionProps<keyof HTMLElementTagNameMap>, 'ref'> & { ref?: React.Ref<T> };
+type DOMMotionProps<T extends HTMLElement = HTMLElement> = Omit<HTMLMotionProps<keyof HTMLElementTagNameMap>, 'ref'> & { ref?: React.Ref<T> | undefined };
 
 type WithAsChild<Base extends object> = (Base & { asChild: true; children: React.ReactElement }) | (Base & { asChild?: false | undefined });
 
@@ -56,7 +56,10 @@ function Slot<T extends HTMLElement = HTMLElement>({ children, ref, ...props }: 
 
     const mergedProps = mergeProps(childProps, props);
 
-    return <Base {...mergedProps} ref={mergeRefs(childRef as React.Ref<T>, ref)} />;
+    return React.createElement(Base as React.ElementType, {
+        ...mergedProps,
+        ref: mergeRefs(childRef as React.Ref<T>, ref),
+    });
 }
 
 export { Slot, type AnyProps, type DOMMotionProps, type SlotProps, type WithAsChild };

@@ -19,7 +19,7 @@ const AuthorlyEditor = dynamic(() => import('authorly-editor').then((mod) => mod
 
 function EditorSkeleton() {
     return (
-        <div className='w-full animate-pulse rounded-lg border border-border bg-muted/30 min-h-[500px] flex items-center justify-center'>
+        <div className='w-full animate-pulse rounded-lg border border-border bg-muted/30 min-h-125 flex items-center justify-center'>
             <p className='text-sm text-muted-foreground'>Loading editor…</p>
         </div>
     );
@@ -39,10 +39,11 @@ export const RichTextEditor = forwardRef<EditorRef, RichTextEditorProps>(functio
 ) {
     const { resolvedTheme } = useTheme();
     const isDark = resolvedTheme === 'dark';
+    const saveProps = onSave !== undefined ? { onSave } : {};
 
     return (
         <div className='rounded-lg border border-border overflow-hidden bg-background'>
-            <AuthorlyEditor ref={ref} initialContent={value} onChange={onChange} onSave={onSave} darkMode={isDark} placeholder={placeholder} style={{ minHeight, padding: '1.25rem' }} />
+            <AuthorlyEditor ref={ref} initialContent={value} onChange={onChange} darkMode={isDark} placeholder={placeholder} style={{ minHeight, padding: '1.25rem' }} {...saveProps} />
         </div>
     );
 });

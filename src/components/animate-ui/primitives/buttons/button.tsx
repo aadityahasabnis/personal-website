@@ -12,9 +12,11 @@ type ButtonProps = WithAsChild<
 >;
 
 function Button({ hoverScale = 1.05, tapScale = 0.95, asChild = false, ...props }: ButtonProps) {
-    const Component = asChild ? Slot : motion.button;
+    if (asChild) {
+        return <Slot whileTap={{ scale: tapScale }} whileHover={{ scale: hoverScale }} {...props} />;
+    }
 
-    return <Component whileTap={{ scale: tapScale }} whileHover={{ scale: hoverScale }} {...props} />;
+    return <motion.button whileTap={{ scale: tapScale }} whileHover={{ scale: hoverScale }} {...props} />;
 }
 
 export { Button, type ButtonProps };

@@ -20,7 +20,6 @@ export interface IAdminCommentLean {
         name: string;
         email: string;
         avatar?: string | null;
-        website?: string | null;
         isOwner?: boolean;
     };
     content: string;
@@ -227,7 +226,6 @@ export const mapAdminCommentRow = (
             name: row.author.name,
             email: row.author.email,
             avatar: row.author.avatar ?? null,
-            website: row.author.website ?? null,
             isOwner: Boolean(row.author.isOwner),
         },
         body: row.content,
@@ -327,7 +325,6 @@ export const resolveAdminReplyAuthor = (): {
     name: string;
     email: string;
     avatar: null;
-    website: null;
     isOwner: true;
 } => {
     const configuredName = process.env.ADMIN_COMMENT_AUTHOR_NAME?.trim();
@@ -344,7 +341,6 @@ export const resolveAdminReplyAuthor = (): {
         name,
         email,
         avatar: null,
-        website: null,
         isOwner: true,
     };
 };

@@ -10,7 +10,7 @@
 export const STORAGE_KEYS = {
     USER:    { PROFILE: 'rc::u:profile', PREFERENCES: 'rc::u:prefs'},
     STATS:   { LIKES: 'rc::s:likes', VIEWS: 'rc::s:views', COMMENT_UPVOTES: 'rc::s:upvotes' },
-    COMMENT: { AUTHOR: 'rc::c:author' },
+    COMMENT: { AUTHOR: 'rc::c:author', OWN_COMMENTS: 'rc::c:own' },
 } as const;
 
 // =================================================
@@ -101,6 +101,24 @@ class SiteStorage {
         this.remove(STORAGE_KEYS.COMMENT.AUTHOR);
     }
 
+    // Own comments tracking (to prevent self-upvoting)
+    isOwnComment(commentId: string): boolean {
+        const ownComments = this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
+        return ownComments.includes(commentId);
+    }
+
+    addOwnComment(commentId: string): void {
+        const ownComments = this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
+        if (!ownComments.includes(commentId)) {
+            ownComments.push(commentId);
+            this.set(STORAGE_KEYS.COMMENT.OWN_COMMENTS, ownComments);
+        }
+    }
+
+    getOwnComments(): string[] {
+        return this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
+    }
+
     // Likes
     hasLiked(id: string, namespace?: string): boolean {
         const key = this.namespacedId(id, namespace);
@@ -174,7 +192,7 @@ class SiteStorage {
     clearAll(): void {
         [STORAGE_KEYS.USER.PROFILE, STORAGE_KEYS.USER.PREFERENCES,
          STORAGE_KEYS.STATS.LIKES, STORAGE_KEYS.STATS.VIEWS, STORAGE_KEYS.STATS.COMMENT_UPVOTES,
-         STORAGE_KEYS.COMMENT.AUTHOR].forEach(k => this.remove(k));
+         STORAGE_KEYS.COMMENT.AUTHOR, STORAGE_KEYS.COMMENT.OWN_COMMENTS].forEach(k => this.remove(k));
     }
 }
 

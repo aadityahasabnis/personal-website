@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, SVGMotionProps, type HTMLMotionProps } from 'motion/react';
+import { motion, type HTMLMotionProps, type SVGMotionProps } from 'motion/react';
 import { Checkbox as CheckboxPrimitive } from 'radix-ui';
 import * as React from 'react';
 
@@ -18,14 +18,23 @@ type CheckboxProps = HTMLMotionProps<'button'> & Omit<React.ComponentProps<typeo
 
 function Checkbox({ defaultChecked, checked, onCheckedChange, disabled, required, name, value, ...props }: CheckboxProps) {
     const [isChecked, setIsChecked] = useControlledState({
-        value: checked,
-        defaultValue: defaultChecked,
-        onChange: onCheckedChange,
+        ...(checked !== undefined ? { value: checked } : {}),
+        ...(defaultChecked !== undefined ? { defaultValue: defaultChecked } : {}),
+        ...(onCheckedChange !== undefined ? { onChange: onCheckedChange } : {}),
     });
+
+    const rootProps = {
+        ...(defaultChecked !== undefined ? { defaultChecked } : {}),
+        ...(checked !== undefined ? { checked } : {}),
+        ...(disabled !== undefined ? { disabled } : {}),
+        ...(required !== undefined ? { required } : {}),
+        ...(name !== undefined ? { name } : {}),
+        ...(value !== undefined ? { value } : {}),
+    };
 
     return (
         <CheckboxProvider value={{ isChecked, setIsChecked }}>
-            <CheckboxPrimitive.Root defaultChecked={defaultChecked} checked={checked} onCheckedChange={setIsChecked} disabled={disabled} required={required} name={name} value={value} asChild>
+            <CheckboxPrimitive.Root onCheckedChange={setIsChecked} asChild {...rootProps}>
                 <motion.button data-slot='checkbox' whileTap={{ scale: 0.95 }} whileHover={{ scale: 1.05 }} {...props} />
             </CheckboxPrimitive.Root>
         </CheckboxProvider>

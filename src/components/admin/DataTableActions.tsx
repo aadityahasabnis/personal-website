@@ -1,42 +1,13 @@
 'use client';
 
-import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import {
-    MoreHorizontal,
-    Pencil,
-    Trash2,
-    Eye,
-    EyeOff,
-    Star,
-    StarOff,
-    Copy,
-    ExternalLink,
-    AlertTriangle,
-    CheckCircle2,
-    Clock,
-    Pause,
-    type LucideIcon,
-} from 'lucide-react';
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-    DropdownMenuLabel,
-} from '@/components/ui/dropdown-menu';
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { AlertTriangle, CheckCircle2, Clock, Copy, ExternalLink, Eye, EyeOff, MoreHorizontal, Pause, Pencil, Star, StarOff, Trash2, type LucideIcon } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState, useTransition } from 'react';
 
 // Icon mapping for serializable icon names from server components
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -72,10 +43,10 @@ interface IDataTableActionsProps {
 
 /**
  * DataTableActions Component
- * 
+ *
  * Generic dropdown menu for CRUD operations on table rows
  * Supports: Edit, Delete (with confirmation), Toggle Published, Toggle Featured, Duplicate, View, Custom actions
- * 
+ *
  * @example
  * <DataTableActions
  *   itemName="article"
@@ -86,11 +57,7 @@ interface IDataTableActionsProps {
  *   ]}
  * />
  */
-export const DataTableActions = ({
-    actions,
-    itemName = 'item',
-    className,
-}: IDataTableActionsProps): React.ReactElement => {
+export const DataTableActions = ({ actions, itemName = 'item', className }: IDataTableActionsProps): React.ReactElement => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -130,25 +97,26 @@ export const DataTableActions = ({
             {/* Actions Dropdown */}
             <DropdownMenu modal={false}>
                 <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon-sm" disabled={isPending} className={cn(className)}>
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
+                    <Button variant='ghost' size='icon-sm' disabled={isPending} className={cn(className)}>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Open menu</span>
                     </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align="end" className="w-48" sideOffset={5}>
+                <DropdownMenuContent align='end' className='w-48' sideOffset={5}>
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
 
                     {actions.map((action, index) => {
                         const Icon = ICON_MAP[action.icon] || ExternalLink;
+                        const variantProps = action.variant !== undefined ? { variant: action.variant } : {};
 
                         // Render as Link for navigation actions
                         if (action.href) {
                             return (
                                 <DropdownMenuItem key={index} asChild>
-                                    <Link href={action.href} className="flex items-center">
-                                        <Icon className="mr-2 h-4 w-4" />
+                                    <Link href={action.href} className='flex items-center'>
+                                        <Icon className='mr-2 h-4 w-4' />
                                         {action.label}
                                     </Link>
                                 </DropdownMenuItem>
@@ -157,13 +125,8 @@ export const DataTableActions = ({
 
                         // Render as button for actions
                         return (
-                            <DropdownMenuItem
-                                key={index}
-                                onClick={() => handleAction(action)}
-                                variant={action.variant}
-                                disabled={isPending}
-                            >
-                                <Icon className="mr-2 h-4 w-4" />
+                            <DropdownMenuItem key={index} onClick={() => handleAction(action)} disabled={isPending} {...variantProps}>
+                                <Icon className='mr-2 h-4 w-4' />
                                 {action.label}
                             </DropdownMenuItem>
                         );
@@ -175,35 +138,22 @@ export const DataTableActions = ({
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
-                                <AlertTriangle className="h-5 w-5 text-destructive" />
+                        <div className='flex items-center gap-3'>
+                            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10'>
+                                <AlertTriangle className='h-5 w-5 text-destructive' />
                             </div>
                             <div>
-                                <DialogTitle>
-                                    {pendingAction?.confirmTitle || 'Are you sure?'}
-                                </DialogTitle>
-                                <DialogDescription>
-                                    {pendingAction?.confirmMessage ||
-                                        `This action cannot be undone. This will permanently delete ${itemName}.`}
-                                </DialogDescription>
+                                <DialogTitle>{pendingAction?.confirmTitle || 'Are you sure?'}</DialogTitle>
+                                <DialogDescription>{pendingAction?.confirmMessage || `This action cannot be undone. This will permanently delete ${itemName}.`}</DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
 
                     <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setShowDeleteDialog(false)}
-                            disabled={isPending}
-                        >
+                        <Button variant='outline' onClick={() => setShowDeleteDialog(false)} disabled={isPending}>
                             Cancel
                         </Button>
-                        <Button
-                            variant="destructive"
-                            onClick={confirmAction}
-                            disabled={isPending}
-                        >
+                        <Button variant='destructive' onClick={confirmAction} disabled={isPending}>
                             {isPending ? 'Processing...' : 'Confirm'}
                         </Button>
                     </DialogFooter>
@@ -212,4 +162,3 @@ export const DataTableActions = ({
         </>
     );
 };
-

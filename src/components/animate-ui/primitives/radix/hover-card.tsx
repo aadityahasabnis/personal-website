@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProps, type MotionValue, type SpringOptions } from 'motion/react';
+import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProps, type MotionStyle, type MotionValue, type SpringOptions } from 'motion/react';
 import { HoverCard as HoverCardPrimitive } from 'radix-ui';
 import * as React from 'react';
 
@@ -23,11 +23,17 @@ type HoverCardProps = React.ComponentProps<typeof HoverCardPrimitive.Root> & {
     followCursorSpringOptions?: SpringOptions;
 };
 
+function omitUndefined<T extends Record<string, unknown>>(value: T): Partial<T> {
+    return Object.fromEntries(Object.entries(value).filter(([, current]) => current !== undefined)) as Partial<T>;
+}
+
 function HoverCard({ followCursor = false, followCursorSpringOptions = { stiffness: 200, damping: 17 }, ...props }: HoverCardProps) {
     const [isOpen, setIsOpen] = useControlledState({
-        value: props?.open,
-        defaultValue: props?.defaultOpen,
-        onChange: props?.onOpenChange,
+        ...omitUndefined({
+            value: props.open,
+            defaultValue: props.defaultOpen,
+            onChange: props.onOpenChange,
+        }),
     });
     const x = useMotionValue(0);
     const y = useMotionValue(0);
@@ -103,21 +109,27 @@ function HoverCardContent({
     const translateX = useSpring(x, followCursorSpringOptions);
     const translateY = useSpring(y, followCursorSpringOptions);
 
+    const primitiveContentProps = omitUndefined({
+        align,
+        alignOffset,
+        side,
+        sideOffset,
+        avoidCollisions,
+        collisionBoundary,
+        collisionPadding,
+        arrowPadding,
+        sticky,
+        hideWhenDetached,
+    });
+
+    const contentStyle = {
+        ...(followCursor === 'x' || followCursor === true ? { x: translateX } : {}),
+        ...(followCursor === 'y' || followCursor === true ? { y: translateY } : {}),
+        ...(style ?? {}),
+    } as MotionStyle;
+
     return (
-        <HoverCardPrimitive.Content
-            asChild
-            forceMount
-            align={align}
-            alignOffset={alignOffset}
-            side={side}
-            sideOffset={sideOffset}
-            avoidCollisions={avoidCollisions}
-            collisionBoundary={collisionBoundary}
-            collisionPadding={collisionPadding}
-            arrowPadding={arrowPadding}
-            sticky={sticky}
-            hideWhenDetached={hideWhenDetached}
-        >
+        <HoverCardPrimitive.Content asChild forceMount {...primitiveContentProps}>
             <motion.div
                 key='hover-card-content'
                 data-slot='hover-card-content'
@@ -125,11 +137,7 @@ function HoverCardContent({
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
                 transition={transition}
-                style={{
-                    x: followCursor === 'x' || followCursor === true ? translateX : undefined,
-                    y: followCursor === 'y' || followCursor === true ? translateY : undefined,
-                    ...style,
-                }}
+                style={contentStyle}
                 {...props}
             />
         </HoverCardPrimitive.Content>

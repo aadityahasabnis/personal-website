@@ -1,14 +1,11 @@
-import { ChevronLeft, FileText } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { BeamLine } from '@/components/common/BeamLine';
+import { ArticleHeader } from '@/components/content/article/ArticleHeader';
 import { SubtopicAccordion } from '@/components/content/article/SubtopicAccordion';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema } from '@/lib/seo';
-import { formatDate } from '@/lib/utils';
 import { getPublishedArticleTopics, getPublishedTopicTreeBySlug } from '@/server/new/public/content/article';
 
 // ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
@@ -78,6 +75,10 @@ export default async function TopicPage({ params }: ITopicPageProps) {
     }
 
     const allArticles = [...topicData.uncategorizedArticles, ...topicData.subtopics.flatMap((section) => section.articles)];
+    const breadcrumbs = [
+        { label: 'Articles', href: '/articles' },
+        { label: topicData.topic.title, href: `/articles/${topicSlug}` },
+    ];
 
     // JSON-LD structured data for topic hub page
     const breadcrumbSchema = generateBreadcrumbSchema([
@@ -116,35 +117,15 @@ export default async function TopicPage({ params }: ITopicPageProps) {
             {/* JSON-LD Structured Data */}
             <JsonLd data={combinedSchema} />
 
-            <main className='mx-auto px-6 py-24 max-w-4xl md:py-32 lg:px-8'>
-                {/* Breadcrumb */}
-                <nav className='mb-8'>
-                    <Link href='/articles' className='inline-flex items-center gap-1 text-body text-muted-foreground transition-base hover:text-primary'>
-                        <ChevronLeft className='size-4' />
-                        All Topics
-                    </Link>
-                </nav>
-
-                {/* Topic Header */}
-                <header className='mb-12'>
-                    {/* Title */}
-                    <h1 className='mb-4 text-h1 font-semibold text-foreground'>{topicData.topic.title}</h1>
-
-                    {/* Description */}
-                    <p className='max-w-2xl text-h3 text-muted-foreground'>{topicData.topic.description}</p>
-
-                    {/* Meta */}
-                    <div className='mt-6 flex items-center gap-4 text-small text-muted-foreground'>
-                        <span className='flex items-center gap-1.5'>
-                            <FileText className='size-4' />
-                            {topicData.topic.contentCount} article{topicData.topic.contentCount !== 1 ? 's' : ''}
-                        </span>
-                        <span>Last updated {formatDate(topicData.topic.updatedAt)}</span>
-                    </div>
-
-                    {/* Decorative animated beam line */}
-                    <BeamLine />
-                </header>
+            <main className='mx-auto px-6 py-20 max-w-4xl md:py-28 lg:px-8'>
+                <ArticleHeader
+                    breadcrumbs={breadcrumbs}
+                    title={topicData.topic.title}
+                    description={topicData.topic.description}
+                    coverImage={topicData.topic.coverImage}
+                    contentCount={topicData.topic.contentCount}
+                    subtopicCount={topicData.topic.subTopicCount}
+                />
 
                 {/* Subtopics Accordion */}
                 <SubtopicAccordion topicSlug={topicSlug} sections={topicData.subtopics} uncategorizedArticles={topicData.uncategorizedArticles} />

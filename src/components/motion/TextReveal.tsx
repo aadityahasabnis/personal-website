@@ -22,7 +22,7 @@ export const TextReveal = ({ children, delay = 0, charDuration = 0.03, stagger =
 
     const container = {
         hidden: { opacity: 0 },
-        visible: (i = 1) => ({
+        visible: () => ({
             opacity: 1,
             transition: {
                 staggerChildren: stagger,

@@ -3,7 +3,6 @@ import type { IPublicCommentListQuery } from '../shared';
 export interface IPublicCommentAuthor {
     name: string;
     avatar: string | null;
-    website: string | null;
     isOwner: boolean;
 }
 
@@ -32,7 +31,6 @@ export interface ICreateCommentInput {
     parentId?: string | null;
     authorName: string;
     authorEmail: string;
-    authorWebsite?: string | null;
     authorAvatar?: string | null;
     body: string;
     ipAddress?: string | null;

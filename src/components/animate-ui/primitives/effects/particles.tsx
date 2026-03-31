@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion, type HTMLMotionProps } from 'motion/react';
+import { AnimatePresence, motion, type HTMLMotionProps, type MotionStyle } from 'motion/react';
 import * as React from 'react';
 
 import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
@@ -93,10 +93,15 @@ function ParticlesEffect({
                     const x = Math.cos(angle) * radius;
                     const y = Math.sin(angle) * radius;
 
+                    const particleStyle = {
+                        ...containerStyle,
+                        ...(style ?? {}),
+                    } as MotionStyle;
+
                     return (
                         <motion.div
                             key={i}
-                            style={{ ...containerStyle, ...style }}
+                            style={particleStyle}
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{
                                 x: `${x}px`,

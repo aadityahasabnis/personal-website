@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion, type Transition } from 'motion/react';
+import { AnimatePresence, motion, type MotionStyle, type Transition } from 'motion/react';
 import * as React from 'react';
 
 import { cn } from '@/lib/utils';
@@ -114,7 +114,6 @@ type HighlightProps<T extends React.ElementType = 'div'> =
 
 function Highlight<T extends React.ElementType = 'div'>({ ref, ...props }: HighlightProps<T>) {
     const {
-        as: Component = 'div',
         children,
         value,
         defaultValue,
@@ -227,8 +226,14 @@ function Highlight<T extends React.ElementType = 'div'>({ ref, ...props }: Highl
 
     const render = (children: React.ReactNode) => {
         if (mode === 'parent') {
+            const parentHighlightStyle = {
+                position: 'absolute',
+                zIndex: 0,
+                ...(style ?? {}),
+            } as MotionStyle;
+
             return (
-                <Component ref={localRef} data-slot='motion-highlight-container' style={{ position: 'relative', zIndex: 1 }} className={(props as ParentModeHighlightProps)?.containerClassName}>
+                <div ref={localRef} data-slot='motion-highlight-container' style={{ position: 'relative', zIndex: 1 }} className={(props as ParentModeHighlightProps)?.containerClassName}>
                     <AnimatePresence initial={false} mode='wait'>
                         {boundsState && (
                             <motion.div
@@ -255,41 +260,44 @@ function Highlight<T extends React.ElementType = 'div'>({ ref, ...props }: Highl
                                     },
                                 }}
                                 transition={transition}
-                                style={{ position: 'absolute', zIndex: 0, ...style }}
+                                style={parentHighlightStyle}
                                 className={cn(className, activeClassNameState)}
                             />
                         )}
                     </AnimatePresence>
                     {children}
-                </Component>
+                </div>
             );
         }
 
         return children;
     };
 
+    const contextValue: HighlightContextType<string> = {
+        mode,
+        activeValue,
+        setActiveValue: safeSetActiveValue,
+        setBounds: safeSetBounds,
+        clearBounds,
+        id,
+        hover,
+        click,
+        activeClassName: activeClassNameState,
+        setActiveClassName: setActiveClassNameState,
+    };
+
+    if (className !== undefined) contextValue.className = className;
+    if (style !== undefined) contextValue.style = style;
+    if (transition !== undefined) contextValue.transition = transition;
+    if (disabled !== undefined) contextValue.disabled = disabled;
+    if (enabled !== undefined) contextValue.enabled = enabled;
+    if (exitDelay !== undefined) contextValue.exitDelay = exitDelay;
+
+    const forceUpdateBounds = (props as ParentModeHighlightProps)?.forceUpdateBounds;
+    if (forceUpdateBounds !== undefined) contextValue.forceUpdateBounds = forceUpdateBounds;
+
     return (
-        <HighlightContext.Provider
-            value={{
-                mode,
-                activeValue,
-                setActiveValue: safeSetActiveValue,
-                id,
-                hover,
-                click,
-                className,
-                style,
-                transition,
-                disabled,
-                enabled,
-                exitDelay,
-                setBounds: safeSetBounds,
-                clearBounds,
-                activeClassName: activeClassNameState,
-                setActiveClassName: setActiveClassNameState,
-                forceUpdateBounds: (props as ParentModeHighlightProps)?.forceUpdateBounds,
-            }}
-        >
+        <HighlightContext.Provider value={contextValue}>
             {enabled
                 ? controlledItems
                     ? render(children)
@@ -417,7 +425,11 @@ function HighlightItem<T extends React.ElementType>({
             setActiveClassName(activeClassName ?? '');
         } else if (!activeValue) clearBounds();
 
-        if (shouldUpdateBounds) return () => cancelAnimationFrame(rafId);
+        if (shouldUpdateBounds) {
+            return () => cancelAnimationFrame(rafId);
+        }
+
+        return undefined;
     }, [mode, isActive, activeValue, setBounds, clearBounds, activeClassName, setActiveClassName, forceUpdateBounds, contextForceUpdateBounds]);
 
     if (!React.isValidElement(children)) return children;
@@ -450,6 +462,13 @@ function HighlightItem<T extends React.ElementType>({
             }
           : {};
 
+    const itemHighlightStyle = {
+        position: 'absolute',
+        zIndex: 0,
+        ...(contextStyle ?? {}),
+        ...(style ?? {}),
+    } as MotionStyle;
+
     if (asChild) {
         if (mode === 'children') {
             return React.cloneElement(
@@ -471,12 +490,7 @@ function HighlightItem<T extends React.ElementType>({
                             <motion.div
                                 layoutId={`transition-background-${contextId}`}
                                 data-slot='motion-highlight'
-                                style={{
-                                    position: 'absolute',
-                                    zIndex: 0,
-                                    ...contextStyle,
-                                    ...style,
-                                }}
+                                style={itemHighlightStyle}
                                 className={cn(contextClassName, activeClassName)}
                                 transition={itemTransition}
                                 initial={{ opacity: 0 }}
@@ -526,12 +540,7 @@ function HighlightItem<T extends React.ElementType>({
                         <motion.div
                             layoutId={`transition-background-${contextId}`}
                             data-slot='motion-highlight'
-                            style={{
-                                position: 'absolute',
-                                zIndex: 0,
-                                ...contextStyle,
-                                ...style,
-                            }}
+                            style={itemHighlightStyle}
                             className={cn(contextClassName, activeClassName)}
                             transition={itemTransition}
                             initial={{ opacity: 0 }}

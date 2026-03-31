@@ -1,4 +1,4 @@
-import { Github, Linkedin, Mail, Twitter } from 'lucide-react';
+import { Facebook, Github, Instagram, Linkedin, Mail, Twitter } from 'lucide-react';
 
 // ============================================================
 // Site Configuration
@@ -103,6 +103,22 @@ export const SOCIAL_LINKS = [
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on LinkedIn',
     icon: Linkedin,
+  },
+  {
+    id: 'instagram',
+    platform: 'Instagram',
+    url: 'https://instagram.com/creative_northstar',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on Instagram',
+    icon: Instagram
+  },
+  {
+    id: 'facebook',
+    platform: 'Facebook',
+    url: 'https://facebook.com/aadityahasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on Facebook',
+    icon: Facebook
   },
   {
     id: 'email',

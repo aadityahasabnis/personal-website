@@ -21,15 +21,19 @@ export interface ICustomCheckboxProps<TFormBody extends IFormData = IFormData> {
 }
 
 const CustomCheckbox = <TFormBody extends IFormData = IFormData>({ name, value, label, onChange, required, disabled, hint, errorMessage, className }: ICustomCheckboxProps<TFormBody>) => {
+    const checkboxProps = {
+        id: name,
+        name,
+        checked: Boolean(value),
+        ...(required !== undefined ? { required } : {}),
+        ...(disabled !== undefined ? { disabled } : {}),
+    };
+
     return (
         <div className={cn('flex flex-col gap-1.5', className)}>
             <label className={cn('flex items-start gap-2.5', disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer')}>
                 <Checkbox
-                    id={name}
-                    name={name}
-                    checked={Boolean(value)}
-                    required={required}
-                    disabled={disabled}
+                    {...checkboxProps}
                     onCheckedChange={(checked) => {
                         onChange({
                             target: {

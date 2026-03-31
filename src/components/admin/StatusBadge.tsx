@@ -1,27 +1,25 @@
-import { Eye, EyeOff, Star, StarOff, CheckCircle2, Clock, XCircle, Pause } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CheckCircle2, Clock, Eye, EyeOff, Pause, Star, StarOff, XCircle } from 'lucide-react';
 
 type StatusType = 'published' | 'draft' | 'archived';
-type FeaturedType = 'featured' | 'not-featured';
-type ProjectStatusType = 'active' | 'archived' | 'wip';
 type SubscriberStatusType = 'confirmed' | 'pending' | 'unsubscribed';
 
 interface IStatusBadgeProps {
     variant?: 'published' | 'featured' | 'status';
     status?: SubscriberStatusType;
-    value?: boolean | StatusType | ProjectStatusType;
+    value?: boolean | StatusType | string;
     className?: string;
 }
 
 /**
  * StatusBadge Component
- * 
+ *
  * Reusable badge component for displaying different status types across admin panel
  * - Published/Draft status
  * - Featured/Not Featured status
  * - Project status (Active/WIP/Archived)
  * - Subscriber status (Confirmed/Pending/Unsubscribed)
- * 
+ *
  * @example
  * <StatusBadge variant="published" value={true} />
  * <StatusBadge variant="published" value={false} />
@@ -54,14 +52,8 @@ export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeP
         const Icon = config.icon;
 
         return (
-            <span
-                className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    config.className,
-                    className
-                )}
-            >
-                <Icon className="h-3 w-3" />
+            <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium', config.className, className)}>
+                <Icon className='h-3 w-3' />
                 {config.label}
             </span>
         );
@@ -74,13 +66,11 @@ export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeP
             <span
                 className={cn(
                     'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    isPublished
-                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-                    className
+                    isPublished ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                    className,
                 )}
             >
-                {isPublished ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                {isPublished ? <Eye className='h-3 w-3' /> : <EyeOff className='h-3 w-3' />}
                 {isPublished ? 'Published' : 'Draft'}
             </span>
         );
@@ -93,13 +83,11 @@ export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeP
             <span
                 className={cn(
                     'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    isFeatured
-                        ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400'
-                        : 'bg-muted text-muted-foreground',
-                    className
+                    isFeatured ? 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400' : 'bg-muted text-muted-foreground',
+                    className,
                 )}
             >
-                {isFeatured ? <Star className="h-3 w-3 fill-current" /> : <StarOff className="h-3 w-3" />}
+                {isFeatured ? <Star className='h-3 w-3 fill-current' /> : <StarOff className='h-3 w-3' />}
                 {isFeatured ? 'Featured' : 'Regular'}
             </span>
         );
@@ -107,8 +95,12 @@ export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeP
 
     // Project Status Badge
     if (variant === 'status') {
-        const projectStatus = value as ProjectStatusType;
-        
+        const normalizedStatus = String(value ?? '')
+            .trim()
+            .toLowerCase();
+
+        const statusKey = normalizedStatus === 'active' ? 'active' : normalizedStatus === 'wip' || normalizedStatus === 'in progress' ? 'wip' : normalizedStatus === 'archived' ? 'archived' : 'wip';
+
         const statusConfig = {
             active: {
                 icon: CheckCircle2,
@@ -127,18 +119,12 @@ export const StatusBadge = ({ variant, value, status, className }: IStatusBadgeP
             },
         };
 
-        const config = statusConfig[projectStatus];
+        const config = statusConfig[statusKey];
         const Icon = config.icon;
 
         return (
-            <span
-                className={cn(
-                    'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                    config.className,
-                    className
-                )}
-            >
-                <Icon className="h-3 w-3" />
+            <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium', config.className, className)}>
+                <Icon className='h-3 w-3' />
                 {config.label}
             </span>
         );

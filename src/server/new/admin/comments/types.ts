@@ -20,7 +20,6 @@ export interface IAdminCommentAuthor {
     name: string;
     email: string;
     avatar: string | null;
-    website: string | null;
     isOwner: boolean;
 }
 

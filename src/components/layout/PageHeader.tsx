@@ -16,12 +16,22 @@ export const PageHeader = ({ title, description, label, align = 'left', classNam
     return (
         <header className={cn('relative mb-16 md:mb-20', align === 'center' && 'text-center', className)}>
             {label && (
-                <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className='mb-4 text-label font-medium uppercase tracking-widest text-primary'>
+                <motion.p
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className='text-label font-medium uppercase font-nunito tracking-widest text-primary'
+                >
                     {label}
                 </motion.p>
             )}
 
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }} className='text-display font-light leading-tight text-foreground'>
+            <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className='text-display font-medium font-nunito tracking-wide text-foreground'
+            >
                 {title}
             </motion.h1>
 
@@ -30,7 +40,7 @@ export const PageHeader = ({ title, description, label, align = 'left', classNam
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.2 }}
-                    className={cn('mt-6 text-h3 font-light leading-relaxed text-muted-foreground', align === 'center' ? 'mx-auto max-w-2xl' : 'max-w-3xl')}
+                    className={cn('text-h6 font-light tracking-wider text-muted-foreground')}
                 >
                     {description}
                 </motion.p>

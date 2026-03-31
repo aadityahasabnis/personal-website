@@ -1,7 +1,7 @@
 'use client';
 
-import { motion, useInView, UseInViewOptions, Variants } from 'framer-motion';
-import { Children, isValidElement, ReactNode, useRef } from 'react';
+import { motion, useInView, type UseInViewOptions, type Variants } from 'framer-motion';
+import { Children, isValidElement, type ReactNode, useRef } from 'react';
 
 interface IStaggerChildrenProps {
     children: ReactNode;
@@ -18,32 +18,6 @@ interface IStaggerChildrenProps {
     /** Additional className for container */
     className?: string;
 }
-
-const containerVariants: Variants = {
-    hidden: { opacity: 0 },
-    visible: {
-        opacity: 1,
-        transition: {
-            staggerChildren: 0.1,
-            delayChildren: 0,
-        },
-    },
-};
-
-const itemVariants: Variants = {
-    hidden: {
-        opacity: 0,
-        y: 20,
-    },
-    visible: {
-        opacity: 1,
-        y: 0,
-        transition: {
-            duration: 0.5,
-            ease: [0.25, 0.4, 0.25, 1],
-        },
-    },
-};
 
 /**
  * Container that staggers animations for its children

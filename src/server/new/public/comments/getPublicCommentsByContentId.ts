@@ -29,15 +29,15 @@ export const getPublicCommentsByContentId = async (
         if (!canRead) return error('Published content not found', 404);
 
         const { offset, limit } = normalizePagination(params.pagination);
-        const approvedOnly = true;
 
-        const baseMatch: Record<string, unknown> = {
+        // Fetch top-level comments (parentId is null)
+        const baseMatch = {
             contentId,
             parentId: null,
-            ...(approvedOnly ? { approved: true } : {}),
+            approved: true,
         };
 
-        const [rows, total] = await Promise.all([
+        const [topLevelComments, total] = await Promise.all([
             Comment.find(baseMatch)
                 .sort({ createdAt: -1, _id: -1 })
                 .skip(offset)
@@ -47,31 +47,43 @@ export const getPublicCommentsByContentId = async (
             Comment.countDocuments(baseMatch),
         ]);
 
-        const rowNodes = rows.map(mapComment);
-        const parentIds = rows.map((row) => row._id);
+        const rowNodes = topLevelComments.map(mapComment);
+        const topLevelIds = topLevelComments.map((row) => row._id);
 
-        if (parentIds.length) {
-            const replyRows = await Comment.find({
+        if (topLevelIds.length > 0) {
+            // Fetch ALL nested replies for this content (both level 1 and level 2)
+            const allReplies = await Comment.find({
                 contentId,
-                parentId: { $in: parentIds },
-                ...(approvedOnly ? { approved: true } : {}),
+                parentId: { $ne: null },
+                approved: true,
             })
-                .sort({ parentId: 1, createdAt: 1, _id: 1 })
-                .hint({ contentId: 1, parentId: 1, approved: 1, createdAt: 1, _id: 1 })
+                .sort({ createdAt: 1, _id: 1 })
                 .select('_id contentId parentId author content upvotes replyCount createdAt')
                 .lean<ICommentLean[]>();
 
-            const replyByParent = new Map<string, IPublicCommentNode[]>();
-            for (const reply of replyRows) {
+            // Build a map of parentId -> replies
+            const repliesByParent = new Map<string, IPublicCommentNode[]>();
+            for (const reply of allReplies) {
                 if (!reply.parentId) continue;
                 const key = reply.parentId.toString();
-                const list = replyByParent.get(key) ?? [];
+                const list = repliesByParent.get(key) ?? [];
                 list.push(mapComment(reply));
-                replyByParent.set(key, list);
+                repliesByParent.set(key, list);
             }
 
+            // Recursive function to attach replies
+            const attachReplies = (node: IPublicCommentNode, depth: number): void => {
+                if (depth >= 2) return; // Max 2 levels of nesting
+                const replies = repliesByParent.get(node.id) ?? [];
+                node.replies = replies;
+                for (const reply of replies) {
+                    attachReplies(reply, depth + 1);
+                }
+            };
+
+            // Attach replies to top-level comments
             for (const row of rowNodes) {
-                row.replies = replyByParent.get(row.id) ?? [];
+                attachReplies(row, 0);
             }
         }
 
@@ -89,7 +101,7 @@ export const getPublicCommentsByContentId = async (
 
 /*
 API Responses:
-- 200: Comment list returned with paginated top-level rows and nested replies.
+- 200: Comment list returned with paginated top-level rows and nested replies (up to 2 levels deep).
 - 400: Invalid content id.
 - 404: Published content not found.
 - 500: Unexpected server/database error.

@@ -1,17 +1,17 @@
 'use client';
 
-import { cva, VariantProps } from 'class-variance-authority';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { PanelLeftIcon } from 'lucide-react';
 import { type Transition } from 'motion/react';
 import { Slot } from 'radix-ui';
 import * as React from 'react';
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/animate-ui/components/animate/tooltip';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/animate-ui/components/radix/sheet';
 import { Highlight, HighlightItem } from '@/components/animate-ui/primitives/effects/highlight';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { getStrictContext } from '@/lib/get-strict-context';
@@ -143,10 +143,11 @@ function Sidebar({
     ...props
 }: SidebarProps) {
     const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+    const rootContainerClassNameProps = containerClassName !== undefined ? { containerClassName } : {};
 
     if (collapsible === 'none') {
         return (
-            <Highlight enabled={animateOnHover} hover controlledItems mode='parent' containerClassName={containerClassName} transition={transition}>
+            <Highlight enabled={animateOnHover} hover controlledItems mode='parent' transition={transition} {...rootContainerClassNameProps}>
                 <div data-slot='sidebar' className={cn('bg-sidebar text-sidebar-foreground flex h-full w-(--sidebar-width) flex-col', className)} {...props}>
                     {children}
                 </div>
@@ -269,7 +270,7 @@ function SidebarRail({ className, ...props }: SidebarRailProps) {
             onClick={toggleSidebar}
             title='Toggle Sidebar'
             className={cn(
-                'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] sm:flex',
+                'hover:after:bg-sidebar-border absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:left-1/2 after:w-0.5 sm:flex',
                 'in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize',
                 '[[data-side=left][data-state=collapsed]_&]:cursor-e-resize [[data-side=right][data-state=collapsed]_&]:cursor-w-resize',
                 'hover:group-data-[collapsible=offcanvas]:bg-sidebar group-data-[collapsible=offcanvas]:translate-x-0 group-data-[collapsible=offcanvas]:after:left-full',
@@ -492,7 +493,7 @@ function SidebarMenuAction({ className, asChild = false, showOnHover = false, ..
             data-sidebar='menu-action'
             className={cn(
                 // Increases the hit area of the button on mobile.
-                'z-[1] text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+                'z-1 text-sidebar-foreground ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground peer-hover/menu-button:text-sidebar-accent-foreground absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0 outline-hidden transition-transform focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
                 'after:absolute after:-inset-2 md:after:hidden',
                 'peer-data-[size=sm]/menu-button:top-1',
                 'peer-data-[size=default]/menu-button:top-1.5',
@@ -627,6 +628,5 @@ export {
     SidebarRail,
     SidebarSeparator,
     SidebarTrigger,
-    useSidebar
+    useSidebar,
 };
-

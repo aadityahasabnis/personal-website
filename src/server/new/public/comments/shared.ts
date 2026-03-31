@@ -14,7 +14,6 @@ export interface ICommentLean {
     author: {
         name: string;
         avatar?: string | null;
-        website?: string | null;
         isOwner?: boolean;
     };
     content: string;
@@ -49,7 +48,6 @@ export const mapComment = (row: ICommentLean): IPublicCommentNode => ({
     author: {
         name: row.author.name,
         avatar: row.author.avatar ?? null,
-        website: row.author.website ?? null,
         isOwner: Boolean(row.author.isOwner),
     },
     content: row.content,

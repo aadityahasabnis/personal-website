@@ -1,4 +1,4 @@
-import { AmbientBackground, NoiseOverlay, ScrollReset } from '@/components/effects';
+import { AmbientBackground, NoiseOverlay } from '@/components/effects';
 import Footer from '@/components/layout/Footer';
 import Navbar from '@/components/layout/Navbar';
 
@@ -17,7 +17,7 @@ interface IPublicLayoutProps {
 const PublicLayout = ({ children }: IPublicLayoutProps) => {
     return (
         <div className='relative flex flex-col min-h-screen'>
-            <ScrollReset />
+            {/* <ScrollReset /> */}
             <AmbientBackground />
             <NoiseOverlay />
             <Navbar />

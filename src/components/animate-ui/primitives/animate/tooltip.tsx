@@ -172,6 +172,8 @@ function TooltipArrow({ ref, withTransition = true, ...props }: TooltipArrowProp
     React.useImperativeHandle(ref, () => arrowRef.current as SVGSVGElement);
 
     const deg = { top: 0, right: 90, bottom: 180, left: -90 }[side];
+    const transitionProps = withTransition ? { transition } : {};
+    const layoutProps = withTransition ? { layoutId: `tooltip-arrow-${globalId}` } : {};
 
     return (
         <MotionTooltipArrow
@@ -182,8 +184,8 @@ function TooltipArrow({ ref, withTransition = true, ...props }: TooltipArrowProp
             data-align={align}
             data-slot='tooltip-arrow'
             style={{ rotate: deg }}
-            layoutId={withTransition ? `tooltip-arrow-${globalId}` : undefined}
-            transition={withTransition ? transition : undefined}
+            {...layoutProps}
+            {...transitionProps}
             {...props}
         />
     );
@@ -240,6 +242,9 @@ function TooltipOverlay() {
     const ready = x != null && y != null;
     const Component = rendered.data?.contentAsChild ? Slot : motion.div;
     const resolvedSide = getResolvedSide(context.placement);
+    const contentProps = rendered.data?.contentProps;
+    const { ref: contentRef, transition: contentTransition, style: contentStyle, ...restContentProps } = contentProps ?? {};
+    const finalTransition = contentTransition ?? transition;
 
     return (
         <AnimatePresence mode='wait'>
@@ -295,11 +300,12 @@ function TooltipOverlay() {
                                     onAnimationComplete={() => {
                                         if (!rendered.open) setRendered({ data: null, open: false });
                                     }}
-                                    transition={transition}
-                                    {...rendered.data.contentProps}
+                                    transition={finalTransition}
+                                    {...restContentProps}
+                                    {...(contentRef !== undefined ? { ref: contentRef } : {})}
                                     style={{
                                         position: 'relative',
-                                        ...(rendered.data.contentProps?.style || {}),
+                                        ...(contentStyle || {}),
                                     }}
                                 />
                             </RenderedTooltipProvider>

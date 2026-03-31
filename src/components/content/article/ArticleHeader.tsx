@@ -1,8 +1,8 @@
-'use client';
+import Image from 'next/image';
 
 import { BeamLine } from '@/components/common/BeamLine';
 import { cn, formatDate } from '@/lib/utils';
-import { Calendar, ChevronRight, Clock } from 'lucide-react';
+import { BookOpen, Calendar, ChevronRight, Clock, FileText } from 'lucide-react';
 import Link from 'next/link';
 
 interface IBreadcrumb {
@@ -17,6 +17,12 @@ interface IArticleHeaderProps {
     title: string;
     /** Article description */
     description?: string;
+    /** Optional hero image */
+    coverImage?: string | null;
+    /** Optional content count for topic headers */
+    contentCount?: number;
+    /** Optional subtopic count for topic headers */
+    subtopicCount?: number;
     /** Reading time in minutes */
     readingTime?: number;
     /** Published date */
@@ -30,25 +36,24 @@ interface IArticleHeaderProps {
 }
 
 /**
- * ArticleHeader - Server Component for article page header
+ * ArticleHeader - Shared header for topic and article pages
  *
- * Shows breadcrumbs, title, description, and meta info.
- * All breadcrumbs are clickable for navigation.
+ * Keeps topic and article center-content visual language aligned.
  */
-const ArticleHeader = ({ breadcrumbs, title, description, readingTime, publishedAt, updatedAt, tags, className }: IArticleHeaderProps) => {
+const ArticleHeader = ({ breadcrumbs, title, description, coverImage, contentCount, subtopicCount, readingTime, publishedAt, updatedAt, tags, className }: IArticleHeaderProps) => {
     return (
-        <header className={cn('mb-10 pt-4', className)}>
-            {/* Breadcrumbs - All clickable with Microdata */}
-            <nav className='mb-8 flex items-center gap-1.5 text-sm text-[var(--fg-muted)] flex-wrap' aria-label='Breadcrumb' itemScope itemType='https://schema.org/BreadcrumbList'>
+        <header className={cn('mb-12 pt-2', className)}>
+            {/* Breadcrumbs */}
+            <nav className='flex flex-wrap items-center gap-1.5 mb-6 text-small text-muted-foreground' aria-label='Breadcrumb' itemScope itemType='https://schema.org/BreadcrumbList'>
                 {breadcrumbs.map((crumb, index) => (
                     <span key={crumb.href} className='flex items-center gap-1.5' itemProp='itemListElement' itemScope itemType='https://schema.org/ListItem'>
-                        {index > 0 && <ChevronRight className='size-3.5 text-[var(--fg-subtle)] shrink-0' />}
+                        {index > 0 && <ChevronRight className='size-3.5 shrink-0 text-muted-foreground/70' />}
                         <Link
                             href={crumb.href}
                             itemProp='item'
                             className={cn(
-                                'hover:text-[var(--accent)] transition-colors',
-                                index === breadcrumbs.length - 1 ? 'text-[var(--fg)] font-medium max-w-[300px] truncate' : 'hover:underline underline-offset-2',
+                                'transition-base hover:text-primary',
+                                index === breadcrumbs.length - 1 ? 'max-w-85 truncate font-medium text-foreground' : 'hover:underline underline-offset-2',
                             )}
                         >
                             <span itemProp='name'>{crumb.label}</span>
@@ -58,18 +63,22 @@ const ArticleHeader = ({ breadcrumbs, title, description, readingTime, published
                 ))}
             </nav>
 
+            {/* Cover Image */}
+            {coverImage && (
+                <div className='relative overflow-hidden mb-8 rounded-2xl border border-border bg-card'>
+                    <div className='relative h-48 w-full md:h-64'>
+                        <Image src={coverImage} alt={title} fill className='object-cover' sizes='(max-width: 768px) 100vw, 1024px' priority />
+                    </div>
+                </div>
+            )}
+
             {/* Tags Pills - Above Title */}
             {tags && tags.length > 0 && (
                 <div className='flex flex-wrap gap-2 mb-6'>
                     {tags.slice(0, 5).map((tag) => (
                         <span
                             key={tag}
-                            className={cn(
-                                'inline-flex items-center px-3 py-1.5 rounded-full',
-                                'text-xs font-medium uppercase tracking-wider',
-                                'bg-[var(--accent-subtle)] text-[var(--accent)]',
-                                'border border-[var(--accent)]/20',
-                            )}
+                            className='inline-flex items-center px-3 py-1.5 rounded-full border border-primary/20 bg-primary/8 text-label font-medium uppercase tracking-wider text-primary'
                         >
                             {tag}
                         </span>
@@ -78,13 +87,25 @@ const ArticleHeader = ({ breadcrumbs, title, description, readingTime, published
             )}
 
             {/* Title */}
-            <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold text-[var(--fg)] leading-tight'>{title}</h1>
+            <h1 className='text-h1 font-semibold leading-tight text-foreground'>{title}</h1>
 
             {/* Description */}
-            {description && <p className='mt-6 text-lg md:text-xl text-[var(--fg-muted)] leading-relaxed max-w-3xl'>{description}</p>}
+            {description && <p className='mt-4 max-w-3xl text-h4 leading-relaxed text-muted-foreground'>{description}</p>}
 
             {/* Meta */}
-            <div className='flex items-center gap-4 mt-6 text-sm text-[var(--fg-subtle)] flex-wrap'>
+            <div className='flex flex-wrap items-center gap-4 mt-6 text-small text-muted-foreground'>
+                {typeof contentCount === 'number' && (
+                    <span className='inline-flex items-center gap-1.5 px-3 py-1.5 text-label font-medium text-muted-foreground bg-card border border-border rounded-full'>
+                        <FileText className='size-4' />
+                        {contentCount} article{contentCount !== 1 ? 's' : ''}
+                    </span>
+                )}
+                {typeof subtopicCount === 'number' && (
+                    <span className='inline-flex items-center gap-1.5 px-3 py-1.5 text-label font-medium text-muted-foreground bg-card border border-border rounded-full'>
+                        <BookOpen className='size-4' />
+                        {subtopicCount} subtopic{subtopicCount !== 1 ? 's' : ''}
+                    </span>
+                )}
                 {publishedAt && (
                     <span className='flex items-center gap-1.5'>
                         <Calendar className='size-4' />
@@ -97,11 +118,11 @@ const ArticleHeader = ({ breadcrumbs, title, description, readingTime, published
                         {readingTime} min read
                     </span>
                 )}
-                {updatedAt && publishedAt && new Date(updatedAt) > new Date(publishedAt) && <span className='text-[var(--fg-subtle)]'>(Updated {formatDate(updatedAt)})</span>}
+                {updatedAt && publishedAt && new Date(updatedAt) > new Date(publishedAt) && <span className='text-muted-foreground'>(Updated {formatDate(updatedAt)})</span>}
             </div>
 
             {/* Decorative Animated Beam Line */}
-            <BeamLine />
+            <BeamLine className='mt-8' />
         </header>
     );
 };

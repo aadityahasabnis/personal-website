@@ -141,12 +141,13 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
             <JsonLd data={combinedSchema} />
             <ScrollToTop />
 
-            <main className='mx-auto px-6 py-12 max-w-4xl lg:px-8'>
+            <main className='mx-auto px-6 py-20 max-w-4xl md:py-28 lg:px-8'>
                 <article className='article-content' itemScope itemType='https://schema.org/TechArticle'>
                     <ArticleHeader
                         breadcrumbs={breadcrumbs}
                         title={article.title}
                         description={article.description}
+                        coverImage={article.coverImage ?? article.seo?.ogImage ?? null}
                         readingTime={article.readingTime}
                         {...(article.publishedAt ? { publishedAt: article.publishedAt } : {})}
                         updatedAt={article.updatedAt}

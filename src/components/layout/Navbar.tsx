@@ -58,7 +58,7 @@ const Navbar = () => {
                             </motion.span>
                         </Link>
 
-                        <div className='hidden md:flex md:items-center md:gap-1'>
+                        <div className='hidden md:flex md:items-center md:gap-8'>
                             {NAV_LINKS.filter((link) => !link.hideOnDesktop).map((link) => {
                                 const isActive = isActivePath(link.href);
 
@@ -68,19 +68,19 @@ const Navbar = () => {
                                         href={link.href}
                                         aria-current={isActive ? 'page' : undefined}
                                         className={cn(
-                                            'relative px-5 py-2 rounded-full text-small font-medium transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                            'relative inline-flex items-center py-2 text-small font-medium tracking-tight transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                             isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                                         )}
                                     >
-                                        {link.label}
-
                                         {isActive && (
                                             <motion.span
-                                                layoutId='nav-active-dot'
-                                                className='absolute left-1/2 bottom-1 size-1 -translate-x-1/2 rounded-full bg-primary'
-                                                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                                                layoutId='nav-active-line'
+                                                className='absolute inset-x-0 -bottom-1 h-px bg-foreground'
+                                                transition={{ type: 'spring', stiffness: 380, damping: 34 }}
                                             />
                                         )}
+
+                                        <span className='relative'>{link.label}</span>
                                     </Link>
                                 );
                             })}
@@ -92,7 +92,7 @@ const Navbar = () => {
                             <Link
                                 href='/contact'
                                 aria-label='Go to contact page'
-                                className='group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full text-small font-medium text-foreground border border-border transition-base hover:border-primary/40 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                                className='group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 text-small font-medium text-foreground rounded-full border border-border bg-background transition-base hover:border-primary/40 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                             >
                                 <span>Contact</span>
                                 <ArrowUpRight className='size-4 transition-base group-hover:-translate-y-0.5 group-hover:translate-x-0.5' aria-hidden='true' />
@@ -179,12 +179,19 @@ const Navbar = () => {
                                                 onClick={() => setMobileMenuOpen(false)}
                                                 aria-current={isActive ? 'page' : undefined}
                                                 className={cn(
-                                                    'inline-flex items-center gap-3 py-4 text-title font-light tracking-tight transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                                                    'relative inline-flex items-center py-2 text-small font-medium tracking-tight transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                                     isActive ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
                                                 )}
                                             >
-                                                {link.label}
-                                                {isActive && <span className='inline-flex size-2 rounded-full bg-primary' aria-hidden='true' />}
+                                                {isActive && (
+                                                    <motion.span
+                                                        layoutId='mobile-nav-active-line'
+                                                        className='absolute inset-x-0 -bottom-1 h-px bg-foreground'
+                                                        transition={{ type: 'spring', stiffness: 380, damping: 34 }}
+                                                    />
+                                                )}
+
+                                                <span className='relative'>{link.label}</span>
                                             </Link>
                                         </motion.div>
                                     );

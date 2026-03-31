@@ -28,8 +28,13 @@ export const createPublicComment = async (
         if (!contentId) return error('Invalid content id', 400);
 
         const parentId =
-            typeof input.parentId === 'string' ? parseCommentObjectId(input.parentId) : null;
-        if (typeof input.parentId === 'string' && !parentId) return error('Invalid parent comment id', 400);
+            typeof input.parentId === 'string' && input.parentId.length > 0
+                ? parseCommentObjectId(input.parentId)
+                : null;
+
+        if (typeof input.parentId === 'string' && input.parentId.length > 0 && !parentId) {
+            return error('Invalid parent comment id', 400);
+        }
 
         const authorName = sanitizeAuthorName(input.authorName);
         if (!authorName || authorName.length < 2) return error('Author name must be at least 2 characters', 400);
@@ -40,11 +45,6 @@ export const createPublicComment = async (
         const body = input.body.trim();
         if (body.length < SCHEMA_LIMITS.COMMENT_MIN_LENGTH) return error('Comment is too short', 400);
         if (body.length > SCHEMA_LIMITS.COMMENT_MAX_LENGTH) return error('Comment is too long', 400);
-
-        const authorWebsite = normalizeOptionalString(input.authorWebsite);
-        if (authorWebsite && !VALIDATION_PATTERNS.URL.test(authorWebsite)) {
-            return error('Invalid author website URL', 400);
-        }
 
         await connectDB();
 
@@ -63,11 +63,10 @@ export const createPublicComment = async (
                 name: authorName,
                 email: authorEmail,
                 avatar: normalizeOptionalString(input.authorAvatar),
-                website: authorWebsite,
                 isOwner: false,
             },
             content: body,
-            approved: false,
+            approved: true,
             ipHash: input.ipAddress ? hashIp(input.ipAddress) : null,
         });
 
@@ -78,7 +77,6 @@ export const createPublicComment = async (
             author: {
                 name: created.author.name,
                 avatar: created.author.avatar ?? null,
-                website: created.author.website ?? null,
                 isOwner: Boolean(created.author.isOwner),
             },
             content: created.content,
@@ -88,7 +86,7 @@ export const createPublicComment = async (
             replies: [],
         };
 
-        return success(publicNode, 'Comment submitted for moderation');
+        return success(publicNode, 'Comment posted successfully');
     } catch (err) {
         return handleError(err, 'Failed to submit comment');
     }
@@ -97,7 +95,7 @@ export const createPublicComment = async (
 /*
 API Responses:
 - 200: Comment created and returned in pending moderation state.
-- 400: Invalid payload values (content id, parent id, email, length, URL).
+- 400: Invalid payload values (content id, parent id, email, length).
 - 404: Published content or parent comment not found.
 - 500: Unexpected server/database error.
 */
