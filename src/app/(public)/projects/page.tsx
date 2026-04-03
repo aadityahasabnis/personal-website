@@ -40,7 +40,7 @@ export default async function ProjectsPage() {
     const githubUrl = SOCIAL_LINKS.find((link) => link.id === 'github')?.url ?? SITE_CONFIG.url;
 
     return (
-        <main className='mx-auto px-6 py-20 max-w-6xl md:py-28 lg:px-8'>
+        <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             <PageHeader label='Work' title='Projects' description='Open source contributions, side projects, and experiments in web development.' />
 
             {projects.length === 0 ? (
@@ -49,11 +49,10 @@ export default async function ProjectsPage() {
                 <div className='space-y-14'>
                     {featuredProjects.length > 0 && (
                         <section>
-                            <h2 className='mb-6 text-small font-medium tracking-wide uppercase text-muted-foreground'>Featured Work</h2>
-                            <ul className='grid gap-8 md:grid-cols-2'>
+                            <ul className='grid gap-6'>
                                 {featuredProjects.map((project) => (
                                     <li key={project.id}>
-                                        <ProjectCard project={project} featured />
+                                        <ProjectCard project={project} variant='featured' />
                                     </li>
                                 ))}
                             </ul>
@@ -62,8 +61,7 @@ export default async function ProjectsPage() {
 
                     {otherProjects.length > 0 && (
                         <section>
-                            <h2 className='mb-6 text-small font-medium tracking-wide uppercase text-muted-foreground'>More Projects</h2>
-                            <ul className='grid gap-8 md:grid-cols-2'>
+                            <ul className='grid gap-6 md:grid-cols-2'>
                                 {otherProjects.map((project) => (
                                     <li key={project.id}>
                                         <ProjectCard project={project} />

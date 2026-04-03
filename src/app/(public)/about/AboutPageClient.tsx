@@ -79,7 +79,7 @@ const staggerContainer = {
  */
 export default function AboutPageClient() {
     return (
-        <div className='max-w-4xl mx-auto px-6 lg:px-8 py-24 md:py-32'>
+        <div className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             {/* Hero Section */}
             <section className='mb-20'>
                 <div className='flex flex-col md:flex-row gap-10 md:gap-16 items-start'>
@@ -109,7 +109,7 @@ export default function AboutPageClient() {
                         <motion.div {...fadeIn} transition={{ delay: 0.4 }} className='flex flex-wrap gap-6 text-sm text-[var(--fg-muted)]'>
                             <span className='flex items-center gap-2'>
                                 <MapPin className='size-4' />
-                                San Francisco, CA
+                                Pune, Kothrud
                             </span>
                             <a href={`mailto:${SITE_CONFIG.email}`} className='flex items-center gap-2 hover:text-[var(--fg)] transition-colors'>
                                 <Mail className='size-4' />

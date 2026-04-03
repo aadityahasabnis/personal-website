@@ -11,7 +11,7 @@ import { FileText, StarIcon } from 'lucide-react';
 export const revalidate = 600;
 
 const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
-const FEATURED_TOPICS_DEFAULT_COUNT = 6;
+const FEATURED_TOPICS_DEFAULT_COUNT = 2 * 1; // Always should be multiple of 2
 const TOPICS_PAGE_LIMIT = 200;
 
 export const metadata: Metadata = createPageMetadata({
@@ -60,11 +60,11 @@ export default async function Page() {
     const { featuredTopics, allTopics } = await getArticlesHubData();
 
     return (
-        <main className='mx-auto px-6 py-20 max-w-6xl md:py-28 lg:px-8'>
+        <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             {/* Page Header */}
             <PageHeader
                 title='Articles'
-                label='Knowledge Base'
+                label='Knowledge Based'
                 description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
             />
 

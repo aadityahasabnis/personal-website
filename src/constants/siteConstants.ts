@@ -115,7 +115,7 @@ export const SOCIAL_LINKS = [
   {
     id: 'facebook',
     platform: 'Facebook',
-    url: 'https://facebook.com/aadityahasabnis',
+    url: 'https://www.facebook.com/profile.php?id=100016312514133',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on Facebook',
     icon: Facebook

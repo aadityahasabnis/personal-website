@@ -26,7 +26,7 @@ const ThemeToggle = () => {
             size='default'
             direction='btt'
             modes={['light', 'dark']}
-            className='relative text-violet-700 transition-base dark:text-violet-300 hover:bg-violet-200/70 hover:text-violet-800 dark:hover:bg-violet-800/35 dark:hover:text-violet-200 focus-visible:ring-2 focus-visible:ring-ring'
+            className='relative text-foreground transition-base dark:text-foreground hover:bg-violet-200/70 hover:text-violet-800 dark:hover:bg-violet-800/35 dark:hover:text-violet-200 focus-visible:ring-2 focus-visible:ring-ring'
             aria-label={toggleLabel}
             aria-pressed={isDarkMode}
         />

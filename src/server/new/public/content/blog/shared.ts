@@ -32,13 +32,13 @@ export const toPublicBlogListItem = (row: IBlogLean): IPublicBlogListItem => ({
     featured: Boolean(row.featured),
     publishedAt: toIsoOrNull(row.publishedAt),
     updatedAt: row.updatedAt.toISOString(),
+    tags: row.tags ?? [],
 });
 
 export const toPublicBlogDetail = (row: IBlogLean): IPublicBlogDetail => ({
     ...toPublicBlogListItem(row),
     body: row.body,
     html: row.html ?? null,
-    tags: row.tags ?? [],
     seo: row.seo ?? null,
 });
 

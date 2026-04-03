@@ -13,7 +13,7 @@ const TopicCard = ({ topic, className }: ITopicCardProps) => {
     return (
         <article className={className ?? 'relative h-full'}>
             <Link href={`/articles/${topic.slug}`} aria-label={`Open topic ${topic.title}`} className='group relative block h-full focus-visible:outline-none'>
-                <div className='relative flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card transition-all duration-300 group-hover:border-primary/40 group-hover:shadow-glow-sm group-focus-visible:border-primary/40 group-focus-visible:shadow-glow-sm'>
+                <div className='relative flex h-full flex-col overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 group-hover:border-primary/25 group-hover:shadow-md group-focus-visible:border-primary/40 group-focus-visible:shadow-glow-sm'>
                     {/* Cover Image */}
                     <div className='relative h-34 w-full shrink-0 overflow-hidden bg-muted'>
                         {topic.coverImage ? (
@@ -25,7 +25,7 @@ const TopicCard = ({ topic, className }: ITopicCardProps) => {
                                 sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
                             />
                         ) : (
-                            <div className='flex h-full w-full items-center justify-center bg-linear-to-br from-primary/10 to-primary/5'>
+                            <div className='flex h-full w-full items-center justify-center bg-linear-to-br from-primary/15 to-primary/5'>
                                 <BookOpen className='size-8 text-muted-foreground' aria-hidden='true' />
                             </div>
                         )}
@@ -49,13 +49,13 @@ const TopicCard = ({ topic, className }: ITopicCardProps) => {
                                     {topic.contentCount} article{topic.contentCount !== 1 ? 's' : ''}
                                 </span>
                             </div>
-                            <span className='rounded-full bg-primary/8 px-2 py-0.5 font-medium text-primary'>
+                            <span className='rounded-full bg-primary/8 px-3 py-0.5 font-medium text-primary'>
                                 {topic.subTopicCount} section{topic.subTopicCount !== 1 ? 's' : ''}
                             </span>
                         </div>
 
                         {/* Title */}
-                        <h3 className='max-h-14 overflow-hidden text-h3 font-semibold leading-7 text-foreground'>{topic.title}</h3>
+                        <h3 className='overflow-hidden text-h3 font-semibold leading-9 text-foreground'>{topic.title}</h3>
 
                         {/* Description */}
                         <p className='overflow-hidden text-body leading-6 text-muted-foreground line-clamp-2'>{topic.description}</p>

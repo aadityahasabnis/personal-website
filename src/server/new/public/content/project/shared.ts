@@ -38,26 +38,26 @@ export const toPublicProjectListItem = (row: IProjectLean): IPublicProjectListIt
     title: row.title,
     description: row.description,
     coverImage: row.coverImage ?? null,
-    tags: row.tags ?? [],
     techStack: row.techStack ?? [],
     githubUrl: row.githubUrl ?? null,
     liveUrl: row.liveUrl ?? null,
-    demoVideo: row.demoVideo ?? null,
-    gallery: row.gallery ?? [],
     status: row.status ?? null,
     startDate: toIsoOrNull(row.startDate),
     completedDate: toIsoOrNull(row.completedDate),
     order: row.order ?? 0,
-    readingTime: row.readingTime ?? 0,
     featured: Boolean(row.featured),
     publishedAt: toIsoOrNull(row.publishedAt),
-    updatedAt: row.updatedAt.toISOString(),
 });
 
 export const toPublicProjectDetail = (row: IProjectLean): IPublicProjectDetail => ({
     ...toPublicProjectListItem(row),
     body: row.body,
     html: row.html ?? null,
+    tags: row.tags ?? [],
+    demoVideo: row.demoVideo ?? null,
+    gallery: row.gallery ?? [],
+    readingTime: row.readingTime ?? 0,
+    updatedAt: row.updatedAt.toISOString(),
     seo: row.seo ?? null,
 });
 

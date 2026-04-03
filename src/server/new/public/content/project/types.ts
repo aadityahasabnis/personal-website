@@ -8,25 +8,25 @@ export interface IPublicProjectListItem {
     title: string;
     description: string;
     coverImage: string | null;
-    tags: string[];
     techStack: string[];
     githubUrl: string | null;
     liveUrl: string | null;
-    demoVideo: string | null;
-    gallery: string[];
     status: ProjectStatusType | null;
     startDate: string | null;
     completedDate: string | null;
     order: number;
-    readingTime: number;
     featured: boolean;
     publishedAt: string | null;
-    updatedAt: string;
 }
 
 export interface IPublicProjectDetail extends IPublicProjectListItem {
     body: string;
     html: string | null;
+    tags: string[];
+    demoVideo: string | null;
+    gallery: string[];
+    readingTime: number;
+    updatedAt: string;
     seo: ISeoMetadata | null;
 }
 

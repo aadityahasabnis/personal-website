@@ -35,7 +35,7 @@ export const getPublishedProjects = async (
             .skip(offset)
             .limit(limit)
             .select(
-                '_id slug title description body html coverImage tags techStack githubUrl liveUrl demoVideo gallery status startDate completedDate order readingTime featured publishedAt updatedAt seo'
+                '_id slug title description coverImage techStack githubUrl liveUrl status startDate completedDate order featured publishedAt'
             )
             .lean<IProjectLean[]>();
 

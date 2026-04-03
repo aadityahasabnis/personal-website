@@ -6,11 +6,12 @@ interface IBlogMetaProps {
     publishedAt?: string | null | undefined;
     readingTime?: number | undefined;
     updatedAt?: string | null | undefined;
+    showUpdated?: boolean;
     className?: string;
 }
 
-export const BlogMeta = ({ publishedAt, readingTime, updatedAt, className }: IBlogMetaProps) => {
-    const showUpdated = Boolean(updatedAt && publishedAt && new Date(updatedAt) > new Date(publishedAt));
+export const BlogMeta = ({ publishedAt, readingTime, updatedAt, showUpdated = true, className }: IBlogMetaProps) => {
+    const shouldShowUpdated = Boolean(showUpdated && updatedAt && publishedAt && new Date(updatedAt) > new Date(publishedAt));
 
     return (
         <div className={cn('flex items-center gap-4 text-small text-muted-foreground', className)}>
@@ -28,7 +29,7 @@ export const BlogMeta = ({ publishedAt, readingTime, updatedAt, className }: IBl
                 </span>
             )}
 
-            {showUpdated && updatedAt && <span className='text-label text-muted-foreground'>{`Updated ${formatDate(updatedAt)}`}</span>}
+            {shouldShowUpdated && updatedAt && <span className='text-label text-muted-foreground'>{`Updated ${formatDate(updatedAt)}`}</span>}
         </div>
     );
 };

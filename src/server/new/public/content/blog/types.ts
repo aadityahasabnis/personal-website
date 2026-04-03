@@ -11,12 +11,12 @@ export interface IPublicBlogListItem {
     featured: boolean;
     publishedAt: string | null;
     updatedAt: string;
+    tags: string[];
 }
 
 export interface IPublicBlogDetail extends IPublicBlogListItem {
     body: string;
     html: string | null;
-    tags: string[];
     seo: ISeoMetadata | null;
 }
 

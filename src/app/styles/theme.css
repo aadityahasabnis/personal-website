@@ -9,7 +9,7 @@
     --bg: oklch(0.99 0.002 90);
     --bg-subtle: oklch(0.97 0.004 90);
     --fg: oklch(0.2 0.02 285);
-    --fg-muted: oklch(0.45 0.02 285);
+    --fg-muted: oklch(33.441% 0.00699 285.944);
     --fg-subtle: oklch(0.6 0.015 285);
 
     /* Surfaces */
@@ -49,7 +49,7 @@
     --glass-border: oklch(0.9 0.01 285 / 0.5);
 
     /* Status */
-    --success: oklch(0.55 0.18 145);
+    --success: oklch(74.936% 0.23206 144.929);
     --warning: oklch(0.7 0.15 75);
     --error: oklch(0.55 0.22 25);
 }
@@ -60,7 +60,7 @@
     --bg: oklch(0.13 0.03 285);
     --bg-subtle: oklch(0.16 0.035 285);
     --fg: oklch(0.95 0.01 285);
-    --fg-muted: oklch(0.7 0.02 285);
+    --fg-muted: oklch(74.306% 0.0086 286.05);
     --fg-subtle: oklch(0.55 0.02 285);
 
     /* Surfaces */
@@ -144,6 +144,7 @@
     --color-secondary-foreground: var(--fg);
     --color-muted: var(--surface);
     --color-muted-foreground: var(--fg-muted);
+    --color-subtle: var(--fg-subtle);
     --color-accent: var(--accent);
     --color-accent-foreground: var(--accent-fg);
     --color-destructive: var(--error);

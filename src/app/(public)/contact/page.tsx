@@ -44,7 +44,7 @@ const CONTACT_INFO = [
     {
         icon: MapPin,
         label: 'Location',
-        value: 'San Francisco, CA',
+        value: 'Pune, Kothrud',
         href: null,
     },
     {
@@ -68,7 +68,7 @@ const ContactPage = () => {
     return (
         <div className='min-h-screen'>
             {/* Header Section */}
-            <div className='max-w-4xl mx-auto px-6 lg:px-8 pt-24 md:pt-32 pb-12 text-center'>
+            <div className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl text-center'>
                 <p className='text-sm font-medium uppercase tracking-widest text-[var(--accent)] mb-4'>Contact</p>
                 <h1 className='text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[var(--fg)]'>Get in Touch</h1>
                 <p className='mt-6 text-lg text-[var(--fg-muted)] max-w-2xl mx-auto leading-relaxed'>

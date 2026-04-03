@@ -41,13 +41,13 @@ const Navbar = () => {
                 <div className={cn('absolute inset-0 opacity-0 bg-linear-to-b from-background to-transparent transition-slow', scrolled && 'opacity-100')} aria-hidden='true' />
 
                 <nav className='relative pointer-events-auto' aria-label='Primary navigation'>
-                    <div className='mx-auto flex items-center justify-between px-6 h-20 max-w-7xl md:px-8 md:h-24 lg:px-12'>
+                    <div className='mx-auto flex items-center justify-between px-6 lg:px-8 py-4 max-w-5xl'>
                         <Link
                             href='/'
                             aria-label='Go to homepage'
-                            className='group relative inline-flex rounded-sm text-h4 font-semibold tracking-tight text-foreground transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            className='group relative inline-flex rounded-sm text-h4 font-medium font-nunito tracking-wide text-foreground transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                         >
-                            <motion.span whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className='relative'>
+                            <motion.span whileHover={{ scale: 1.02 }} className='relative'>
                                 {SITE_CONFIG.shortName}
                                 <motion.span
                                     className='absolute inset-x-0 -bottom-1 h-px bg-linear-to-r from-primary to-transparent'
@@ -58,7 +58,7 @@ const Navbar = () => {
                             </motion.span>
                         </Link>
 
-                        <div className='hidden md:flex md:items-center md:gap-8'>
+                        <div className='hidden md:flex md:items-center md:gap-6'>
                             {NAV_LINKS.filter((link) => !link.hideOnDesktop).map((link) => {
                                 const isActive = isActivePath(link.href);
 
@@ -75,7 +75,7 @@ const Navbar = () => {
                                         {isActive && (
                                             <motion.span
                                                 layoutId='nav-active-line'
-                                                className='absolute inset-x-0 -bottom-1 h-px bg-foreground'
+                                                className='absolute inset-x-0 bottom-0 h-px bg-foreground'
                                                 transition={{ type: 'spring', stiffness: 380, damping: 34 }}
                                             />
                                         )}

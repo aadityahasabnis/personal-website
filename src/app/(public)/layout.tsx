@@ -21,7 +21,7 @@ const PublicLayout = ({ children }: IPublicLayoutProps) => {
             <AmbientBackground />
             <NoiseOverlay />
             <Navbar />
-            <main className='relative flex-1 z-10'>{children}</main>
+            <main >{children}</main>
             <Footer />
         </div>
     );
