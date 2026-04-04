@@ -1,5 +1,6 @@
 'use client';
 
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import { toast } from 'sonner';
 
 export interface ISnackbarDescription {
@@ -13,6 +14,39 @@ interface IActionResult {
     error?: string;
     message?: string;
 }
+
+class SnackbarResultError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = 'SnackbarResultError';
+    }
+}
+
+class SnackbarApiResponseError<TData> extends Error {
+    public readonly response: Extract<IApiResponse<TData>, { success: false }>;
+
+    constructor(response: Extract<IApiResponse<TData>, { success: false }>) {
+        super(response.error);
+        this.name = 'SnackbarApiResponseError';
+        this.response = response;
+    }
+}
+
+const isSnackbarApiResponseError = <TData>(error: unknown): error is SnackbarApiResponseError<TData> => {
+    return error instanceof SnackbarApiResponseError;
+};
+
+const normalizeErrorMessage = (error: unknown, fallback: string): string => {
+    if (isSnackbarApiResponseError(error)) {
+        return error.response.error;
+    }
+
+    if (error instanceof Error && error.message.trim()) {
+        return error.message;
+    }
+
+    return fallback;
+};
 
 /**
  * Hook for showing toast notifications with promise handling
@@ -32,22 +66,70 @@ export const useSnackbar = () => {
             errorMessage = 'Something went wrong',
         } = options;
 
-        return new Promise((resolve) => {
-            toast.promise(promise, {
-                loading: loadingMessage,
-                success: (result) => {
-                    resolve(result);
-                    if (!result.success) {
-                        throw new Error(result.error ?? errorMessage);
-                    }
-                    return result.message ?? successMessage;
-                },
-                error: (err) => {
-                    resolve({ success: false, error: err.message } as T);
-                    return err.message ?? errorMessage;
-                },
-            });
+        const wrappedPromise = promise.then((result) => {
+            if (!result.success) {
+                throw new SnackbarResultError(result.error ?? errorMessage);
+            }
+
+            return result;
         });
+
+        void toast.promise(wrappedPromise, {
+            loading: loadingMessage,
+            success: (result) => result.message ?? successMessage,
+            error: (err) => normalizeErrorMessage(err, errorMessage),
+        });
+
+        try {
+            return await wrappedPromise;
+        } catch (err) {
+            return {
+                success: false,
+                error: normalizeErrorMessage(err, errorMessage),
+            } as T;
+        }
+    };
+
+    /**
+     * Trigger a snackbar for server-action style IApiResponse promises
+     */
+    const triggerActionSnackbar = async <TData>(
+        promise: Promise<IApiResponse<TData>>,
+        options: ISnackbarDescription
+    ): Promise<IApiResponse<TData>> => {
+        const {
+            loadingMessage = 'Processing...',
+            successMessage,
+            errorMessage = 'Something went wrong',
+        } = options;
+
+        const wrappedPromise = promise.then((response) => {
+            if (!response.success) {
+                throw new SnackbarApiResponseError(response);
+            }
+
+            return response;
+        });
+
+        void toast.promise(wrappedPromise, {
+            loading: loadingMessage,
+            success: (response) => response.message ?? successMessage,
+            error: (err) => normalizeErrorMessage(err, errorMessage),
+        });
+
+        try {
+            return await wrappedPromise;
+        } catch (err) {
+            if (isSnackbarApiResponseError<TData>(err)) {
+                return err.response;
+            }
+
+            return {
+                success: false,
+                status: 500,
+                error: normalizeErrorMessage(err, errorMessage),
+            };
+        }
     };
 
     /**
@@ -94,6 +176,7 @@ export const useSnackbar = () => {
 
     return {
         triggerSnackbar,
+        triggerActionSnackbar,
         showSuccess,
         showError,
         showInfo,

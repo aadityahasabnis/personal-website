@@ -1,71 +1,47 @@
 // ===== Admin Components =====
 
 // Core Components
-export { StatusBadge } from './StatusBadge';
-export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
+export { PageHeader } from './PageHeader';
+export { StatusBadge } from './StatusBadge';
 
 // Content Preview
 export { ContentPreview } from './ContentPreview';
 
 // Table Components
-export { DataTable, type IDataTableColumn, type IDataTableProps } from './DataTable';
-export { TableSearch, type ITableSearchProps, type ITableFilter } from './TableSearch';
 export {
-    BulkActionsBar,
-    type IBulkActionsBarProps,
-    type IBulkAction as IBulkActionNew,
-    createBulkSetActiveAction,
-    createBulkSetWipAction,
-    createBulkArchiveAction,
+    BulkActionsBar, createBulkArchiveAction, createBulkSetActiveAction,
+    createBulkSetWipAction, type IBulkAction as IBulkActionNew, type IBulkActionsBarProps
 } from './BulkActionsBar';
+export { DataTable, type IDataTableColumn, type IDataTableProps } from './DataTable';
+export { TableSearch, type ITableFilter, type ITableSearchProps } from './TableSearch';
 
 // Action Components
 export { DataTableActions, type IDataTableAction } from './DataTableActions';
 
 // Action Helpers
 export {
-    createEditAction,
-    createDeleteAction,
-    createTogglePublishedAction,
-    createToggleFeaturedAction,
-    createViewAction,
-    createDuplicateAction,
-    createBulkPublishAction,
-    createBulkUnpublishAction,
-    createBulkDeleteAction,
-    createBulkFeatureAction,
-    createBulkUnfeatureAction,
-    createBulkDeleteAction as createBulkDeleteActionNew,
-    createBulkPublishActionLegacy,
-    createBulkUnpublishActionLegacy,
-    createBulkDeleteActionLegacy,
+    createBulkDeleteAction, createBulkDeleteActionLegacy, createBulkDeleteAction as createBulkDeleteActionNew, createBulkFeatureAction, createBulkPublishAction, createBulkPublishActionLegacy, createBulkUnfeatureAction, createBulkUnpublishAction, createBulkUnpublishActionLegacy, createDeleteAction, createDuplicateAction, createEditAction, createToggleFeaturedAction, createTogglePublishedAction, createViewAction
 } from './action-helpers';
 
 // Filter & Search
-export { SearchFilter, type IFilterOption, type IFilterGroup } from './SearchFilter';
+export { SearchFilter, type IFilterGroup, type IFilterOption } from './SearchFilter';
 
 // Bulk Operations (Legacy)
 export { BulkActions, type IBulkAction } from './BulkActions';
 
 // Layout Components
-export { default as AdminSidebar } from './AdminSidebar';
-export { default as AdminHeader } from './AdminHeader';
 export { CommandPalette } from './CommandPalette';
+export { default as AdminHeader } from './layout/AdminHeader';
+export { default as AdminSidebar } from './layout/AdminSidebar';
 export { NotificationsPanel } from './NotificationsPanel';
 
 // Image Components
-export { ImageUpload, type UploadedImage } from './ImageUpload';
 export { ImageGallery, type GalleryImage } from './ImageGallery';
+export { ImageUpload, type UploadedImage } from './ImageUpload';
 
 // Form Components
 export {
-    FormInput,
-    FormTextarea,
-    FormSelect,
-    FormCheckbox,
-    TagInput,
-    FormSection,
-    FormActions,
-    FormError,
+    FormActions, FormCheckbox, FormError, FormInput, FormSection, FormSelect, FormTextarea, TagInput
 } from './form';
+

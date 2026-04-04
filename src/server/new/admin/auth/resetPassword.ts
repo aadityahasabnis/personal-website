@@ -7,8 +7,8 @@
 
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import bcrypt from 'bcryptjs';
-import { error, handleError, success } from '../../utils/helper';
 import { isResetTokenExpired } from '../../utils/auth-tokens';
+import { error, handleError, success } from '../../utils/helper';
 import { findAdminByResetToken, validatePasswordStrength } from './shared';
 import type { IResetPasswordInput, IResetPasswordResult } from './types';
 
@@ -106,10 +106,9 @@ export const resetPassword = async (
         const salt = await bcrypt.genSalt(12);
         const passwordHash = await bcrypt.hash(newPassword, salt);
 
-        // Update password and clear reset token
+        // Update password and clear reset token using model helper
         admin.passwordHash = passwordHash;
-        admin.passwordResetToken = null;
-        await admin.save();
+        await admin.clearPasswordResetToken();
 
         return success({
             success: true,

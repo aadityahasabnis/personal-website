@@ -2,7 +2,7 @@
 
 import { type InputHTMLAttributes, type KeyboardEvent, type ReactElement, memo, useState } from 'react';
 
-import { CaseUpper } from 'lucide-react';
+import { CaseUpper, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 import type { DotNestedScalarKeys, IFormData, IHandleChange, StrongOmit } from '@/components/form/form';
@@ -36,6 +36,7 @@ export interface ICustomInputProps<TFormBody extends IFormData = IFormData> exte
     inputType?: InputType | undefined;
     startIcon?: ReactElement<{ className?: string }> | undefined;
     endIcon?: ReactElement<{ className?: string }> | undefined;
+    allowPasswordToggle?: boolean | undefined;
     containerClassName?: string | undefined;
     inputClassName?: string | undefined;
     supplementaryLink?:
@@ -58,6 +59,7 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
     inputType,
     startIcon,
     endIcon,
+    allowPasswordToggle,
     containerClassName,
     inputClassName,
     supplementaryLink,
@@ -68,10 +70,15 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
     onBlur,
     onKeyDown,
     onKeyUp,
+    type = 'text',
     ...rest
 }: ICustomInputProps<TFormBody>) => {
     const [isFocused, setIsFocused] = useState(false);
     const [capsLockActive, setCapsLockActive] = useState(false);
+    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+
+    const showPasswordToggle = Boolean(allowPasswordToggle && type === 'password');
+    const resolvedType = showPasswordToggle && isPasswordVisible ? 'text' : type;
 
     const handleChange = (nextValue: string) => {
         const formattedValue = inputType ? formatterMap[inputType](nextValue) : nextValue;
@@ -107,7 +114,7 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
                 {startIcon ? <span className='absolute inset-y-0 left-3 flex items-center text-muted-foreground'>{startIcon}</span> : null}
                 <input
                     {...rest}
-                    type={rest.type ?? 'text'}
+                    type={resolvedType}
                     name={name}
                     value={value ?? ''}
                     required={required}
@@ -136,12 +143,25 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
                         'focus:outline-none focus:ring-2 focus:ring-ring',
                         'disabled:cursor-not-allowed disabled:opacity-50',
                         startIcon ? 'pl-10' : undefined,
-                        endIcon || (isFocused && capsLockActive) ? 'pr-10' : undefined,
+                        endIcon || (isFocused && capsLockActive) || showPasswordToggle ? 'pr-10' : undefined,
                         errorMessage ? 'border-destructive focus:ring-destructive' : undefined,
                         inputClassName,
                     )}
                 />
                 {isFocused && capsLockActive ? <CaseUpper className='absolute inset-y-0 right-3 my-auto size-4 text-warning' aria-label='Caps lock is on' /> : null}
+                {!capsLockActive && showPasswordToggle ? (
+                    <button
+                        type='button'
+                        disabled={disabled}
+                        onClick={() => {
+                            setIsPasswordVisible((prev) => !prev);
+                        }}
+                        className='absolute inset-y-0 right-2 flex items-center justify-center px-1 text-muted-foreground transition-fast hover:text-foreground disabled:opacity-50'
+                        aria-label={isPasswordVisible ? 'Hide password' : 'Show password'}
+                    >
+                        {isPasswordVisible ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+                    </button>
+                ) : null}
                 {!capsLockActive && endIcon ? <span className='absolute inset-y-0 right-3 flex items-center text-muted-foreground'>{endIcon}</span> : null}
             </div>
 

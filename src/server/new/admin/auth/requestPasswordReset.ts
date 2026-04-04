@@ -9,8 +9,8 @@ import { PASSWORD_RESET_CONFIG } from '@/constants/emailConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Admin from '@/server/models/Admin';
-import { error, success } from '../../utils/helper';
 import { generateResetToken, getResetTokenExpiry } from '../../utils/auth-tokens';
+import { error, success } from '../../utils/helper';
 import { isEmailConfigured, sendEmailWithRetry, validateEmail } from '../../utils/mail';
 import { passwordResetEmailTemplate } from '../../utils/mail-templates';
 import { isValidEmail, normalizeEmail } from './shared';
@@ -120,14 +120,11 @@ export const requestPasswordReset = async (
         if (!emailResult.success) {
             // Clear token on email failure
             await admin.clearPasswordResetToken();
-            // Don't reveal the failure to the user
-            console.error('[Password Reset] Failed to send email:', emailResult.error);
         }
 
         return success(genericResponse);
     } catch (err) {
-        // Log error but return generic response
-        console.error('[Password Reset] Error:', err);
+        void err;
         return success(genericResponse);
     }
 };

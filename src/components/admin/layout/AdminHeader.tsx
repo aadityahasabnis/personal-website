@@ -7,8 +7,8 @@ import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 
 import { cn } from '@/lib/utils';
-import { CommandPalette } from './CommandPalette';
-import { NotificationsPanel } from './NotificationsPanel';
+import { CommandPalette } from '../CommandPalette';
+import { NotificationsPanel } from '../NotificationsPanel';
 
 interface IAdminHeaderProps {
     user: {

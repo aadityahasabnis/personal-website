@@ -7,13 +7,13 @@
 
 import { OTP_CONFIG } from '@/constants/emailConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
-import { error, handleError, success } from '../../utils/helper';
 import {
     generateOtp,
     getOtpExpiry,
     maskEmail,
     verifyPendingLoginToken,
 } from '../../utils/auth-tokens';
+import { error, handleError, success } from '../../utils/helper';
 import { isEmailConfigured, sendEmailWithRetry, validateEmail } from '../../utils/mail';
 import { otpEmailTemplate } from '../../utils/mail-templates';
 import {
@@ -101,9 +101,6 @@ export const requestLoginOtp = async (
 
         // Store OTP in admin document
         await admin.setOtp(otp, expiresAt, targetEmailAddress);
-        
-        // Debug: Log OTP storage
-        console.log('[OTP] Stored OTP for:', admin.email, 'Target:', targetEmailAddress, 'Expires:', expiresAt);
 
         // Generate email content
         const { html, text } = otpEmailTemplate(

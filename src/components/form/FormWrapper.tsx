@@ -54,6 +54,7 @@ export interface IInputFieldConfig<TFormBody extends IFormData> extends IBaseFie
     inputType?: InputType | undefined;
     startIcon?: ReactElement<{ className?: string }> | undefined;
     endIcon?: ReactElement<{ className?: string }> | undefined;
+    allowPasswordToggle?: boolean | undefined;
     supplementaryLink?:
         | {
               href: string;
@@ -166,6 +167,7 @@ export const renderField = <TFormBody extends IFormData>(formData: TFormBody, ha
                     inputType={field.inputType}
                     startIcon={field.startIcon}
                     endIcon={field.endIcon}
+                    allowPasswordToggle={field.allowPasswordToggle}
                     supplementaryLink={field.supplementaryLink}
                     autoComplete={field.autoComplete}
                     containerClassName={containerClassName}

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
-import AdminHeader from '@/components/admin/AdminHeader';
-import AdminSidebar from '@/components/admin/AdminSidebar';
+import AdminHeader from '@/components/admin/layout/AdminHeader';
+import AdminSidebar from '@/components/admin/layout/AdminSidebar';
 import { auth } from '@/lib/auth/admin';
 import { redirect } from 'next/navigation';
 
@@ -14,14 +14,6 @@ interface IAdminLayoutProps {
     children: React.ReactNode;
 }
 
-/**
- * Admin Layout
- *
- * Wraps all admin pages with:
- * - Authentication check
- * - Sidebar navigation
- * - Header with user info
- */
 const AdminLayout = async ({ children }: IAdminLayoutProps): Promise<React.ReactElement> => {
     const session = await auth();
 
@@ -31,19 +23,15 @@ const AdminLayout = async ({ children }: IAdminLayoutProps): Promise<React.React
     }
 
     return (
-        <div className="flex min-h-screen bg-muted/30">
+        <div className='flex min-h-screen bg-muted/30'>
             {/* Sidebar */}
             <AdminSidebar user={session.user} />
 
             {/* Main content area */}
-            <div className="flex flex-1 flex-col">
-                {/* Header */}
+            <div className='flex flex-1 flex-col'>
                 <AdminHeader user={session.user} />
 
-                {/* Page content */}
-                <main className="flex-1 p-6">
-                    {children}
-                </main>
+                <main className='flex-1 p-6'>{children}</main>
             </div>
         </div>
     );

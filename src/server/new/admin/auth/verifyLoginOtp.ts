@@ -7,8 +7,8 @@
 
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { OTP_VERIFIED_MARKER, signIn } from '@/lib/auth/admin';
-import { error, handleError, success } from '../../utils/helper';
 import { isOtpExpired, verifyPendingLoginToken } from '../../utils/auth-tokens';
+import { error, handleError, success } from '../../utils/helper';
 import { findAdminByEmailWithOtp, isValidOtpFormat } from './shared';
 import type { IVerifyLoginOtpInput, IVerifyLoginOtpResult } from './types';
 
@@ -69,9 +69,6 @@ export const verifyLoginOtp = async (
         }
 
         const admin = adminResult.data;
-
-        // Debug: Log OTP retrieval
-        console.log('[OTP] Retrieved admin:', admin.email, 'Has OTP:', !!admin.otp, 'OTP value:', admin.otp);
 
         // Check if OTP exists
         if (!admin.otp) {
