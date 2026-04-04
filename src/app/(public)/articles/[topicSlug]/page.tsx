@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 
 import { ArticleHeader } from '@/components/content/article/ArticleHeader';
 import { SubtopicAccordion } from '@/components/content/article/SubtopicAccordion';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema } from '@/lib/seo';
@@ -128,7 +129,11 @@ export default async function TopicPage({ params }: ITopicPageProps) {
                 />
 
                 {/* Subtopics Accordion */}
-                <SubtopicAccordion topicSlug={topicSlug} sections={topicData.subtopics} uncategorizedArticles={topicData.uncategorizedArticles} />
+                <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                    <section>
+                        <SubtopicAccordion topicSlug={topicSlug} sections={topicData.subtopics} uncategorizedArticles={topicData.uncategorizedArticles} />
+                    </section>
+                </FadeIn>
             </main>
         </>
     );

@@ -23,7 +23,14 @@ const TopicCard = ({ topic, className }: ITopicCardProps) => {
 
                 <div className='relative h-34 w-full shrink-0 overflow-hidden bg-muted'>
                     {topic.coverImage ? (
-                        <Image src={topic.coverImage} alt={topic.title} fill className='object-cover' sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw' />
+                        <Image
+                            src={topic.coverImage}
+                            alt={topic.title}
+                            width={400}
+                            height={200}
+                            className='h-full w-full object-cover'
+                            sizes='(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw'
+                        />
                     ) : (
                         <div className='flex h-full w-full items-center justify-center bg-linear-to-br from-primary/15 to-primary/5'>
                             <BookOpen className='size-8 text-muted-foreground' aria-hidden='true' />

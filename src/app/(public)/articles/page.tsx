@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { TopicGroup } from '@/components/content/article/TopicGroup';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
@@ -68,10 +69,12 @@ export default async function Page() {
                 description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
             />
 
-            <section className='flex flex-col gap-14'>
-                {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
-                <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
-            </section>
+            <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                <section className='flex flex-col gap-8'>
+                    {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
+                    <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
+                </section>
+            </FadeIn>
 
             <ScrollToTop />
         </main>

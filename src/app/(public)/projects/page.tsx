@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 import { ProjectCard } from '@/components/content/project/ProjectCard';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { getPublishedProjects, type IPublicProjectListItem } from '@/server/new/public/content/project';
@@ -48,27 +49,31 @@ export default async function ProjectsPage() {
             ) : (
                 <div className='flex flex-col gap-8'>
                     {featuredProjects.length > 0 && (
-                        <section>
-                            <ul className='grid gap-6'>
-                                {featuredProjects.map((project) => (
-                                    <li key={project.id}>
-                                        <ProjectCard project={project} variant='featured' />
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
+                        <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                            <section>
+                                <ul className='grid gap-6'>
+                                    {featuredProjects.map((project) => (
+                                        <li key={project.id}>
+                                            <ProjectCard project={project} variant='featured' />
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        </FadeIn>
                     )}
 
                     {otherProjects.length > 0 && (
-                        <section>
-                            <ul className='grid gap-6 md:grid-cols-2'>
-                                {otherProjects.map((project) => (
-                                    <li key={project.id}>
-                                        <ProjectCard project={project} />
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
+                        <FadeIn direction='up' distance={20} duration={0.5} delay={0.42}>
+                            <section>
+                                <ul className='grid gap-6 md:grid-cols-2'>
+                                    {otherProjects.map((project) => (
+                                        <li key={project.id}>
+                                            <ProjectCard project={project} />
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        </FadeIn>
                     )}
                 </div>
             )}

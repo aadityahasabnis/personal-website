@@ -1,8 +1,8 @@
 'use client';
 
 import { BeamLine } from '@/components/common/BeamLine';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
 
 interface IPageHeaderProps {
     title: string;
@@ -10,35 +10,31 @@ interface IPageHeaderProps {
     label?: string;
     align?: 'left' | 'center';
     className?: string;
+    animationDelay?: number;
+    animationStagger?: number;
+    animationDuration?: number;
 }
 
-export const PageHeader = ({ title, description, label, align = 'left', className }: IPageHeaderProps) => {
+export const PageHeader = ({ title, description, label, align = 'left', className, animationDelay = 0.05, animationStagger = 0.1, animationDuration = 0.5 }: IPageHeaderProps) => {
+    const titleDelay = animationDelay + animationStagger;
+    const descriptionDelay = titleDelay + animationStagger;
+
     return (
         <header className={cn('relative mb-8 md:mb-10', align === 'center' && 'text-center', className)}>
             {label && (
-                <motion.p
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                    className='text-label font-semibold  uppercase font-nunito tracking-widest text-primary'
-                >
-                    {label}
-                </motion.p>
+                <FadeIn direction='up' distance={10} duration={animationDuration} delay={animationDelay} trigger='always'>
+                    <p className='text-label font-semibold uppercase font-nunito tracking-widest text-primary'>{label}</p>
+                </FadeIn>
             )}
 
-            <motion.h1
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                className='text-title font-bold font-nunito tracking-wide text-foreground'
-            >
-                {title}
-            </motion.h1>
+            <FadeIn direction='up' distance={20} duration={animationDuration} delay={titleDelay} trigger='always'>
+                <h1 className='text-title font-bold font-nunito tracking-wide text-foreground'>{title}</h1>
+            </FadeIn>
 
             {description && (
-                <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }} className='text-h5 font-nunito tracking-wide text-muted-foreground'>
-                    {description}
-                </motion.p>
+                <FadeIn direction='up' distance={20} duration={animationDuration} delay={descriptionDelay} trigger='always'>
+                    <p className='text-h5 font-nunito tracking-wide text-muted-foreground'>{description}</p>
+                </FadeIn>
             )}
 
             <BeamLine origin={align === 'center' ? 'center' : 'left'} className={align === 'center' ? 'mx-auto max-w-xs' : ''} />

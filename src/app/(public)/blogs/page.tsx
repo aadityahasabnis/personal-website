@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 
 import { BlogCard } from '@/components/content/blog/BlogCard';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { getPublishedBlogs, type IPublicBlogListItem } from '@/server/new/public/content/blog';
@@ -61,19 +62,21 @@ export default async function BlogsPage() {
             {!hasBlogs ? (
                 <p className='text-body text-muted-foreground'>No blogs published yet.</p>
             ) : (
-                <section className='flex flex-col gap-8'>
-                    {featuredBlog && <BlogCard blog={featuredBlog} />}
+                <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                    <section className='flex flex-col gap-8'>
+                        {featuredBlog && <BlogCard blog={featuredBlog} />}
 
-                    {regularBlogs.length > 0 && (
-                        <ul className='grid gap-6'>
-                            {regularBlogs.map((blog) => (
-                                <li key={blog.id}>
-                                    <BlogCard blog={blog} />
-                                </li>
-                            ))}
-                        </ul>
-                    )}
-                </section>
+                        {regularBlogs.length > 0 && (
+                            <ul className='grid gap-6'>
+                                {regularBlogs.map((blog) => (
+                                    <li key={blog.id}>
+                                        <BlogCard blog={blog} />
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </section>
+                </FadeIn>
             )}
         </main>
     );

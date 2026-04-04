@@ -45,17 +45,9 @@ const Navbar = () => {
                         <Link
                             href='/'
                             aria-label='Go to homepage'
-                            className='group relative inline-flex rounded-sm text-h4 font-medium font-nunito tracking-wide text-foreground transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            className='relative text-h4 font-medium font-nunito tracking-wide text-foreground transition-all duration-500 ease-out hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                         >
-                            <motion.span whileHover={{ scale: 1.02 }} className='relative'>
-                                {SITE_CONFIG.shortName}
-                                <motion.span
-                                    className='absolute inset-x-0 -bottom-1 h-px bg-linear-to-r from-primary to-transparent'
-                                    initial={{ width: 0 }}
-                                    whileHover={{ width: '100%' }}
-                                    transition={{ duration: 0.3 }}
-                                />
-                            </motion.span>
+                            {SITE_CONFIG.shortName}
                         </Link>
 
                         <div className='hidden md:flex md:items-center md:gap-6'>
