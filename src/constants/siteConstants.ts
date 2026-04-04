@@ -1,4 +1,6 @@
-import { Facebook, Github, Instagram, Linkedin, Mail, Twitter } from 'lucide-react';
+import { Facebook, Github, Instagram, Linkedin } from 'lucide-react';
+import { FaPinterest } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 
 // ============================================================
 // Site Configuration
@@ -94,7 +96,7 @@ export const SOCIAL_LINKS = [
     url: 'https://x.com/aadityahasabnis',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on X',
-    icon: Twitter,
+    icon: FaXTwitter,
   },
   {
     id: 'linkedin',
@@ -121,13 +123,13 @@ export const SOCIAL_LINKS = [
     icon: Facebook
   },
   {
-    id: 'email',
-    platform: 'Email',
-    url: 'mailto:aaditya.hasabnis@gmail.com',
-    isExternal: false,
-    ariaLabel: 'Send email to Aaditya Hasabnis',
-    icon: Mail,
-  },
+    id: 'pinterest',
+    platform: 'Pinterest',
+    url: 'https://www.pinterest.com/aaditya_hasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on Pinterest',
+    icon: FaPinterest
+  }
 ] as const;
 
 // ============================================================

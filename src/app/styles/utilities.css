@@ -65,8 +65,7 @@
         box-shadow: var(--shadow-glow-sm);
     }
 }
-
-/* ===== AMBIENT BACKGROUND ===== */
+/* ===== AMBIENT BACKGROUND – RESPONSIVE STATIC SPHERES ===== */
 @layer utilities {
     .ambient-bg {
         position: fixed;
@@ -80,35 +79,67 @@
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        animation: float 20s ease-in-out infinite;
+        animation: subtleBreath 12s ease-in-out infinite alternate;
     }
 
+    @keyframes subtleBreath {
+        0% {
+            opacity: 0.55;
+        }
+        100% {
+            opacity: 0.75;
+        }
+    }
+
+    /* Sphere 1 – top-right */
     .ambient-sphere-1 {
-        width: 600px;
-        height: 600px;
+        width: clamp(300px, 70vw, 700px);
+        height: clamp(300px, 70vw, 700px);
         background: var(--sphere-1);
-        top: -200px;
-        right: -100px;
-        animation-delay: 0s;
+        top: -15%;
+        right: -20%;
+        opacity: 0.7;
     }
 
+    /* Sphere 2 – bottom-left */
     .ambient-sphere-2 {
-        width: 500px;
-        height: 500px;
+        width: clamp(250px, 55vw, 550px);
+        height: clamp(250px, 55vw, 550px);
         background: var(--sphere-2);
-        bottom: -150px;
-        left: -100px;
-        animation-delay: -7s;
+        bottom: -15%;
+        left: -20%;
+        opacity: 0.7;
     }
 
+    /* Sphere 3 – centre (slightly smaller on mobile) */
     .ambient-sphere-3 {
-        width: 400px;
-        height: 400px;
+        width: clamp(250px, 55vw, 450px);
+        height: clamp(250px, 55vw, 450px);
         background: var(--sphere-3);
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        animation-delay: -14s;
+        opacity: 0.7;
+    }
+
+    /* Sphere 4 – bottom-right */
+    .ambient-sphere-4 {
+        width: clamp(200px, 45vw, 450px);
+        height: clamp(200px, 45vw, 450px);
+        background: var(--sphere-4);
+        bottom: 5%;
+        right: -15%;
+        opacity: 0.7;
+    }
+
+    /* Sphere 5 – top-left */
+    .ambient-sphere-5 {
+        width: clamp(180px, 40vw, 400px);
+        height: clamp(180px, 40vw, 400px);
+        background: var(--sphere-5);
+        top: 10%;
+        left: -15%;
+        opacity: 0.8;
     }
 }
 
@@ -295,7 +326,6 @@
 
 /* ===== KEYFRAMES ===== */
 @keyframes float {
-
     0%,
     100% {
         transform: translate(0, 0) scale(1);
@@ -397,7 +427,6 @@
 }
 
 @keyframes pulse-glow {
-
     0%,
     100% {
         box-shadow: 0 0 20px -5px var(--glow-color);
@@ -429,7 +458,6 @@
 }
 
 @keyframes bounce-subtle {
-
     0%,
     100% {
         transform: translateY(0);
@@ -441,7 +469,6 @@
 }
 
 @keyframes wiggle {
-
     0%,
     100% {
         transform: rotate(0deg);
@@ -483,7 +510,6 @@
 }
 
 @keyframes blink {
-
     0%,
     100% {
         opacity: 1;
@@ -604,7 +630,6 @@
 
 /* ===== REDUCED MOTION ===== */
 @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {

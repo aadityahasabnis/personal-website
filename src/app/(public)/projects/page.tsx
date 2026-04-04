@@ -46,7 +46,7 @@ export default async function ProjectsPage() {
             {projects.length === 0 ? (
                 <p className='text-body text-muted-foreground'>No projects published yet.</p>
             ) : (
-                <div className='space-y-14'>
+                <div className='flex flex-col gap-8'>
                     {featuredProjects.length > 0 && (
                         <section>
                             <ul className='grid gap-6'>

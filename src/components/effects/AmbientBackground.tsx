@@ -12,6 +12,8 @@ export const AmbientBackground = memo(() => {
             <div className='ambient-sphere ambient-sphere-1' />
             <div className='ambient-sphere ambient-sphere-2' />
             <div className='ambient-sphere ambient-sphere-3' />
+            <div className='ambient-sphere ambient-sphere-4' />
+            <div className='ambient-sphere ambient-sphere-5' />
         </div>
     );
 });

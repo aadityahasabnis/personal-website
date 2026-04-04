@@ -9,8 +9,8 @@ const Footer = () => {
     const copyrightText = `© ${currentYear} ${SITE_CONFIG.name}. All rights reserved.`;
 
     return (
-        <footer className='relative border-t border-border bg-background' role='contentinfo'>
-            <div className='mx-auto grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-7xl'>
+        <footer className='relative border-border ' role='contentinfo'>
+            <div className='mx-auto border-t border-border grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-5xl'>
                 <section className='flex flex-col gap-4'>
                     <Link
                         href='/'
@@ -69,7 +69,7 @@ const Footer = () => {
                 </section>
             </div>
 
-            <div className='mx-auto flex flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row md:px-10 max-w-7xl border-t border-border'>
+            <div className='mx-auto flex flex-col items-center justify-between gap-4 px-5 py-8 sm:flex-row md:px-10 max-w-5xl border-t border-border'>
                 <p className='text-center text-small text-muted-foreground sm:text-left'>{copyrightText}</p>
                 <nav className='flex items-center gap-6' aria-label='Footer legal links'>
                     {FOOTER_LINKS.legal.map((link) => (
