@@ -21,11 +21,12 @@ import {
     DropdownMenuTrigger,
 } from '@/components/animate-ui/components/radix/dropdown-menu';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/animate-ui/components/radix/hover-card';
+import { FlipCardDemo } from '@/components/animate-ui/demo/components/community/flip-card';
+import ScalesWithImageDemo from '@/components/animate-ui/demo/components/community/scales-with-image-demo';
+import TextRevealCardPreview from '@/components/animate-ui/demo/components/community/text-reveal-card-demo';
 import { BeamLine } from '@/components/common/BeamLine';
 import { ScrollToTop } from '@/components/common/ScrollToTop';
 import { HoverTextSwap } from '@/components/interactive/HoverTextSwap';
-import ScalesWithImageDemo from '@/components/scales-with-image-demo';
-import TextRevealCardPreview from '@/components/text-reveal-card-demo';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import AvatarCircles, { type IAvatarData } from '@/components/ui/avatar-circles';
 import { GridPattern } from '@/components/ui/GridPattern';
@@ -404,6 +405,7 @@ export default function TestShowcaseClient() {
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>
+                    <FlipCardDemo />
                 </article>
             </div>
 
