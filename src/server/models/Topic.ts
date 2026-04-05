@@ -1,5 +1,6 @@
 import { SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
 import mongoose, { Model, Schema } from 'mongoose';
+import { SeoMetadataSchema } from './shared/SeoMetadataSchema';
 import type { ITopicDocument } from './types';
 
 // ============================================================
@@ -33,6 +34,18 @@ const TopicSchema = new Schema<ITopicDocument>(
             default: null,
             trim: true,
         },
+        tags: {
+            type: [String],
+            default: [],
+            validate: {
+                validator: (tags: string[]) => tags.length <= SCHEMA_LIMITS.TAGS_MAX_COUNT,
+                message: `Cannot have more than ${SCHEMA_LIMITS.TAGS_MAX_COUNT} tags`,
+            },
+        },
+        seo: {
+            type: SeoMetadataSchema,
+            default: null,
+        },
         order: {
             type: Number,
             required: true,
@@ -47,14 +60,11 @@ const TopicSchema = new Schema<ITopicDocument>(
             type: Boolean,
             default: false,
         },
-
         subTopicCount: {
             type: Number,
             default: 0,
-            min: [0, 'Subtopic count cannot be negative']
+            min: [0, 'Subtopic count cannot be negative'],
         },
-
-        // Number of published articles under this topic (not subtopic count)
         contentCount: {
             type: Number,
             default: 0,
@@ -76,6 +86,7 @@ TopicSchema.index({ order: 1 });
 TopicSchema.index({ published: 1, order: 1 });
 TopicSchema.index({ featured: 1, published: 1 });
 TopicSchema.index({ published: 1, featured: -1, order: 1, updatedAt: -1 });
+TopicSchema.index({ tags: 1 });
 
 // ============================================================
 // Model Export

@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import * as React from 'react';
 
 import { Button as ButtonPrimitive, type ButtonProps as ButtonPrimitiveProps } from '@/components/animate-ui/primitives/buttons/button';
-import { useControlledState } from '@/hooks/use-controlled-state';
+import { useControlledState } from '@/hooks/form/use-controlled-state';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
@@ -76,7 +76,7 @@ function CopyButton({ className, content, copied, onCopiedChange, onClick, varia
     const Icon = isCopied ? CheckIcon : CopyIcon;
 
     return (
-        <ButtonPrimitive data-slot='copy-button' className={cn(buttonVariants({ variant, size, className }))} onClick={handleCopy} {...props}>
+        <ButtonPrimitive data-slot='copy-button' type={props.type || 'button'} className={cn(buttonVariants({ variant, size, className }))} onClick={handleCopy} {...props}>
             <AnimatePresence mode='popLayout'>
                 <motion.span
                     key={isCopied ? 'check' : 'copy'}

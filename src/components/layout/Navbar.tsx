@@ -38,7 +38,7 @@ const Navbar = () => {
     return (
         <>
             <motion.header initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8, delay: 0.2 }} className='fixed inset-x-0 top-0 z-50 pointer-events-none'>
-                <div className={cn('absolute inset-0 opacity-0 bg-linear-to-b from-background to-transparent transition-slow', scrolled && 'opacity-100')} aria-hidden='true' />
+                <div className={cn('absolute inset-0 opacity-0 bg-linear-to-b from-background to-transparent transition-slow duration-700', scrolled && 'opacity-100')} aria-hidden='true' />
 
                 <nav className='relative pointer-events-auto' aria-label='Primary navigation'>
                     <div className='mx-auto flex items-center justify-between px-6 lg:px-8 py-4 max-w-5xl'>

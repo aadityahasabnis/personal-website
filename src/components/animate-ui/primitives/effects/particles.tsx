@@ -4,7 +4,7 @@ import { AnimatePresence, motion, type HTMLMotionProps, type MotionStyle } from 
 import * as React from 'react';
 
 import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
-import { useIsInView, type UseIsInViewOptions } from '@/hooks/use-is-in-view';
+import { useIsInView, type UseIsInViewOptions } from '@/hooks/ui/use-is-in-view';
 import { getStrictContext } from '@/lib/get-strict-context';
 
 type Side = 'top' | 'bottom' | 'left' | 'right';

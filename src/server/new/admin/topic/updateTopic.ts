@@ -6,6 +6,7 @@ import Topic from '@/server/models/Topic';
 import { ObjectId } from 'mongodb';
 import { cleanUndefined, error, handleError, success, updatedNow } from '../../utils/helper';
 import { getAdminId, revalidateTopicPaths } from '../shared';
+import { buildSeo } from '../shared/seo';
 import type { ITopicUpdateInput } from './types';
 
 // ========================================================
@@ -29,7 +30,12 @@ export const updateTopic = async (topicId: string, input: ITopicUpdateInput): Pr
             if (conflict) return error('Topic with this slug already exists', 409);
         }
 
-        const update = cleanUndefined({ ...input, ...updatedNow() });
+        const { seo, ...rest } = input;
+        const update = cleanUndefined({
+            ...rest,
+            ...(seo !== undefined ? { seo: buildSeo(seo) } : {}),
+            ...updatedNow(),
+        });
         await Topic.updateOne({ _id: topic._id }, { $set: update });
 
         revalidateTopicPaths(topic.slug);

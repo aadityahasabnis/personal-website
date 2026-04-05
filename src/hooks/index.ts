@@ -1,19 +1,19 @@
-export { useAction, type ActionFn, type IUseActionOptions, type IUseActionReturn } from './useAction';
-export { useActionQuery, type IUseActionQueryOptions } from './useActionQuery';
+export { useAction, type ActionFn, type IUseActionOptions, type IUseActionReturn } from './server/useAction';
+export { useActionQuery, type IUseActionQueryOptions } from './server/useActionQuery';
 export {
     ADMIN_QUERY_KEYS, createOptimisticMutation, useAdminData,
     useAdminMutation, type IAdminMutationOptions, type IAdminQueryOptions, type IUseAdminDataReturn
-} from './useAdminData';
-export { useAdminTable, type IUseAdminTableOptions, type IUseAdminTableReturn } from './useAdminTable';
+} from './table/useAdminData';
+export { useAdminTable, type IUseAdminTableOptions, type IUseAdminTableReturn } from './table/useAdminTable';
 
-export { useDebounce, useDebouncedCallback } from './useDebounce';
-export { useDialog } from './useDialog';
-export { useFormOperations } from './useFormOperations';
-export { useMediaQuery } from './useMediaQuery';
-export { useOutsideClick } from './useOutsideClick';
-export { useInfiniteScroll, usePagination } from './usePagination';
-export { useScrollPosition } from './useScrollPosition';
-export { useSnackbar, type ISnackbarDescription } from './useSnackbar';
-export { useStepper } from './useStepper';
-export { useTabs } from './useTabs';
+export { useFormOperations } from './form/useFormOperations';
+export { useSnackbar, type ISnackbarDescription } from './form/useSnackbar';
+export { useStepper } from './form/useStepper';
+export { useTabs } from './form/useTabs';
+export { useDebounce, useDebouncedCallback } from './table/useDebounce';
+export { useInfiniteScroll, usePagination } from './table/usePagination';
+export { useDialog } from './ui/useDialog';
+export { useMediaQuery } from './ui/useMediaQuery';
+export { useOutsideClick } from './ui/useOutsideClick';
+export { useScrollPosition } from './ui/useScrollPosition';
 

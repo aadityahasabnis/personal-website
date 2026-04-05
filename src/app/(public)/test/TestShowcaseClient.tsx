@@ -34,7 +34,7 @@ import { ScalesContainer } from '@/components/ui/scales';
 import { ScrollVelocityContainer, ScrollVelocityRow } from '@/components/ui/scroll-based-velocity';
 import { StickyScroll } from '@/components/ui/sticky-scroll-reveal';
 import { COLLECTIONS, NAV_LINKS, SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
-import { useDialog } from '@/hooks/useDialog';
+import { useDialog } from '@/hooks/ui/useDialog';
 
 type NavigationMode = 'internal' | 'external';
 

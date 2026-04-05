@@ -4,7 +4,7 @@ import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProp
 import { HoverCard as HoverCardPrimitive } from 'radix-ui';
 import * as React from 'react';
 
-import { useControlledState } from '@/hooks/use-controlled-state';
+import { useControlledState } from '@/hooks/form/use-controlled-state';
 import { getStrictContext } from '@/lib/get-strict-context';
 
 type HoverCardContextType = {

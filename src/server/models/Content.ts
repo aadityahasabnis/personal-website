@@ -1,47 +1,7 @@
 import { CONTENT_TYPES, PROJECT_STATUS, PUBLISH_STATUS, SCHEMA_LIMITS, VALIDATION_PATTERNS } from '@/constants/schemaConstants';
-import type { ISeoMetadata } from '@/interfaces/schema/content';
 import mongoose, { Model, Schema } from 'mongoose';
+import { SeoMetadataSchema } from './shared/SeoMetadataSchema';
 import type { IContentDocument } from './types';
-
-// ============================================================
-// SEO Metadata Schema
-// ============================================================
-
-const SeoMetadataSchema = new Schema<ISeoMetadata>(
-    {
-        title: {
-            type: String,
-            default: null,
-            trim: true,
-            maxlength: [SCHEMA_LIMITS.SEO_TITLE_MAX_LENGTH, 'SEO title cannot exceed 70 characters'],
-        },
-        description: {
-            type: String,
-            default: null,
-            trim: true,
-            maxlength: [SCHEMA_LIMITS.SEO_DESCRIPTION_MAX_LENGTH, 'SEO description cannot exceed 160 characters'],
-        },
-        keywords: {
-            type: [String],
-            default: [],
-        },
-        ogImage: {
-            type: String,
-            default: null,
-            trim: true,
-        },
-        canonicalUrl: {
-            type: String,
-            default: null,
-            trim: true,
-        },
-        noIndex: {
-            type: Boolean,
-            default: false,
-        },
-    },
-    { _id: false }
-);
 
 // ============================================================
 // Base Content Schema

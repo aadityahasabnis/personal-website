@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
 import { FileText, StarIcon } from 'lucide-react';
 
@@ -59,9 +60,38 @@ const getArticlesHubData = async (featuredCount = FEATURED_TOPICS_DEFAULT_COUNT)
 
 export default async function Page() {
     const { featuredTopics, allTopics } = await getArticlesHubData();
+    const allUniqueTopics = [...featuredTopics, ...allTopics];
+
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: 'Articles', url: `${SITE_CONFIG.url}/articles` },
+    ]);
+
+    const collectionSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `${SITE_CONFIG.url}/articles`,
+        name: 'Technical Articles & Guides',
+        description,
+        url: `${SITE_CONFIG.url}/articles`,
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: allUniqueTopics.length,
+            itemListElement: allUniqueTopics.map((topic, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                url: `${SITE_CONFIG.url}/articles/${topic.slug}`,
+                name: topic.title,
+                description: topic.description,
+            })),
+        },
+    };
+
+    const combinedSchema = combineSchemas(breadcrumbSchema, collectionSchema);
 
     return (
-        <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
+        <>
+            <JsonLd data={combinedSchema} />
+            <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             {/* Page Header */}
             <PageHeader
                 title='Articles'
@@ -77,6 +107,7 @@ export default async function Page() {
             </FadeIn>
 
             <ScrollToTop />
-        </main>
+            </main>
+        </>
     );
 }

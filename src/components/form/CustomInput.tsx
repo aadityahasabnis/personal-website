@@ -6,6 +6,7 @@ import { CaseUpper, Eye, EyeOff } from 'lucide-react';
 import Link from 'next/link';
 
 import type { DotNestedScalarKeys, IFormData, IHandleChange, StrongOmit } from '@/components/form/form';
+import { CopyButton } from '@/components/animate-ui/components/buttons/copy';
 import { cn } from '@/lib/utils';
 
 import { FieldError, FieldHint, FieldLabel } from './FieldComponents';
@@ -37,6 +38,7 @@ export interface ICustomInputProps<TFormBody extends IFormData = IFormData> exte
     startIcon?: ReactElement<{ className?: string }> | undefined;
     endIcon?: ReactElement<{ className?: string }> | undefined;
     allowPasswordToggle?: boolean | undefined;
+    allowCopy?: boolean | undefined;
     containerClassName?: string | undefined;
     inputClassName?: string | undefined;
     supplementaryLink?:
@@ -60,6 +62,7 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
     startIcon,
     endIcon,
     allowPasswordToggle,
+    allowCopy,
     containerClassName,
     inputClassName,
     supplementaryLink,
@@ -78,6 +81,7 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
     const showPasswordToggle = Boolean(allowPasswordToggle && type === 'password');
+    const showCopyButton = Boolean(allowCopy && type !== 'password');
     const resolvedType = showPasswordToggle && isPasswordVisible ? 'text' : type;
 
     const handleChange = (nextValue: string) => {
@@ -162,7 +166,16 @@ const CustomInput = <TFormBody extends IFormData = IFormData>({
                         {isPasswordVisible ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
                     </button>
                 ) : null}
-                {!capsLockActive && endIcon ? <span className='absolute inset-y-0 right-3 flex items-center text-muted-foreground'>{endIcon}</span> : null}
+                {!capsLockActive && !showPasswordToggle && showCopyButton ? (
+                    <CopyButton
+                        content={String(value ?? '')}
+                        variant='ghost'
+                        size='xs'
+                        className='absolute inset-y-0 right-1.5 my-auto text-muted-foreground hover:text-foreground'
+                        aria-label='Copy to clipboard'
+                    />
+                ) : null}
+                {!capsLockActive && !showCopyButton && endIcon ? <span className='absolute inset-y-0 right-3 flex items-center text-muted-foreground'>{endIcon}</span> : null}
             </div>
 
             <FieldHint text={hint} />

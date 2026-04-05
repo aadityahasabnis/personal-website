@@ -5,6 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Topic from '@/server/models/Topic';
 import { cleanUndefined, created, error, handleError, timestamps } from '../../utils/helper';
 import { getAdminId, revalidateTopicPaths } from '../shared';
+import { buildSeo } from '../shared/seo';
 import type { ITopicCreateInput, ITopicDocumentInput } from './types';
 
 // ========================================================
@@ -27,6 +28,8 @@ export const createTopic = async (input: ITopicCreateInput): Promise<IApiRespons
             description: input.description,
             coverImage: input.coverImage ?? null,
             order: input.order ?? 0,
+            tags: input.tags ?? [],
+            seo: buildSeo(input.seo),
             subTopicCount: 0,
             contentCount: 0,
             ...timestamps(),

@@ -4,8 +4,8 @@ import { useAtom } from 'jotai';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 
-import { useDebounce } from '@/hooks/useDebounce';
-import { useInfiniteScroll } from '@/hooks/usePagination';
+import { useDebounce } from '@/hooks/table/useDebounce';
+import { useInfiniteScroll } from '@/hooks/table/usePagination';
 import {
     createTableFiltersAtom,
     createTablePageSizeAtom,

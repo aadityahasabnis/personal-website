@@ -4,7 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 
 import { renderField, type IFieldConfig } from '@/components/form';
 import { Button } from '@/components/ui/button';
-import { useFormOperations } from '@/hooks/useFormOperations';
+import { useFormOperations } from '@/hooks/form/useFormOperations';
 import { type IFormData } from '@/interfaces/actionHelper';
 import { cn } from '@/lib/utils';
 

@@ -3,8 +3,8 @@
 import { CustomInput } from '@/components/form';
 import type { IFormData } from '@/components/form/form';
 import { NEWSLETTER_SECTION } from '@/constants/homeConstants';
-import { useAction } from '@/hooks/useAction';
-import { useFormOperations } from '@/hooks/useFormOperations';
+import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useAction } from '@/hooks/server/useAction';
 import { subscribe, type ISubscribeInput, type ISubscriptionResult } from '@/server/new/public/subscribe';
 import { motion } from 'framer-motion';
 import { CheckCircle, Loader2, Send } from 'lucide-react';

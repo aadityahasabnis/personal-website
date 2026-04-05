@@ -1,179 +1,246 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save } from 'lucide-react';
+import { type FormEvent, useMemo } from 'react';
 
+import FormWrapper, { type IFieldConfig } from '@/components/form/FormWrapper';
+import { getSeoFieldConfig } from '@/components/form/config/seoFields';
+import type { IFormData } from '@/components/form/form';
+import { VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import { useFormOperations } from '@/hooks/form/useFormOperations';
 import { slugify } from '@/lib/utils';
-import { createTopic, updateTopic } from '@/server/actions/topics';
-import type { ITopic } from '@/interfaces/schema';
-import {
-    FormInput,
-    FormTextarea,
-    FormCheckbox,
-    FormSection,
-    FormActions,
-    FormError,
-} from '@/components/admin/form';
+import { createTopic } from '@/server/new/admin/topic/createTopic';
+import type { ITopicCreateInput, ITopicEdit, ITopicSeoInput } from '@/server/new/admin/topic/types';
+import { updateTopic } from '@/server/new/admin/topic/updateTopic';
+import { useState } from 'react';
 
-// Icon options for topics
-const ICON_OPTIONS = [
-    'Code', 'Database', 'Globe', 'Server', 'Cpu', 'Terminal',
-    'GitBranch', 'Layers', 'Box', 'Puzzle', 'Lightbulb', 'BookOpen',
-    'FileCode', 'Braces', 'Binary', 'Network', 'Cloud', 'Shield',
+// =============================================================
+// Form Data Type
+// =============================================================
+
+interface ITopicFormData extends IFormData {
+    title: string;
+    slug: string;
+    description: string;
+    coverImage: string;
+    tags: string[];
+    'seo.title': string;
+    'seo.description': string;
+    'seo.keywords': string[];
+    'seo.ogImage': string;
+    'seo.canonicalUrl': string;
+    'seo.noIndex': boolean;
+    order: number;
+}
+
+// =============================================================
+// Payload helpers
+// =============================================================
+
+const parseSeo = (data: ITopicFormData): ITopicSeoInput | null => {
+    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
+    if (!title && !description && !keywords && !ogImage && !canonicalUrl && !noIndex) return null;
+    return {
+        title: title || null,
+        description: description || null,
+        keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
+        ogImage: ogImage || null,
+        canonicalUrl: canonicalUrl || null,
+        noIndex: Boolean(noIndex),
+    };
+};
+
+// =============================================================
+// Field Config
+// =============================================================
+
+const buildFields = (formData: ITopicFormData, isEditing: boolean): Array<IFieldConfig<ITopicFormData>> => [
+    {
+        fieldtype: 'group',
+        title: 'Topic Details',
+        subText: 'Core identity used in URLs and article categorisation.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'input',
+                name: 'title',
+                label: 'Title',
+                placeholder: 'e.g., Data Structures & Algorithms',
+                required: true,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'input',
+                name: 'slug',
+                label: 'Slug',
+                placeholder: 'dsa',
+                value: !isEditing && formData.title && !formData.slug ? slugify(formData.title) : formData.slug,
+                required: true,
+                hint: 'Lowercase letters, numbers, and hyphens only. Auto-generated from title.',
+                allowCopy: true,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'textArea',
+                name: 'description',
+                label: 'Description',
+                placeholder: 'A brief description of this topic. Shown in listings and meta tags.',
+                required: true,
+                rows: 3,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'tagInput',
+                name: 'tags',
+                label: 'Tags',
+                placeholder: 'Type a tag and press Enter…',
+                maxTags: 10,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'input',
+                name: 'coverImage',
+                label: 'Cover Image URL',
+                placeholder: 'https://example.com/image.png',
+                type: 'url',
+                hint: 'Optional. Used as the topic thumbnail.',
+                allowCopy: true,
+                colsize: 'full',
+            },
+        ],
+    },
+
+    // Display order — edit only
+    ...(isEditing
+        ? [
+              {
+                  fieldtype: 'group' as const,
+                  title: 'Display Settings',
+                  subText: 'Controls ordering in the topics list.',
+                  colsize: 'full' as const,
+                  fields: [
+                      {
+                          fieldtype: 'input' as const,
+                          name: 'order' as const,
+                          label: 'Display Order',
+                          type: 'number' as const,
+                          inputType: 'number' as const,
+                          hint: 'Lower numbers appear first.',
+                          colsize: 'full' as const,
+                      },
+                  ],
+              },
+          ]
+        : []),
+
+    ...getSeoFieldConfig(formData, '/articles'),
 ];
 
+// =============================================================
+// Props
+// =============================================================
+
 interface ITopicFormProps {
-    topic?: ITopic;
+    topic?: ITopicEdit;
     isEditing?: boolean;
 }
 
-export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps): React.ReactElement => {
+// =============================================================
+// TopicForm
+// =============================================================
+
+export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps) => {
     const router = useRouter();
-    const [isPending, startTransition] = useTransition();
-    const [error, setError] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Form state
-    const [title, setTitle] = useState(topic?.title ?? '');
-    const [slug, setSlug] = useState(topic?.slug ?? '');
-    const [description, setDescription] = useState(topic?.description ?? '');
-    const [icon, setIcon] = useState(topic?.icon ?? 'Code');
-    const [order, setOrder] = useState(topic?.order ?? 0);
-    const [published, setPublished] = useState(topic?.published ?? false);
-    const [featured, setFeatured] = useState(topic?.featured ?? false);
-    const [autoSlug, setAutoSlug] = useState(!isEditing);
+    const initialData: ITopicFormData = {
+        title: topic?.title ?? '',
+        slug: topic?.slug ?? '',
+        description: topic?.description ?? '',
+        coverImage: topic?.coverImage ?? '',
+        tags: topic?.tags ?? [],
+        'seo.title': topic?.seo?.title ?? '',
+        'seo.description': topic?.seo?.description ?? '',
+        'seo.keywords': topic?.seo?.keywords ?? [],
+        'seo.ogImage': topic?.seo?.ogImage ?? '',
+        'seo.canonicalUrl': topic?.seo?.canonicalUrl ?? '',
+        'seo.noIndex': topic?.seo?.noIndex ?? false,
+        order: topic?.order ?? 0,
+    };
 
-    // Auto-generate slug
-    useEffect(() => {
-        if (autoSlug && title) setSlug(slugify(title));
-    }, [title, autoSlug]);
+    const { formData, handleChange, setFormData, isModified, resetForm, submitBtnRef } = useFormOperations<ITopicFormData>(initialData);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const resolvedFields = useMemo(() => buildFields(formData, isEditing), [formData, isEditing]);
+
+    const showImagePreview = Boolean(formData.coverImage && VALIDATION_PATTERNS.URL.test(formData.coverImage));
+
+    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setError(null);
+        setIsSubmitting(true);
 
-        startTransition(async () => {
-            const data = { title, slug, description, icon, order, published, featured };
-            const result = isEditing && topic
-                ? await updateTopic(topic.slug, data)
-                : await createTopic(data);
+        try {
+            const tags = formData.tags;
+            const seo = parseSeo(formData);
+            let res;
 
-            if (result.success) {
+            if (isEditing && topic) {
+                const payload: Partial<ITopicCreateInput> = {
+                    title: formData.title,
+                    slug: formData.slug || slugify(formData.title),
+                    description: formData.description,
+                    coverImage: formData.coverImage || null,
+                    order: Number(formData.order) || 0,
+                    tags,
+                    seo,
+                };
+                res = await updateTopic(topic._id, payload);
+            } else {
+                const payload: ITopicCreateInput = {
+                    title: formData.title,
+                    slug: formData.slug || slugify(formData.title),
+                    description: formData.description,
+                    coverImage: formData.coverImage || null,
+                    tags,
+                    seo,
+                };
+                res = await createTopic(payload);
+            }
+
+            if (res.success) {
                 router.push('/admin/topics');
                 router.refresh();
-            } else {
-                setError(result.error ?? 'Something went wrong');
             }
-        });
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <FormError message={error} />
-
-            <FormSection title="Topic Details">
-                <FormInput
-                    label="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Data Structures & Algorithms"
-                    required
-                    minLength={3}
-                    maxLength={100}
-                />
-
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">
-                            Slug <span className="text-destructive">*</span>
-                        </label>
-                        <FormCheckbox
-                            label="Auto-generate"
-                            checked={autoSlug}
-                            onChange={(e) => setAutoSlug(e.target.checked)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">/articles/</span>
-                        <input
-                            type="text"
-                            value={slug}
-                            onChange={(e) => { setSlug(e.target.value); setAutoSlug(false); }}
-                            placeholder="dsa"
-                            required
-                            pattern="^[a-z0-9-]+$"
-                            minLength={2}
-                            maxLength={50}
-                            className="flex-1 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                    </div>
-                    <p className="text-xs text-muted-foreground">Lowercase letters, numbers, and hyphens only</p>
+        <div className='flex flex-col gap-5'>
+            {/* Cover Image Preview */}
+            {showImagePreview && (
+                <div className='relative w-full h-44 overflow-hidden rounded-lg border border-border bg-muted'>
+                    <Image src={formData.coverImage} alt='Cover image preview' fill className='object-cover' unoptimized />
                 </div>
+            )}
 
-                <FormTextarea
-                    label="Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="A brief description of this topic..."
-                    required
-                    maxLength={500}
-                    showCount
-                />
-            </FormSection>
-
-            <FormSection title="Display Settings">
-                <div className="space-y-2">
-                    <label className="text-sm font-medium">Icon</label>
-                    <div className="flex flex-wrap gap-2">
-                        {ICON_OPTIONS.map((iconName) => (
-                            <button
-                                key={iconName}
-                                type="button"
-                                onClick={() => setIcon(iconName)}
-                                className={`rounded-lg border px-3 py-1.5 text-sm transition-colors ${icon === iconName
-                                        ? 'border-primary bg-primary/10 text-primary'
-                                        : 'hover:border-primary/50 hover:bg-muted'
-                                    }`}
-                            >
-                                {iconName}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <label htmlFor="order" className="text-sm font-medium">Display Order</label>
-                    <input
-                        id="order"
-                        type="number"
-                        value={order}
-                        onChange={(e) => setOrder(parseInt(e.target.value) || 0)}
-                        min={0}
-                        className="w-32 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                    />
-                    <p className="text-xs text-muted-foreground">Lower numbers appear first</p>
-                </div>
-
-                <div className="flex flex-wrap gap-6">
-                    <FormCheckbox
-                        label="Published"
-                        checked={published}
-                        onChange={(e) => setPublished(e.target.checked)}
-                    />
-                    <FormCheckbox
-                        label="Featured on homepage"
-                        checked={featured}
-                        onChange={(e) => setFeatured(e.target.checked)}
-                    />
-                </div>
-            </FormSection>
-
-            <FormActions
-                cancelHref="/admin/topics"
+            <FormWrapper
+                formConfig={resolvedFields}
+                handleSubmit={handleSubmit}
+                handleSecondaryClick={resetForm}
+                handleChange={handleChange}
+                setFormData={setFormData}
+                formData={formData}
+                isModified={isEditing ? isModified : true}
+                isSubmitting={isSubmitting}
+                submitBtnRef={submitBtnRef}
                 submitLabel={isEditing ? 'Update Topic' : 'Create Topic'}
-                isPending={isPending}
-                submitIcon={isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                cancelLabel='Discard'
+                navigateBackRequired={false}
             />
-        </form>
+        </div>
     );
 };
+
+export default TopicForm;

@@ -1,3 +1,4 @@
+import type { ISeoMetadata } from './content';
 import type { IDocument, ITimestamps } from './base';
 
 // ============================================================
@@ -5,13 +6,15 @@ import type { IDocument, ITimestamps } from './base';
 // ============================================================
 
 export interface ITopic extends IDocument, ITimestamps {
-    slug: string; // Unique identifier for URL
+    slug: string;
     title: string;
     description: string;
     coverImage: string | null;
-    order: number; // Display order
+    order: number;
     published: boolean;
-    featured: boolean; // Highlight on homepage
-    subTopicCount: number,
-    contentCount: number; // Denormalized count of published articles
+    featured: boolean;
+    subTopicCount: number;
+    contentCount: number;
+    tags: string[];
+    seo: ISeoMetadata | null;
 }

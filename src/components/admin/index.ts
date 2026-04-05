@@ -13,11 +13,11 @@ export {
     BulkActionsBar, createBulkArchiveAction, createBulkSetActiveAction,
     createBulkSetWipAction, type IBulkAction as IBulkActionNew, type IBulkActionsBarProps
 } from './BulkActionsBar';
-export { DataTable, type IDataTableColumn, type IDataTableProps } from './DataTable';
-export { TableSearch, type ITableFilter, type ITableSearchProps } from './TableSearch';
+export { DataTable, type IDataTableColumn, type IDataTableProps } from './table/DataTable';
+export { TableSearch, type ITableFilter, type ITableSearchProps } from './table/TableSearch';
 
 // Action Components
-export { DataTableActions, type IDataTableAction } from './DataTableActions';
+export { DataTableActions, type IDataTableAction } from './table/DataTableActions';
 
 // Action Helpers
 export {

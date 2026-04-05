@@ -1,9 +1,19 @@
 import type { ITopic } from '@/interfaces/schema';
+import type { ISeoMetadata } from '@/interfaces/schema/content';
 import type { ITableQueryParams } from '../shared';
 
 // ========================================================
 // Topic Types
 // ========================================================
+
+export interface ITopicSeoInput {
+    title?: string | null;
+    description?: string | null;
+    keywords?: string[];
+    ogImage?: string | null;
+    canonicalUrl?: string | null;
+    noIndex?: boolean;
+}
 
 export interface ITopicCreateInput {
     slug: string;
@@ -11,6 +21,8 @@ export interface ITopicCreateInput {
     description: string;
     coverImage?: string | null;
     order?: number;
+    tags?: string[];
+    seo?: ITopicSeoInput | null;
 }
 
 export type ITopicUpdateInput = Partial<ITopicCreateInput>;
@@ -31,6 +43,8 @@ export interface ITopicRow {
     featured: boolean;
     subTopicCount: number;
     contentCount: number;
+    tags: string[];
+    seo: ISeoMetadata | null;
     createdAt: string;
     updatedAt: string;
 }

@@ -84,7 +84,7 @@ export const getTopicForEdit = async (topicId: string): Promise<IApiResponse<ITo
 
         await connectDB();
         const topic = await Topic.findById(topicId)
-            .select('slug title description coverImage order published featured subTopicCount contentCount createdAt updatedAt')
+            .select('slug title description coverImage order published featured subTopicCount contentCount tags seo createdAt updatedAt')
             .lean();
         if (!topic) return success(null);
 
@@ -99,6 +99,8 @@ export const getTopicForEdit = async (topicId: string): Promise<IApiResponse<ITo
             featured: Boolean(topic.featured),
             subTopicCount: topic.subTopicCount ?? 0,
             contentCount: topic.contentCount ?? 0,
+            tags: topic.tags ?? [],
+            seo: topic.seo ?? null,
             createdAt: topic.createdAt.toISOString(),
             updatedAt: topic.updatedAt.toISOString(),
         });
@@ -113,3 +115,4 @@ API Responses:
 - 400: Invalid topic id.
 - 500: Unexpected server/database error.
 */
+

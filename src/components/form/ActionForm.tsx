@@ -6,8 +6,8 @@ import type { QueryKey } from '@tanstack/react-query';
 
 import type { IFormData, IHandleChange } from '@/components/form/form';
 import FormWrapper, { type IFieldConfig } from '@/components/form/FormWrapper';
-import { useAction, type ActionFn } from '@/hooks/useAction';
-import { useFormOperations } from '@/hooks/useFormOperations';
+import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useAction, type ActionFn } from '@/hooks/server/useAction';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 
 interface IActionFormSuccessPayload<TFormBody extends IFormData, TResult> {

@@ -14,6 +14,7 @@ import CustomCheckbox from './CustomCheckbox';
 import CustomInput, { type InputType } from './CustomInput';
 import CustomRichText from './CustomRichText';
 import CustomSelect, { type ISelectFieldValue, type ISelectOption } from './CustomSelect';
+import CustomTagInput from './CustomTagInput';
 import CustomTextArea from './CustomTextArea';
 import CustomToggle from './CustomToggle';
 
@@ -55,6 +56,7 @@ export interface IInputFieldConfig<TFormBody extends IFormData> extends IBaseFie
     startIcon?: ReactElement<{ className?: string }> | undefined;
     endIcon?: ReactElement<{ className?: string }> | undefined;
     allowPasswordToggle?: boolean | undefined;
+    allowCopy?: boolean | undefined;
     supplementaryLink?:
         | {
               href: string;
@@ -117,6 +119,15 @@ export interface IDividerFieldConfig extends IBaseFieldConfig {
     name?: string | undefined;
 }
 
+export interface ITagInputFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'tagInput';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
+    value?: string[] | undefined;
+    placeholder?: string | undefined;
+    maxTags?: number | undefined;
+}
+
 export interface IGroupFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig {
     fieldtype: 'group';
     title?: string | undefined;
@@ -131,6 +142,7 @@ export type IFieldConfig<TFormBody extends IFormData> =
     | ICheckboxFieldConfig<TFormBody>
     | IToggleFieldConfig<TFormBody>
     | IRichTextFieldConfig<TFormBody>
+    | ITagInputFieldConfig<TFormBody>
     | IDividerFieldConfig
     | IGroupFieldConfig<TFormBody>;
 
@@ -168,6 +180,7 @@ export const renderField = <TFormBody extends IFormData>(formData: TFormBody, ha
                     startIcon={field.startIcon}
                     endIcon={field.endIcon}
                     allowPasswordToggle={field.allowPasswordToggle}
+                    allowCopy={field.allowCopy}
                     supplementaryLink={field.supplementaryLink}
                     autoComplete={field.autoComplete}
                     containerClassName={containerClassName}
@@ -261,6 +274,24 @@ export const renderField = <TFormBody extends IFormData>(formData: TFormBody, ha
                     className={containerClassName}
                 />
             );
+        case 'tagInput':
+            return (
+                <CustomTagInput
+                    key={key}
+                    name={field.name}
+                    value={field.value ?? getResolvedValue(formData, field.name, [])}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    info={field.info}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
+                    placeholder={field.placeholder}
+                    maxTags={field.maxTags}
+                    containerClassName={containerClassName}
+                />
+            );
         case 'divider': {
             const dividerHeight = field.size === 'xs' ? 'h-3' : field.size === 'lg' ? 'h-8' : 'h-5';
             return (
@@ -323,23 +354,23 @@ const FormWrapper = <TFormBody extends IFormData>({
     const router = useRouter();
 
     return (
-        <form onSubmit={handleSubmit} className={cn('flex h-full flex-col gap-8 pb-5', className)}>
+        <form onSubmit={handleSubmit} className={cn('flex h-full flex-col gap-6 pb-5', className)}>
             <div className='grid h-full gap-5 sm:grid-cols-2 md:grid-cols-6'>{formConfig.map((field, index) => renderField(formData, handleChange, field, index))}</div>
 
             {hideActionable ? null : (
-                <div className='flex w-full flex-col-reverse gap-3 sm:w-fit sm:flex-row sm:self-end'>
-                    <div className='flex gap-3'>
+                <div className='glass-card sticky bottom-6 z-40 mt-8 flex w-full items-center justify-between gap-4 rounded-xl p-4 shadow-glow-sm transition-all duration-300 hover:shadow-glow-md'>
+                    <div className='flex items-center gap-3'>
                         {navigateBackRequired ? (
-                            <Button type='button' variant='outline' size='icon' onClick={() => router.back()} className='group'>
+                            <Button type='button' variant='ghost' size='icon' onClick={() => router.back()} className='group size-9' aria-label='Go back'>
                                 <ArrowLeft className='size-4 transition-fast group-hover:-translate-x-0.5' />
                             </Button>
                         ) : null}
-                        <Button type='reset' variant='outline' disabled={!isModified || isSubmitting} onClick={handleSecondaryClick} className='w-full sm:w-44'>
+                        <Button type='reset' variant='outline' disabled={!isModified || isSubmitting} onClick={handleSecondaryClick} className='h-9 min-w-28 bg-background/50 hover:bg-background/80'>
                             {cancelLabel}
                         </Button>
                     </div>
-                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='w-full sm:w-44'>
-                        {isSubmitting ? 'Saving...' : submitLabel}
+                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='h-9 min-w-32 shadow-sm'>
+                        {isSubmitting ? 'Saving…' : submitLabel}
                     </Button>
                 </div>
             )}

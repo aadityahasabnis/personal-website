@@ -4,7 +4,7 @@ import { PreviewCard as PreviewCardPrimitive } from '@base-ui-components/react/p
 import { AnimatePresence, motion, useMotionValue, useSpring, type HTMLMotionProps, type MotionStyle, type MotionValue, type SpringOptions } from 'motion/react';
 import * as React from 'react';
 
-import { useControlledState } from '@/hooks/use-controlled-state';
+import { useControlledState } from '@/hooks/form/use-controlled-state';
 import { getStrictContext } from '@/lib/get-strict-context';
 
 type PreviewCardContextType = {
