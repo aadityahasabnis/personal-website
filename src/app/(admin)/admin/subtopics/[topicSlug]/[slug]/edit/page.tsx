@@ -1,65 +1,62 @@
-import { notFound } from 'next/navigation';
-import { ArrowLeft, Layers } from 'lucide-react';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/admin';
-import { SubtopicForm } from '../../../SubtopicForm';
-import { getSubtopicForEdit } from '@/server/queries/admin';
-import { getAllTopics } from '@/server/queries/topics';
+import { notFound } from 'next/navigation';
 
-interface EditSubtopicPageProps {
+import SubtopicForm from '@/app/(admin)/admin/subtopics/SubtopicForm';
+import { getSubtopicForEdit, getSubtopics } from '@/server/new/admin/subtopic/getSubtopics';
+interface IEditSubtopicPageProps {
     params: Promise<{
         topicSlug: string;
         slug: string;
     }>;
 }
 
-async function getFormData(topicSlug: string, slug: string) {
-    const [subtopic, topics] = await Promise.all([
-        getSubtopicForEdit(topicSlug, slug),
-        getAllTopics(),
-    ]);
+const EditSubtopicPage = async ({ params }: IEditSubtopicPageProps): Promise<React.ReactElement> => {
+    const { topicSlug, slug } = await params;
 
-    if (!subtopic) {
+    // We need the subtopic ID. getSubtopicForEdit expects an ID.
+    // For now, look up by topicSlug + slug via the getSubtopics query
+    const result = await getSubtopics({ query: slug });
+
+    if (!result.success || !result.data || result.data.length === 0) {
         notFound();
     }
 
-    return { subtopic, topics };
-}
+    // Find exact match by topicSlug + slug
+    const matched = result.data.find((s) => s.topicSlug === topicSlug && s.slug === slug);
+    if (!matched) notFound();
 
-export default async function EditSubtopicPage({ params }: EditSubtopicPageProps) {
-    const { topicSlug, slug } = await params;
-    const { subtopic, topics } = await getFormData(topicSlug, slug);
+    const editResult = await getSubtopicForEdit(matched.id);
+    if (!editResult.success || !editResult.data) notFound();
+
+    const subtopic = editResult.data;
 
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/admin/subtopics"
-                    className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-2 hover:bg-muted transition-colors"
-                    aria-label="Back to subtopics"
-                >
-                    <ArrowLeft className="h-4 w-4" />
+        <div className='max-w-2xl mx-auto space-y-6'>
+            <div>
+                <Link href='/admin/subtopics' className='inline-flex items-center gap-2 mb-4 text-label text-muted-foreground transition-fast hover:text-foreground'>
+                    <ArrowLeft className='size-4' />
+                    Back to Subtopics
                 </Link>
-                <div className="flex-1">
-                    <PageHeader
-                        title={`Edit: ${subtopic.title}`}
-                        description={`Last updated ${new Date(subtopic.updatedAt).toLocaleDateString()}`}
-                        icon={Layers}
-                    />
-                </div>
+                <h1 className='text-h1 text-foreground'>Edit Subtopic</h1>
+                <p className='mt-1 text-regular text-muted-foreground'>Update &ldquo;{subtopic.title}&rdquo; subtopic settings.</p>
             </div>
 
-            {/* Form */}
-            <div className="max-w-2xl">
-                <div className="rounded-xl border border-border bg-card p-6">
-                    <SubtopicForm 
-                        subtopic={subtopic}
-                        topics={topics}
-                        isEditing
-                    />
+            {subtopic.contentCount > 0 && (
+                <div className='flex items-start gap-3 p-4 rounded-lg border border-warning bg-warning/10 text-label text-warning'>
+                    <AlertCircle className='size-5 shrink-0 mt-0.5' />
+                    <div>
+                        <p className='font-medium'>This subtopic has {subtopic.contentCount} article(s)</p>
+                        <p className='mt-1 text-muted-foreground'>Changing the slug will update all article URLs. Make sure to set up redirects if needed.</p>
+                    </div>
                 </div>
+            )}
+
+            <div className='p-6 bg-card border border-border rounded-xl'>
+                <SubtopicForm subtopic={subtopic} isEditing />
             </div>
         </div>
     );
-}
+};
+
+export default EditSubtopicPage;

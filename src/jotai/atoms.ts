@@ -1,7 +1,6 @@
-// Jotai Atoms — Global State Management
+// Jotai Atoms — Global State Management (Memory Only - No LocalStorage)
 
 import { atom } from 'jotai';
-import { atomWithStorage } from 'jotai/utils';
 
 export type TableViewMode = 'grid' | 'list';
 export type TableSortOrder = 'asc' | 'desc';
@@ -18,12 +17,20 @@ type TableViewStore = Record<string, TableViewMode>;
 type TablePageSizeStore = Record<string, number>;
 type TableSelectedIdsStore = Record<string, string[]>;
 
-const tableSearchStoreAtom = atomWithStorage<TableSearchStore>('admin:table:search', {});
-const tableFiltersStoreAtom = atomWithStorage<TableFiltersStore>('admin:table:filters', {});
-const tableSortStoreAtom = atomWithStorage<TableSortStore>('admin:table:sort', {});
-const tableViewStoreAtom = atomWithStorage<TableViewStore>('admin:table:view', {});
-const tablePageSizeStoreAtom = atomWithStorage<TablePageSizeStore>('admin:table:page-size', {});
+// =============================================================
+// Base Store Atoms (Memory Only - No LocalStorage)
+// =============================================================
+
+const tableSearchStoreAtom = atom<TableSearchStore>({});
+const tableFiltersStoreAtom = atom<TableFiltersStore>({});
+const tableSortStoreAtom = atom<TableSortStore>({});
+const tableViewStoreAtom = atom<TableViewStore>({});
+const tablePageSizeStoreAtom = atom<TablePageSizeStore>({});
 const tableSelectedIdsStoreAtom = atom<TableSelectedIdsStore>({});
+
+// =============================================================
+// Factory Functions for Table-Specific Atoms
+// =============================================================
 
 export const createTableSearchAtom = (tableKey: string) =>
 	atom(

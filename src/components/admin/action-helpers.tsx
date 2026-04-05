@@ -1,7 +1,6 @@
 import { Eye, EyeOff, Star, StarOff, Trash2 } from 'lucide-react';
 import type { IBulkAction as IBulkActionLegacy } from './BulkActions';
 import type { IBulkAction } from './BulkActionsBar';
-import type { IDataTableAction } from './table/DataTableActions';
 
 /**
  * Action Helper Functions
@@ -10,6 +9,21 @@ import type { IDataTableAction } from './table/DataTableActions';
  * These are NOT client components and can be called from server components
  * Icons are passed as strings to avoid serialization issues
  */
+
+// =============================================================
+// Legacy IDataTableAction Type (for old table system)
+// =============================================================
+
+export interface IDataTableAction {
+    label: string;
+    icon?: string;
+    action: string;
+    variant?: 'default' | 'destructive' | 'success' | 'warning';
+    href?: string;
+    onClick?: () => Promise<void>;
+    confirmMessage?: string;
+    confirmTitle?: string;
+}
 
 // ===== DataTable Action Helpers =====
 

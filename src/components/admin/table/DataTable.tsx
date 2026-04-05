@@ -1,366 +1,482 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { GripVertical } from 'lucide-react';
+// =============================================================
+// DataTable - Professional Config-Driven Table Component
+// =============================================================
+
+import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical, Loader2 } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
 
-// ===== TYPES =====
+import type {
+    IColumnConfig,
+    IColumnSort,
+    IDataTableProps,
+    ITableContext,
+} from './types';
+import { useDataTable } from './useDataTable';
+import { DataTableActions } from './DataTableActions';
+import { TableSearch } from './TableSearch';
+import { DataTablePagination } from './DataTablePagination';
+import { BulkActionsBar } from './BulkActionsBar';
+import { DataTableEmptyState } from './DataTableEmptyState';
 
-export interface IDataTableColumn<TData> {
-    id: string;
-    header: string;
-    accessor?: keyof TData | ((row: TData) => React.ReactNode);
-    cell?: (row: TData) => React.ReactNode;
-    width?: string;
-    align?: 'left' | 'center' | 'right';
-    sortable?: boolean;
-    hidden?: boolean;
+// =============================================================
+// Table Context
+// =============================================================
+
+const TableContext = createContext<ITableContext<unknown> | null>(null);
+
+export function useTableContext<TData>(): ITableContext<TData> {
+    const context = useContext(TableContext);
+    if (!context) {
+        throw new Error('useTableContext must be used within a DataTable');
+    }
+    return context as ITableContext<TData>;
 }
 
-export interface IDataTableProps<TData> {
-    data: TData[];
-    columns: IDataTableColumn<TData>[];
-    keyExtractor: (row: TData) => string;
-    
-    // Selection
-    selectable?: boolean;
-    selectedIds?: string[];
-    onSelectionChange?: (ids: string[]) => void;
-    
-    // Drag & Drop
-    draggable?: boolean;
-    onReorder?: (newOrder: TData[]) => Promise<void>;
-    
-    // Infinite Scroll
-    infiniteScroll?: boolean;
-    hasMore?: boolean;
-    onLoadMore?: () => Promise<void>;
-    isLoading?: boolean;
-    
-    // Row Actions
-    onRowClick?: (row: TData) => void;
-    rowClassName?: (row: TData) => string;
-    
-    // Empty State
-    emptyState?: React.ReactNode;
-    
-    className?: string;
-}
-
-// ===== DRAG & DROP UTILITIES =====
+// =============================================================
+// Drag State
+// =============================================================
 
 interface IDragState {
     draggedIndex: number | null;
-    draggedOverIndex: number | null;
+    dragOverIndex: number | null;
 }
 
-// ===== DATA TABLE COMPONENT =====
+// =============================================================
+// DataTable Component
+// =============================================================
 
 export function DataTable<TData>({
+    config,
     data,
-    columns,
-    keyExtractor,
-    selectable = false,
-    selectedIds = [],
-    onSelectionChange,
-    draggable = false,
-    onReorder,
-    infiniteScroll = false,
-    hasMore = false,
-    onLoadMore,
-    isLoading = false,
-    onRowClick,
-    rowClassName,
-    emptyState,
+    serverAction,
+    initialData,
     className,
 }: IDataTableProps<TData>): React.ReactElement {
-    // State
+    const tableContext = useDataTable<TData>({
+        config,
+        data,
+        serverAction,
+        initialData,
+    });
+
+    const {
+        displayedData,
+        isLoading,
+        state,
+        setSearchQuery,
+        setFilter,
+        activeFiltersCount,
+        clearFilters,
+        toggleSort,
+        toggleSelection,
+        toggleSelectAll,
+        clearSelection,
+        isSelected,
+        isAllSelected,
+        isSomeSelected,
+        selectedRows,
+        setPage,
+        setPageSize,
+        hasMore,
+        loadMore,
+        moveUp,
+        moveDown,
+        reorder,
+        isReordering,
+    } = tableContext;
+
+    // Drag state for reordering
     const [dragState, setDragState] = useState<IDragState>({
         draggedIndex: null,
-        draggedOverIndex: null,
+        dragOverIndex: null,
     });
-    const [localData, setLocalData] = useState<TData[]>(data);
-    
-    // Refs
+
+    // Infinite scroll ref
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const isLoadingMore = useRef(false);
-    const prevDataRef = useRef<TData[]>(data);
 
-    // Sync local data with props - only when data prop actually changes
-    // Using a ref comparison to prevent infinite loops
-    useEffect(() => {
-        // Only update if the data reference has actually changed
-        if (prevDataRef.current !== data) {
-            prevDataRef.current = data;
-            setLocalData(data);
-        }
-    }, [data]);
-
-    // ===== SELECTION HANDLERS =====
-    
-    const isSelected = useCallback(
-        (id: string) => selectedIds.includes(id),
-        [selectedIds]
-    );
-
-    const toggleSelection = useCallback(
-        (id: string) => {
-            if (!onSelectionChange) return;
-            
-            const newSelection = isSelected(id)
-                ? selectedIds.filter((selectedId) => selectedId !== id)
-                : [...selectedIds, id];
-            
-            onSelectionChange(newSelection);
-        },
-        [isSelected, selectedIds, onSelectionChange]
-    );
-
-    const toggleSelectAll = useCallback(() => {
-        if (!onSelectionChange) return;
-        
-        const allIds = localData.map(keyExtractor);
-        const newSelection = selectedIds.length === localData.length ? [] : allIds;
-        onSelectionChange(newSelection);
-    }, [localData, selectedIds, onSelectionChange, keyExtractor]);
-
-    // ===== DRAG & DROP HANDLERS =====
+    // =============================================================
+    // Drag & Drop Handlers
+    // =============================================================
 
     const handleDragStart = useCallback((index: number) => {
-        setDragState({ draggedIndex: index, draggedOverIndex: null });
+        setDragState({ draggedIndex: index, dragOverIndex: null });
     }, []);
 
     const handleDragOver = useCallback((e: React.DragEvent, index: number) => {
         e.preventDefault();
-        setDragState((prev) => ({
-            ...prev,
-            draggedOverIndex: index,
-        }));
+        setDragState(prev => ({ ...prev, dragOverIndex: index }));
     }, []);
 
-    const handleDrop = useCallback(
-        async (e: React.DragEvent) => {
-            e.preventDefault();
-            
-            if (dragState.draggedIndex === null || dragState.draggedOverIndex === null) {
-                setDragState({ draggedIndex: null, draggedOverIndex: null });
-                return;
-            }
-
-            if (dragState.draggedIndex === dragState.draggedOverIndex) {
-                setDragState({ draggedIndex: null, draggedOverIndex: null });
-                return;
-            }
-
-            const newData = [...localData];
-            const [removed] = newData.splice(dragState.draggedIndex, 1);
-            newData.splice(dragState.draggedOverIndex, 0, removed);
-
-            setLocalData(newData);
-            setDragState({ draggedIndex: null, draggedOverIndex: null });
-
-            if (onReorder) {
-                await onReorder(newData);
-            }
-        },
-        [dragState, localData, onReorder]
-    );
+    const handleDrop = useCallback(async (e: React.DragEvent) => {
+        e.preventDefault();
+        if (dragState.draggedIndex === null || dragState.dragOverIndex === null) {
+            setDragState({ draggedIndex: null, dragOverIndex: null });
+            return;
+        }
+        if (dragState.draggedIndex === dragState.dragOverIndex) {
+            setDragState({ draggedIndex: null, dragOverIndex: null });
+            return;
+        }
+        await reorder(dragState.draggedIndex, dragState.dragOverIndex);
+        setDragState({ draggedIndex: null, dragOverIndex: null });
+    }, [dragState, reorder]);
 
     const handleDragEnd = useCallback(() => {
-        setDragState({ draggedIndex: null, draggedOverIndex: null });
+        setDragState({ draggedIndex: null, dragOverIndex: null });
     }, []);
 
-    // ===== INFINITE SCROLL =====
+    // =============================================================
+    // Computed Values
+    // =============================================================
 
-    useEffect(() => {
-        if (!infiniteScroll || !hasMore || isLoadingMore.current) return;
+    const visibleColumns = config.columns.filter(col => !col.hidden);
+    const hasSelection = config.selectable;
+    const hasDrag = config.reorder?.enabled && config.reorder.mode !== 'buttons';
+    const hasRowActions = config.rowActions && config.rowActions.length > 0;
+    const hasBulkActions = config.bulkActions && config.bulkActions.length > 0 && selectedRows.length > 0;
 
-        const observer = new IntersectionObserver(
-            async (entries) => {
-                if (entries[0]?.isIntersecting && !isLoadingMore.current) {
-                    isLoadingMore.current = true;
-                    
-                    if (onLoadMore) {
-                        await onLoadMore();
-                    }
-                    
-                    isLoadingMore.current = false;
-                }
-            },
-            { threshold: 0.1 }
-        );
+    // =============================================================
+    // Render Helpers
+    // =============================================================
 
-        const currentRef = loadMoreRef.current;
-        if (currentRef) {
-            observer.observe(currentRef);
+    const renderCellContent = useCallback((column: IColumnConfig<TData>, row: TData, rowIndex: number) => {
+        // Custom cell renderer
+        if (column.cell) {
+            return column.cell(row, rowIndex);
         }
 
-        return () => {
-            if (currentRef) {
-                observer.unobserve(currentRef);
-            }
-        };
-    }, [infiniteScroll, hasMore, onLoadMore]);
+        // Accessor function
+        if (typeof column.accessor === 'function') {
+            return column.accessor(row) as React.ReactNode;
+        }
 
-    // ===== RENDER HELPERS =====
+        // Key accessor
+        if (column.accessor) {
+            const value = row[column.accessor];
+            if (value === null || value === undefined) return null;
+            if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+            if (value instanceof Date) return value.toLocaleDateString();
+            return String(value);
+        }
 
-    const renderCellContent = useCallback(
-        (column: IDataTableColumn<TData>, row: TData) => {
-            if (column.cell) {
-                return column.cell(row);
-            }
+        return null;
+    }, []);
 
-            if (typeof column.accessor === 'function') {
-                return column.accessor(row);
-            }
+    const renderSortIndicator = (column: IColumnConfig<TData>, sort: IColumnSort | null) => {
+        if (!column.sortable) return null;
 
-            if (column.accessor) {
-                return row[column.accessor] as React.ReactNode;
-            }
+        const isSorted = sort?.id === column.id;
+        const direction = sort?.direction;
 
-            return null;
-        },
-        []
-    );
-
-    const visibleColumns = columns.filter((col) => !col.hidden);
-    const allSelected = selectable && localData.length > 0 && selectedIds.length === localData.length;
-    const someSelected = selectable && selectedIds.length > 0 && selectedIds.length < localData.length;
-
-    // ===== RENDER =====
-
-    if (localData.length === 0 && !isLoading) {
         return (
-            <div className="rounded-xl border bg-card">
-                {emptyState || (
-                    <div className="p-12 text-center">
-                        <p className="text-muted-foreground">No data available</p>
-                    </div>
+            <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => toggleSort(column.id)}
+                className="ml-1 h-6 w-6 p-0 opacity-50 hover:opacity-100"
+            >
+                {isSorted ? (
+                    direction === 'asc' ? (
+                        <ArrowUp className="h-3.5 w-3.5" />
+                    ) : (
+                        <ArrowDown className="h-3.5 w-3.5" />
+                    )
+                ) : (
+                    <ArrowUpDown className="h-3.5 w-3.5" />
                 )}
+            </Button>
+        );
+    };
+
+    // =============================================================
+    // Loading State
+    // =============================================================
+
+    if (isLoading && displayedData.length === 0) {
+        return (
+            <div className={cn('flex flex-col gap-4', className)}>
+                {config.searchable && (
+                    <TableSearch
+                        value={state.searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={config.searchPlaceholder}
+                        filters={config.filters}
+                        filterValues={state.filters}
+                        onFilterChange={setFilter}
+                        activeFiltersCount={activeFiltersCount}
+                        onClearFilters={clearFilters}
+                    />
+                )}
+                <div className="rounded-xl border border-border bg-card">
+                    <div className="flex items-center justify-center p-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                </div>
             </div>
         );
     }
 
+    // =============================================================
+    // Empty State
+    // =============================================================
+
+    if (displayedData.length === 0) {
+        return (
+            <div className={cn('flex flex-col gap-4', className)}>
+                {config.searchable && (
+                    <TableSearch
+                        value={state.searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={config.searchPlaceholder}
+                        filters={config.filters}
+                        filterValues={state.filters}
+                        onFilterChange={setFilter}
+                        activeFiltersCount={activeFiltersCount}
+                        onClearFilters={clearFilters}
+                    />
+                )}
+                <div className="rounded-xl border border-border bg-card">
+                    <DataTableEmptyState
+                        icon={config.emptyState?.icon}
+                        title={config.emptyState?.title ?? 'No items found'}
+                        description={config.emptyState?.description}
+                        action={config.emptyState?.action}
+                    />
+                </div>
+            </div>
+        );
+    }
+
+    // =============================================================
+    // Main Render
+    // =============================================================
+
     return (
-        <div className={cn('rounded-xl border bg-card', className)}>
-            <div className="overflow-x-auto [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/30 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-muted-foreground/50">
-                <Table>
-                    <TableHeader>
-                        <TableRow className="hover:bg-transparent">
-                            {/* Drag Handle Column */}
-                            {draggable && (
-                                <TableHead className="w-12 text-center">
-                                    <span className="sr-only">Drag</span>
-                                </TableHead>
-                            )}
+        <TableContext.Provider value={tableContext as ITableContext<unknown>}>
+            <div className={cn('flex flex-col gap-4', className)}>
+                {/* Search & Filters */}
+                {config.searchable && (
+                    <TableSearch
+                        value={state.searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={config.searchPlaceholder}
+                        filters={config.filters}
+                        filterValues={state.filters}
+                        onFilterChange={setFilter}
+                        activeFiltersCount={activeFiltersCount}
+                        onClearFilters={clearFilters}
+                    />
+                )}
 
-                            {/* Selection Column */}
-                            {selectable && (
-                                <TableHead className="w-12 text-center">
-                                    <Checkbox
-                                        checked={allSelected || (someSelected ? 'indeterminate' : false)}
-                                        onCheckedChange={toggleSelectAll}
-                                        aria-label="Select all"
-                                    />
-                                </TableHead>
-                            )}
-
-                            {/* Data Columns */}
-                            {visibleColumns.map((column) => (
-                                <TableHead
-                                    key={column.id}
-                                    className={cn(
-                                        column.align === 'center' && 'text-center',
-                                        column.align === 'right' && 'text-right'
-                                    )}
-                                    style={{ width: column.width }}
-                                >
-                                    {column.header}
-                                </TableHead>
-                            ))}
-                        </TableRow>
-                    </TableHeader>
-
-                    <TableBody>
-                        {localData.map((row, index) => {
-                            const rowId = keyExtractor(row);
-                            const selected = isSelected(rowId);
-                            const isDragging = dragState.draggedIndex === index;
-                            const isDraggedOver = dragState.draggedOverIndex === index;
-
-                            return (
-                                <TableRow
-                                    key={rowId}
-                                    draggable={draggable}
-                                    onDragStart={() => handleDragStart(index)}
-                                    onDragOver={(e) => handleDragOver(e, index)}
-                                    onDrop={handleDrop}
-                                    onDragEnd={handleDragEnd}
-                                    onClick={() => onRowClick?.(row)}
-                                    data-state={selected ? 'selected' : undefined}
-                                    className={cn(
-                                        'transition-colors hover:bg-muted/50',
-                                        isDragging && 'opacity-50',
-                                        isDraggedOver && 'border-t-2 border-t-primary',
-                                        onRowClick && 'cursor-pointer',
-                                        rowClassName?.(row)
-                                    )}
-                                >
-                                    {/* Drag Handle Cell */}
-                                    {draggable && (
-                                        <TableCell className="text-center">
-                                            <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab active:cursor-grabbing" />
-                                        </TableCell>
+                {/* Table Container */}
+                <div className="rounded-xl border border-border bg-card">
+                    <div className="overflow-x-auto no-scrollbar">
+                        <Table>
+                            {/* Header */}
+                            <TableHeader>
+                                <TableRow className="hover:bg-transparent">
+                                    {/* Drag Handle Column */}
+                                    {hasDrag && (
+                                        <TableHead className="w-10 text-center">
+                                            <span className="sr-only">Drag</span>
+                                        </TableHead>
                                     )}
 
-                                    {/* Selection Cell */}
-                                    {selectable && (
-                                        <TableCell
-                                            className="text-center"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleSelection(rowId);
-                                            }}
-                                        >
+                                    {/* Selection Column */}
+                                    {hasSelection && (
+                                        <TableHead className="w-10 text-center">
                                             <Checkbox
-                                                checked={selected}
-                                                aria-label={`Select row ${index + 1}`}
+                                                checked={isAllSelected || (isSomeSelected ? 'indeterminate' : false)}
+                                                onCheckedChange={toggleSelectAll}
+                                                aria-label="Select all"
                                             />
-                                        </TableCell>
+                                        </TableHead>
                                     )}
 
-                                    {/* Data Cells */}
-                                    {visibleColumns.map((column) => (
-                                        <TableCell
+                                    {/* Data Columns */}
+                                    {visibleColumns.map(column => (
+                                        <TableHead
                                             key={column.id}
                                             className={cn(
+                                                'whitespace-nowrap',
                                                 column.align === 'center' && 'text-center',
-                                                column.align === 'right' && 'text-right'
+                                                column.align === 'right' && 'text-right',
+                                                column.sticky === 'left' && 'sticky left-0 z-20 bg-muted/50',
+                                                column.sticky === 'right' && 'sticky right-0 z-20 bg-muted/50',
+                                                column.headerClassName
+                                            )}
+                                            style={{
+                                                width: column.width,
+                                                minWidth: column.minWidth,
+                                                maxWidth: column.maxWidth,
+                                            }}
+                                        >
+                                            <div className={cn(
+                                                'flex items-center gap-1',
+                                                column.align === 'center' && 'justify-center',
+                                                column.align === 'right' && 'justify-end'
+                                            )}>
+                                                {column.header}
+                                                {renderSortIndicator(column, state.sort)}
+                                            </div>
+                                        </TableHead>
+                                    ))}
+
+                                    {/* Actions Column */}
+                                    {hasRowActions && (
+                                        <TableHead className="sticky right-0 z-20 w-12 bg-muted/50 text-center">
+                                            <span className="sr-only">Actions</span>
+                                        </TableHead>
+                                    )}
+                                </TableRow>
+                            </TableHeader>
+
+                            {/* Body */}
+                            <TableBody>
+                                {displayedData.map((row, rowIndex) => {
+                                    const rowId = config.keyExtractor(row);
+                                    const selected = isSelected(rowId);
+                                    const isDragging = dragState.draggedIndex === rowIndex;
+                                    const isDragOver = dragState.dragOverIndex === rowIndex;
+                                    const canMoveUp = rowIndex > 0;
+                                    const canMoveDown = rowIndex < displayedData.length - 1;
+
+                                    return (
+                                        <TableRow
+                                            key={rowId}
+                                            draggable={hasDrag}
+                                            onDragStart={() => handleDragStart(rowIndex)}
+                                            onDragOver={(e) => handleDragOver(e, rowIndex)}
+                                            onDrop={handleDrop}
+                                            onDragEnd={handleDragEnd}
+                                            onClick={() => config.onRowClick?.(row)}
+                                            data-state={selected ? 'selected' : undefined}
+                                            className={cn(
+                                                'transition-colors duration-150',
+                                                isDragging && 'opacity-50',
+                                                isDragOver && 'border-t-2 border-t-primary',
+                                                config.onRowClick && 'cursor-pointer',
+                                                config.striped && rowIndex % 2 === 1 && 'bg-muted/30',
+                                                config.rowClassName?.(row, rowIndex)
                                             )}
                                         >
-                                            {renderCellContent(column, row)}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            );
-                        })}
-                    </TableBody>
-                </Table>
-            </div>
+                                            {/* Drag Handle Cell */}
+                                            {hasDrag && (
+                                                <TableCell className="text-center">
+                                                    <div className="flex items-center justify-center">
+                                                        <GripVertical className="h-4 w-4 cursor-grab text-muted-foreground active:cursor-grabbing" />
+                                                    </div>
+                                                </TableCell>
+                                            )}
 
-            {/* Infinite Scroll Loading Trigger */}
-            {infiniteScroll && hasMore && (
-                <div ref={loadMoreRef} className="p-4 text-center">
-                    {isLoading ? (
-                        <div className="flex items-center justify-center gap-2">
-                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                            <span className="text-sm text-muted-foreground">Loading more...</span>
+                                            {/* Selection Cell */}
+                                            {hasSelection && (
+                                                <TableCell
+                                                    className="text-center"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleSelection(rowId);
+                                                    }}
+                                                >
+                                                    <Checkbox
+                                                        checked={selected}
+                                                        aria-label={`Select row ${rowIndex + 1}`}
+                                                    />
+                                                </TableCell>
+                                            )}
+
+                                            {/* Data Cells */}
+                                            {visibleColumns.map(column => (
+                                                <TableCell
+                                                    key={column.id}
+                                                    className={cn(
+                                                        column.align === 'center' && 'text-center',
+                                                        column.align === 'right' && 'text-right',
+                                                        column.sticky === 'left' && 'sticky left-0 z-10 bg-card',
+                                                        column.sticky === 'right' && 'sticky right-0 z-10 bg-card',
+                                                        column.className
+                                                    )}
+                                                >
+                                                    {renderCellContent(column, row, rowIndex)}
+                                                </TableCell>
+                                            ))}
+
+                                            {/* Actions Cell */}
+                                            {hasRowActions && (
+                                                <TableCell className="sticky right-0 z-10 bg-card text-center">
+                                                    <DataTableActions
+                                                        row={row}
+                                                        actions={config.rowActions!}
+                                                        canMoveUp={canMoveUp}
+                                                        canMoveDown={canMoveDown}
+                                                        onMoveUp={() => moveUp(rowId)}
+                                                        onMoveDown={() => moveDown(rowId)}
+                                                        isReordering={isReordering}
+                                                        reorderMode={config.reorder?.mode}
+                                                    />
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    );
+                                })}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Infinite Scroll Trigger */}
+                    {config.pagination?.mode === 'infinite' && hasMore && (
+                        <div ref={loadMoreRef} className="flex items-center justify-center p-4">
+                            {isLoading || isLoadingMore.current ? (
+                                <div className="flex items-center gap-2">
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                    <span className="text-sm text-muted-foreground">Loading more...</span>
+                                </div>
+                            ) : (
+                                <Button variant="ghost" size="sm" onClick={loadMore}>
+                                    Load More
+                                </Button>
+                            )}
                         </div>
-                    ) : null}
+                    )}
                 </div>
-            )}
-        </div>
+
+                {/* Pagination */}
+                {config.pagination?.mode === 'client' && (
+                    <DataTablePagination
+                        page={state.page}
+                        pageSize={state.pageSize}
+                        total={tableContext.filteredData.length}
+                        pageSizeOptions={config.pagination.pageSizeOptions}
+                        showPageSizeSelector={config.pagination.showPageSizeSelector}
+                        showPageInfo={config.pagination.showPageInfo}
+                        onPageChange={setPage}
+                        onPageSizeChange={setPageSize}
+                        mode={config.pagination.mode}
+                    />
+                )}
+
+                {/* Bulk Actions Bar */}
+                {hasBulkActions && (
+                    <BulkActionsBar
+                        selectedCount={selectedRows.length}
+                        totalCount={tableContext.filteredData.length}
+                        selectedRows={selectedRows}
+                        selectedIds={state.selectedIds}
+                        actions={config.bulkActions!}
+                        onClear={clearSelection}
+                    />
+                )}
+            </div>
+        </TableContext.Provider>
     );
 }
+
+export default DataTable;

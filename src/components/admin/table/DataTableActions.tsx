@@ -1,15 +1,55 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
-import { AlertTriangle, CheckCircle2, Clock, Copy, ExternalLink, Eye, EyeOff, MoreHorizontal, Pause, Pencil, Star, StarOff, Trash2, type LucideIcon } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState, useTransition } from 'react';
+// =============================================================
+// DataTableActions - Row Actions Dropdown with Reorder Support
+// =============================================================
 
-// Icon mapping for serializable icon names from server components
+import Link from 'next/link';
+import { useState, useTransition } from 'react';
+import {
+    ArrowDown,
+    ArrowUp,
+    Copy,
+    Eye,
+    EyeOff,
+    ExternalLink,
+    MoreHorizontal,
+    Pencil,
+    Star,
+    StarOff,
+    Trash2,
+    Archive,
+    Undo,
+    Loader2,
+    type LucideIcon,
+} from 'lucide-react';
+
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
+
+import type { IDataTableActionsProps, IRowAction } from './types';
+
+// =============================================================
+// Icon Registry
+// =============================================================
+
 const ICON_MAP: Record<string, LucideIcon> = {
     Pencil,
     Trash2,
@@ -19,146 +59,336 @@ const ICON_MAP: Record<string, LucideIcon> = {
     StarOff,
     Copy,
     ExternalLink,
+    Archive,
+    Undo,
+    ArrowUp,
+    ArrowDown,
     CheckCircle2,
-    Clock,
-    Pause,
 };
 
-export interface IDataTableAction {
-    label: string;
-    icon: string; // Icon name as string (e.g., 'Pencil', 'Trash2')
-    variant?: 'default' | 'destructive';
-    action: 'edit' | 'delete' | 'toggle-published' | 'toggle-featured' | 'duplicate' | 'view' | 'custom';
-    href?: string;
-    onClick?: () => Promise<void> | void;
-    confirmMessage?: string;
-    confirmTitle?: string;
+// =============================================================
+// Button Variant Styles for Confirmation Dialog
+// =============================================================
+
+const DIALOG_BUTTON_STYLES: Record<string, string> = {
+    success: 'bg-success text-white hover:bg-success/90',
+    warning: 'bg-warning text-white hover:bg-warning/90',
+};
+
+// =============================================================
+// Helper Functions
+// =============================================================
+
+function resolveIcon<TData>(
+    icon: LucideIcon | string | ((row: TData) => LucideIcon) | undefined,
+    row: TData
+): LucideIcon | undefined {
+    if (!icon) return undefined;
+    if (typeof icon === 'string') return ICON_MAP[icon];
+    if (typeof icon === 'function') {
+        const result = (icon as (row: TData) => LucideIcon)(row);
+        return result;
+    }
+    return icon as LucideIcon;
 }
 
-interface IDataTableActionsProps {
-    actions: IDataTableAction[];
-    itemName?: string; // For confirmation dialogs (e.g., "this article")
-    className?: string;
+function resolveLabel<TData>(
+    label: string | ((row: TData) => string),
+    row: TData
+): string {
+    return typeof label === 'function' ? label(row) : label;
 }
 
-/**
- * DataTableActions Component
- *
- * Generic dropdown menu for CRUD operations on table rows
- * Supports: Edit, Delete (with confirmation), Toggle Published, Toggle Featured, Duplicate, View, Custom actions
- *
- * @example
- * <DataTableActions
- *   itemName="article"
- *   actions={[
- *     { label: 'Edit', icon: Pencil, action: 'edit', href: `/admin/articles/${slug}/edit` },
- *     { label: 'Delete', icon: Trash2, action: 'delete', variant: 'destructive', onClick: handleDelete },
- *     { label: 'Publish', icon: Eye, action: 'toggle-published', onClick: handlePublish },
- *   ]}
- * />
- */
-export const DataTableActions = ({ actions, itemName = 'item', className }: IDataTableActionsProps): React.ReactElement => {
-    const router = useRouter();
+function resolveHref<TData>(
+    href: string | ((row: TData) => string) | undefined,
+    row: TData
+): string | undefined {
+    if (!href) return undefined;
+    return typeof href === 'function' ? href(row) : href;
+}
+
+// =============================================================
+// Confirmation Dialog Variants
+// =============================================================
+
+const CONFIRMATION_VARIANTS: Record<string, { icon: LucideIcon; iconClass: string; bgClass: string }> = {
+    destructive: { icon: AlertTriangle, iconClass: 'text-destructive', bgClass: 'bg-destructive/10' },
+    success: { icon: CheckCircle2, iconClass: 'text-success', bgClass: 'bg-success/10' },
+    warning: { icon: AlertTriangle, iconClass: 'text-warning', bgClass: 'bg-warning/10' },
+    default: { icon: AlertTriangle, iconClass: 'text-foreground', bgClass: 'bg-muted' },
+};
+
+// =============================================================
+// Dropdown Item Variant Styles
+// =============================================================
+
+const DROPDOWN_ITEM_STYLES: Record<string, string> = {
+    destructive: 'text-destructive focus:bg-destructive/10 focus:text-destructive',
+    success: 'text-success focus:bg-success/10 focus:text-success',
+    warning: 'text-warning focus:bg-warning/10 focus:text-warning',
+    default: '',
+};
+
+// =============================================================
+// DataTableActions Component
+// =============================================================
+
+export function DataTableActions<TData>({
+    row,
+    actions,
+    canMoveUp = false,
+    canMoveDown = false,
+    onMoveUp,
+    onMoveDown,
+    isReordering = false,
+    reorderMode,
+    className,
+}: IDataTableActionsProps<TData>): React.ReactElement {
     const [isPending, startTransition] = useTransition();
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [pendingAction, setPendingAction] = useState<IDataTableAction | null>(null);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [pendingAction, setPendingAction] = useState<IRowAction<TData> | null>(null);
+    const [isOpen, setIsOpen] = useState(false);
 
-    const handleAction = (action: IDataTableAction): void => {
-        // If action requires confirmation, show dialog
-        if (action.confirmMessage) {
+    // Filter visible actions
+    const visibleActions = actions.filter(action => {
+        if (action.isVisible && !action.isVisible(row)) return false;
+        return true;
+    });
+
+    // Check if we should show reorder buttons in the menu
+    const showReorderInMenu = reorderMode === 'buttons' || reorderMode === 'both';
+
+    // =============================================================
+    // Action Handlers
+    // =============================================================
+
+    const handleAction = (action: IRowAction<TData>) => {
+        if (action.confirm) {
             setPendingAction(action);
-            setShowDeleteDialog(true);
+            setShowConfirmDialog(true);
+            setIsOpen(false);
             return;
         }
-
-        // Execute action directly
         executeAction(action);
     };
 
-    const executeAction = (action: IDataTableAction): void => {
+    const executeAction = (action: IRowAction<TData>) => {
         if (action.onClick) {
             startTransition(async () => {
-                await action.onClick?.();
-                router.refresh();
+                await action.onClick?.(row);
+                setIsOpen(false);
             });
         }
     };
 
-    const confirmAction = (): void => {
+    const confirmAction = () => {
         if (pendingAction) {
             executeAction(pendingAction);
         }
-        setShowDeleteDialog(false);
+        setShowConfirmDialog(false);
         setPendingAction(null);
     };
 
+    const handleMoveUp = () => {
+        if (onMoveUp) {
+            startTransition(async () => {
+                await onMoveUp();
+                setIsOpen(false);
+            });
+        }
+    };
+
+    const handleMoveDown = () => {
+        if (onMoveDown) {
+            startTransition(async () => {
+                await onMoveDown();
+                setIsOpen(false);
+            });
+        }
+    };
+
+    // =============================================================
+    // Render Action Item
+    // =============================================================
+
+    const renderActionItem = (action: IRowAction<TData>, index: number) => {
+        const Icon = resolveIcon(action.icon, row);
+        const label = resolveLabel(action.label, row);
+        const href = resolveHref(action.href, row);
+        const isDisabled = action.isDisabled?.(row) || isPending;
+        const variant = action.variant ?? 'default';
+
+        const itemContent = (
+            <>
+                {Icon && <Icon className="mr-2 h-4 w-4" />}
+                {label}
+            </>
+        );
+
+        // Navigation action
+        if (href) {
+            return (
+                <DropdownMenuItem key={action.id || index} asChild disabled={isDisabled}>
+                    <Link 
+                        href={href} 
+                        className="flex items-center"
+                        onClick={() => setIsOpen(false)}
+                    >
+                        {itemContent}
+                    </Link>
+                </DropdownMenuItem>
+            );
+        }
+
+        // Button action
+        return (
+            <DropdownMenuItem
+                key={action.id || index}
+                onClick={() => handleAction(action)}
+                disabled={isDisabled}
+                className={DROPDOWN_ITEM_STYLES[variant]}
+            >
+                {itemContent}
+            </DropdownMenuItem>
+        );
+    };
+
+    // =============================================================
+    // Confirmation Dialog Content
+    // =============================================================
+
+    const getConfirmationContent = () => {
+        if (!pendingAction?.confirm) return null;
+
+        const variant = CONFIRMATION_VARIANTS[pendingAction.variant ?? 'default'];
+        const ConfirmIcon = variant.icon;
+
+        const title = typeof pendingAction.confirm.title === 'function'
+            ? pendingAction.confirm.title(row)
+            : pendingAction.confirm.title;
+
+        const message = typeof pendingAction.confirm.message === 'function'
+            ? pendingAction.confirm.message(row)
+            : pendingAction.confirm.message;
+
+        return (
+            <>
+                <DialogHeader>
+                    <div className="flex items-center gap-3">
+                        <div className={cn(
+                            'flex h-10 w-10 shrink-0 items-center justify-center rounded-full',
+                            variant.bgClass
+                        )}>
+                            <ConfirmIcon className={cn('h-5 w-5', variant.iconClass)} />
+                        </div>
+                        <div>
+                            <DialogTitle>{title}</DialogTitle>
+                            <DialogDescription>{message}</DialogDescription>
+                        </div>
+                    </div>
+                </DialogHeader>
+                <DialogFooter>
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowConfirmDialog(false)}
+                        disabled={isPending}
+                    >
+                        {pendingAction.confirm.cancelLabel ?? 'Cancel'}
+                    </Button>
+                    <Button
+                        variant={pendingAction.variant === 'destructive' ? 'destructive' : 'default'}
+                        onClick={confirmAction}
+                        disabled={isPending}
+                        className={cn(
+                            pendingAction.variant === 'success' && DIALOG_BUTTON_STYLES.success,
+                            pendingAction.variant === 'warning' && DIALOG_BUTTON_STYLES.warning
+                        )}
+                    >
+                        {isPending ? (
+                            <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Processing...
+                            </>
+                        ) : (
+                            pendingAction.confirm.confirmLabel ?? 'Confirm'
+                        )}
+                    </Button>
+                </DialogFooter>
+            </>
+        );
+    };
+
+    // =============================================================
+    // Render
+    // =============================================================
+
     return (
         <>
-            {/* Actions Dropdown */}
-            <DropdownMenu modal={false}>
+            <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
                 <DropdownMenuTrigger asChild>
-                    <Button variant='ghost' size='icon-sm' disabled={isPending} className={cn(className)}>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Open menu</span>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        disabled={isPending || isReordering}
+                        className={cn(
+                            'h-8 w-8 transition-colors',
+                            isOpen && 'bg-muted',
+                            className
+                        )}
+                    >
+                        {isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <MoreHorizontal className="h-4 w-4" />
+                        )}
+                        <span className="sr-only">Open menu</span>
                     </Button>
                 </DropdownMenuTrigger>
 
-                <DropdownMenuContent align='end' className='w-48' sideOffset={5}>
+                <DropdownMenuContent align="end" className="w-48" sideOffset={5}>
                     <DropdownMenuLabel>Actions</DropdownMenuLabel>
                     <DropdownMenuSeparator />
 
-                    {actions.map((action, index) => {
-                        const Icon = ICON_MAP[action.icon] || ExternalLink;
-                        const variantProps = action.variant !== undefined ? { variant: action.variant } : {};
-
-                        // Render as Link for navigation actions
-                        if (action.href) {
-                            return (
-                                <DropdownMenuItem key={index} asChild>
-                                    <Link href={action.href} className='flex items-center'>
-                                        <Icon className='mr-2 h-4 w-4' />
-                                        {action.label}
-                                    </Link>
-                                </DropdownMenuItem>
-                            );
-                        }
-
-                        // Render as button for actions
-                        return (
-                            <DropdownMenuItem key={index} onClick={() => handleAction(action)} disabled={isPending} {...variantProps}>
-                                <Icon className='mr-2 h-4 w-4' />
-                                {action.label}
+                    {/* Reorder Actions */}
+                    {showReorderInMenu && (onMoveUp || onMoveDown) && (
+                        <>
+                            <DropdownMenuItem
+                                onClick={handleMoveUp}
+                                disabled={!canMoveUp || isPending || isReordering}
+                            >
+                                <ArrowUp className="mr-2 h-4 w-4" />
+                                Move Up
                             </DropdownMenuItem>
-                        );
-                    })}
+                            <DropdownMenuItem
+                                onClick={handleMoveDown}
+                                disabled={!canMoveDown || isPending || isReordering}
+                            >
+                                <ArrowDown className="mr-2 h-4 w-4" />
+                                Move Down
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                        </>
+                    )}
+
+                    {/* Regular Actions */}
+                    {visibleActions.map((action, index) => (
+                        <div key={action.id || index}>
+                            {action.dividerBefore && index > 0 && <DropdownMenuSeparator />}
+                            {renderActionItem(action, index)}
+                            {action.dividerAfter && <DropdownMenuSeparator />}
+                        </div>
+                    ))}
                 </DropdownMenuContent>
             </DropdownMenu>
 
             {/* Confirmation Dialog */}
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <DialogContent>
-                    <DialogHeader>
-                        <div className='flex items-center gap-3'>
-                            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10'>
-                                <AlertTriangle className='h-5 w-5 text-destructive' />
-                            </div>
-                            <div>
-                                <DialogTitle>{pendingAction?.confirmTitle || 'Are you sure?'}</DialogTitle>
-                                <DialogDescription>{pendingAction?.confirmMessage || `This action cannot be undone. This will permanently delete ${itemName}.`}</DialogDescription>
-                            </div>
-                        </div>
-                    </DialogHeader>
-
-                    <DialogFooter>
-                        <Button variant='outline' onClick={() => setShowDeleteDialog(false)} disabled={isPending}>
-                            Cancel
-                        </Button>
-                        <Button variant='destructive' onClick={confirmAction} disabled={isPending}>
-                            {isPending ? 'Processing...' : 'Confirm'}
-                        </Button>
-                    </DialogFooter>
+                    {getConfirmationContent()}
                 </DialogContent>
             </Dialog>
         </>
     );
-};
+}
+
+export default DataTableActions;

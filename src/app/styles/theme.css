@@ -142,6 +142,9 @@
     --color-destructive-foreground: #fff;
     --color-border: var(--border-color);
     --color-ring: var(--accent);
+    --color-input: var(--border-color);
+    --color-popover: var(--card-bg);
+    --color-popover-foreground: var(--fg);
     --color-success: var(--success);
     --color-warning: var(--warning);
     --color-error: var(--error);

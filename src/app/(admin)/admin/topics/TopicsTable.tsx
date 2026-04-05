@@ -1,252 +1,304 @@
 'use client';
 
-import { Layers } from 'lucide-react';
+// =============================================================
+// TopicsTable - Professional Config-Driven Table Component
+// Server-Side with TanStack Query Caching
+// =============================================================
+
 import Link from 'next/link';
+import { useCallback, useMemo } from 'react';
+import { Layers } from 'lucide-react';
+
+import { DataTable, StatusBadge } from '@/components/admin';
+import type { IServerQueryParams } from '@/components/admin/table';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
+import type { IPaginatedResponse } from '@/interfaces/actionHelper';
+import type { ITopicRow } from '@/server/new/admin/topic';
+import {
+    bulkFeatureTopics,
+    bulkPublishTopics,
+    bulkUnfeatureTopics,
+    bulkUnpublishTopics,
+    bulkDeleteTopics,
+    deleteTopic,
+    reorderTopics,
+    toggleTopicFeatured,
+    toggleTopicPublished,
+    getTopics,
+} from '@/server/new/admin/topic';
+import { formatDate } from '@/lib/utils';
 
 import {
-    BulkActionsBar,
-    DataTable,
-    DataTableActions,
-    StatusBadge,
-    TableSearch,
-    createBulkDeleteActionNew,
-    createBulkFeatureAction,
-    createBulkPublishAction,
-    createBulkUnfeatureAction,
-    createBulkUnpublishAction,
-    createDeleteAction,
-    createEditAction,
-    createToggleFeaturedAction,
-    createTogglePublishedAction,
-    type IBulkActionNew,
-    type IDataTableColumn,
-    type ITableFilter,
-} from '@/components/admin';
-import { Button } from '@/components/ui/button';
-import { useAdminTable } from '@/hooks';
-import type { ITopic } from '@/interfaces/schema';
-import { formatDate } from '@/lib/utils';
-import { deleteTopic, reorderTopics, toggleTopicFeatured, toggleTopicPublished } from '@/server/actions/topics';
+    createTopicsTableConfig,
+    type ITopicActionHandlers,
+    type ITopicBulkActionHandlers,
+} from './config';
 
-// ===== FILTERS CONFIG =====
-
-const TABLE_FILTERS: ITableFilter[] = [
-    {
-        id: 'published',
-        label: 'Status',
-        type: 'select',
-        options: [
-            { label: 'All Statuses', value: 'all' },
-            { label: 'Published', value: 'true' },
-            { label: 'Draft', value: 'false' },
-        ],
-    },
-    {
-        id: 'featured',
-        label: 'Featured',
-        type: 'select',
-        options: [
-            { label: 'All', value: 'all' },
-            { label: 'Featured Only', value: 'true' },
-            { label: 'Not Featured', value: 'false' },
-        ],
-    },
-];
-
-// ===== COMPONENT =====
+// =============================================================
+// Types
+// =============================================================
 
 interface ITopicsTableProps {
-    topics: ITopic[];
+    /** Initial server-side data for hydration */
+    initialData?: ITopicRow[] | undefined;
 }
 
-export function TopicsTable({ topics }: ITopicsTableProps): React.ReactElement {
-    const table = useAdminTable({
-        tableKey: 'admin-topics',
-        data: topics,
-        keyExtractor: (topic) => topic.slug,
-        searchFn: (topic, query) => topic.title.toLowerCase().includes(query) || topic.slug.toLowerCase().includes(query) || topic.description?.toLowerCase().includes(query) || false,
-    });
+// =============================================================
+// TopicsTable Component
+// =============================================================
 
-    // ===== ROW ACTIONS =====
+export function TopicsTable({ initialData }: ITopicsTableProps): React.ReactElement {
+    const { showSuccess, showError } = useSnackbar();
 
-    const getRowActions = (topic: ITopic) => [
-        createEditAction(`/admin/topics/${topic.slug}/edit`),
-        createTogglePublishedAction(topic.published || false, () =>
-            table.optimisticUpdate(
-                topic.slug,
-                (t) => ({ ...t, published: !t.published }),
-                () => toggleTopicPublished(topic.slug),
-            ),
-        ),
-        createToggleFeaturedAction(topic.featured || false, () =>
-            table.optimisticUpdate(
-                topic.slug,
-                (t) => ({ ...t, featured: !t.featured }),
-                () => toggleTopicFeatured(topic.slug),
-            ),
-        ),
-        createDeleteAction(() => table.optimisticDelete(topic.slug, () => deleteTopic(topic.slug)), `"${topic.title}"`),
-    ];
+    // =============================================================
+    // Server Query Function (with TanStack Query caching)
+    // =============================================================
 
-    // ===== COLUMNS =====
+    const serverQueryFn = useCallback(async (params: IServerQueryParams): Promise<IPaginatedResponse<ITopicRow>> => {
+        // Convert generic params to topic-specific query
+        // Build query object conditionally to satisfy exactOptionalPropertyTypes
+        const query: {
+            query?: string;
+            pagination?: { limit: number; offset: number };
+            sort?: { sortBy: string; sortOrder: 'asc' | 'desc' };
+            published?: boolean;
+            featured?: boolean;
+        } = {};
 
-    const columns: IDataTableColumn<ITopic>[] = [
-        {
-            id: 'topic',
-            header: 'Topic',
-            accessor: (topic) => (
-                <div className='flex items-center gap-3'>
-                    <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary shrink-0'>
-                        <Layers className='h-5 w-5' />
-                    </div>
-                    <div className='min-w-0'>
-                        <Link href={`/admin/topics/${topic.slug}/edit`} className='font-medium hover:underline hover:text-foreground line-clamp-1 block'>
-                            {topic.title}
-                        </Link>
-                        <p className='text-sm text-muted-foreground'>/{topic.slug}</p>
-                    </div>
-                </div>
-            ),
-            width: '300px',
-        },
-        {
-            id: 'articles',
-            header: 'Articles',
-            cell: (topic) => <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium'>{topic.metadata?.articleCount ?? 0}</span>,
-            align: 'center',
-            width: '100px',
-        },
-        {
-            id: 'published',
-            header: 'Status',
-            cell: (topic) => <StatusBadge variant='published' value={topic.published || false} />,
-            align: 'center',
-            width: '120px',
-        },
-        {
-            id: 'featured',
-            header: 'Featured',
-            cell: (topic) => <StatusBadge variant='featured' value={topic.featured || false} />,
-            align: 'center',
-            width: '100px',
-        },
-        {
-            id: 'updated',
-            header: 'Last Updated',
-            cell: (topic) => <div className='text-sm text-muted-foreground'>{formatDate(topic.updatedAt)}</div>,
-            width: '150px',
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: (topic) => <DataTableActions actions={getRowActions(topic)} itemName={`"${topic.title}"`} />,
-            align: 'right',
-            width: '60px',
-        },
-    ];
+        // Only add optional fields if they are defined
+        if (params.query !== undefined) {
+            query.query = params.query;
+        }
+        if (params.pagination !== undefined) {
+            query.pagination = params.pagination;
+        }
+        if (params.sort !== undefined) {
+            query.sort = params.sort;
+        }
+        if (params.published !== undefined) {
+            query.published = params.published as boolean;
+        }
+        if (params.featured !== undefined) {
+            query.featured = params.featured as boolean;
+        }
 
-    // ===== BULK ACTIONS =====
+        const result = await getTopics(query);
 
-    const bulkActions: IBulkActionNew[] = [
-        createBulkPublishAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (t) => ({ ...t, published: true }),
-                async () => {
-                    await Promise.all(ids.filter((id) => !table.items.find((t) => t.slug === id)?.published).map((id) => toggleTopicPublished(id)));
-                },
-            ),
-        ),
-        createBulkUnpublishAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (t) => ({ ...t, published: false }),
-                async () => {
-                    await Promise.all(ids.filter((id) => table.items.find((t) => t.slug === id)?.published).map((id) => toggleTopicPublished(id)));
-                },
-            ),
-        ),
-        createBulkFeatureAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (t) => ({ ...t, featured: true }),
-                async () => {
-                    await Promise.all(ids.filter((id) => !table.items.find((t) => t.slug === id)?.featured).map((id) => toggleTopicFeatured(id)));
-                },
-            ),
-        ),
-        createBulkUnfeatureAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (t) => ({ ...t, featured: false }),
-                async () => {
-                    await Promise.all(ids.filter((id) => table.items.find((t) => t.slug === id)?.featured).map((id) => toggleTopicFeatured(id)));
-                },
-            ),
-        ),
-        createBulkDeleteActionNew(async (ids) => {
-            await Promise.all(ids.map((id) => table.optimisticDelete(id, () => deleteTopic(id))));
+        return result;
+    }, []);
+
+    // =============================================================
+    // Row Action Handlers
+    // =============================================================
+
+    const rowActionHandlers: ITopicActionHandlers = useMemo(
+        () => ({
+            onTogglePublished: async (topic: ITopicRow) => {
+                const result = await toggleTopicPublished(topic.id);
+                if (result.success) {
+                    showSuccess(result.message ?? (topic.published ? 'Topic unpublished' : 'Topic published'));
+                } else {
+                    showError(result.error ?? 'Failed to toggle publish state');
+                }
+            },
+
+            onToggleFeatured: async (topic: ITopicRow) => {
+                const result = await toggleTopicFeatured(topic.id);
+                if (result.success) {
+                    showSuccess(result.message ?? (topic.featured ? 'Topic unfeatured' : 'Topic featured'));
+                } else {
+                    showError(result.error ?? 'Failed to toggle featured state');
+                }
+            },
+
+            onDelete: async (topic: ITopicRow) => {
+                const result = await deleteTopic(topic.id, topic.contentCount > 0);
+                if (result.success) {
+                    showSuccess(result.message ?? 'Topic deleted successfully');
+                } else {
+                    showError(result.error ?? 'Failed to delete topic');
+                }
+            },
         }),
-    ];
+        [showSuccess, showError]
+    );
 
-    // ===== REORDER HANDLER =====
+    // =============================================================
+    // Bulk Action Handlers
+    // =============================================================
 
-    const handleReorder = async (newOrder: ITopic[]) => {
-        const slugs = newOrder.map((t) => t.slug);
-        table.startTransition(async () => {
-            await reorderTopics(slugs);
-            table.refresh();
+    const bulkActionHandlers: ITopicBulkActionHandlers = useMemo(
+        () => ({
+            onBulkPublish: async (_rows: ITopicRow[], ids: string[]) => {
+                const result = await bulkPublishTopics(ids);
+                if (result.success) {
+                    showSuccess(result.message ?? `${ids.length} topics published`);
+                } else {
+                    showError(result.error ?? 'Failed to publish topics');
+                }
+            },
+
+            onBulkUnpublish: async (_rows: ITopicRow[], ids: string[]) => {
+                const result = await bulkUnpublishTopics(ids);
+                if (result.success) {
+                    showSuccess(result.message ?? `${ids.length} topics unpublished`);
+                } else {
+                    showError(result.error ?? 'Failed to unpublish topics');
+                }
+            },
+
+            onBulkFeature: async (_rows: ITopicRow[], ids: string[]) => {
+                const result = await bulkFeatureTopics(ids);
+                if (result.success) {
+                    showSuccess(result.message ?? `${ids.length} topics featured`);
+                } else {
+                    showError(result.error ?? 'Failed to feature topics');
+                }
+            },
+
+            onBulkUnfeature: async (_rows: ITopicRow[], ids: string[]) => {
+                const result = await bulkUnfeatureTopics(ids);
+                if (result.success) {
+                    showSuccess(result.message ?? `${ids.length} topics unfeatured`);
+                } else {
+                    showError(result.error ?? 'Failed to unfeature topics');
+                }
+            },
+
+            onBulkDelete: async (_rows: ITopicRow[], ids: string[]) => {
+                const result = await bulkDeleteTopics(ids, true);
+                if (result.success) {
+                    showSuccess(result.message ?? `${ids.length} topics deleted`);
+                } else {
+                    showError(result.error ?? 'Failed to delete topics');
+                }
+            },
+        }),
+        [showSuccess, showError]
+    );
+
+    // =============================================================
+    // Reorder Handler
+    // =============================================================
+
+    const handleReorder = useCallback(
+        async (_items: ITopicRow[], ids: string[]) => {
+            const result = await reorderTopics(ids);
+            if (result.success) {
+                showSuccess(result.message ?? 'Topics reordered');
+            } else {
+                showError(result.error ?? 'Failed to reorder topics');
+            }
+            return result;
+        },
+        [showSuccess, showError]
+    );
+
+    // =============================================================
+    // Table Configuration
+    // =============================================================
+
+    const tableConfig = useMemo(
+        () =>
+            createTopicsTableConfig({
+                rowActions: rowActionHandlers,
+                bulkActions: bulkActionHandlers,
+                onReorder: handleReorder,
+            }),
+        [rowActionHandlers, bulkActionHandlers, handleReorder]
+    );
+
+    // =============================================================
+    // Custom Column Renderers
+    // Override default column rendering for complex cells
+    // =============================================================
+
+    const columnsWithRenderers = useMemo(() => {
+        return tableConfig.columns.map((column) => {
+            switch (column.id) {
+                case 'topic':
+                    return {
+                        ...column,
+                        cell: (topic: ITopicRow) => (
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                    <Layers className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0">
+                                    <Link
+                                        href={`/admin/topics/${topic.id}/edit`}
+                                        className="block truncate font-medium hover:text-foreground hover:underline"
+                                    >
+                                        {topic.title}
+                                    </Link>
+                                    <p className="text-sm text-muted-foreground">/{topic.slug}</p>
+                                </div>
+                            </div>
+                        ),
+                    };
+
+                case 'contentCount':
+                    return {
+                        ...column,
+                        cell: (topic: ITopicRow) => (
+                            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
+                                {topic.contentCount}
+                            </span>
+                        ),
+                    };
+
+                case 'published':
+                    return {
+                        ...column,
+                        cell: (topic: ITopicRow) => (
+                            <StatusBadge variant="published" value={topic.published} />
+                        ),
+                    };
+
+                case 'featured':
+                    return {
+                        ...column,
+                        cell: (topic: ITopicRow) => (
+                            <StatusBadge variant="featured" value={topic.featured} />
+                        ),
+                    };
+
+                case 'updatedAt':
+                    return {
+                        ...column,
+                        cell: (topic: ITopicRow) => (
+                            <span className="text-sm text-muted-foreground">
+                                {formatDate(topic.updatedAt)}
+                            </span>
+                        ),
+                    };
+
+                default:
+                    return column;
+            }
         });
-    };
+    }, [tableConfig.columns]);
 
-    // ===== RENDER =====
+    // Create final config with custom renderers
+    const finalConfig = useMemo(
+        () => ({
+            ...tableConfig,
+            columns: columnsWithRenderers,
+        }),
+        [tableConfig, columnsWithRenderers]
+    );
+
+    // =============================================================
+    // Render
+    // =============================================================
 
     return (
-        <div className='space-y-6'>
-            <TableSearch
-                placeholder='Search topics by title or slug...'
-                onSearch={table.setSearchQuery}
-                filters={TABLE_FILTERS}
-                onFilterChange={table.setFilters}
-                activeFiltersCount={table.activeFiltersCount}
-            />
-
-            <DataTable
-                data={table.displayedItems}
-                columns={columns}
-                keyExtractor={(topic) => topic.slug}
-                selectable
-                selectedIds={table.selectedIds}
-                onSelectionChange={table.setSelectedIds}
-                draggable
-                onReorder={handleReorder}
-                infiniteScroll
-                hasMore={table.hasMore}
-                onLoadMore={async () => table.loadMore()}
-                isLoading={table.isPending}
-                emptyState={
-                    <div className='p-12 text-center'>
-                        <Layers className='mx-auto h-12 w-12 text-muted-foreground/50' />
-                        <h3 className='mt-4 text-lg font-semibold'>No topics found</h3>
-                        <p className='mt-2 text-muted-foreground'>
-                            {table.searchQuery || table.activeFiltersCount > 0 ? 'Try adjusting your search or filters' : 'Create your first topic to get started'}
-                        </p>
-                        {!table.searchQuery && table.activeFiltersCount === 0 && (
-                            <Link href='/admin/topics/new'>
-                                <Button className='mt-6'>Create Topic</Button>
-                            </Link>
-                        )}
-                    </div>
-                }
-            />
-
-            <BulkActionsBar
-                selectedCount={table.selectedIds.length}
-                totalCount={table.displayedItems.length}
-                actions={bulkActions}
-                onClear={table.clearSelection}
-                onAction={async (action) => action.action(table.selectedIds)}
-            />
-        </div>
+        <DataTable<ITopicRow>
+            config={finalConfig}
+            serverAction={serverQueryFn}
+            initialData={initialData}
+        />
     );
 }
+
+export default TopicsTable;

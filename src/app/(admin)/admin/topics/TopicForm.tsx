@@ -111,29 +111,6 @@ const buildFields = (formData: ITopicFormData, isEditing: boolean): Array<IField
         ],
     },
 
-    // Display order — edit only
-    ...(isEditing
-        ? [
-              {
-                  fieldtype: 'group' as const,
-                  title: 'Display Settings',
-                  subText: 'Controls ordering in the topics list.',
-                  colsize: 'full' as const,
-                  fields: [
-                      {
-                          fieldtype: 'input' as const,
-                          name: 'order' as const,
-                          label: 'Display Order',
-                          type: 'number' as const,
-                          inputType: 'number' as const,
-                          hint: 'Lower numbers appear first.',
-                          colsize: 'full' as const,
-                      },
-                  ],
-              },
-          ]
-        : []),
-
     ...getSeoFieldConfig(formData, '/articles'),
 ];
 

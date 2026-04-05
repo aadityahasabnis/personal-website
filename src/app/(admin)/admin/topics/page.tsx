@@ -5,21 +5,28 @@ import { Layers, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/admin';
-import { getAllTopics } from '@/server/queries/topics';
+import { getTopics } from '@/server/new/admin/topic';
 import { TopicsTable } from './TopicsTable';
-import { serializeDocuments } from '@/lib/utils';
 
 /**
  * Topics Management Page
  *
  * List, create, edit, and delete topics for the article hierarchy
- * Features: Search, Filters, Bulk Actions, Drag & Drop Reordering, Infinite Scroll
+ * Features: Search, Filters, Bulk Actions, Drag & Drop Reordering, Pagination
  */
 
 const TopicsTableWrapper = async (): Promise<React.ReactElement> => {
-    const topics = await getAllTopics();
+    const response = await getTopics();
 
-    return <TopicsTable topics={serializeDocuments(topics)} />;
+    if (!response.success || !response.data) {
+        return (
+            <div className="flex h-64 items-center justify-center rounded-xl border border-dashed">
+                <p className="text-muted-foreground">Failed to load topics</p>
+            </div>
+        );
+    }
+
+    return <TopicsTable initialData={response.data} />;
 };
 
 const TopicsPage = (): React.ReactElement => {

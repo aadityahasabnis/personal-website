@@ -1,110 +1,204 @@
 'use client';
 
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useDebounce } from '@/hooks/table/useDebounce';
+// =============================================================
+// TableSearch - Search Input with Filter Dropdowns
+// Server-Side Ready with TanStack Query Integration
+// =============================================================
+
+import { useCallback, useRef, useState } from 'react';
+import { Search, X, Filter } from 'lucide-react';
+
 import { cn } from '@/lib/utils';
-import { Search, X } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { useDebouncedCallback } from '@/hooks/table/useDebounce';
 
-// ===== TYPES =====
+import type { IFilterConfig, ITableSearchProps } from './types';
 
-export interface ITableFilter {
-    id: string;
-    label: string;
-    type: 'select' | 'multiselect' | 'date' | 'daterange';
-    options?: Array<{ label: string; value: string }>;
-    value?: string;
-}
+// =============================================================
+// TableSearch Component
+// =============================================================
 
-export interface ITableSearchProps {
-    placeholder?: string;
-    onSearch?: (query: string) => void;
-    filters?: ITableFilter[];
-    onFilterChange?: (filters: Record<string, string>) => void;
-    activeFiltersCount?: number;
-    className?: string;
-}
+export function TableSearch({
+    value,
+    onChange,
+    placeholder = 'Search...',
+    filters = [],
+    filterValues = {},
+    onFilterChange,
+    activeFiltersCount = 0,
+    onClearFilters,
+    className,
+}: ITableSearchProps): React.ReactElement {
+    // Use uncontrolled input for performance - only sync on blur/enter/clear
+    const inputRef = useRef<HTMLInputElement>(null);
+    const [localValue, setLocalValue] = useState(value);
 
-// ===== TABLE SEARCH COMPONENT (MINIMAL INLINE DESIGN) =====
+    // Debounced search callback for server-side
+    const debouncedSearch = useDebouncedCallback((query: string) => {
+        onChange(query);
+    }, 350);
 
-export function TableSearch({ placeholder = 'Search...', onSearch, filters = [], onFilterChange, activeFiltersCount: _activeFiltersCount = 0, className }: ITableSearchProps): React.ReactElement {
-    const [searchQuery, setSearchQuery] = useState('');
-    const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-    const debouncedQuery = useDebounce(searchQuery, 300);
+    // =============================================================
+    // Handlers
+    // =============================================================
 
-    // Trigger search when debounced query changes
-    useEffect(() => {
-        if (onSearch) {
-            onSearch(debouncedQuery);
-        }
-    }, [debouncedQuery, onSearch]);
-
-    // Handle search input change
     const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearchQuery(e.target.value);
-    }, []);
+        const newValue = e.target.value;
+        setLocalValue(newValue);
+        debouncedSearch(newValue);
+    }, [debouncedSearch]);
 
-    // Clear search
     const handleClearSearch = useCallback(() => {
-        setSearchQuery('');
-        if (onSearch) {
-            onSearch('');
+        setLocalValue('');
+        onChange('');
+        if (inputRef.current) {
+            inputRef.current.value = '';
+            inputRef.current.focus();
         }
-    }, [onSearch]);
+    }, [onChange]);
 
-    // Handle filter value change
-    const handleFilterValueChange = useCallback(
-        (filterId: string, value: string) => {
-            const newFilters = {
-                ...filterValues,
-                [filterId]: value,
-            };
-            setFilterValues(newFilters);
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
+            handleClearSearch();
+        }
+    }, [handleClearSearch]);
 
-            if (onFilterChange) {
-                onFilterChange(newFilters);
-            }
-        },
-        [filterValues, onFilterChange],
-    );
+    const handleFilterChange = useCallback((filterId: string, newValue: string) => {
+        // Convert '_all' back to empty string for server
+        onFilterChange?.(filterId, newValue === '_all' ? undefined : newValue);
+    }, [onFilterChange]);
+
+    // =============================================================
+    // Render Filter
+    // =============================================================
+
+    const renderFilter = (filter: IFilterConfig) => {
+        const currentValue = filterValues[filter.id] as string | undefined;
+
+        if (filter.type === 'select' && filter.options) {
+            return (
+                <Select
+                    key={filter.id}
+                    value={currentValue || '_all'}
+                    onValueChange={(val) => handleFilterChange(filter.id, val)}
+                >
+                    <SelectTrigger className="h-9 min-w-32 border-border bg-card">
+                        <SelectValue placeholder={filter.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="_all">
+                            <span className="text-muted-foreground">All {filter.label}</span>
+                        </SelectItem>
+                        {filter.options.map((option) => (
+                            <SelectItem
+                                key={option.value || '_all'}
+                                value={option.value || '_all'}
+                            >
+                                <div className="flex items-center gap-2">
+                                    {option.icon && <option.icon className="h-3.5 w-3.5" />}
+                                    <span>{option.label}</span>
+                                    {option.count !== undefined && (
+                                        <span className="ml-auto text-xs text-muted-foreground">
+                                            {option.count}
+                                        </span>
+                                    )}
+                                </div>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            );
+        }
+
+        if (filter.type === 'boolean') {
+            return (
+                <Select
+                    key={filter.id}
+                    value={currentValue || '_all'}
+                    onValueChange={(val) => handleFilterChange(filter.id, val)}
+                >
+                    <SelectTrigger className="h-9 min-w-28 border-border bg-card">
+                        <SelectValue placeholder={filter.label} />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="_all">
+                            <span className="text-muted-foreground">All</span>
+                        </SelectItem>
+                        <SelectItem value="true">Yes</SelectItem>
+                        <SelectItem value="false">No</SelectItem>
+                    </SelectContent>
+                </Select>
+            );
+        }
+
+        return null;
+    };
+
+    // =============================================================
+    // Render
+    // =============================================================
 
     return (
-        <div className={cn('flex items-center gap-3', className)}>
-            {/* Search Input - Takes remaining space */}
-            <div className='relative flex-1'>
-                <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                <Input type='text' placeholder={placeholder} value={searchQuery} onChange={handleSearchChange} className='pl-10 pr-10' />
-                {searchQuery && (
-                    <button onClick={handleClearSearch} className='absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors' aria-label='Clear search'>
-                        <X className='h-4 w-4' />
-                    </button>
+        <div className={cn('flex flex-col gap-3 sm:flex-row sm:items-center', className)}>
+            {/* Search Input */}
+            <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                    ref={inputRef}
+                    type="text"
+                    placeholder={placeholder}
+                    value={localValue}
+                    onChange={handleSearchChange}
+                    onKeyDown={handleKeyDown}
+                    className="h-9 pl-10 pr-10 border-border bg-card transition-base focus:ring-1 focus:ring-primary/20"
+                />
+                {localValue && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={handleClearSearch}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label="Clear search"
+                    >
+                        <X className="h-3.5 w-3.5" />
+                    </Button>
                 )}
             </div>
 
-            {/* Inline Filter Dropdowns - Using Radix Select for proper theming */}
+            {/* Filters */}
             {filters.length > 0 && (
-                <>
-                    {filters.map((filter) => (
-                        <div key={filter.id} className='min-w-40'>
-                            {filter.type === 'select' && filter.options && (
-                                <Select value={filterValues[filter.id] || filter.options[0]?.value || ''} onValueChange={(value) => handleFilterValueChange(filter.id, value)}>
-                                    <SelectTrigger className='h-9 w-full'>
-                                        <SelectValue placeholder={filter.label} />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {filter.options.map((option) => (
-                                            <SelectItem key={option.value} value={option.value || '_all'}>
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            )}
-                        </div>
-                    ))}
-                </>
+                <div className="flex flex-wrap items-center gap-2">
+                    {filters.map(renderFilter)}
+
+                    {/* Clear Filters Button */}
+                    {activeFiltersCount > 0 && onClearFilters && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onClearFilters}
+                            className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
+                        >
+                            <Filter className="h-3.5 w-3.5" />
+                            Clear
+                            <Badge variant="secondary" className="ml-1 h-5 px-1.5">
+                                {activeFiltersCount}
+                            </Badge>
+                        </Button>
+                    )}
+                </div>
             )}
         </div>
     );
 }
+
+export default TableSearch;
