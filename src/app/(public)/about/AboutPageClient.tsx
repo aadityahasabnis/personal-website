@@ -202,8 +202,8 @@ export default function AboutPageClient() {
                         <Link
                             key={link.id}
                             href={link.url}
-                            target={link.id !== 'email' ? '_blank' : undefined}
-                            rel={link.id !== 'email' ? 'noopener noreferrer' : undefined}
+                            target={'_blank'}
+                            rel={'noopener noreferrer'}
                             className='group inline-flex items-center gap-2 text-[var(--fg)] hover:text-[var(--accent)] transition-colors'
                         >
                             <span className='capitalize'>{link.platform}</span>

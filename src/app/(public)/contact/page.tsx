@@ -124,7 +124,7 @@ const ContactPage = () => {
                         <div className='rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6'>
                             <h3 className='text-sm font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6'>Connect Online</h3>
                             <ul className='space-y-3'>
-                                {SOCIAL_LINKS.filter((l) => l.id !== 'email').map((link) => (
+                                {SOCIAL_LINKS.map((link) => (
                                     <li key={link.id}>
                                         <Link
                                             href={link.url}

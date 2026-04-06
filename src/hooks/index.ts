@@ -1,9 +1,6 @@
 export { useAction, type ActionFn, type IUseActionOptions, type IUseActionReturn } from './server/useAction';
 export { useActionQuery, type IUseActionQueryOptions } from './server/useActionQuery';
-export {
-    ADMIN_QUERY_KEYS, createOptimisticMutation, useAdminData,
-    useAdminMutation, type IAdminMutationOptions, type IAdminQueryOptions, type IUseAdminDataReturn
-} from './table/useAdminData';
+
 export { useAdminTable, type IUseAdminTableOptions, type IUseAdminTableReturn } from './table/useAdminTable';
 
 export { useFormOperations } from './form/useFormOperations';
