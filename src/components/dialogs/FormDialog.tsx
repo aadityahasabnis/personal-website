@@ -53,6 +53,8 @@ export function FormDialog<TFormBody extends IFormData>({
         try {
             await onSubmit(formData);
             handleClose(true);
+        } catch {
+            // Keep the dialog open when submit fails so users can correct input and retry.
         } finally {
             setIsSubmitting(false);
         }

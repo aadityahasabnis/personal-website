@@ -13,6 +13,16 @@ export const PUBLISHED_FILTER_OPTIONS = [
 ];
 
 /**
+ * Publish status filter options for articles (3-state status)
+ * Filter component automatically adds "All Status" option
+ */
+export const PUBLISH_STATUS_FILTER_OPTIONS = [
+    { label: 'Published', value: 'published' },
+    { label: 'Draft', value: 'draft' },
+    { label: 'Archived', value: 'archived' },
+];
+
+/**
  * Featured status filter options for topics/articles  
  * Filter component automatically adds "All" option
  */

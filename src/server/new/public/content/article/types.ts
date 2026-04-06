@@ -19,7 +19,6 @@ export interface IPublicArticleCard {
     title: string;
     description: string;
     readingTime: number;
-    order: number;
     featured: boolean;
     publishedAt: string | null;
 }

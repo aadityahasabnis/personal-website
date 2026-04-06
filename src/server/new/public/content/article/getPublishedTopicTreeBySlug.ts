@@ -39,8 +39,8 @@ export const getPublishedTopicTreeBySlug = async (
                     topicId: topic._id,
                 })
             )
-                .sort(toStableSort({ subtopicId: 1, order: 1, publishedAt: -1 }))
-                .select('_id slug title description readingTime order featured publishedAt subtopicId')
+                .sort(toStableSort({ subtopicId: 1, publishedAt: -1 }))
+                .select('_id slug title description readingTime featured publishedAt subtopicId')
                 .lean<IArticleLean[]>(),
         ]);
 

@@ -19,9 +19,9 @@ const EditSubtopicPage = async ({ params }: IEditSubtopicPageProps): Promise<Rea
     const subtopicData = subtopic.data;
 
     return (
-        <div className='max-w-2xl mx-auto space-y-6'>
+        <div className='mx-auto max-w-2xl space-y-6 pb-6'>
             <div>
-                <Link href='/admin/subtopics' className='inline-flex items-center gap-2 mb-4 text-label text-muted-foreground transition-fast hover:text-foreground'>
+                <Link href='/admin/subtopics' className='mb-4 inline-flex items-center gap-2 text-label text-muted-foreground transition-fast hover:text-foreground'>
                     <ArrowLeft className='size-4' />
                     Back to Subtopics
                 </Link>
@@ -30,8 +30,8 @@ const EditSubtopicPage = async ({ params }: IEditSubtopicPageProps): Promise<Rea
             </div>
 
             {subtopicData.contentCount > 0 && (
-                <div className='flex items-start gap-3 p-4 rounded-lg border border-warning bg-warning/10 text-label text-warning'>
-                    <AlertCircle className='size-5 shrink-0 mt-0.5' />
+                <div className='flex items-start gap-3 rounded-lg border border-warning bg-warning/10 p-4 text-label text-warning'>
+                    <AlertCircle className='mt-0.5 size-5 shrink-0' />
                     <div>
                         <p className='font-medium'>This subtopic has {subtopicData.contentCount} article(s)</p>
                         <p className='mt-1 text-muted-foreground'>Changing the slug will update all article URLs. Make sure to set up redirects if needed.</p>
@@ -39,9 +39,7 @@ const EditSubtopicPage = async ({ params }: IEditSubtopicPageProps): Promise<Rea
                 </div>
             )}
 
-            <div className='p-6 bg-card border border-border rounded-xl'>
-                <SubtopicForm subtopic={subtopicData} isEditing />
-            </div>
+            <SubtopicForm subtopic={subtopicData} isEditing />
         </div>
     );
 };

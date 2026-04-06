@@ -18,7 +18,7 @@ export default async function EditArticlePage({ params }: EditArticlePageProps) 
     const articleData = article.data;
 
     return (
-        <div className='space-y-6'>
+        <div className='mx-auto max-w-6xl space-y-6 pb-6'>
             <div className='flex items-center gap-4'>
                 <Link href='/admin/articles' className='inline-flex items-center justify-center rounded-lg border bg-background p-2 hover:bg-muted transition-colors' aria-label='Back to articles'>
                     <ArrowLeft className='h-4 w-4' />

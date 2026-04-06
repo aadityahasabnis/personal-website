@@ -110,7 +110,6 @@ export const updateArticle = async (
                             seo: input.seo ? buildSeo(input.seo) : undefined,
                             topicId: targetTopic._id,
                             subtopicId: targetSubtopicId,
-                            order: input.order,
                             publishStatus: nextPublishStatus,
                             publishedAt: nextPublishedAt,
                             updatedBy: admin.data,

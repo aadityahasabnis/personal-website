@@ -64,11 +64,6 @@ const MediaSchema = new Schema<IMediaDocument>(
                 message: `Cannot exceed ${MEDIA_UPLOAD_LIMITS.MAX_TAGS_COUNT} tags`,
             },
         },
-        uploadedBy: {
-            type: Schema.Types.ObjectId,
-            required: [true, 'Uploader ID is required'],
-            ref: 'Admin',
-        },
         description: {
             type: String,
             default: null,

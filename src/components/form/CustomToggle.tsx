@@ -48,8 +48,8 @@ const CustomToggle = <TFormBody extends IFormData = IFormData>({ name, value, on
                     {label}
                     {required ? <span className='text-destructive'> *</span> : null}
                 </span>
-                <span className={cn('relative ml-auto h-5 w-10 rounded-full transition-fast', isOn ? 'bg-primary' : 'bg-muted')}>
-                    <span className={cn('absolute top-0.5 left-0.5 size-4 rounded-full bg-background transition-fast', isOn ? 'translate-x-5' : undefined)} />
+                <span className={cn('relative ml-auto h-5 w-10 rounded-full transition-fast', isOn ? 'bg-primary' : 'bg-muted-foreground/20 border border-border')}>
+                    <span className={cn('absolute top-0.5 left-0.5 size-4 rounded-full transition-fast shadow-sm', isOn ? 'translate-x-5 bg-primary-foreground' : 'bg-muted-foreground/60')} />
                 </span>
             </button>
             <FieldHint text={hint} />

@@ -16,7 +16,6 @@ export interface IMedia {
     size: number; // File size in bytes
     folder: string; // Folder/category
     tags?: string[]; // Optional tags for organization
-    uploadedBy: Types.ObjectId; // Reference to Admin who uploaded
     description?: string | null; // Optional description
     altText?: string | null; // Alt text for images (accessibility)
     width?: number | null; // Image/video width (pixels)

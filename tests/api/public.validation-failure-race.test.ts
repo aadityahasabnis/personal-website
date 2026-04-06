@@ -229,7 +229,7 @@ describe('public api validation, failure paths, and race expansions', () => {
                 id: 'c1',
                 contentId: '65f1502cdc9bc503f8d7c001',
                 parentId: null,
-                author: { name: 'A', avatar: null, website: null, isOwner: false },
+                author: { name: 'A', avatar: null, isOwner: false },
                 content: 'parallel comment',
                 upvotes: 0,
                 replyCount: 0,

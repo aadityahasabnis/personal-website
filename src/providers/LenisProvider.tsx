@@ -1,6 +1,7 @@
 'use client';
 
 import Lenis from 'lenis';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, type ReactNode } from 'react';
 
 interface ILenisProviderProps {
@@ -16,8 +17,23 @@ interface ILenisProviderProps {
 export const LenisProvider = ({ children }: ILenisProviderProps) => {
     const lenisRef = useRef<Lenis | null>(null);
     const rafRef = useRef<number | null>(null);
+    const pathname = usePathname();
+    const isAdminRoute = pathname?.startsWith('/admin') ?? false;
 
     useEffect(() => {
+        // Admin routes own their scroll containers and should not be hijacked.
+        if (isAdminRoute) {
+            if (rafRef.current) {
+                cancelAnimationFrame(rafRef.current);
+                rafRef.current = null;
+            }
+            if (lenisRef.current) {
+                lenisRef.current.destroy();
+                lenisRef.current = null;
+            }
+            return;
+        }
+
         // Check for reduced motion preference
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -55,7 +71,7 @@ export const LenisProvider = ({ children }: ILenisProviderProps) => {
             lenis.destroy();
             lenisRef.current = null;
         };
-    }, []);
+    }, [isAdminRoute]);
 
     return <>{children}</>;
 };

@@ -68,7 +68,6 @@ export const createArticle = async (input: IArticleCreateInput): Promise<IApiRes
                         seo: buildSeo(input.seo),
                         topicId: topic._id,
                         subtopicId,
-                        order: input.order ?? 0,
                         createdBy: admin.data,
                         updatedBy: admin.data,
                         ...now,

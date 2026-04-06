@@ -5,7 +5,7 @@ import { connectDB } from '@/lib/db/connectDB';
 import Media from '@/server/models/Media';
 import { handleError, normalizePagination, paginated } from '../../utils/helper';
 import { getAdminId } from '../shared';
-import { buildMediaMatch, buildMediaSort, toAdminMediaRow } from './shared';
+import { buildMediaMatch, buildMediaSort, toAdminMediaRow, type IMediaRowDoc } from './shared';
 import type { IAdminMediaRow, IMediaTableQuery } from './types';
 
 // ========================================================
@@ -31,11 +31,11 @@ export const getMedia = async (
                 .sort(sort)
                 .skip(offset)
                 .limit(limit)
-                .lean(),
+                .lean<IMediaRowDoc[]>(),
             Media.countDocuments(match),
         ]);
 
-        const rows = docs.map((doc: any) => toAdminMediaRow(doc));
+        const rows = docs.map((doc) => toAdminMediaRow(doc));
         return paginated(rows, total, offset, limit);
     } catch (err) {
         return handleError(err, 'Failed to fetch media') as IPaginatedResponse<IAdminMediaRow>;

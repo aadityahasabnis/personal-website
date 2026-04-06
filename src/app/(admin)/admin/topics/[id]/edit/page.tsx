@@ -22,9 +22,9 @@ const EditTopicPage = async ({ params }: IEditTopicPageProps): Promise<React.Rea
     const topic = result.data;
 
     return (
-        <div className='max-w-2xl mx-auto space-y-6'>
+        <div className='mx-auto max-w-2xl space-y-6 pb-6'>
             <div>
-                <Link href='/admin/topics' className='inline-flex items-center gap-2 mb-4 text-label text-muted-foreground transition-fast hover:text-foreground'>
+                <Link href='/admin/topics' className='mb-4 inline-flex items-center gap-2 text-label text-muted-foreground transition-fast hover:text-foreground'>
                     <ArrowLeft className='size-4' />
                     Back to Topics
                 </Link>
@@ -33,8 +33,8 @@ const EditTopicPage = async ({ params }: IEditTopicPageProps): Promise<React.Rea
             </div>
 
             {topic.contentCount > 0 && (
-                <div className='flex items-start gap-3 p-4 rounded-lg border border-warning bg-warning/10 text-label text-warning'>
-                    <AlertCircle className='size-5 shrink-0 mt-0.5' />
+                <div className='flex items-start gap-3 rounded-lg border border-warning bg-warning/10 p-4 text-label text-warning'>
+                    <AlertCircle className='mt-0.5 size-5 shrink-0' />
                     <div>
                         <p className='font-medium'>This topic has {topic.contentCount} article(s)</p>
                         <p className='mt-1 text-muted-foreground'>Changing the slug will update all article URLs. Make sure to set up redirects if needed.</p>
@@ -42,9 +42,7 @@ const EditTopicPage = async ({ params }: IEditTopicPageProps): Promise<React.Rea
                 </div>
             )}
 
-            <div className='p-6 bg-card border border-border rounded-xl'>
-                <TopicForm topic={topic} isEditing />
-            </div>
+            <TopicForm topic={topic} isEditing />
         </div>
     );
 };

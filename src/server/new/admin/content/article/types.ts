@@ -18,7 +18,6 @@ export interface IArticleCreateInput {
     readingTime?: number;
     publishStatus?: PublishStatusType;
     featured?: boolean;
-    order?: number;
     seo?: Partial<ISeoMetadata> | null;
 }
 
@@ -45,7 +44,6 @@ export interface IArticleRow {
     publishStatus: PublishStatusType;
     featured: boolean;
     readingTime: number;
-    order: number;
     publishedAt: string | null;
     updatedAt: string;
 }

@@ -94,7 +94,6 @@ export const getArticles = async (params: IArticleTableQuery = {}): Promise<IPag
                                 publishStatus: { $ifNull: ['$publishStatus', PUBLISH_STATUS.DRAFT] },
                                 featured: { $ifNull: ['$featured', false] },
                                 readingTime: { $ifNull: ['$readingTime', 0] },
-                                order: { $ifNull: ['$order', 0] },
                                 publishedAt: {
                                     $cond: [
                                         { $ifNull: ['$publishedAt', false] },
@@ -175,7 +174,6 @@ export const getArticleForEdit = async (
                     publishStatus: { $ifNull: ['$publishStatus', PUBLISH_STATUS.DRAFT] },
                     featured: { $ifNull: ['$featured', false] },
                     readingTime: { $ifNull: ['$readingTime', 0] },
-                    order: { $ifNull: ['$order', 0] },
                     publishedAt: {
                         $cond: [
                             { $ifNull: ['$publishedAt', false] },

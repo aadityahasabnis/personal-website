@@ -57,23 +57,3 @@ export { default as AdminHeader } from './layout/AdminHeader';
 export { default as AdminSidebar } from './layout/AdminSidebar';
 export { NotificationsPanel } from './NotificationsPanel';
 
-// =============================================================
-// Image Components
-// =============================================================
-export { ImageGallery, type GalleryImage } from './gallery/ImageGallery';
-export { ImageUpload, type UploadedImage } from './gallery/ImageUpload';
-
-// =============================================================
-// Form Components
-// =============================================================
-export {
-    FormActions,
-    FormCheckbox,
-    FormError,
-    FormInput,
-    FormSection,
-    FormSelect,
-    FormTextarea,
-    TagInput
-} from './form';
-

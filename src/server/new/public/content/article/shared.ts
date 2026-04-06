@@ -35,7 +35,6 @@ export interface IArticleLean {
     title: string;
     description: string;
     readingTime?: number;
-    order?: number;
     featured?: boolean;
     publishedAt?: Date | null;
     subtopicId?: ObjectId | null;
@@ -86,7 +85,6 @@ export const toArticleCard = (article: IArticleLean): IPublicArticleCard => ({
     title: article.title,
     description: article.description,
     readingTime: article.readingTime ?? 0,
-    order: article.order ?? 0,
     featured: Boolean(article.featured),
     publishedAt: toIsoOrNull(article.publishedAt),
 });

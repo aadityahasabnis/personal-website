@@ -9,31 +9,17 @@ import { getPublishedBlogs, type IPublicBlogListItem } from '@/server/new/public
 
 const description = `Blog posts by ${SITE_CONFIG.author.name} on engineering, web development, and continuous learning.`;
 const BLOGS_PAGE_LIMIT = 60;
-const FEATURED_BLOGS_LIMIT = 1;
 
-const getBlogsPageData = async (): Promise<{ featuredBlog: IPublicBlogListItem | null; regularBlogs: IPublicBlogListItem[] }> => {
-    const [featuredResult, blogsResult] = await Promise.all([
-        getPublishedBlogs({
-            featuredOnly: true,
-            pagination: {
-                offset: 0,
-                limit: FEATURED_BLOGS_LIMIT,
-            },
-        }),
-        getPublishedBlogs({
-            pagination: {
-                offset: 0,
-                limit: BLOGS_PAGE_LIMIT,
-            },
-        }),
-    ]);
-
-    const featuredBlog = featuredResult.success ? (featuredResult.data[0] ?? null) : null;
-    const allBlogs: IPublicBlogListItem[] = blogsResult.success ? blogsResult.data : [];
+const getBlogsPageData = async (): Promise<{ blogs: IPublicBlogListItem[] }> => {
+    const blogsResult = await getPublishedBlogs({
+        pagination: {
+            offset: 0,
+            limit: BLOGS_PAGE_LIMIT,
+        },
+    });
 
     return {
-        featuredBlog,
-        regularBlogs: featuredBlog ? allBlogs.filter((blog) => blog.featured !== true) : allBlogs,
+        blogs: blogsResult.success ? blogsResult.data : [],
     };
 };
 
@@ -52,8 +38,8 @@ export const metadata: Metadata = createPageMetadata({
 export const revalidate = 3600;
 
 export default async function BlogsPage() {
-    const { featuredBlog, regularBlogs } = await getBlogsPageData();
-    const hasBlogs = Boolean(featuredBlog) || regularBlogs.length > 0;
+    const { blogs } = await getBlogsPageData();
+    const hasBlogs = blogs.length > 0;
 
     return (
         <main className='mx-auto px-6 py-20 md:py-24 lg:px-8 max-w-5xl'>
@@ -64,11 +50,9 @@ export default async function BlogsPage() {
             ) : (
                 <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
                     <section className='flex flex-col gap-8'>
-                        {featuredBlog && <BlogCard blog={featuredBlog} />}
-
-                        {regularBlogs.length > 0 && (
+                        {blogs && blogs.length > 0 && (
                             <ul className='grid gap-6'>
-                                {regularBlogs.map((blog) => (
+                                {blogs.map((blog) => (
                                     <li key={blog.id}>
                                         <BlogCard blog={blog} />
                                     </li>

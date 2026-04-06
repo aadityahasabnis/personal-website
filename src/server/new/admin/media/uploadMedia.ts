@@ -1,9 +1,9 @@
 'use server';
 
+import { formatBytes, getMaxFileSizeForType, getMediaTypeFromMimeType, isAllowedMimeType } from '@/constants/mediaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Media from '@/server/models/Media';
-import { getMediaTypeFromMimeType, isAllowedMimeType, getMaxFileSizeForType, formatBytes } from '@/constants/mediaConstants';
 import { created, error, handleError } from '../../utils/helper';
 import { getAdminId } from '../shared';
 import { requireMediaService, uploadToCdn } from './shared';
@@ -19,7 +19,6 @@ export const uploadMedia = async (
     try {
         const authResult = await getAdminId();
         if (!authResult.success) return authResult;
-        const adminId = authResult.data;
 
         const serviceCheck = requireMediaService();
         if (serviceCheck) return serviceCheck;
@@ -58,7 +57,6 @@ export const uploadMedia = async (
             mimeType: cdnResponse.mime_type,
             size: cdnResponse.size,
             folder,
-            uploadedBy: adminId,
             ...(description && { description }),
             ...(altText && { altText }),
             ...(tags.length > 0 && { tags }),

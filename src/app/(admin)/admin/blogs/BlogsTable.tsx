@@ -1,7 +1,7 @@
 'use client';
 
 // =============================================================
-// ArticlesTable - Professional Server-Side Table
+// BlogsTable - Professional Server-Side Table
 // Uses DataTable component with server-action-first architecture
 // Uses useAction hook for TanStack Query mutation benefits
 // =============================================================
@@ -16,40 +16,40 @@ import type { PublishStatusType } from '@/constants/schemaConstants';
 import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
 import { formatDate } from '@/lib/utils';
-import type { IArticleRow } from '@/server/new/admin/content/article';
+import type { IBlogRow } from '@/server/new/admin/content/blog';
 import {
-    bulkArchiveArticles,
-    bulkDeleteArticles,
-    bulkDraftArticles,
-    bulkPublishArticles,
-    deleteArticle,
-    getArticles,
-    setArticleStatus,
-    toggleArticleFeatured,
-} from '@/server/new/admin/content/article';
+    bulkArchiveBlogs,
+    bulkDeleteBlogs,
+    bulkDraftBlogs,
+    bulkPublishBlogs,
+    deleteBlog,
+    getBlogs,
+    setBlogStatus,
+    toggleBlogFeatured,
+} from '@/server/new/admin/content/blog';
 
 import {
-    createArticlesTableConfig,
-    type IArticleActionHandlers,
-    type IArticleBulkActionHandlers,
+    createBlogsTableConfig,
+    type IBlogActionHandlers,
+    type IBlogBulkActionHandlers,
 } from './config';
 
 // =============================================================
 // Types
 // =============================================================
 
-interface IArticlesTableProps {
+interface IBlogsTableProps {
     /** Initial server-side data for hydration */
-    initialData?: IArticleRow[] | undefined;
+    initialData?: IBlogRow[] | undefined;
     /** Initial total count for pagination */
     initialTotal?: number | undefined;
 }
 
 // =============================================================
-// ArticlesTable Component
+// BlogsTable Component
 // =============================================================
 
-export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps): React.ReactElement {
+export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): React.ReactElement {
     const { showSuccess, showError } = useSnackbar();
 
     // =============================================================
@@ -58,21 +58,21 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
     // =============================================================
 
     const setStatusAction = useAction({
-        action: async (article: IArticleRow, status: PublishStatusType) => 
-            setArticleStatus(article.id, status),
+        action: async (blog: IBlogRow, status: PublishStatusType) => 
+            setBlogStatus(blog.id, status),
         onSuccess: (_data, response, [, status]) => {
             const statusLabels = { draft: 'Draft', published: 'Published', archived: 'Archived' };
-            showSuccess(response.message ?? `Article moved to ${statusLabels[status]}`);
+            showSuccess(response.message ?? `Blog moved to ${statusLabels[status]}`);
         },
         onError: (message) => {
-            showError(message ?? 'Failed to change article status');
+            showError(message ?? 'Failed to change blog status');
         },
     });
 
     const toggleFeaturedAction = useAction({
-        action: async (article: IArticleRow) => toggleArticleFeatured(article.id),
-        onSuccess: (_data, response, [article]) => {
-            showSuccess(response.message ?? (article.featured ? 'Article unfeatured' : 'Article featured'));
+        action: async (blog: IBlogRow) => toggleBlogFeatured(blog.id),
+        onSuccess: (_data, response, [blog]) => {
+            showSuccess(response.message ?? (blog.featured ? 'Blog unfeatured' : 'Blog featured'));
         },
         onError: (message) => {
             showError(message ?? 'Failed to toggle featured state');
@@ -80,25 +80,25 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
     });
 
     const deleteAction = useAction({
-        action: async (article: IArticleRow) => deleteArticle(article.id),
+        action: async (blog: IBlogRow) => deleteBlog(blog.id),
         onSuccess: (_data, response) => {
-            showSuccess(response.message ?? 'Article deleted successfully');
+            showSuccess(response.message ?? 'Blog deleted successfully');
         },
         onError: (message) => {
-            showError(message ?? 'Failed to delete article');
+            showError(message ?? 'Failed to delete blog');
         },
     });
 
-    const rowActionHandlers: IArticleActionHandlers = useMemo(
+    const rowActionHandlers: IBlogActionHandlers = useMemo(
         () => ({
-            onSetStatus: async (article: IArticleRow, status: PublishStatusType) => {
-                await setStatusAction.mutateAsync(article, status);
+            onSetStatus: async (blog: IBlogRow, status: PublishStatusType) => {
+                await setStatusAction.mutateAsync(blog, status);
             },
-            onToggleFeatured: async (article: IArticleRow) => {
-                await toggleFeaturedAction.mutateAsync(article);
+            onToggleFeatured: async (blog: IBlogRow) => {
+                await toggleFeaturedAction.mutateAsync(blog);
             },
-            onDelete: async (article: IArticleRow) => {
-                await deleteAction.mutateAsync(article);
+            onDelete: async (blog: IBlogRow) => {
+                await deleteAction.mutateAsync(blog);
             },
         }),
         [setStatusAction.mutateAsync, toggleFeaturedAction.mutateAsync, deleteAction.mutateAsync],
@@ -110,57 +110,57 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
     // =============================================================
 
     const bulkPublishAction = useAction({
-        action: async (_rows: IArticleRow[], ids: string[]) => bulkPublishArticles(ids),
+        action: async (_rows: IBlogRow[], ids: string[]) => bulkPublishBlogs(ids),
         onSuccess: (_data, response, [, ids]) => {
-            showSuccess(response.message ?? `${ids.length} articles published`);
+            showSuccess(response.message ?? `${ids.length} blogs published`);
         },
         onError: (message) => {
-            showError(message ?? 'Failed to publish articles');
+            showError(message ?? 'Failed to publish blogs');
         },
     });
 
     const bulkDraftAction = useAction({
-        action: async (_rows: IArticleRow[], ids: string[]) => bulkDraftArticles(ids),
+        action: async (_rows: IBlogRow[], ids: string[]) => bulkDraftBlogs(ids),
         onSuccess: (_data, response, [, ids]) => {
-            showSuccess(response.message ?? `${ids.length} articles moved to draft`);
+            showSuccess(response.message ?? `${ids.length} blogs moved to draft`);
         },
         onError: (message) => {
-            showError(message ?? 'Failed to move articles to draft');
+            showError(message ?? 'Failed to move blogs to draft');
         },
     });
 
     const bulkArchiveAction = useAction({
-        action: async (_rows: IArticleRow[], ids: string[]) => bulkArchiveArticles(ids),
+        action: async (_rows: IBlogRow[], ids: string[]) => bulkArchiveBlogs(ids),
         onSuccess: (_data, response, [, ids]) => {
-            showSuccess(response.message ?? `${ids.length} articles archived`);
+            showSuccess(response.message ?? `${ids.length} blogs archived`);
         },
         onError: (message) => {
-            showError(message ?? 'Failed to archive articles');
+            showError(message ?? 'Failed to archive blogs');
         },
     });
 
     const bulkDeleteAction = useAction({
-        action: async (_rows: IArticleRow[], ids: string[]) => bulkDeleteArticles(ids),
+        action: async (_rows: IBlogRow[], ids: string[]) => bulkDeleteBlogs(ids),
         onSuccess: (_data, response, [, ids]) => {
-            showSuccess(response.message ?? `${ids.length} articles deleted`);
+            showSuccess(response.message ?? `${ids.length} blogs deleted`);
         },
         onError: (message) => {
-            showError(message ?? 'Failed to delete articles');
+            showError(message ?? 'Failed to delete blogs');
         },
     });
 
-    const bulkActionHandlers: IArticleBulkActionHandlers = useMemo(
+    const bulkActionHandlers: IBlogBulkActionHandlers = useMemo(
         () => ({
-            onBulkPublish: async (rows: IArticleRow[], ids: string[]) => {
+            onBulkPublish: async (rows: IBlogRow[], ids: string[]) => {
                 await bulkPublishAction.mutateAsync(rows, ids);
             },
-            onBulkDraft: async (rows: IArticleRow[], ids: string[]) => {
+            onBulkDraft: async (rows: IBlogRow[], ids: string[]) => {
                 await bulkDraftAction.mutateAsync(rows, ids);
             },
-            onBulkArchive: async (rows: IArticleRow[], ids: string[]) => {
+            onBulkArchive: async (rows: IBlogRow[], ids: string[]) => {
                 await bulkArchiveAction.mutateAsync(rows, ids);
             },
-            onBulkDelete: async (rows: IArticleRow[], ids: string[]) => {
+            onBulkDelete: async (rows: IBlogRow[], ids: string[]) => {
                 await bulkDeleteAction.mutateAsync(rows, ids);
             },
         }),
@@ -177,68 +177,33 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
     // =============================================================
 
     const config = useMemo(() => {
-        const baseConfig = createArticlesTableConfig({
+        const baseConfig = createBlogsTableConfig({
             rowActions: rowActionHandlers,
             bulkActions: bulkActionHandlers,
         });
 
         // Add custom cell renderers
         const columnsWithRenderers = baseConfig.columns.map((col) => {
-            // Article column - Icon + Title + Slug
-            if (col.id === 'article') {
+            // Blog column - Icon + Title + Slug
+            if (col.id === 'blog') {
                 return {
                     ...col,
-                    cell: (article: IArticleRow) => (
+                    cell: (blog: IBlogRow) => (
                         <div className="flex items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                                 <FileText className="h-5 w-5" />
                             </div>
                             <div className="min-w-0">
                                 <Link
-                                    href={`/admin/articles/${article.id}/edit`}
+                                    href={`/admin/blogs/${blog.id}/edit`}
                                     className="block truncate font-medium hover:text-foreground hover:underline"
                                 >
-                                    {article.title}
+                                    {blog.title}
                                 </Link>
-                                <p className="text-sm text-muted-foreground">/{article.slug}</p>
+                                <p className="text-sm text-muted-foreground">/{blog.slug}</p>
                             </div>
                         </div>
                     ),
-                };
-            }
-
-            // Topic column - Parent topic with link
-            if (col.id === 'topic') {
-                return {
-                    ...col,
-                    cell: (article: IArticleRow) => (
-                        <Link
-                            href={`/admin/topics/${article.topicId}/edit`}
-                            className="block truncate text-sm hover:text-foreground hover:underline"
-                        >
-                            {article.topicTitle}
-                        </Link>
-                    ),
-                };
-            }
-
-            // Subtopic column - Parent subtopic with link (nullable)
-            if (col.id === 'subtopic') {
-                return {
-                    ...col,
-                    cell: (article: IArticleRow) => {
-                        if (!article.subtopicId || !article.subtopicTitle) {
-                            return <span className="text-sm text-muted-foreground">—</span>;
-                        }
-                        return (
-                            <Link
-                                href={`/admin/subtopics/${article.subtopicId}/edit`}
-                                className="block truncate text-sm hover:text-foreground hover:underline"
-                            >
-                                {article.subtopicTitle}
-                            </Link>
-                        );
-                    },
                 };
             }
 
@@ -246,10 +211,10 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
             if (col.id === 'publishStatus') {
                 return {
                     ...col,
-                    cell: (article: IArticleRow) => {
-                        const { publishStatus } = article;
+                    cell: (blog: IBlogRow) => {
+                        const { publishStatus } = blog;
                         
-                        // Custom 3-state status badge for articles
+                        // Custom 3-state status badge for blogs
                         const statusConfig = {
                             published: {
                                 label: 'Published',
@@ -280,7 +245,7 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
             if (col.id === 'featured') {
                 return {
                     ...col,
-                    cell: (article: IArticleRow) => <StatusBadge variant="featured" value={article.featured} />,
+                    cell: (blog: IBlogRow) => <StatusBadge variant="featured" value={blog.featured} />,
                 };
             }
 
@@ -288,9 +253,9 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
             if (col.id === 'readingTime') {
                 return {
                     ...col,
-                    cell: (article: IArticleRow) => (
+                    cell: (blog: IBlogRow) => (
                         <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
-                            {article.readingTime} min
+                            {blog.readingTime} min
                         </span>
                     ),
                 };
@@ -300,8 +265,8 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
             if (col.id === 'updatedAt') {
                 return {
                     ...col,
-                    cell: (article: IArticleRow) => (
-                        <span className="text-sm text-muted-foreground">{formatDate(article.updatedAt)}</span>
+                    cell: (blog: IBlogRow) => (
+                        <span className="text-sm text-muted-foreground">{formatDate(blog.updatedAt)}</span>
                     ),
                 };
             }
@@ -319,7 +284,7 @@ export function ArticlesTable({ initialData, initialTotal }: IArticlesTableProps
     // Render
     // =============================================================
 
-    return <DataTable config={config} serverAction={getArticles} initialData={initialData} initialTotal={initialTotal} />;
+    return <DataTable config={config} serverAction={getBlogs} initialData={initialData} initialTotal={initialTotal} />;
 }
 
-export default ArticlesTable;
+export default BlogsTable;

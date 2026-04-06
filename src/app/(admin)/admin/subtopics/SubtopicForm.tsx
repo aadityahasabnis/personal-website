@@ -1,11 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
-import FormWrapper, { type IFieldConfig } from '@/components/form/FormWrapper';
+import { AdminEntityForm, type IFieldConfig } from '@/components/form';
 import type { IFormData } from '@/components/form/form';
-import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { useActionQuery } from '@/hooks/server/useActionQuery';
 import { slugify } from '@/lib/utils';
 import { createSubtopic } from '@/server/new/admin/subtopic/createSubtopic';
@@ -85,7 +85,6 @@ const buildFields = (formData: ISubtopicFormData, isEditing: boolean, topicOptio
             },
         ],
     },
-
 ];
 
 // =============================================================
@@ -104,9 +103,13 @@ interface ISubtopicFormProps {
 
 export const SubtopicForm = ({ subtopic, isEditing = false, defaultTopicId }: ISubtopicFormProps) => {
     const router = useRouter();
+    const { showSuccess, showError, showLoading, dismiss } = useSnackbar();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Fetch topic options via TanStack Query
+    // =============================================================
+    // Data Fetching
+    // =============================================================
+
     const { data: topics = [], isLoading: isLoadingTopics } = useActionQuery<ITopicOption[]>({
         queryKey: ['admin', 'topicOptions'],
         action: getTopicOptions,
@@ -114,6 +117,10 @@ export const SubtopicForm = ({ subtopic, isEditing = false, defaultTopicId }: IS
     });
 
     const topicSelectOptions = useMemo(() => topics.map((t) => ({ label: t.title, value: t.id })), [topics]);
+
+    // =============================================================
+    // Form State
+    // =============================================================
 
     const initialData: ISubtopicFormData = {
         topicId: subtopic?.topicId ?? defaultTopicId ?? '',
@@ -125,58 +132,72 @@ export const SubtopicForm = ({ subtopic, isEditing = false, defaultTopicId }: IS
 
     const { formData, handleChange, setFormData, isModified, resetForm, submitBtnRef } = useFormOperations<ISubtopicFormData>(initialData);
 
+    // =============================================================
+    // Field Config (dynamic based on formData)
+    // =============================================================
+
     const resolvedFields = useMemo(() => buildFields(formData, isEditing, topicSelectOptions, isLoadingTopics), [formData, isEditing, topicSelectOptions, isLoadingTopics]);
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    // =============================================================
+    // Handlers
+    // =============================================================
+
+    const handleSubmit = async (data: ISubtopicFormData) => {
         setIsSubmitting(true);
+        const loadingToast = showLoading(isEditing ? 'Updating subtopic...' : 'Creating subtopic...');
 
         try {
-            let res;
+            const payload: ISubtopicCreateInput = {
+                topicId: data.topicId,
+                title: data.title,
+                slug: data.slug || slugify(data.title),
+                description: data.description || null,
+                order: Number(data.order) || 0,
+            };
 
-            if (isEditing && subtopic) {
-                const payload: Partial<ISubtopicCreateInput> = {
-                    topicId: formData.topicId,
-                    title: formData.title,
-                    slug: formData.slug || slugify(formData.title),
-                    description: formData.description || null,
-                    order: Number(formData.order) || 0,
-                };
-                res = await updateSubtopic(subtopic._id, payload);
-            } else {
-                const payload: ISubtopicCreateInput = {
-                    topicId: formData.topicId,
-                    title: formData.title,
-                    slug: formData.slug || slugify(formData.title),
-                    description: formData.description || null,
-                    order: 0,
-                };
-                res = await createSubtopic(payload);
+            const res = isEditing && subtopic ? await updateSubtopic(subtopic._id, payload) : await createSubtopic(payload);
+
+            dismiss(loadingToast);
+
+            if (!res.success) {
+                showError(res.error ?? 'Failed to save subtopic', 'Please check your inputs and try again.');
+                return;
             }
 
-            if (res.success) {
+            showSuccess(res.message ?? (isEditing ? 'Subtopic updated successfully' : 'Subtopic created successfully'), 'Redirecting to subtopics list...');
+
+            setTimeout(() => {
                 router.push('/admin/subtopics');
                 router.refresh();
-            }
+            }, 1000);
+        } catch {
+            dismiss(loadingToast);
+            showError('An unexpected error occurred', 'Please try again or contact support.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
+    // =============================================================
+    // Render
+    // =============================================================
+
     return (
-        <FormWrapper
-            formConfig={resolvedFields}
-            handleSubmit={handleSubmit}
-            handleSecondaryClick={resetForm}
+        <AdminEntityForm<ISubtopicFormData>
+            entityName='Subtopic'
+            isEditing={isEditing}
+            fields={resolvedFields}
+            formData={formData}
             handleChange={handleChange}
             setFormData={setFormData}
-            formData={formData}
-            isModified={isEditing ? isModified : true}
+            isModified={isModified}
+            onSubmit={handleSubmit}
+            onReset={resetForm}
             isSubmitting={isSubmitting}
             submitBtnRef={submitBtnRef}
-            submitLabel={isEditing ? 'Update Subtopic' : 'Create Subtopic'}
-            cancelLabel='Discard'
-            navigateBackRequired={false}
+            labels={{
+                submitting: 'Saving…',
+            }}
         />
     );
 };

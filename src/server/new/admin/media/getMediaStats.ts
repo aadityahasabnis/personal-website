@@ -1,13 +1,28 @@
 'use server';
 
+import type { MediaFileType, MediaFolder } from '@/constants/mediaConstants';
+import { MEDIA_FILE_TYPES, MEDIA_FOLDER_OPTIONS, formatBytes } from '@/constants/mediaConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Media from '@/server/models/Media';
-import { MEDIA_FILE_TYPES, formatBytes } from '@/constants/mediaConstants';
-import type { MediaFolder } from '@/constants/mediaConstants';
 import { handleError, success } from '../../utils/helper';
 import { getAdminId } from '../shared';
 import type { IMediaStats } from './types';
+
+interface ITypeStatsRow {
+    _id: MediaFileType | null;
+    count: number;
+    totalSize: number;
+}
+
+interface IFolderStatsRow {
+    _id: string | null;
+    count: number;
+    totalSize: number;
+}
+
+const isMediaFolder = (value: string): value is MediaFolder =>
+    MEDIA_FOLDER_OPTIONS.includes(value as MediaFolder);
 
 // ========================================================
 // Query: Media Statistics
@@ -21,10 +36,10 @@ export const getMediaStats = async (): Promise<IApiResponse<IMediaStats>> => {
         await connectDB();
 
         const [typeStats, folderStats, recentCount] = await Promise.all([
-            Media.aggregate([
+            Media.aggregate<ITypeStatsRow>([
                 { $group: { _id: '$fileType', count: { $sum: 1 }, totalSize: { $sum: '$size' } } },
             ]),
-            Media.aggregate([
+            Media.aggregate<IFolderStatsRow>([
                 { $group: { _id: '$folder', count: { $sum: 1 }, totalSize: { $sum: '$size' } } },
             ]),
             Media.countDocuments({ createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }),
@@ -36,10 +51,12 @@ export const getMediaStats = async (): Promise<IApiResponse<IMediaStats>> => {
             file: { count: 0, size: 0 },
         };
 
-        typeStats.forEach((stat: any) => {
-            if (stat._id === MEDIA_FILE_TYPES.IMAGE) byType.image = stat;
-            else if (stat._id === MEDIA_FILE_TYPES.VIDEO) byType.video = stat;
-            else if (stat._id === MEDIA_FILE_TYPES.FILE) byType.file = stat;
+        typeStats.forEach((stat) => {
+            const normalized = { count: stat.count, size: stat.totalSize };
+
+            if (stat._id === MEDIA_FILE_TYPES.IMAGE) byType.image = normalized;
+            else if (stat._id === MEDIA_FILE_TYPES.VIDEO) byType.video = normalized;
+            else if (stat._id === MEDIA_FILE_TYPES.FILE) byType.file = normalized;
         });
 
         const byFolder: Record<MediaFolder, { count: number; size: number }> = {
@@ -51,14 +68,14 @@ export const getMediaStats = async (): Promise<IApiResponse<IMediaStats>> => {
             documents: { count: 0, size: 0 },
         };
 
-        folderStats.forEach((stat: any) => {
-            if (stat._id in byFolder) {
-                byFolder[stat._id as MediaFolder] = { count: stat.count, size: stat.totalSize };
+        folderStats.forEach((stat) => {
+            if (typeof stat._id === 'string' && isMediaFolder(stat._id)) {
+                byFolder[stat._id] = { count: stat.count, size: stat.totalSize };
             }
         });
 
-        const totalFiles = typeStats.reduce((sum: number, stat: any) => sum + stat.count, 0);
-        const totalSize = typeStats.reduce((sum: number, stat: any) => sum + stat.totalSize, 0);
+        const totalFiles = typeStats.reduce((sum, stat) => sum + stat.count, 0);
+        const totalSize = typeStats.reduce((sum, stat) => sum + stat.totalSize, 0);
 
         const stats: IMediaStats = {
             totalFiles,

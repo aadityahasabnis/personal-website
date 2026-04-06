@@ -354,12 +354,12 @@ const FormWrapper = <TFormBody extends IFormData>({
     const router = useRouter();
 
     return (
-        <form onSubmit={handleSubmit} className={cn('flex h-full flex-col gap-6 pb-5', className)}>
-            <div className='grid h-full gap-5 sm:grid-cols-2 md:grid-cols-6'>{formConfig.map((field, index) => renderField(formData, handleChange, field, index))}</div>
+        <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6 pb-5', className)}>
+            <div className='grid gap-5 sm:grid-cols-2 md:grid-cols-6'>{formConfig.map((field, index) => renderField(formData, handleChange, field, index))}</div>
 
             {hideActionable ? null : (
-                <div className='glass-card sticky bottom-6 z-40 mt-8 flex w-full items-center justify-between gap-4 rounded-xl p-4 shadow-glow-sm transition-all duration-300 hover:shadow-glow-md'>
-                    <div className='flex items-center gap-3'>
+                <div className='glass-card flex w-full flex-wrap items-center justify-between gap-3 rounded-xl p-4 shadow-glow-sm transition-all duration-300 hover:shadow-glow-md'>
+                    <div className='flex flex-wrap items-center gap-3'>
                         {navigateBackRequired ? (
                             <Button type='button' variant='ghost' size='icon' onClick={() => router.back()} className='group size-9' aria-label='Go back'>
                                 <ArrowLeft className='size-4 transition-fast group-hover:-translate-x-0.5' />
@@ -369,7 +369,7 @@ const FormWrapper = <TFormBody extends IFormData>({
                             {cancelLabel}
                         </Button>
                     </div>
-                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='h-9 min-w-32 shadow-sm'>
+                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='h-9 w-full min-w-32 shadow-sm sm:w-auto'>
                         {isSubmitting ? 'Saving…' : submitLabel}
                     </Button>
                 </div>

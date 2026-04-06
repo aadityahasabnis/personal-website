@@ -4,7 +4,5 @@ export * from './deleteArticle';
 export * from './getArticles';
 export * from './publishArticle';
 export * from './reconcileArticleCounters';
-export * from './reorderArticles';
 export * from './types';
 export * from './updateArticle';
-

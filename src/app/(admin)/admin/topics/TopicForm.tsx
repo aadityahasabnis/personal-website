@@ -2,18 +2,17 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { type FormEvent, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
-import FormWrapper, { type IFieldConfig } from '@/components/form/FormWrapper';
+import { AdminEntityForm, type IFieldConfig } from '@/components/form';
 import { getSeoFieldConfig } from '@/components/form/config/seoFields';
 import type { IFormData } from '@/components/form/form';
 import { VALIDATION_PATTERNS } from '@/constants/schemaConstants';
-import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { slugify } from '@/lib/utils';
 import { createTopic } from '@/server/new/admin/topic/createTopic';
 import type { ITopicCreateInput, ITopicEdit, ITopicSeoInput } from '@/server/new/admin/topic/types';
 import { updateTopic } from '@/server/new/admin/topic/updateTopic';
-import { useState } from 'react';
 
 // =============================================================
 // Form Data Type
@@ -129,7 +128,12 @@ interface ITopicFormProps {
 
 export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps) => {
     const router = useRouter();
+    const { showSuccess, showError, showLoading, dismiss } = useSnackbar();
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // =============================================================
+    // Form State
+    // =============================================================
 
     const initialData: ITopicFormData = {
         title: topic?.title ?? '',
@@ -148,75 +152,90 @@ export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps) => {
 
     const { formData, handleChange, setFormData, isModified, resetForm, submitBtnRef } = useFormOperations<ITopicFormData>(initialData);
 
+    // =============================================================
+    // Field Config (dynamic based on formData)
+    // =============================================================
+
     const resolvedFields = useMemo(() => buildFields(formData, isEditing), [formData, isEditing]);
+
+    // =============================================================
+    // Image Preview
+    // =============================================================
 
     const showImagePreview = Boolean(formData.coverImage && VALIDATION_PATTERNS.URL.test(formData.coverImage));
 
-    const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+    // =============================================================
+    // Handlers
+    // =============================================================
+
+    const handleSubmit = async (data: ITopicFormData) => {
         setIsSubmitting(true);
+        const loadingToast = showLoading(isEditing ? 'Updating topic...' : 'Creating topic...');
 
         try {
-            const tags = formData.tags;
-            const seo = parseSeo(formData);
-            let res;
+            const tags = data.tags;
+            const seo = parseSeo(data);
 
-            if (isEditing && topic) {
-                const payload: Partial<ITopicCreateInput> = {
-                    title: formData.title,
-                    slug: formData.slug || slugify(formData.title),
-                    description: formData.description,
-                    coverImage: formData.coverImage || null,
-                    order: Number(formData.order) || 0,
-                    tags,
-                    seo,
-                };
-                res = await updateTopic(topic._id, payload);
-            } else {
-                const payload: ITopicCreateInput = {
-                    title: formData.title,
-                    slug: formData.slug || slugify(formData.title),
-                    description: formData.description,
-                    coverImage: formData.coverImage || null,
-                    tags,
-                    seo,
-                };
-                res = await createTopic(payload);
+            const payload: ITopicCreateInput = {
+                title: data.title,
+                slug: data.slug || slugify(data.title),
+                description: data.description,
+                coverImage: data.coverImage || null,
+                tags,
+                seo,
+            };
+
+            const res = isEditing && topic ? await updateTopic(topic._id, { ...payload, order: Number(data.order) || 0 }) : await createTopic(payload);
+
+            dismiss(loadingToast);
+
+            if (!res.success) {
+                showError(res.error ?? 'Failed to save topic', 'Please check your inputs and try again.');
+                return;
             }
 
-            if (res.success) {
+            showSuccess(res.message ?? (isEditing ? 'Topic updated successfully' : 'Topic created successfully'), 'Redirecting to topics list...');
+
+            setTimeout(() => {
                 router.push('/admin/topics');
                 router.refresh();
-            }
+            }, 1000);
+        } catch {
+            dismiss(loadingToast);
+            showError('An unexpected error occurred', 'Please try again or contact support.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    return (
-        <div className='flex flex-col gap-5'>
-            {/* Cover Image Preview */}
-            {showImagePreview && (
-                <div className='relative w-full h-44 overflow-hidden rounded-lg border border-border bg-muted'>
-                    <Image src={formData.coverImage} alt='Cover image preview' fill className='object-cover' unoptimized />
-                </div>
-            )}
+    // =============================================================
+    // Render
+    // =============================================================
 
-            <FormWrapper
-                formConfig={resolvedFields}
-                handleSubmit={handleSubmit}
-                handleSecondaryClick={resetForm}
-                handleChange={handleChange}
-                setFormData={setFormData}
-                formData={formData}
-                isModified={isEditing ? isModified : true}
-                isSubmitting={isSubmitting}
-                submitBtnRef={submitBtnRef}
-                submitLabel={isEditing ? 'Update Topic' : 'Create Topic'}
-                cancelLabel='Discard'
-                navigateBackRequired={false}
-            />
-        </div>
+    return (
+        <AdminEntityForm<ITopicFormData>
+            entityName='Topic'
+            isEditing={isEditing}
+            fields={resolvedFields}
+            formData={formData}
+            handleChange={handleChange}
+            setFormData={setFormData}
+            isModified={isModified}
+            onSubmit={handleSubmit}
+            onReset={resetForm}
+            isSubmitting={isSubmitting}
+            submitBtnRef={submitBtnRef}
+            labels={{
+                submitting: 'Saving…',
+            }}
+            headerContent={
+                showImagePreview ? (
+                    <div className='relative h-44 w-full overflow-hidden rounded-lg border border-border bg-muted'>
+                        <Image src={formData.coverImage} alt='Cover image preview' fill className='object-cover' unoptimized />
+                    </div>
+                ) : null
+            }
+        />
     );
 };
 
