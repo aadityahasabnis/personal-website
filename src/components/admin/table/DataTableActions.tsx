@@ -45,6 +45,7 @@ import {
 import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 import type { IDataTableActionsProps, IRowAction } from './types';
+import { useTableContext } from './DataTable';
 
 // =============================================================
 // Icon Registry
@@ -148,6 +149,9 @@ export function DataTableActions<TData>({
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [pendingAction, setPendingAction] = useState<IRowAction<TData> | null>(null);
     const [isOpen, setIsOpen] = useState(false);
+    
+    // Get table context to invalidate after actions
+    const tableContext = useTableContext<TData>();
 
     // Filter visible actions
     const visibleActions = actions.filter(action => {
@@ -176,6 +180,8 @@ export function DataTableActions<TData>({
         if (action.onClick) {
             startTransition(async () => {
                 await action.onClick?.(row);
+                // Invalidate cache to refresh data after mutation
+                await tableContext.invalidate();
                 setIsOpen(false);
             });
         }

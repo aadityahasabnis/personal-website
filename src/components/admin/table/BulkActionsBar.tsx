@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/dialog';
 
 import type { IBulkAction, IBulkActionsBarProps } from './types';
+import { useTableContext } from './DataTable';
 
 // =============================================================
 // Button Variant Styles
@@ -49,6 +50,9 @@ export function BulkActionsBar<TData>({
     const [isPending, startTransition] = useTransition();
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
     const [pendingAction, setPendingAction] = useState<IBulkAction<TData> | null>(null);
+    
+    // Get table context to invalidate after bulk actions
+    const tableContext = useTableContext<TData>();
 
     if (selectedCount === 0) return null;
 
@@ -74,6 +78,8 @@ export function BulkActionsBar<TData>({
     const executeAction = (action: IBulkAction<TData>) => {
         startTransition(async () => {
             await action.onClick(selectedRows, selectedIds);
+            // Invalidate cache to refresh data after bulk mutation
+            await tableContext.invalidate();
             onClear();
         });
     };

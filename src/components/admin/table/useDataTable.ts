@@ -3,6 +3,7 @@
 // =============================================================
 // useDataTable - Professional Table Hook with TanStack Query
 // Follows project's server-action-first architecture
+// Supports: client, server, infinite, none pagination modes
 // =============================================================
 
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
@@ -50,8 +51,10 @@ export interface IUseDataTableOptions<TData> {
     data?: TData[] | undefined;
     /** Server action for fetching paginated data */
     serverAction?: ((params: IServerQueryParams) => Promise<IPaginatedResponse<TData>>) | undefined;
-    /** Initial data for SSR */
+    /** Initial data for SSR hydration */
     initialData?: TData[] | undefined;
+    /** Initial total count for SSR hydration (required when initialData is provided for accurate pagination) */
+    initialTotal?: number | undefined;
     /** Cache time in ms (default: 5 min) */
     staleTime?: number | undefined;
     /** GC time in ms (default: 10 min) */
@@ -69,7 +72,8 @@ export function useDataTable<TData>(
         config, 
         data: propData, 
         serverAction, 
-        initialData, 
+        initialData,
+        initialTotal, 
         staleTime = 5 * 60 * 1000,  // 5 minutes
         gcTime = 10 * 60 * 1000,     // 10 minutes
     } = options;
@@ -81,10 +85,10 @@ export function useDataTable<TData>(
     const [, startTransition] = useTransition();
 
     // Determine mode
-    const isServerMode = !!serverAction;
+    const isServerMode = !!serverAction && pagination?.mode === 'server';
 
     // =============================================================
-    // Jotai Atoms for Persistent State
+    // Jotai Atoms for Persistent State (Memory-Only)
     // =============================================================
 
     const searchAtom = useMemo(() => createTableSearchAtom(tableKey), [tableKey]);
@@ -106,7 +110,7 @@ export function useDataTable<TData>(
     const [page, setPage] = useState(1);
     const [isReordering, setIsReordering] = useState(false);
     const [optimisticData, setOptimisticData] = useState<TData[] | null>(null);
-    const [serverTotal, setServerTotal] = useState(initialData?.length ?? propData?.length ?? 0);
+    const [serverTotal, setServerTotal] = useState(initialTotal ?? initialData?.length ?? propData?.length ?? 0);
 
     // Debounce search for server queries (350ms)
     const debouncedSearchQuery = useDebounce(searchQuery, 350);
@@ -126,13 +130,13 @@ export function useDataTable<TData>(
     const serverQueryParams = useMemo((): IServerQueryParams => {
         const params: IServerQueryParams = {};
 
-        // Search
-        if (debouncedSearchQuery) {
-            params.query = debouncedSearchQuery;
+        // Search - use debounced value
+        if (debouncedSearchQuery?.trim()) {
+            params.query = debouncedSearchQuery.trim();
         }
 
-        // Pagination
-        if (pagination?.mode === 'server' || isServerMode) {
+        // Pagination - only for server mode
+        if (isServerMode) {
             params.pagination = {
                 offset: (page - 1) * pageSize,
                 limit: pageSize,
@@ -149,13 +153,14 @@ export function useDataTable<TData>(
 
         // Filters - convert to server format
         Object.entries(filters).forEach(([key, value]) => {
-            if (value === undefined || value === '' || value === 'all') return;
+            // Skip empty, undefined, or "all" values
+            if (value === undefined || value === '' || value === 'all' || value === '_all') return;
             
             // Find filter config to check if it needs conversion
             const filterConfig = filterConfigs?.find(f => f.id === key);
             const serverKey = filterConfig?.serverKey ?? key;
             
-            // Convert string booleans
+            // Convert string booleans to actual booleans
             if (value === 'true') {
                 params[serverKey] = true;
             } else if (value === 'false') {
@@ -166,31 +171,33 @@ export function useDataTable<TData>(
         });
 
         return params;
-    }, [debouncedSearchQuery, page, pageSize, sortState, filters, filterConfigs, pagination?.mode, isServerMode]);
+    }, [debouncedSearchQuery, page, pageSize, sortState, filters, filterConfigs, isServerMode]);
 
     // =============================================================
     // Query Key with Params (for caching)
+    // Key changes = refetch triggered
     // =============================================================
 
     const fullQueryKey = useMemo(() => {
-        if (!isServerMode) return queryKey;
+        if (!serverAction) return queryKey;
+        // Include ALL query params in the key so changes trigger refetch
         return [...queryKey, serverQueryParams];
-    }, [queryKey, serverQueryParams, isServerMode]);
+    }, [queryKey, serverQueryParams, serverAction]);
 
     // =============================================================
-    // Data Fetching with TanStack Query (server-action-first)
+    // Data Fetching with TanStack Query
     // =============================================================
 
     const { 
         data: queryResult, 
-        isLoading, 
+        isLoading,      // True only on first load (no cached data)
+        isFetching,     // True when fetching (even with cached data)
         isError,
-        isFetching,
     } = useQuery({
         queryKey: fullQueryKey,
         queryFn: async () => {
             if (!serverAction) {
-                // Client mode - wrap data in paginated response
+                // Client mode - wrap static data in paginated response format
                 return {
                     success: true as const,
                     status: 200 as const,
@@ -203,28 +210,39 @@ export function useDataTable<TData>(
                     },
                 };
             }
-            // Server mode - call server action
+            
+            // Server mode - call server action with current params
             const response = await serverAction(serverQueryParams);
             if (!response.success) {
                 throw new Error(response.error);
             }
             return response;
         },
+        // Use initialData for SSR hydration but mark it as immediately stale
+        // This allows instant render while still triggering a background refetch
         initialData: initialData ? {
             success: true as const,
             status: 200 as const,
             data: initialData,
             pagination: {
-                total: initialData.length,
+                total: initialTotal ?? initialData.length,
                 offset: 0,
                 limit: initialData.length,
-                hasMore: false,
+                hasMore: initialTotal ? initialTotal > initialData.length : false,
             },
         } : undefined,
-        enabled: isServerMode || !!propData,
+        // CRITICAL: Mark initialData as stale immediately so it refetches
+        // Setting to 0 means "this data is from the beginning of time" = always stale
+        // Only set when we have initialData to avoid TypeScript issues
+        ...(initialData ? { initialDataUpdatedAt: 0 } : {}),
+        // Refetch behavior
+        refetchOnMount: 'always',       // Always refetch when component mounts (not just when stale)
+        refetchOnWindowFocus: false,    // Don't refetch on window focus (annoying for admin)
+        refetchOnReconnect: true,       // Refetch when reconnecting
+        enabled: !!serverAction || !!propData,
         staleTime,
         gcTime,
-        placeholderData: keepPreviousData,
+        placeholderData: keepPreviousData, // Show old data while fetching new
     });
 
     // Extract data and pagination from query result
@@ -278,12 +296,14 @@ export function useDataTable<TData>(
 
     const setSearchQuery = useCallback((query: string) => {
         setSearchQueryState(query);
-        setPage(1);
+        setPage(1); // Reset to first page on search
     }, [setSearchQueryState]);
 
     const setFilter = useCallback((key: string, value: string | string[] | undefined) => {
-        setFiltersState({ ...filters, [key]: value as string });
-        setPage(1);
+        // Handle special "_all" value from UI
+        const normalizedValue = value === '_all' ? undefined : value;
+        setFiltersState({ ...filters, [key]: normalizedValue as string });
+        setPage(1); // Reset to first page on filter
     }, [filters, setFiltersState]);
 
     const setFilters = useCallback((newFilters: FilterValues) => {
@@ -298,7 +318,7 @@ export function useDataTable<TData>(
     }, [setFiltersState, setSearchQueryState]);
 
     const activeFiltersCount = useMemo(() => 
-        Object.values(filters).filter(v => v && v !== '' && v !== 'all').length,
+        Object.values(filters).filter(v => v && v !== '' && v !== 'all' && v !== '_all').length,
         [filters]
     );
 
@@ -328,7 +348,7 @@ export function useDataTable<TData>(
 
         // Filters (client-side)
         Object.entries(filters).forEach(([key, value]) => {
-            if (!value || value === '' || value === 'all') return;
+            if (!value || value === '' || value === 'all' || value === '_all') return;
             result = result.filter(item => {
                 const itemValue = (item as Record<string, unknown>)[key];
                 if (typeof itemValue === 'boolean') return String(itemValue) === value;
@@ -373,7 +393,7 @@ export function useDataTable<TData>(
     const totalItems = isServerMode ? serverTotal : filteredData.length;
 
     const displayedData = useMemo(() => {
-        // Server mode - data is already paginated
+        // Server mode - data is already paginated by server
         if (isServerMode) return data;
 
         // Client mode pagination
@@ -402,7 +422,7 @@ export function useDataTable<TData>(
         if (hasMore) setPage(p => p + 1);
     }, [hasMore]);
 
-    const setPageSize = useCallback((size: number) => {
+    const setPageSizeCallback = useCallback((size: number) => {
         if (!Number.isFinite(size) || size <= 0) return;
         setPageSizeState(Math.trunc(size));
         setPage(1);
@@ -474,8 +494,8 @@ export function useDataTable<TData>(
         try {
             const ids = newData.map(keyExtractor);
             await reorder.onReorder(newData, ids);
-            // Invalidate cache to refetch
-            queryClient.invalidateQueries({ queryKey });
+            // Invalidate cache to refetch with new order
+            await queryClient.invalidateQueries({ queryKey });
             startTransition(() => router.refresh());
         } catch {
             setOptimisticData(null);
@@ -499,7 +519,7 @@ export function useDataTable<TData>(
         try {
             const ids = newData.map(keyExtractor);
             await reorder.onReorder(newData, ids);
-            queryClient.invalidateQueries({ queryKey });
+            await queryClient.invalidateQueries({ queryKey });
             startTransition(() => router.refresh());
         } catch {
             setOptimisticData(null);
@@ -521,7 +541,7 @@ export function useDataTable<TData>(
         try {
             const ids = newData.map(keyExtractor);
             await reorder.onReorder(newData, ids);
-            queryClient.invalidateQueries({ queryKey });
+            await queryClient.invalidateQueries({ queryKey });
             startTransition(() => router.refresh());
         } catch {
             setOptimisticData(null);
@@ -531,17 +551,20 @@ export function useDataTable<TData>(
     }, [data, keyExtractor, reorder, isReordering, router, queryClient, queryKey]);
 
     // =============================================================
-    // Actions
+    // Actions - Refresh & Invalidate
     // =============================================================
 
-    const refresh = useCallback(() => {
-        queryClient.invalidateQueries({ queryKey });
+    const refresh = useCallback(async () => {
+        await queryClient.invalidateQueries({ queryKey });
         startTransition(() => router.refresh());
     }, [queryClient, queryKey, router]);
 
-    const invalidate = useCallback(() => {
-        queryClient.invalidateQueries({ queryKey });
-    }, [queryClient, queryKey]);
+    const invalidate = useCallback(async () => {
+        // Clear selection when data changes
+        setSelectedIdsState([]);
+        // Invalidate all queries with this base key
+        await queryClient.invalidateQueries({ queryKey });
+    }, [queryClient, queryKey, setSelectedIdsState]);
 
     // =============================================================
     // Build State Object
@@ -565,7 +588,11 @@ export function useDataTable<TData>(
         data,
         filteredData: isServerMode ? data : filteredData,
         displayedData,
-        isLoading: isLoading || isFetching,
+        totalItems,
+        // IMPORTANT: isLoading = true only on FIRST load (no data yet)
+        // isFetching = true when fetching new data (but we have old data)
+        isLoading,
+        isFetching,
         isError,
         state,
         setSearchQuery,
@@ -583,7 +610,7 @@ export function useDataTable<TData>(
         isSomeSelected,
         selectedRows,
         setPage,
-        setPageSize,
+        setPageSize: setPageSizeCallback,
         hasMore,
         loadMore,
         moveUp,

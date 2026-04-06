@@ -366,11 +366,13 @@ export function createSelectFilter(
     options: Array<{ label: string; value: string }>,
     defaultValue?: string
 ): IFilterConfig {
+    // Note: TableSearch component automatically adds "All {label}" option
+    // Do NOT add "All" here to avoid duplicates
     return {
         id,
         label,
         type: 'select',
-        options: [{ label: 'All', value: '' }, ...options],
+        options,
         defaultValue,
     };
 }
@@ -380,12 +382,13 @@ export function createBooleanFilter(
     label: string,
     options?: { trueLabel?: string; falseLabel?: string }
 ): IFilterConfig {
+    // Note: TableSearch component automatically adds "All" option
+    // Do NOT add "All" here to avoid duplicates
     return {
         id,
         label,
         type: 'select',
         options: [
-            { label: 'All', value: '' },
             { label: options?.trueLabel ?? 'Yes', value: 'true' },
             { label: options?.falseLabel ?? 'No', value: 'false' },
         ],
@@ -413,7 +416,7 @@ export function createPaginationConfig(
     return {
         mode: 'client',
         pageSize: 15,
-        pageSizeOptions: [10, 15, 25, 50],
+        pageSizeOptions: [5, 10, 15, 25, 50],
         showPageSizeSelector: true,
         showPageInfo: true,
         ...options,

@@ -234,7 +234,9 @@ export interface ITableContext<TData> {
     data: TData[];
     filteredData: TData[];
     displayedData: TData[];
-    isLoading: boolean;
+    totalItems: number;
+    isLoading: boolean;   // True only on first load (no cached data yet)
+    isFetching: boolean;  // True when fetching (even with cached data - for subtle loading indicator)
     isError: boolean;
     
     // State
@@ -305,6 +307,8 @@ export interface IDataTableProps<TData> {
     serverAction?: ((params: IServerQueryParams) => Promise<IPaginatedResponse<TData>>) | undefined;
     /** Initial data for SSR hydration */
     initialData?: TData[] | undefined;
+    /** Initial total count for SSR hydration (required when initialData is provided for accurate pagination) */
+    initialTotal?: number | undefined;
     className?: string | undefined;
 }
 

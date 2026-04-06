@@ -21,6 +21,7 @@ import {
     createTableConfig,
     type IBulkAction,
     type IColumnConfig,
+    type IDataTableSkeletonProps,
     type IFilterConfig,
     type IRowAction,
     type ITableConfig,
@@ -45,7 +46,7 @@ export const TOPICS_SEARCH_FIELDS: (keyof ITopicRow)[] = ['title', 'slug', 'desc
 // Filters Configuration
 // =============================================================
 
-import { PUBLISHED_FILTER_OPTIONS, FEATURED_FILTER_OPTIONS } from '@/constants/tableConstants';
+import { FEATURED_FILTER_OPTIONS, PUBLISHED_FILTER_OPTIONS } from '@/constants/tableConstants';
 
 export const TOPICS_FILTERS: IFilterConfig[] = [
     createSelectFilter('published', 'Status', PUBLISHED_FILTER_OPTIONS),
@@ -270,7 +271,7 @@ export const createTopicsTableConfig = (
         pagination: createPaginationConfig({
             mode: 'server',
             pageSize: 15,
-            pageSizeOptions: [10, 15, 25, 50],
+            pageSizeOptions: [5, 10, 15, 25, 50],
         }),
 
         // Appearance
@@ -290,3 +291,20 @@ export const createTopicsTableConfig = (
         stickyHeader: true,
         striped: false,
     });
+
+// =============================================================
+// Skeleton Configuration for SSR Suspense Fallback
+// =============================================================
+
+/**
+ * Skeleton props for TopicsTable loading state
+ * Use with DataTableSkeleton in Suspense fallback
+ */
+export const TOPICS_TABLE_SKELETON_PROPS: IDataTableSkeletonProps<ITopicRow> = {
+    columns: createTopicsColumns(),
+    rowCount: 15, // Match pagination.pageSize
+    showSearch: true,
+    showSelection: true,
+    showDragHandle: true, // reorder.mode === 'both' includes drag
+    showActions: true,
+};

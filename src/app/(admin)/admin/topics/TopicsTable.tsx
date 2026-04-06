@@ -1,32 +1,34 @@
 'use client';
 
 // =============================================================
-// TopicsTable - Professional Config-Driven Table Component
-// Server-Side with TanStack Query Caching
+// TopicsTable - Professional Server-Side Table
+// Uses DataTable component with server-action-first architecture
+// Uses useAction hook for TanStack Query mutation benefits
 // =============================================================
 
-import Link from 'next/link';
-import { useCallback, useMemo } from 'react';
 import { Layers } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
 
-import { DataTable, StatusBadge } from '@/components/admin';
-import type { IServerQueryParams } from '@/components/admin/table';
+import { StatusBadge } from '@/components/admin';
+import { DataTable } from '@/components/admin/table';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import { useSnackbar } from '@/hooks/form/useSnackbar';
-import type { IPaginatedResponse } from '@/interfaces/actionHelper';
+import { useAction } from '@/hooks/server/useAction';
+import { formatDate } from '@/lib/utils';
 import type { ITopicRow } from '@/server/new/admin/topic';
 import {
+    bulkDeleteTopics,
     bulkFeatureTopics,
     bulkPublishTopics,
     bulkUnfeatureTopics,
     bulkUnpublishTopics,
-    bulkDeleteTopics,
     deleteTopic,
+    getTopics,
     reorderTopics,
     toggleTopicFeatured,
     toggleTopicPublished,
-    getTopics,
 } from '@/server/new/admin/topic';
-import { formatDate } from '@/lib/utils';
 
 import {
     createTopicsTableConfig,
@@ -41,264 +43,256 @@ import {
 interface ITopicsTableProps {
     /** Initial server-side data for hydration */
     initialData?: ITopicRow[] | undefined;
+    /** Initial total count for pagination */
+    initialTotal?: number | undefined;
 }
 
 // =============================================================
 // TopicsTable Component
 // =============================================================
 
-export function TopicsTable({ initialData }: ITopicsTableProps): React.ReactElement {
+export function TopicsTable({ initialData, initialTotal }: ITopicsTableProps): React.ReactElement {
     const { showSuccess, showError } = useSnackbar();
 
     // =============================================================
-    // Server Query Function (with TanStack Query caching)
+    // Row Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - DataTableActions handles invalidation
     // =============================================================
 
-    const serverQueryFn = useCallback(async (params: IServerQueryParams): Promise<IPaginatedResponse<ITopicRow>> => {
-        // Convert generic params to topic-specific query
-        // Build query object conditionally to satisfy exactOptionalPropertyTypes
-        const query: {
-            query?: string;
-            pagination?: { limit: number; offset: number };
-            sort?: { sortBy: string; sortOrder: 'asc' | 'desc' };
-            published?: boolean;
-            featured?: boolean;
-        } = {};
+    const togglePublishedAction = useAction({
+        action: async (topic: ITopicRow) => toggleTopicPublished(topic.id),
+        onSuccess: (_data, response, [topic]) => {
+            showSuccess(response.message ?? (topic.published ? 'Topic unpublished' : 'Topic published'));
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to toggle publish state');
+        },
+    });
 
-        // Only add optional fields if they are defined
-        if (params.query !== undefined) {
-            query.query = params.query;
-        }
-        if (params.pagination !== undefined) {
-            query.pagination = params.pagination;
-        }
-        if (params.sort !== undefined) {
-            query.sort = params.sort;
-        }
-        if (params.published !== undefined) {
-            query.published = params.published as boolean;
-        }
-        if (params.featured !== undefined) {
-            query.featured = params.featured as boolean;
-        }
+    const toggleFeaturedAction = useAction({
+        action: async (topic: ITopicRow) => toggleTopicFeatured(topic.id),
+        onSuccess: (_data, response, [topic]) => {
+            showSuccess(response.message ?? (topic.featured ? 'Topic unfeatured' : 'Topic featured'));
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to toggle featured state');
+        },
+    });
 
-        const result = await getTopics(query);
-
-        return result;
-    }, []);
-
-    // =============================================================
-    // Row Action Handlers
-    // =============================================================
+    const deleteAction = useAction({
+        action: async (topic: ITopicRow) => deleteTopic(topic.id, topic.contentCount > 0),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Topic deleted successfully');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete topic');
+        },
+    });
 
     const rowActionHandlers: ITopicActionHandlers = useMemo(
         () => ({
             onTogglePublished: async (topic: ITopicRow) => {
-                const result = await toggleTopicPublished(topic.id);
-                if (result.success) {
-                    showSuccess(result.message ?? (topic.published ? 'Topic unpublished' : 'Topic published'));
-                } else {
-                    showError(result.error ?? 'Failed to toggle publish state');
-                }
+                await togglePublishedAction.mutateAsync(topic);
             },
-
             onToggleFeatured: async (topic: ITopicRow) => {
-                const result = await toggleTopicFeatured(topic.id);
-                if (result.success) {
-                    showSuccess(result.message ?? (topic.featured ? 'Topic unfeatured' : 'Topic featured'));
-                } else {
-                    showError(result.error ?? 'Failed to toggle featured state');
-                }
+                await toggleFeaturedAction.mutateAsync(topic);
             },
-
             onDelete: async (topic: ITopicRow) => {
-                const result = await deleteTopic(topic.id, topic.contentCount > 0);
-                if (result.success) {
-                    showSuccess(result.message ?? 'Topic deleted successfully');
-                } else {
-                    showError(result.error ?? 'Failed to delete topic');
-                }
+                await deleteAction.mutateAsync(topic);
             },
         }),
-        [showSuccess, showError]
+        [togglePublishedAction.mutateAsync, toggleFeaturedAction.mutateAsync, deleteAction.mutateAsync],
     );
 
     // =============================================================
-    // Bulk Action Handlers
+    // Bulk Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - BulkActionsBar handles invalidation
     // =============================================================
+
+    const bulkPublishAction = useAction({
+        action: async (_rows: ITopicRow[], ids: string[]) => bulkPublishTopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} topics published`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to publish topics');
+        },
+    });
+
+    const bulkUnpublishAction = useAction({
+        action: async (_rows: ITopicRow[], ids: string[]) => bulkUnpublishTopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} topics unpublished`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to unpublish topics');
+        },
+    });
+
+    const bulkFeatureAction = useAction({
+        action: async (_rows: ITopicRow[], ids: string[]) => bulkFeatureTopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} topics featured`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to feature topics');
+        },
+    });
+
+    const bulkUnfeatureAction = useAction({
+        action: async (_rows: ITopicRow[], ids: string[]) => bulkUnfeatureTopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} topics unfeatured`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to unfeature topics');
+        },
+    });
+
+    const bulkDeleteAction = useAction({
+        action: async (_rows: ITopicRow[], ids: string[]) => bulkDeleteTopics(ids, false),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} topics deleted`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete topics');
+        },
+    });
 
     const bulkActionHandlers: ITopicBulkActionHandlers = useMemo(
         () => ({
-            onBulkPublish: async (_rows: ITopicRow[], ids: string[]) => {
-                const result = await bulkPublishTopics(ids);
-                if (result.success) {
-                    showSuccess(result.message ?? `${ids.length} topics published`);
-                } else {
-                    showError(result.error ?? 'Failed to publish topics');
-                }
+            onBulkPublish: async (rows: ITopicRow[], ids: string[]) => {
+                await bulkPublishAction.mutateAsync(rows, ids);
             },
-
-            onBulkUnpublish: async (_rows: ITopicRow[], ids: string[]) => {
-                const result = await bulkUnpublishTopics(ids);
-                if (result.success) {
-                    showSuccess(result.message ?? `${ids.length} topics unpublished`);
-                } else {
-                    showError(result.error ?? 'Failed to unpublish topics');
-                }
+            onBulkUnpublish: async (rows: ITopicRow[], ids: string[]) => {
+                await bulkUnpublishAction.mutateAsync(rows, ids);
             },
-
-            onBulkFeature: async (_rows: ITopicRow[], ids: string[]) => {
-                const result = await bulkFeatureTopics(ids);
-                if (result.success) {
-                    showSuccess(result.message ?? `${ids.length} topics featured`);
-                } else {
-                    showError(result.error ?? 'Failed to feature topics');
-                }
+            onBulkFeature: async (rows: ITopicRow[], ids: string[]) => {
+                await bulkFeatureAction.mutateAsync(rows, ids);
             },
-
-            onBulkUnfeature: async (_rows: ITopicRow[], ids: string[]) => {
-                const result = await bulkUnfeatureTopics(ids);
-                if (result.success) {
-                    showSuccess(result.message ?? `${ids.length} topics unfeatured`);
-                } else {
-                    showError(result.error ?? 'Failed to unfeature topics');
-                }
+            onBulkUnfeature: async (rows: ITopicRow[], ids: string[]) => {
+                await bulkUnfeatureAction.mutateAsync(rows, ids);
             },
-
-            onBulkDelete: async (_rows: ITopicRow[], ids: string[]) => {
-                const result = await bulkDeleteTopics(ids, true);
-                if (result.success) {
-                    showSuccess(result.message ?? `${ids.length} topics deleted`);
-                } else {
-                    showError(result.error ?? 'Failed to delete topics');
-                }
+            onBulkDelete: async (rows: ITopicRow[], ids: string[]) => {
+                await bulkDeleteAction.mutateAsync(rows, ids);
             },
         }),
-        [showSuccess, showError]
+        [
+            bulkPublishAction.mutateAsync,
+            bulkUnpublishAction.mutateAsync,
+            bulkFeatureAction.mutateAsync,
+            bulkUnfeatureAction.mutateAsync,
+            bulkDeleteAction.mutateAsync,
+        ],
     );
 
     // =============================================================
-    // Reorder Handler
+    // Reorder Mutation (using useAction for TanStack Query benefits)
     // =============================================================
 
-    const handleReorder = useCallback(
-        async (_items: ITopicRow[], ids: string[]) => {
-            const result = await reorderTopics(ids);
-            if (result.success) {
-                showSuccess(result.message ?? 'Topics reordered');
-            } else {
-                showError(result.error ?? 'Failed to reorder topics');
-            }
-            return result;
+    const reorderAction = useAction({
+        action: async (_items: ITopicRow[], ids: string[]) => reorderTopics(ids),
+        onSuccess: () => {
+            showSuccess('Topics reordered successfully');
         },
-        [showSuccess, showError]
-    );
+        onError: (message) => {
+            showError(message ?? 'Failed to reorder topics');
+        },
+    });
+
+    // Wrapper to return IApiResponse for reorder config compatibility
+    const handleReorder = async (_items: ITopicRow[], ids: string[]): Promise<IApiResponse<boolean>> => {
+        return reorderAction.mutateAsync(_items, ids);
+    };
 
     // =============================================================
-    // Table Configuration
+    // Table Config with Custom Cell Renderers
     // =============================================================
 
-    const tableConfig = useMemo(
-        () =>
-            createTopicsTableConfig({
-                rowActions: rowActionHandlers,
-                bulkActions: bulkActionHandlers,
-                onReorder: handleReorder,
-            }),
-        [rowActionHandlers, bulkActionHandlers, handleReorder]
-    );
-
-    // =============================================================
-    // Custom Column Renderers
-    // Override default column rendering for complex cells
-    // =============================================================
-
-    const columnsWithRenderers = useMemo(() => {
-        return tableConfig.columns.map((column) => {
-            switch (column.id) {
-                case 'topic':
-                    return {
-                        ...column,
-                        cell: (topic: ITopicRow) => (
-                            <div className="flex items-center gap-3">
-                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    <Layers className="h-5 w-5" />
-                                </div>
-                                <div className="min-w-0">
-                                    <Link
-                                        href={`/admin/topics/${topic.id}/edit`}
-                                        className="block truncate font-medium hover:text-foreground hover:underline"
-                                    >
-                                        {topic.title}
-                                    </Link>
-                                    <p className="text-sm text-muted-foreground">/{topic.slug}</p>
-                                </div>
-                            </div>
-                        ),
-                    };
-
-                case 'contentCount':
-                    return {
-                        ...column,
-                        cell: (topic: ITopicRow) => (
-                            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
-                                {topic.contentCount}
-                            </span>
-                        ),
-                    };
-
-                case 'published':
-                    return {
-                        ...column,
-                        cell: (topic: ITopicRow) => (
-                            <StatusBadge variant="published" value={topic.published} />
-                        ),
-                    };
-
-                case 'featured':
-                    return {
-                        ...column,
-                        cell: (topic: ITopicRow) => (
-                            <StatusBadge variant="featured" value={topic.featured} />
-                        ),
-                    };
-
-                case 'updatedAt':
-                    return {
-                        ...column,
-                        cell: (topic: ITopicRow) => (
-                            <span className="text-sm text-muted-foreground">
-                                {formatDate(topic.updatedAt)}
-                            </span>
-                        ),
-                    };
-
-                default:
-                    return column;
-            }
+    const config = useMemo(() => {
+        const baseConfig = createTopicsTableConfig({
+            rowActions: rowActionHandlers,
+            bulkActions: bulkActionHandlers,
+            onReorder: handleReorder,
         });
-    }, [tableConfig.columns]);
 
-    // Create final config with custom renderers
-    const finalConfig = useMemo(
-        () => ({
-            ...tableConfig,
+        // Add custom cell renderers
+        const columnsWithRenderers = baseConfig.columns.map((col) => {
+            // Topic column - Icon + Title + Slug
+            if (col.id === 'topic') {
+                return {
+                    ...col,
+                    cell: (topic: ITopicRow) => (
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Layers className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <Link
+                                    href={`/admin/topics/${topic.id}/edit`}
+                                    className="block truncate font-medium hover:text-foreground hover:underline"
+                                >
+                                    {topic.title}
+                                </Link>
+                                <p className="text-sm text-muted-foreground">/{topic.slug}</p>
+                            </div>
+                        </div>
+                    ),
+                };
+            }
+
+            // Articles count column - Badge with count
+            if (col.id === 'contentCount') {
+                return {
+                    ...col,
+                    cell: (topic: ITopicRow) => (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
+                            {topic.contentCount}
+                        </span>
+                    ),
+                };
+            }
+
+            // Published column - StatusBadge
+            if (col.id === 'published') {
+                return {
+                    ...col,
+                    cell: (topic: ITopicRow) => <StatusBadge variant="published" value={topic.published} />,
+                };
+            }
+
+            // Featured column - StatusBadge
+            if (col.id === 'featured') {
+                return {
+                    ...col,
+                    cell: (topic: ITopicRow) => <StatusBadge variant="featured" value={topic.featured} />,
+                };
+            }
+
+            // Updated column - Formatted date
+            if (col.id === 'updatedAt') {
+                return {
+                    ...col,
+                    cell: (topic: ITopicRow) => (
+                        <span className="text-sm text-muted-foreground">{formatDate(topic.updatedAt)}</span>
+                    ),
+                };
+            }
+
+            return col;
+        });
+
+        return {
+            ...baseConfig,
             columns: columnsWithRenderers,
-        }),
-        [tableConfig, columnsWithRenderers]
-    );
+        };
+    }, [rowActionHandlers, bulkActionHandlers, handleReorder]);
 
     // =============================================================
     // Render
     // =============================================================
 
-    return (
-        <DataTable<ITopicRow>
-            config={finalConfig}
-            serverAction={serverQueryFn}
-            initialData={initialData}
-        />
-    );
+    return <DataTable config={config} serverAction={getTopics} initialData={initialData} initialTotal={initialTotal} />;
 }
 
 export default TopicsTable;

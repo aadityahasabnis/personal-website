@@ -1,30 +1,22 @@
 // =============================================================
-// Table Constants
+// Table Filter Constants
+// Note: Do NOT include "All" option - the filter component adds it automatically
 // =============================================================
 
 /**
- * Boolean filter options for published/featured/active states
- */
-export const BOOLEAN_FILTER_OPTIONS = [
-    { label: 'All', value: 'all' },
-    { label: 'Yes', value: 'true' },
-    { label: 'No', value: 'false' },
-];
-
-/**
  * Published status filter options for topics/articles
+ * Filter component automatically adds "All Status" option
  */
 export const PUBLISHED_FILTER_OPTIONS = [
-    { label: 'All Status', value: 'all' },
     { label: 'Published', value: 'true' },
     { label: 'Draft', value: 'false' },
 ];
 
 /**
- * Featured status filter options for topics/articles
+ * Featured status filter options for topics/articles  
+ * Filter component automatically adds "All" option
  */
 export const FEATURED_FILTER_OPTIONS = [
-    { label: 'All', value: 'all' },
     { label: 'Featured', value: 'true' },
     { label: 'Not Featured', value: 'false' },
 ];
@@ -32,7 +24,7 @@ export const FEATURED_FILTER_OPTIONS = [
 /**
  * Default page size options for tables
  */
-export const DEFAULT_PAGE_SIZE_OPTIONS = [10, 15, 25, 50, 100];
+export const DEFAULT_PAGE_SIZE_OPTIONS = [5, 10, 15, 25, 50, 100];
 
 /**
  * Default page sizes by table type

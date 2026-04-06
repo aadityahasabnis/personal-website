@@ -28,10 +28,10 @@ const AdminLayout = async ({ children }: IAdminLayoutProps): Promise<React.React
             <AdminSidebar user={session.user} />
 
             {/* Main content area */}
-            <div className='flex flex-1 flex-col'>
+            <div className='flex min-w-0 flex-1 flex-col'>
                 <AdminHeader user={session.user} />
 
-                <main className='flex-1 p-6'>{children}</main>
+                <main className='min-w-0 flex-1 overflow-hidden p-6'>{children}</main>
             </div>
         </div>
     );

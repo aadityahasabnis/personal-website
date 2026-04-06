@@ -4,7 +4,7 @@
 // DataTable - Professional Config-Driven Table Component
 // =============================================================
 
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, ArrowUpDown, GripVertical, Loader2 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -24,6 +24,7 @@ import { TableSearch } from './TableSearch';
 import { DataTablePagination } from './DataTablePagination';
 import { BulkActionsBar } from './BulkActionsBar';
 import { DataTableEmptyState } from './DataTableEmptyState';
+import { DataTableSkeleton } from './DataTableSkeleton';
 
 // =============================================================
 // Table Context
@@ -57,6 +58,7 @@ export function DataTable<TData>({
     data,
     serverAction,
     initialData,
+    initialTotal,
     className,
 }: IDataTableProps<TData>): React.ReactElement {
     const tableContext = useDataTable<TData>({
@@ -64,11 +66,14 @@ export function DataTable<TData>({
         data,
         serverAction,
         initialData,
+        initialTotal,
     });
 
     const {
         displayedData,
+        totalItems,
         isLoading,
+        isFetching,
         state,
         setSearchQuery,
         setFilter,
@@ -101,6 +106,33 @@ export function DataTable<TData>({
     // Infinite scroll ref
     const loadMoreRef = useRef<HTMLDivElement>(null);
     const isLoadingMore = useRef(false);
+
+    // Scroll shadow state for responsive tables
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [scrollState, setScrollState] = useState({ canScrollLeft: false, canScrollRight: false });
+
+    // Update scroll shadows on scroll and resize
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        const updateScrollState = () => {
+            const { scrollLeft, scrollWidth, clientWidth } = container;
+            setScrollState({
+                canScrollLeft: scrollLeft > 0,
+                canScrollRight: scrollLeft + clientWidth < scrollWidth - 1,
+            });
+        };
+
+        updateScrollState();
+        container.addEventListener('scroll', updateScrollState, { passive: true });
+        window.addEventListener('resize', updateScrollState);
+
+        return () => {
+            container.removeEventListener('scroll', updateScrollState);
+            window.removeEventListener('resize', updateScrollState);
+        };
+    }, [displayedData]);
 
     // =============================================================
     // Drag & Drop Handlers
@@ -197,12 +229,13 @@ export function DataTable<TData>({
     };
 
     // =============================================================
-    // Loading State
+    // Loading State - Use DataTableSkeleton for consistent UI
     // =============================================================
 
     if (isLoading && displayedData.length === 0) {
         return (
             <div className={cn('flex flex-col gap-4', className)}>
+                {/* Show interactive search bar during loading */}
                 {config.searchable && (
                     <TableSearch
                         value={state.searchQuery}
@@ -215,11 +248,11 @@ export function DataTable<TData>({
                         onClearFilters={clearFilters}
                     />
                 )}
-                <div className="rounded-xl border border-border bg-card">
-                    <div className="flex items-center justify-center p-12">
-                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                    </div>
-                </div>
+                {/* Use DataTableSkeleton for table body */}
+                <DataTableSkeleton
+                    config={config}
+                    showSearch={false} // Already showing interactive search above
+                />
             </div>
         );
     }
@@ -277,9 +310,38 @@ export function DataTable<TData>({
                 )}
 
                 {/* Table Container */}
-                <div className="rounded-xl border border-border bg-card">
-                    <div className="overflow-x-auto no-scrollbar">
-                        <Table>
+                <div className="relative rounded-xl border border-border bg-card">
+                    {/* Subtle loading indicator when fetching new data */}
+                    {isFetching && !isLoading && (
+                        <div className="absolute inset-x-0 top-0 z-30 h-0.5 overflow-hidden rounded-t-xl">
+                            <div className="h-full w-full animate-pulse bg-primary/50" />
+                        </div>
+                    )}
+                    
+                    {/* Scroll shadow indicators for mobile */}
+                    <div
+                        className={cn(
+                            'pointer-events-none absolute left-0 top-0 bottom-0 z-20 w-4 bg-gradient-to-r from-card to-transparent transition-opacity duration-200',
+                            scrollState.canScrollLeft ? 'opacity-100' : 'opacity-0'
+                        )}
+                        aria-hidden="true"
+                    />
+                    <div
+                        className={cn(
+                            'pointer-events-none absolute right-0 top-0 bottom-0 z-20 w-4 bg-gradient-to-l from-card to-transparent transition-opacity duration-200',
+                            scrollState.canScrollRight ? 'opacity-100' : 'opacity-0'
+                        )}
+                        aria-hidden="true"
+                    />
+                    
+                    <div
+                        ref={scrollContainerRef}
+                        className={cn(
+                            'overflow-x-auto transition-opacity duration-150',
+                            isFetching && !isLoading && 'opacity-70'
+                        )}
+                    >
+                        <Table className="min-w-max">
                             {/* Header */}
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent">
@@ -449,11 +511,11 @@ export function DataTable<TData>({
                 </div>
 
                 {/* Pagination */}
-                {config.pagination?.mode === 'client' && (
+                {(config.pagination?.mode === 'client' || config.pagination?.mode === 'server') && (
                     <DataTablePagination
                         page={state.page}
                         pageSize={state.pageSize}
-                        total={tableContext.filteredData.length}
+                        total={totalItems}
                         pageSizeOptions={config.pagination.pageSizeOptions}
                         showPageSizeSelector={config.pagination.showPageSizeSelector}
                         showPageInfo={config.pagination.showPageInfo}
@@ -467,7 +529,7 @@ export function DataTable<TData>({
                 {hasBulkActions && (
                     <BulkActionsBar
                         selectedCount={selectedRows.length}
-                        totalCount={tableContext.filteredData.length}
+                        totalCount={totalItems}
                         selectedRows={selectedRows}
                         selectedIds={state.selectedIds}
                         actions={config.bulkActions!}

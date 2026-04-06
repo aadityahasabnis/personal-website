@@ -46,6 +46,7 @@ export type {
 
 // Components
 export { DataTable, useTableContext } from './DataTable';
+export { DataTableSkeleton, type IDataTableSkeletonProps } from './DataTableSkeleton';
 export { DataTableActions } from './DataTableActions';
 export { TableSearch } from './TableSearch';
 export { DataTablePagination } from './DataTablePagination';
