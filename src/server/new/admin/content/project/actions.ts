@@ -110,7 +110,7 @@ export const setProjectLifecycleStatus = async (
         if (!authResult.success) return authResult;
 
         if (!ObjectId.isValid(projectId)) return error('Invalid project id', 400);
-        if (typeof status === 'string' && !isValidProjectStatus(status)) return error('Invalid project status', 400);
+        if (status !== null && !isValidProjectStatus(status)) return error('Invalid project status', 400);
 
         await connectDB();
 
@@ -121,13 +121,22 @@ export const setProjectLifecycleStatus = async (
         if (!project) return error('Project not found', 404);
 
         if (project.status === status) {
-            return success(true, status ? `Project status already ${status}` : 'Project status already cleared');
+            return success(true, status ? `Project lifecycle already ${status}` : 'Project lifecycle already cleared');
         }
 
-        await Content.updateOne({ _id: project._id }, { $set: { status, ...updatedNow() } });
+        // Use type filter to ensure discriminator is respected
+        const result = await Content.updateOne(
+            { type: 'project', _id: project._id },
+            { $set: { status, ...updatedNow() } }
+        );
+
+        if (result.modifiedCount === 0) {
+            return error('Failed to update project lifecycle status', 500);
+        }
+
         revalidateProjectPaths(project.slug);
 
-        return success(true, status ? `Project status changed to ${status}` : 'Project status cleared');
+        return success(true, status ? `Project lifecycle changed to ${status}` : 'Project lifecycle cleared');
     } catch (err) {
         return handleError(err, 'Failed to set project lifecycle status');
     }
@@ -237,7 +246,7 @@ export const bulkSetProjectLifecycleStatus = async (
 
         if (!projectIds.length) return success(true, 'No projects selected');
         if (!projectIds.every((id) => ObjectId.isValid(id))) return error('One or more project ids are invalid', 400);
-        if (typeof status === 'string' && !isValidProjectStatus(status)) return error('Invalid project status', 400);
+        if (status !== null && !isValidProjectStatus(status)) return error('Invalid project status', 400);
 
         const uniqueProjectIds = normalizeProjectIds(projectIds);
         const objectIds = toObjectIds(uniqueProjectIds);
@@ -251,13 +260,19 @@ export const bulkSetProjectLifecycleStatus = async (
 
         if (projects.length !== uniqueProjectIds.length) return error('One or more projects not found', 404);
 
-        await Content.updateMany(
+        // Use type filter to ensure discriminator is respected
+        const result = await Content.updateMany(
             { type: 'project', _id: { $in: objectIds } },
             { $set: { status, ...updatedNow() } }
         );
 
+        if (result.modifiedCount === 0 && projects.length > 0) {
+            // All projects might already have the same status - this is okay
+            return success(true, status ? `Projects lifecycle already ${status}` : 'Projects lifecycle already cleared');
+        }
+
         projects.forEach((project) => revalidateProjectPaths(project.slug));
-        return success(true, status ? `Projects lifecycle status changed to ${status}` : 'Projects lifecycle status cleared');
+        return success(true, status ? `Projects lifecycle changed to ${status}` : 'Projects lifecycle cleared');
     } catch (err) {
         return handleError(err, 'Failed to bulk set project lifecycle status');
     }
