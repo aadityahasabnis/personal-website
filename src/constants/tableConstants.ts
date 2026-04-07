@@ -45,4 +45,31 @@ export const DEFAULT_PAGE_SIZES = {
     subtopics: 15,
     contacts: 20,
     subscribers: 25,
+    comments: 25,
 };
+
+// =============================================================
+// Comment Filter Constants
+// =============================================================
+
+/**
+ * Comment moderation status filter options
+ * Filter component automatically adds "All" option
+ */
+export const COMMENT_STATUS_FILTER_OPTIONS = [
+    { label: 'Approved', value: 'approved' },
+    { label: 'Pending', value: 'pending' },
+    { label: 'Owner', value: 'owner' },
+    { label: 'Top-level', value: 'top-level' },
+    { label: 'Replies', value: 'replies' },
+];
+
+/**
+ * Comment content type filter options
+ * Filter component automatically adds "All" option
+ */
+export const COMMENT_CONTENT_TYPE_FILTER_OPTIONS = [
+    { label: 'Article', value: 'article' },
+    { label: 'Blog', value: 'blog' },
+    { label: 'Project', value: 'project' },
+];

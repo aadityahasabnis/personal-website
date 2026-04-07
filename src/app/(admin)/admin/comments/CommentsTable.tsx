@@ -1,381 +1,541 @@
 'use client';
 
-import { Calendar, Check, Flag, MessageCircle, MessageSquare, Reply, ThumbsUp, X } from 'lucide-react';
+// =============================================================
+// CommentsTable - Professional Server-Side Table for Comments
+// Uses DataTable component with server-action-first architecture
+// Uses useAction hook for TanStack Query mutation benefits
+// Uses useDialog for viewing full comment details and admin replies
+// =============================================================
+
+import { MessageCircle, MessageSquareReply, ThumbsUp, User } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo } from 'react';
+
+import { DataTable } from '@/components/admin/table';
+import { useDialog } from '@/hooks/ui/useDialog';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
+import { useAction } from '@/hooks/server/useAction';
+import { getAvatarById } from '@/lib/storage';
+import { formatDate } from '@/lib/utils';
+import type { IAdminCommentRow } from '@/server/new/admin/comments';
+import {
+    adminReplyToComment,
+    approveComment,
+    bulkApproveComments,
+    bulkDeleteComments,
+    deleteComment,
+    getComments,
+    rejectComment,
+} from '@/server/new/admin/comments';
 
 import {
-    BulkActionsBar,
-    DataTable,
-    DataTableActions,
-    TableSearch,
-    createBulkDeleteActionNew,
-    createDeleteAction,
-    type IBulkActionNew,
-    type IDataTableAction,
-    type IDataTableColumn,
-    type ITableFilter,
-} from '@/components/admin';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useAdminTable } from '@/hooks';
-import { cn, formatDate } from '@/lib/utils';
-import { approveComment, clearReportedFlag, deleteComment, rejectComment, type IAdminComment } from '@/server/actions/comments';
-import { adminReplyToComment } from '@/server/admin/comments';
+    createCommentsTableConfig,
+    type ICommentActionHandlers,
+    type ICommentBulkActionHandlers,
+} from './config';
 
-// ===== FILTERS CONFIG =====
-
-const TABLE_FILTERS: ITableFilter[] = [
-    {
-        id: 'status',
-        label: 'Status',
-        type: 'select',
-        options: [
-            { label: 'All Comments', value: 'all' },
-            { label: 'Approved', value: 'approved' },
-            { label: 'Pending', value: 'pending' },
-            { label: 'Reported', value: 'reported' },
-        ],
-    },
-];
-
-// ===== COMPONENT =====
+// =============================================================
+// Types
+// =============================================================
 
 interface ICommentsTableProps {
-    comments: IAdminComment[];
+    /** Initial server-side data for hydration */
+    initialData?: IAdminCommentRow[] | undefined;
+    /** Initial total count for pagination */
+    initialTotal?: number | undefined;
 }
 
-export function CommentsTable({ comments }: ICommentsTableProps): React.ReactElement {
-    const router = useRouter();
-    const [replyDialog, setReplyDialog] = useState<{ comment: IAdminComment; content: string } | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+// =============================================================
+// Reply Form Data Interface
+// =============================================================
 
-    const table = useAdminTable({
-        tableKey: 'admin-comments',
-        data: comments,
-        keyExtractor: (c) => c._id,
-        searchFn: (c, query) =>
-            c.author.name.toLowerCase().includes(query) || c.author.email.toLowerCase().includes(query) || c.content.toLowerCase().includes(query) || c.articleSlug.toLowerCase().includes(query),
-    });
+interface IReplyFormData {
+    content: string;
+    [key: string]: unknown;
+}
 
-    // Custom filtering for status
-    const filteredByStatus = table.filteredItems.filter((c) => {
-        const status = table.filters.status;
-        if (!status || status === 'all') return true;
-        if (status === 'approved') return c.approved && !c.reported;
-        if (status === 'pending') return !c.approved;
-        if (status === 'reported') return c.reported;
-        return true;
-    });
+// =============================================================
+// Helper to resolve avatar ID to image path
+// =============================================================
 
-    // ===== STATUS BADGE =====
+/**
+ * Resolves an avatar value to an image URL.
+ * - If it's an avatar ID (e.g., 'avatar-1'), looks up the image path from AVATAR_OPTIONS
+ * - If it's already a URL (starts with http/https or /), returns as-is
+ * - Returns null if no valid avatar found
+ */
+function resolveAvatarUrl(avatar: string | null): string | null {
+    if (!avatar) return null;
+    
+    // If it's already a URL or absolute path, return as-is
+    if (avatar.startsWith('http') || avatar.startsWith('/avatars/')) {
+        return avatar;
+    }
+    
+    // Try to resolve as avatar ID
+    const avatarOption = getAvatarById(avatar);
+    return avatarOption?.image ?? null;
+}
 
-    const StatusBadge = ({ comment }: { comment: IAdminComment }) => {
-        if (comment.reported) {
-            return (
-                <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700'>
-                    <Flag className='h-3 w-3' /> Reported
-                </span>
-            );
-        }
-        if (comment.approved) {
-            return (
-                <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700'>
-                    <Check className='h-3 w-3' /> Approved
-                </span>
-            );
-        }
-        return <span className='inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700'>Pending</span>;
-    };
+// =============================================================
+// Comment View Dialog Content Component
+// =============================================================
 
-    // ===== ROW ACTIONS =====
-
-    const getRowActions = (comment: IAdminComment): IDataTableAction[] => {
-        const actions: IDataTableAction[] = [];
-
-        // Reply action - first for quick access
-        actions.push({
-            label: 'Reply',
-            icon: 'MessageSquare',
-            action: 'custom',
-            onClick: () => {
-                setReplyDialog({ comment, content: '' });
-            },
-        });
-
-        if (!comment.approved) {
-            actions.push({
-                label: 'Approve',
-                icon: 'CheckCircle2',
-                action: 'custom',
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        comment._id,
-                        (c) => ({ ...c, approved: true }),
-                        () => approveComment(comment._id),
-                    );
-                },
-            });
-        } else {
-            actions.push({
-                label: 'Reject',
-                icon: 'Pause',
-                action: 'custom',
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        comment._id,
-                        (c) => ({ ...c, approved: false }),
-                        () => rejectComment(comment._id),
-                    );
-                },
-            });
-        }
-
-        if (comment.reported) {
-            actions.push({
-                label: 'Clear Report',
-                icon: 'CheckCircle2',
-                action: 'custom',
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        comment._id,
-                        (c) => ({ ...c, reported: false }),
-                        () => clearReportedFlag(comment._id),
-                    );
-                },
-            });
-        }
-
-        actions.push(createDeleteAction(() => table.optimisticDelete(comment._id, () => deleteComment(comment._id)), `comment by ${comment.author.name}`));
-
-        return actions;
-    };
-
-    // ===== COLUMNS =====
-
-    const columns: IDataTableColumn<IAdminComment>[] = [
-        {
-            id: 'author',
-            header: 'Author',
-            accessor: (comment) => (
-                <div className='min-w-0'>
-                    <p className='font-medium line-clamp-1'>{comment.author.name}</p>
-                    <p className='text-sm text-muted-foreground line-clamp-1'>{comment.author.email}</p>
-                </div>
-            ),
-            width: '180px',
-        },
-        {
-            id: 'content',
-            header: 'Content',
-            accessor: (comment) => (
-                <div className='min-w-0'>
-                    <p className='text-sm line-clamp-2'>{comment.content}</p>
-                    <Link href={`/articles/${comment.articleSlug}`} className='text-xs text-muted-foreground hover:text-foreground mt-1 inline-block'>
-                        {comment.articleSlug}
-                    </Link>
-                </div>
-            ),
-            width: '350px',
-        },
-        {
-            id: 'status',
-            header: 'Status',
-            cell: (comment) => <StatusBadge comment={comment} />,
-            align: 'center',
-            width: '120px',
-        },
-        {
-            id: 'stats',
-            header: 'Stats',
-            cell: (comment) => (
-                <div className='flex items-center gap-3 text-sm text-muted-foreground'>
-                    <span className='flex items-center gap-1'>
-                        <ThumbsUp className='h-3 w-3' /> {comment.upvotes}
-                    </span>
-                    <span className='flex items-center gap-1'>
-                        <MessageCircle className='h-3 w-3' /> {comment.replyCount}
-                    </span>
-                </div>
-            ),
-            align: 'center',
-            width: '100px',
-        },
-        {
-            id: 'date',
-            header: 'Date',
-            cell: (comment) => (
-                <div className='flex items-center gap-1 text-sm text-muted-foreground'>
-                    <Calendar className='h-3 w-3' />
-                    {formatDate(new Date(comment.createdAt))}
-                </div>
-            ),
-            width: '130px',
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: (comment) => <DataTableActions actions={getRowActions(comment)} itemName={`comment by ${comment.author.name}`} />,
-            align: 'right',
-            width: '60px',
-        },
-    ];
-
-    // ===== BULK ACTIONS =====
-
-    const bulkActions: IBulkActionNew[] = [
-        {
-            id: 'approve',
-            label: 'Approve',
-            icon: <Check className='h-4 w-4' />,
-            variant: 'default',
-            action: (ids) =>
-                table.optimisticBulkUpdate(
-                    ids,
-                    (c) => ({ ...c, approved: true }),
-                    async () => {
-                        await Promise.all(ids.map((id) => approveComment(id)));
-                    },
-                ),
-        },
-        {
-            id: 'reject',
-            label: 'Reject',
-            icon: <X className='h-4 w-4' />,
-            variant: 'secondary',
-            action: (ids) =>
-                table.optimisticBulkUpdate(
-                    ids,
-                    (c) => ({ ...c, approved: false }),
-                    async () => {
-                        await Promise.all(ids.map((id) => rejectComment(id)));
-                    },
-                ),
-        },
-        createBulkDeleteActionNew(async (ids) => {
-            await Promise.all(ids.map((id) => table.optimisticDelete(id, () => deleteComment(id))));
-        }),
-    ];
-
-    // Stats
-    const pendingCount = comments.filter((c) => !c.approved).length;
-    const reportedCount = comments.filter((c) => c.reported).length;
-
-    // ===== REPLY HANDLER =====
-
-    const handleSubmitReply = async () => {
-        if (!replyDialog || !replyDialog.content.trim()) return;
-
-        setIsSubmitting(true);
-        try {
-            const result = await adminReplyToComment({
-                commentId: replyDialog.comment._id,
-                content: replyDialog.content.trim(),
-            });
-
-            if (result.success) {
-                setReplyDialog(null);
-                router.refresh();
-            }
-        } catch (error) {
-            console.error('Failed to submit reply:', error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    // ===== RENDER =====
-
+function CommentViewContent({ comment }: { comment: IAdminCommentRow }): React.ReactElement {
+    const avatarUrl = resolveAvatarUrl(comment.author.avatar);
+    
     return (
-        <div className='space-y-6'>
-            <div className='flex items-center justify-between'>
-                <TableSearch placeholder='Search comments...' onSearch={table.setSearchQuery} filters={TABLE_FILTERS} onFilterChange={table.setFilters} activeFiltersCount={table.activeFiltersCount} />
-                <div className='flex items-center gap-4 text-sm text-muted-foreground'>
-                    {pendingCount > 0 && <span>{pendingCount} pending</span>}
-                    {reportedCount > 0 && <span className='text-red-600'>{reportedCount} reported</span>}
+        <div className="space-y-4">
+            {/* Author Info */}
+            <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                    {avatarUrl ? (
+                        <Image
+                            src={avatarUrl}
+                            alt={comment.author.name}
+                            width={40}
+                            height={40}
+                            className="h-10 w-10 rounded-full object-cover"
+                            unoptimized
+                        />
+                    ) : (
+                        <User className="h-5 w-5" />
+                    )}
+                </div>
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <p className="font-medium">{comment.author.name}</p>
+                        {comment.author.isOwner && (
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                                Owner
+                            </span>
+                        )}
+                    </div>
+                    <a
+                        href={`mailto:${comment.author.email}`}
+                        className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                    >
+                        {comment.author.email}
+                    </a>
                 </div>
             </div>
 
-            <DataTable
-                data={filteredByStatus.slice(0, table.displayCount)}
-                columns={columns}
-                keyExtractor={(c) => c._id}
-                selectable
-                selectedIds={table.selectedIds}
-                onSelectionChange={table.setSelectedIds}
-                infiniteScroll
-                hasMore={filteredByStatus.length > table.displayCount}
-                onLoadMore={async () => table.loadMore()}
-                isLoading={table.isPending}
-                emptyState={
-                    <div className='p-12 text-center'>
-                        <MessageSquare className='mx-auto h-12 w-12 text-muted-foreground/50' />
-                        <h3 className='mt-4 text-lg font-semibold'>No comments found</h3>
-                        <p className='mt-2 text-muted-foreground'>
-                            {table.searchQuery || table.activeFiltersCount > 0 ? 'Try adjusting your search or filters' : 'Comments will appear here when readers engage'}
-                        </p>
+            {/* Comment Body */}
+            <div>
+                <p className="text-sm font-medium text-muted-foreground">Comment</p>
+                <div className="mt-1 rounded-md border bg-muted/50 p-3">
+                    <p className="whitespace-pre-wrap text-sm">{comment.body}</p>
+                </div>
+            </div>
+
+            {/* Parent Comment (if this is a reply) */}
+            {comment.isReply && comment.parentPreview && (
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                        In reply to {comment.parentAuthorName ?? 'Unknown'}
+                    </p>
+                    <div className="mt-1 rounded-md border border-dashed bg-muted/30 p-3">
+                        <p className="text-sm italic text-muted-foreground">{comment.parentPreview}</p>
                     </div>
-                }
-            />
+                </div>
+            )}
 
-            <BulkActionsBar
-                selectedCount={table.selectedIds.length}
-                totalCount={filteredByStatus.length}
-                actions={bulkActions}
-                onClear={table.clearSelection}
-                onAction={async (action) => action.action(table.selectedIds)}
-            />
+            {/* Content Info */}
+            {comment.contentTitle && (
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">On Content</p>
+                    <div className="mt-1 flex items-center gap-2">
+                        {comment.contentType && (
+                            <span className="inline-flex items-center rounded bg-secondary px-2 py-0.5 text-xs font-medium capitalize">
+                                {comment.contentType}
+                            </span>
+                        )}
+                        <span className="text-sm">{comment.contentTitle}</span>
+                    </div>
+                </div>
+            )}
 
-            {/* Reply Dialog */}
-            <Dialog open={!!replyDialog} onOpenChange={(open) => !open && setReplyDialog(null)}>
-                <DialogContent className='sm:max-w-lg'>
-                    <DialogHeader>
-                        <DialogTitle className='flex items-center gap-2'>
-                            <Reply className='h-5 w-5' />
-                            Reply to Comment
-                        </DialogTitle>
-                        <DialogDescription>Replying to {replyDialog?.comment.author.name}&apos;s comment</DialogDescription>
-                    </DialogHeader>
+            {/* Stats & Metadata */}
+            <div className="grid grid-cols-3 gap-4 border-t pt-4">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Status</p>
+                    <span
+                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            comment.moderationStatus === 'approved'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        }`}
+                    >
+                        {comment.moderationStatus === 'approved' ? 'Approved' : 'Pending'}
+                    </span>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Upvotes</p>
+                    <p className="text-sm">{comment.upvotes}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Replies</p>
+                    <p className="text-sm">{comment.replyCount}</p>
+                </div>
+            </div>
 
-                    {replyDialog && (
-                        <div className='space-y-4'>
-                            {/* Original Comment Preview */}
-                            <div className='p-3 rounded-lg bg-muted/50 border text-sm'>
-                                <p className='text-muted-foreground italic line-clamp-3'>&quot;{replyDialog.comment.content}&quot;</p>
-                            </div>
-
-                            {/* Reply Input */}
-                            <div className='space-y-2'>
-                                <label className='text-sm font-medium'>Your Reply</label>
-                                <textarea
-                                    value={replyDialog.content}
-                                    onChange={(e) => setReplyDialog({ ...replyDialog, content: e.target.value })}
-                                    placeholder='Write your reply...'
-                                    className={cn('w-full min-h-[120px] px-3 py-2 rounded-lg border bg-background', 'focus:outline-none focus:ring-2 focus:ring-ring resize-y text-sm')}
-                                    maxLength={2000}
-                                />
-                                <p className='text-xs text-muted-foreground text-right'>{replyDialog.content.length}/2000</p>
-                            </div>
-
-                            {/* Owner Badge Notice */}
-                            <p className='text-xs text-muted-foreground flex items-center gap-1'>
-                                <Check className='h-3 w-3 text-green-600' />
-                                This reply will display with an &quot;Author&quot; badge
-                            </p>
-                        </div>
-                    )}
-
-                    <DialogFooter>
-                        <Button variant='outline' onClick={() => setReplyDialog(null)} disabled={isSubmitting}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSubmitReply} disabled={isSubmitting || !replyDialog?.content.trim()}>
-                            {isSubmitting ? 'Posting...' : 'Post Reply'}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Created</p>
+                    <p className="text-sm">{formatDate(comment.createdAt)}</p>
+                </div>
+                <div>
+                    <p className="text-sm font-medium text-muted-foreground">Updated</p>
+                    <p className="text-sm">{formatDate(comment.updatedAt)}</p>
+                </div>
+            </div>
         </div>
     );
 }
+
+// =============================================================
+// CommentsTable Component
+// =============================================================
+
+export function CommentsTable({ initialData, initialTotal }: ICommentsTableProps): React.ReactElement {
+    const { showSuccess, showError } = useSnackbar();
+    const { openView, openForm, closeDialog } = useDialog();
+
+    // =============================================================
+    // Row Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - DataTableActions handles invalidation
+    // =============================================================
+
+    const approveAction = useAction({
+        action: async (comment: IAdminCommentRow) => approveComment(comment.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Comment approved');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to approve comment');
+        },
+    });
+
+    const rejectAction = useAction({
+        action: async (comment: IAdminCommentRow) => rejectComment(comment.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Comment rejected');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to reject comment');
+        },
+    });
+
+    const deleteAction = useAction({
+        action: async (comment: IAdminCommentRow) => deleteComment(comment.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Comment deleted successfully');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete comment');
+        },
+    });
+
+    const replyAction = useAction({
+        action: async ({ commentId, content }: { commentId: string; content: string }) =>
+            adminReplyToComment({ commentId, content }),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Reply posted successfully');
+            closeDialog();
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to post reply');
+        },
+    });
+
+    const rowActionHandlers: ICommentActionHandlers = useMemo(
+        () => ({
+            onView: (comment: IAdminCommentRow) => {
+                openView({
+                    title: 'Comment Details',
+                    description: `By ${comment.author.name}`,
+                    icon: MessageCircle,
+                    content: <CommentViewContent comment={comment} />,
+                    width: 'lg',
+                    closeLabel: 'Close',
+                });
+            },
+            onApprove: async (comment: IAdminCommentRow) => {
+                await approveAction.mutateAsync(comment);
+            },
+            onReject: async (comment: IAdminCommentRow) => {
+                await rejectAction.mutateAsync(comment);
+            },
+            onReply: (comment: IAdminCommentRow) => {
+                openForm<IReplyFormData>({
+                    title: 'Reply to Comment',
+                    description: `Replying to ${comment.author.name}'s comment`,
+                    width: 'lg',
+                    fields: [
+                        {
+                            fieldtype: 'textArea',
+                            name: 'content',
+                            label: 'Your Reply',
+                            placeholder: 'Write your reply...',
+                            required: true,
+                            rows: 5,
+                            colsize: 'full',
+                        },
+                    ],
+                    defaultValues: {
+                        content: '',
+                    },
+                    submitLabel: 'Post Reply',
+                    cancelLabel: 'Cancel',
+                    onSubmit: async (data: IReplyFormData) => {
+                        await replyAction.mutateAsync({
+                            commentId: comment.id,
+                            content: data.content,
+                        });
+                    },
+                });
+            },
+            onDelete: async (comment: IAdminCommentRow) => {
+                await deleteAction.mutateAsync(comment);
+            },
+        }),
+        [
+            openView,
+            openForm,
+            approveAction.mutateAsync,
+            rejectAction.mutateAsync,
+            deleteAction.mutateAsync,
+            replyAction.mutateAsync,
+        ],
+    );
+
+    // =============================================================
+    // Bulk Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - BulkActionsBar handles invalidation
+    // =============================================================
+
+    const bulkApproveAction = useAction({
+        action: async (_rows: IAdminCommentRow[], ids: string[]) => bulkApproveComments(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} comments approved`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to approve comments');
+        },
+    });
+
+    const bulkDeleteAction = useAction({
+        action: async (_rows: IAdminCommentRow[], ids: string[]) => bulkDeleteComments(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} comments deleted`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete comments');
+        },
+    });
+
+    const bulkActionHandlers: ICommentBulkActionHandlers = useMemo(
+        () => ({
+            onBulkApprove: async (rows: IAdminCommentRow[], ids: string[]) => {
+                await bulkApproveAction.mutateAsync(rows, ids);
+            },
+            onBulkDelete: async (rows: IAdminCommentRow[], ids: string[]) => {
+                await bulkDeleteAction.mutateAsync(rows, ids);
+            },
+        }),
+        [bulkApproveAction.mutateAsync, bulkDeleteAction.mutateAsync],
+    );
+
+    // =============================================================
+    // Table Config with Custom Cell Renderers
+    // =============================================================
+
+    const config = useMemo(() => {
+        const baseConfig = createCommentsTableConfig({
+            rowActions: rowActionHandlers,
+            bulkActions: bulkActionHandlers,
+        });
+
+        // Add custom cell renderers
+        const columnsWithRenderers = baseConfig.columns.map((col) => {
+            // Author column - Avatar + Name + Email + Owner Badge
+            if (col.id === 'author') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => {
+                        const avatarUrl = resolveAvatarUrl(comment.author.avatar);
+                        
+                        return (
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary">
+                                    {avatarUrl ? (
+                                        <Image
+                                            src={avatarUrl}
+                                            alt={comment.author.name}
+                                            width={36}
+                                            height={36}
+                                            className="h-9 w-9 rounded-full object-cover"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <User className="h-4 w-4" />
+                                    )}
+                                </div>
+                                <div className="min-w-0">
+                                    <div className="flex items-center gap-1.5">
+                                        <p className="truncate font-medium">{comment.author.name}</p>
+                                        {comment.author.isOwner && (
+                                            <span className="inline-flex shrink-0 items-center rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                                                Owner
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="truncate text-sm text-muted-foreground">
+                                        {comment.author.email}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    },
+                };
+            }
+
+            // Comment column - Preview + Parent preview if reply
+            if (col.id === 'comment') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => (
+                        <div className="min-w-0 space-y-1">
+                            <p className="line-clamp-2 text-sm">{comment.bodyPreview}</p>
+                            {comment.isReply && comment.parentAuthorName && (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                    <MessageSquareReply className="h-3 w-3" />
+                                    <span>Reply to {comment.parentAuthorName}</span>
+                                </div>
+                            )}
+                        </div>
+                    ),
+                };
+            }
+
+            // Content column - Title + Type Badge + Link
+            if (col.id === 'content') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => {
+                        if (!comment.contentTitle) {
+                            return <span className="text-sm text-muted-foreground">Unknown</span>;
+                        }
+
+                        // Build admin edit URL based on content type
+                        const getContentUrl = () => {
+                            if (!comment.contentSlug || !comment.contentType) return null;
+                            
+                            switch (comment.contentType) {
+                                case 'article':
+                                    return `/admin/articles/${comment.contentSlug}/edit`;
+                                case 'blog':
+                                    return `/admin/blogs/${comment.contentSlug}/edit`;
+                                case 'project':
+                                    return `/admin/projects/${comment.contentSlug}/edit`;
+                                default:
+                                    return null;
+                            }
+                        };
+
+                        const contentUrl = getContentUrl();
+
+                        return (
+                            <div className="min-w-0 space-y-1">
+                                <div className="flex items-center gap-2">
+                                    {comment.contentType && (
+                                        <span className="inline-flex shrink-0 items-center rounded bg-secondary px-1.5 py-0.5 text-xs font-medium capitalize">
+                                            {comment.contentType}
+                                        </span>
+                                    )}
+                                </div>
+                                {contentUrl ? (
+                                    <Link
+                                        href={contentUrl}
+                                        className="block truncate text-sm font-medium text-primary hover:underline"
+                                    >
+                                        {comment.contentTitle}
+                                    </Link>
+                                ) : (
+                                    <p className="truncate text-sm font-medium">{comment.contentTitle}</p>
+                                )}
+                            </div>
+                        );
+                    },
+                };
+            }
+
+            // Status column - Approved/Pending badge
+            if (col.id === 'moderationStatus') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => {
+                        const isApproved = comment.moderationStatus === 'approved';
+
+                        return (
+                            <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                    isApproved
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                                        : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                }`}
+                            >
+                                {isApproved ? 'Approved' : 'Pending'}
+                            </span>
+                        );
+                    },
+                };
+            }
+
+            // Stats column - Upvotes + Replies
+            if (col.id === 'stats') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => (
+                        <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1" title="Upvotes">
+                                <ThumbsUp className="h-3.5 w-3.5" />
+                                {comment.upvotes}
+                            </span>
+                            <span className="flex items-center gap-1" title="Replies">
+                                <MessageCircle className="h-3.5 w-3.5" />
+                                {comment.replyCount}
+                            </span>
+                        </div>
+                    ),
+                };
+            }
+
+            // Date column - Formatted date
+            if (col.id === 'createdAt') {
+                return {
+                    ...col,
+                    cell: (comment: IAdminCommentRow) => (
+                        <span className="text-sm text-muted-foreground">{formatDate(comment.createdAt)}</span>
+                    ),
+                };
+            }
+
+            return col;
+        });
+
+        return {
+            ...baseConfig,
+            columns: columnsWithRenderers,
+        };
+    }, [rowActionHandlers, bulkActionHandlers]);
+
+    // =============================================================
+    // Render
+    // =============================================================
+
+    return <DataTable config={config} serverAction={getComments} initialData={initialData} initialTotal={initialTotal} />;
+}
+
+export default CommentsTable;

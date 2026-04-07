@@ -1,106 +1,54 @@
+import { Mail } from 'lucide-react';
 import { Suspense } from 'react';
-import { Users, UserPlus, Mail, Download, Trash2 } from 'lucide-react';
-import { PageHeader } from '@/components/admin';
-import { SubscribersTable } from './SubscribersTable';
-import { getAllSubscribersForAdmin } from '@/server/queries/subscribers';
-import type { ISubscriber } from '@/interfaces/schema';
 
-export const metadata = {
-    title: 'Subscribers | Admin Dashboard',
-    description: 'Manage newsletter subscribers',
+import { PageHeader } from '@/components/admin';
+import { DataTableSkeleton } from '@/components/admin/table';
+import { getSubscribers } from '@/server/new/admin/subscribers';
+
+import { SUBSCRIBERS_TABLE_SKELETON_PROPS } from './config';
+import { SubscribersTable } from './SubscribersTable';
+
+// =============================================================
+// Subscribers Table Wrapper (Server Component)
+// =============================================================
+
+const SubscribersTableWrapper = async (): Promise<React.ReactElement> => {
+    const response = await getSubscribers();
+
+    if (!response.success || !response.data) {
+        return (
+            <div className="flex h-64 items-center justify-center rounded-xl border border-dashed">
+                <p className="text-muted-foreground">Failed to load subscribers</p>
+            </div>
+        );
+    }
+
+    return (
+        <SubscribersTable
+            initialData={response.data}
+            initialTotal={response.pagination.total}
+        />
+    );
 };
 
-// Helper to serialize subscribers for client component
-function serializeSubscribers(subscribers: ISubscriber[]) {
-    return subscribers.map(sub => ({
-        ...sub,
-        _id: sub._id?.toString(),
-        subscribedAt: sub.subscribedAt.toISOString(),
-        unsubscribedAt: sub.unsubscribedAt?.toISOString(),
-        createdAt: sub.createdAt?.toISOString(),
-        updatedAt: sub.updatedAt?.toISOString(),
-    }));
-}
+// =============================================================
+// Subscribers Page (Server Component)
+// =============================================================
 
-export default async function SubscribersPage() {
-    const subscribers = await getAllSubscribersForAdmin();
-    const serializedSubscribers = serializeSubscribers(subscribers);
-
+const SubscribersPage = (): React.ReactElement => {
     return (
         <div className="space-y-6">
             <PageHeader
                 title="Subscribers"
-                description="Manage newsletter subscribers and export email lists"
-                icon={Users}
+                description="Manage your newsletter subscribers. View, confirm, or remove subscribers."
+                icon={Mail}
             />
 
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <StatCard
-                    title="Total Subscribers"
-                    value={serializedSubscribers.filter(s => s.confirmed).length}
-                    icon={<Users className="h-5 w-5" />}
-                    color="blue"
-                />
-                <StatCard
-                    title="Pending Confirmation"
-                    value={serializedSubscribers.filter(s => !s.confirmed).length}
-                    icon={<Mail className="h-5 w-5" />}
-                    color="amber"
-                />
-                <StatCard
-                    title="Unsubscribed"
-                    value={serializedSubscribers.filter(s => s.unsubscribedAt).length}
-                    icon={<Trash2 className="h-5 w-5" />}
-                    color="red"
-                />
-            </div>
-
-            {/* Subscribers Table */}
-            <Suspense fallback={<TableSkeleton />}>
-                <SubscribersTable subscribers={serializedSubscribers} />
+            <Suspense fallback={<DataTableSkeleton {...SUBSCRIBERS_TABLE_SKELETON_PROPS} />}>
+                <SubscribersTableWrapper />
             </Suspense>
         </div>
     );
-}
+};
 
-interface StatCardProps {
-    title: string;
-    value: number;
-    icon: React.ReactNode;
-    color: 'blue' | 'amber' | 'red';
-}
-
-function StatCard({ title, value, icon, color }: StatCardProps) {
-    const colorClasses = {
-        blue: 'bg-blue-500/10 text-blue-600',
-        amber: 'bg-amber-500/10 text-amber-600',
-        red: 'bg-red-500/10 text-red-600',
-    };
-
-    return (
-        <div className="rounded-lg border bg-card p-6">
-            <div className="flex items-center justify-between mb-3">
-                <p className="text-sm text-muted-foreground">{title}</p>
-                <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-                    {icon}
-                </div>
-            </div>
-            <p className="text-3xl font-bold">{value}</p>
-        </div>
-    );
-}
-
-function TableSkeleton() {
-    return (
-        <div className="rounded-lg border bg-card animate-pulse">
-            <div className="p-6 space-y-4">
-                <div className="h-10 bg-muted rounded" />
-                <div className="h-10 bg-muted rounded" />
-                <div className="h-10 bg-muted rounded" />
-                <div className="h-10 bg-muted rounded" />
-                <div className="h-10 bg-muted rounded" />
-            </div>
-        </div>
-    );
-}
+export default SubscribersPage;
