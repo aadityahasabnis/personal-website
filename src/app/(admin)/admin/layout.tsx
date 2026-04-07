@@ -10,6 +10,8 @@ export const metadata: Metadata = {
     robots: 'noindex, nofollow',
 };
 
+export const dynamic = 'force-dynamic';
+
 interface IAdminLayoutProps {
     children: React.ReactNode;
 }
@@ -31,7 +33,7 @@ const AdminLayout = async ({ children }: IAdminLayoutProps): Promise<React.React
     return (
         <div className='flex h-screen overflow-hidden bg-muted/30'>
             {/* Sidebar */}
-            <AdminSidebar user={adminUser} />
+            <AdminSidebar />
 
             {/* Main content area */}
             <div className='flex min-w-0 min-h-0 flex-1 flex-col overflow-hidden'>

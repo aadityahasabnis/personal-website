@@ -1,14 +1,17 @@
 'use client';
 
-import { Bell, ExternalLink, LogOut, Moon, RefreshCw, Search, Sun, User } from 'lucide-react';
+import { ExternalLink, LogOut, Moon, RefreshCw, Search, Settings, Sun } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { CommandPalette } from '../CommandPalette';
-import { NotificationsPanel } from '../NotificationsPanel';
 
 interface IAdminHeaderProps {
     user: {
@@ -19,13 +22,11 @@ interface IAdminHeaderProps {
 }
 
 /**
- * Admin Header with search, notifications, and user menu
+ * Admin Header with search, theme toggle, and user menu
  */
 const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
     const { theme, setTheme } = useTheme();
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-    const [isNotificationsPanelOpen, setIsNotificationsPanelOpen] = useState(false);
     const [isPending, startTransition] = useTransition();
 
     // Command palette keyboard shortcut
@@ -51,115 +52,129 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
     };
 
+    const userInitials = user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
     return (
-        <>
-            <header className='sticky top-0 z-40 flex h-16 items-center justify-between border-b bg-card px-6'>
+        <TooltipProvider delayDuration={0}>
+            <header
+                className={cn(
+                    // Positioning
+                    'sticky top-0 z-40',
+                    // Layout
+                    'flex h-16 items-center justify-between',
+                    // Spacing - extra padding on left for mobile hamburger
+                    'border-b border-border px-4 pl-16 lg:pl-6',
+                    // Background
+                    'bg-card',
+                )}
+            >
                 {/* Search */}
-                <div className='flex items-center gap-4'>
-                    <div className='relative'>
-                        <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
-                        <input
-                            type='text'
-                            placeholder='Search...'
-                            onClick={() => setIsCommandPaletteOpen(true)}
-                            readOnly
-                            className={cn(
-                                'h-9 w-64 rounded-lg border bg-background pl-9 pr-3 text-sm cursor-pointer',
-                                'placeholder:text-muted-foreground',
-                                'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
-                            )}
-                        />
-                        <kbd className='absolute right-3 top-1/2 -translate-y-1/2 hidden rounded border bg-muted px-1.5 text-xs text-muted-foreground sm:inline-block pointer-events-none'>⌘K</kbd>
-                    </div>
+                <div className='flex items-center'>
+                    <button
+                        onClick={() => setIsCommandPaletteOpen(true)}
+                        className={cn(
+                            // Layout
+                            'flex items-center gap-2',
+                            // Sizing
+                            'h-9 w-48 sm:w-64 rounded-lg border border-border px-3',
+                            // Background
+                            'bg-background',
+                            // Typography
+                            'text-sm text-muted-foreground',
+                            // Transitions
+                            'transition-all duration-200',
+                            'hover:border-primary/50 hover:bg-muted/50',
+                            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
+                        )}
+                    >
+                        <Search className='h-4 w-4 shrink-0' />
+                        <span className='flex-1 text-left truncate'>Search...</span>
+                        <kbd className='hidden rounded border border-border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-block'>⌘K</kbd>
+                    </button>
                 </div>
 
                 {/* Actions */}
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-1'>
                     {/* View Site */}
-                    <Link
-                        href='/'
-                        target='_blank'
-                        className={cn('flex h-9 items-center gap-2 rounded-lg px-3 text-sm', 'text-muted-foreground hover:bg-muted hover:text-foreground transition-colors')}
-                    >
-                        <ExternalLink className='h-4 w-4' />
-                        <span className='hidden sm:inline'>View Site</span>
-                    </Link>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant='ghost' size='icon' asChild className='h-9 w-9 text-muted-foreground hover:text-foreground'>
+                                <Link href='/' target='_blank' aria-label='View Site'>
+                                    <ExternalLink className='h-4 w-4' />
+                                </Link>
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side='bottom'>View Site</TooltipContent>
+                    </Tooltip>
 
                     {/* Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        className={cn('flex h-9 w-9 items-center justify-center rounded-lg', 'text-muted-foreground hover:bg-muted hover:text-foreground transition-colors')}
-                        aria-label='Toggle theme'
-                    >
-                        <Sun className='h-4 w-4 dark:hidden' />
-                        <Moon className='hidden h-4 w-4 dark:block' />
-                    </button>
-
-                    {/* Notifications */}
-                    <button
-                        onClick={() => setIsNotificationsPanelOpen(!isNotificationsPanelOpen)}
-                        className={cn(
-                            'relative flex h-9 w-9 items-center justify-center rounded-lg',
-                            'text-muted-foreground hover:bg-muted hover:text-foreground transition-colors',
-                            isNotificationsPanelOpen && 'bg-muted',
-                        )}
-                        aria-label='Notifications'
-                    >
-                        <Bell className='h-4 w-4' />
-                        {/* Notification dot */}
-                        <span className='absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive' />
-                    </button>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button variant='ghost' size='icon' onClick={toggleTheme} className='h-9 w-9 text-muted-foreground hover:text-foreground' aria-label='Toggle theme'>
+                                <Sun className='h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0' />
+                                <Moon className='absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100' />
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent side='bottom'>Toggle theme</TooltipContent>
+                    </Tooltip>
 
                     {/* User Menu */}
-                    <div className='relative'>
-                        <button
-                            onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                            className={cn('flex h-9 items-center gap-2 rounded-lg px-2', 'hover:bg-muted transition-colors', isUserMenuOpen && 'bg-muted')}
-                        >
-                            <div className='flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-medium text-primary'>{user.name.charAt(0).toUpperCase()}</div>
-                            <span className='hidden text-sm font-medium sm:inline'>{user.name}</span>
-                        </button>
-
-                        {/* Dropdown */}
-                        {isUserMenuOpen && (
-                            <>
-                                {/* Backdrop */}
-                                <div className='fixed inset-0 z-40' onClick={() => setIsUserMenuOpen(false)} />
-                                {/* Menu */}
-                                <div className='absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border bg-card p-1 shadow-lg'>
-                                    <div className='border-b px-3 py-2'>
-                                        <p className='text-sm font-medium'>{user.name}</p>
-                                        <p className='text-xs text-muted-foreground'>{user.email}</p>
-                                    </div>
-                                    <div className='py-1'>
-                                        <Link href='/admin/settings' className='flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted' onClick={() => setIsUserMenuOpen(false)}>
-                                            <User className='h-4 w-4' />
-                                            Profile Settings
-                                        </Link>
-                                    </div>
-                                    <div className='border-t py-1'>
-                                        <button
-                                            onClick={handleSignOut}
-                                            disabled={isPending}
-                                            className='flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-destructive hover:bg-destructive/10 disabled:opacity-50'
-                                        >
-                                            {isPending ? <RefreshCw className='h-4 w-4 animate-spin' /> : <LogOut className='h-4 w-4' />}
-                                            Sign Out
-                                        </button>
-                                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant='ghost' className={cn('relative h-9 gap-2 rounded-lg px-2', 'hover:bg-muted', 'focus-visible:ring-2 focus-visible:ring-primary/20')}>
+                                <Avatar size='sm'>
+                                    <AvatarFallback className={cn('bg-linear-to-br from-primary/80 to-primary', 'text-[10px] font-semibold text-primary-foreground')}>{userInitials}</AvatarFallback>
+                                </Avatar>
+                                <div className='hidden flex-col items-start sm:flex'>
+                                    <span className='text-sm font-medium leading-none'>{user.name}</span>
+                                    <span className='text-[10px] text-muted-foreground leading-none mt-0.5'>{user.role}</span>
                                 </div>
-                            </>
-                        )}
-                    </div>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' sideOffset={8} className='w-56 p-1'>
+                            {/* User Info - Not hoverable */}
+                            <div className='flex items-center gap-3 px-2 py-3 select-none'>
+                                <Avatar size='sm'>
+                                    <AvatarFallback className={cn('bg-linear-to-br from-primary/80 to-primary', 'text-xs font-semibold text-primary-foreground')}>{userInitials}</AvatarFallback>
+                                </Avatar>
+                                <div className='flex flex-1 flex-col overflow-hidden'>
+                                    <span className='truncate text-sm font-medium text-foreground'>{user.name}</span>
+                                    <span className='truncate text-xs text-muted-foreground'>{user.email}</span>
+                                </div>
+                            </div>
+
+                            <DropdownMenuSeparator />
+
+                            {/* Menu Items */}
+                            <DropdownMenuGroup>
+                                <DropdownMenuItem asChild>
+                                    <Link href='/admin/settings' className='cursor-pointer'>
+                                        <Settings className='h-4 w-4' />
+                                        <span>Settings</span>
+                                    </Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuGroup>
+
+                            <DropdownMenuSeparator />
+
+                            {/* Sign Out */}
+                            <DropdownMenuItem onClick={handleSignOut} disabled={isPending} variant='destructive' className='cursor-pointer'>
+                                {isPending ? <RefreshCw className='h-4 w-4 animate-spin' /> : <LogOut className='h-4 w-4' />}
+                                <span>Sign out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </header>
 
             {/* Command Palette */}
             <CommandPalette isOpen={isCommandPaletteOpen} onClose={() => setIsCommandPaletteOpen(false)} />
-
-            {/* Notifications Panel */}
-            <NotificationsPanel isOpen={isNotificationsPanelOpen} onClose={() => setIsNotificationsPanelOpen(false)} />
-        </>
+        </TooltipProvider>
     );
 };
 

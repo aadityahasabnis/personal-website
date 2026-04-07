@@ -99,7 +99,7 @@
         "@types/three": "^0.183.1",
         "@types/turndown": "^5.0.6",
         "babel-plugin-react-compiler": "1.0.0",
-        "eslint": "^10.1.0",
+        "eslint": "^9.39.4",
         "eslint-config-next": "16.2.1",
         "mongodb-memory-server": "^11.0.1",
         "tailwindcss": "^4.2.2",
