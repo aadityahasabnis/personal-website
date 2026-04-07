@@ -1,5 +1,8 @@
-import { getRecentArticles } from '@/server/queries/content';
-import { SITE_CONFIG } from '@/constants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
+import {
+    getPublishedArticleByPath,
+    getPublishedArticleStaticPaths,
+} from '@/server/new/public/content/article';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600; // 1 hour
@@ -13,20 +16,80 @@ function escapeXml(str: string): string {
         .replace(/'/g, '&apos;');
 }
 
-function buildRfc822Date(date: Date | undefined): string {
+function buildRfc822Date(date: Date | string | undefined | null): string {
     if (!date) return new Date().toUTCString();
     return new Date(date).toUTCString();
 }
 
+interface IRssArticle {
+    topicSlug: string;
+    articleSlug: string;
+    title: string;
+    description: string;
+    tags: string[];
+    coverImage: string | null;
+    publishedAt: string | null;
+    updatedAt: string;
+}
+
+const loadRecentPublishedArticles = async (limit: number): Promise<IRssArticle[]> => {
+    const pathsResult = await getPublishedArticleStaticPaths();
+    if (!pathsResult.success) return [];
+
+    const detailResults = await Promise.all(
+        pathsResult.data.map((path) =>
+            getPublishedArticleByPath(path.topicSlug, path.articleSlug).then((result) => ({
+                result,
+                topicSlug: path.topicSlug,
+                articleSlug: path.articleSlug,
+            }))
+        )
+    );
+
+    const articles: IRssArticle[] = [];
+
+    for (const row of detailResults) {
+        if (!row.result.success || !row.result.data) {
+            continue;
+        }
+
+        articles.push({
+            topicSlug: row.topicSlug,
+            articleSlug: row.articleSlug,
+            title: row.result.data.title,
+            description: row.result.data.seo?.description ?? row.result.data.description,
+            tags: row.result.data.tags,
+            coverImage: row.result.data.seo?.ogImage ?? row.result.data.coverImage,
+            publishedAt: row.result.data.publishedAt,
+            updatedAt: row.result.data.updatedAt,
+        });
+    }
+
+    return articles
+        .sort((a, b) => {
+            const aTime = Date.parse(a.publishedAt ?? a.updatedAt);
+            const bTime = Date.parse(b.publishedAt ?? b.updatedAt);
+            return bTime - aTime;
+        })
+        .slice(0, limit);
+};
+
 export async function GET(): Promise<Response> {
-    const articles = await getRecentArticles(50);
+    if (!SITE_CONFIG.seo.rssEnabled) {
+        return new Response('RSS feed is disabled', { status: 404 });
+    }
+
+    const articles = await loadRecentPublishedArticles(50);
 
     const items = articles
         .map((article) => {
-            const url = `${SITE_CONFIG.url}/articles/${article.topicSlug}/${article.slug}`;
+            const url = `${SITE_CONFIG.url}/articles/${article.topicSlug}/${article.articleSlug}`;
             const title = escapeXml(article.title);
             const description = escapeXml(article.description ?? '');
             const pubDate = buildRfc822Date(article.publishedAt);
+            const categories = article.tags.length
+                ? article.tags.map((tag) => `<category>${escapeXml(tag)}</category>`).join('\n      ')
+                : '';
             const coverImage = article.coverImage
                 ? `<enclosure url="${escapeXml(article.coverImage)}" type="image/jpeg" />`
                 : '';
@@ -39,14 +102,14 @@ export async function GET(): Promise<Response> {
       <description>${description}</description>
       <pubDate>${pubDate}</pubDate>
       <author>${escapeXml(SITE_CONFIG.author.email)} (${escapeXml(SITE_CONFIG.author.name)})</author>
-      ${article.tags?.map((tag) => `<category>${escapeXml(tag)}</category>`).join('\n      ') ?? ''}
+            ${categories}
       ${coverImage}
     </item>`.trim();
         })
         .join('\n\n  ');
 
-    const lastBuildDate = articles[0]?.publishedAt
-        ? buildRfc822Date(articles[0].publishedAt)
+        const lastBuildDate = articles[0]
+                ? buildRfc822Date(articles[0].publishedAt ?? articles[0].updatedAt)
         : buildRfc822Date(new Date());
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -58,7 +121,7 @@ export async function GET(): Promise<Response> {
     <title>${escapeXml(SITE_CONFIG.name)}</title>
     <link>${SITE_CONFIG.url}</link>
     <description>${escapeXml(SITE_CONFIG.description)}</description>
-    <language>en-us</language>
+        <language>${escapeXml(SITE_CONFIG.seo.feedLanguage)}</language>
     <managingEditor>${escapeXml(SITE_CONFIG.author.email)} (${escapeXml(SITE_CONFIG.author.name)})</managingEditor>
     <webMaster>${escapeXml(SITE_CONFIG.author.email)} (${escapeXml(SITE_CONFIG.author.name)})</webMaster>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>

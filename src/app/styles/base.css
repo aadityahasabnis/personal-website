@@ -1,0 +1,25 @@
+/* ===== BASE LAYER ===== */
+@layer base {
+    * {
+        border-color: var(--border-color);
+        box-sizing: border-box;
+    }
+
+    html {
+        scroll-behavior: smooth;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+        background-color: var(--bg);
+        color: var(--fg);
+        font-family: var(--font-sans);
+        overflow-x: hidden;
+    }
+
+    ::selection {
+        background-color: var(--accent);
+        color: var(--accent-fg);
+    }
+}

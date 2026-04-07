@@ -7,13 +7,15 @@ import { memo } from 'react';
  * Creates a beautiful, subtle animated background effect
  */
 export const AmbientBackground = memo(() => {
-  return (
-    <div className="ambient-bg" aria-hidden="true">
-      <div className="ambient-sphere ambient-sphere-1" />
-      <div className="ambient-sphere ambient-sphere-2" />
-      <div className="ambient-sphere ambient-sphere-3" />
-    </div>
-  );
+    return (
+        <div className='ambient-bg' aria-hidden='true'>
+            <div className='ambient-sphere ambient-sphere-1' />
+            <div className='ambient-sphere ambient-sphere-2' />
+            <div className='ambient-sphere ambient-sphere-3' />
+            <div className='ambient-sphere ambient-sphere-4' />
+            <div className='ambient-sphere ambient-sphere-5' />
+        </div>
+    );
 });
 
 AmbientBackground.displayName = 'AmbientBackground';

@@ -1,116 +1,113 @@
 import type { Metadata } from 'next';
 
-import { getAllTopics, getFeaturedTopics } from '@/server/queries/topics';
-import { SITE_CONFIG } from '@/constants';
+import { ScrollToTop } from '@/components/common/ScrollToTop';
+import { TopicGroup } from '@/components/content/article/TopicGroup';
 import { PageHeader } from '@/components/layout/PageHeader';
-import { TopicGrid } from '@/components/content/TopicGrid';
-import type { ITopic } from '@/interfaces';
+import { FadeIn } from '@/components/motion/FadeIn';
+import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema } from '@/lib/seo';
+import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
+import { FileText, StarIcon } from 'lucide-react';
 
-const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
-
-export const metadata: Metadata = {
-    title: 'Articles',
-    description,
-    keywords: ['articles', 'tutorials', 'software development', 'web development', 'DSA', SITE_CONFIG.author.name].join(', '),
-    alternates: {
-        canonical: `${SITE_CONFIG.url}/articles`,
-    },
-    openGraph: {
-        title: `Articles | ${SITE_CONFIG.name}`,
-        description,
-        url: `${SITE_CONFIG.url}/articles`,
-        siteName: SITE_CONFIG.name,
-        locale: 'en_US',
-        type: 'website',
-        images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Articles' }],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: `Articles | ${SITE_CONFIG.name}`,
-        description,
-        creator: SITE_CONFIG.seo.twitterHandle,
-        site: SITE_CONFIG.seo.twitterHandle,
-        images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
-    },
-};
-
-// ISR: articles listing regenerates every 10 minutes; on-demand via /api/revalidate
 export const revalidate = 600;
 
-/**
- * Transform MongoDB topic to plain object for client components
- */
-function transformTopic(topic: ITopic): ITopic {
-    return {
-        slug: topic.slug,
-        title: topic.title,
-        description: topic.description,
-        icon: topic.icon,
-        coverImage: topic.coverImage,
-        order: topic.order,
-        published: topic.published,
-        featured: topic.featured,
-        metadata: {
-            articleCount: topic.metadata.articleCount,
-            lastUpdated: topic.metadata.lastUpdated,
-        },
-        createdAt: topic.createdAt,
-        updatedAt: topic.updatedAt,
-    };
-}
+const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
+const FEATURED_TOPICS_DEFAULT_COUNT = 2 * 1; // Always should be multiple of 2
+const TOPICS_PAGE_LIMIT = 200;
 
-/**
- * Articles Page - Topics Grid
- * 
- * Fully static page listing all topics with their article counts.
- * No loading states - content is pre-rendered at build time.
- */
-export default async function ArticlesPage() {
-    // Fetch all data at build time
-    const [featuredTopics, allTopics] = await Promise.all([
-        getFeaturedTopics(3),
-        getAllTopics(),
+export const metadata: Metadata = createPageMetadata({
+    title: 'Articles',
+    description,
+    canonicalPath: '/articles',
+    keywords: ['articles', 'tutorials', 'software development', 'web development', 'DSA', SITE_CONFIG.author.name],
+    includeSocial: true,
+    socialType: 'website',
+    robots: {
+        index: true,
+        follow: true,
+    },
+});
+
+// Load featured and all topic collections for the hub page.
+
+const getArticlesHubData = async (featuredCount = FEATURED_TOPICS_DEFAULT_COUNT): Promise<{ featuredTopics: IPublicTopicSummary[]; allTopics: IPublicTopicSummary[] }> => {
+    const [featuredResult, allResult] = await Promise.all([
+        getPublishedArticleTopics({
+            featuredOnly: true,
+            pagination: {
+                offset: 0,
+                limit: featuredCount,
+            },
+        }),
+        getPublishedArticleTopics({
+            pagination: {
+                offset: 0,
+                limit: TOPICS_PAGE_LIMIT,
+            },
+        }),
     ]);
 
-    const transformedFeatured = featuredTopics.map(transformTopic);
-    const transformedAll = allTopics.map(transformTopic);
+    const featuredTopics = featuredResult.success ? featuredResult.data : [];
+    const allTopicsRaw = allResult.success ? allResult.data : [];
+    const featuredIds = new Set(featuredTopics.map((topic) => topic.id));
+
+    return {
+        featuredTopics,
+        allTopics: allTopicsRaw.filter((topic) => !featuredIds.has(topic.id)),
+    };
+};
+
+export default async function Page() {
+    const { featuredTopics, allTopics } = await getArticlesHubData();
+    const allUniqueTopics = [...featuredTopics, ...allTopics];
+
+    const breadcrumbSchema = generateBreadcrumbSchema([
+        { name: 'Articles', url: `${SITE_CONFIG.url}/articles` },
+    ]);
+
+    const collectionSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        '@id': `${SITE_CONFIG.url}/articles`,
+        name: 'Technical Articles & Guides',
+        description,
+        url: `${SITE_CONFIG.url}/articles`,
+        mainEntity: {
+            '@type': 'ItemList',
+            numberOfItems: allUniqueTopics.length,
+            itemListElement: allUniqueTopics.map((topic, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                url: `${SITE_CONFIG.url}/articles/${topic.slug}`,
+                name: topic.title,
+                description: topic.description,
+            })),
+        },
+    };
+
+    const combinedSchema = combineSchemas(breadcrumbSchema, collectionSchema);
 
     return (
-        <div className="max-w-6xl mx-auto px-6 lg:px-8 py-24 md:py-32">
+        <>
+            <JsonLd data={combinedSchema} />
+            <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             {/* Page Header */}
             <PageHeader
-                label="Knowledge Base"
-                title="Articles"
-                description="Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides."
+                title='Articles'
+                label='Knowledge Based'
+                description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
             />
 
-            {/* Featured Topics */}
-            {transformedFeatured.length > 0 && (
-                <section className="mb-16">
-                    <h2 className="text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6">
-                        Featured Topics
-                    </h2>
-                    <TopicGrid topics={transformedFeatured} />
+            <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                <section className='flex flex-col gap-8'>
+                    {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
+                    <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
                 </section>
-            )}
+            </FadeIn>
 
-            {/* All Topics Grid */}
-            <section>
-                {transformedAll.length === 0 ? (
-                    <div className="text-center py-20">
-                        <p className="text-[var(--fg-muted)] text-lg">
-                            No topics yet. Check back soon.
-                        </p>
-                    </div>
-                ) : (
-                    <>
-                        <h2 className="text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6">
-                            All Topics
-                        </h2>
-                        <TopicGrid topics={transformedAll} />
-                    </>
-                )}
-            </section>
-        </div>
+            <ScrollToTop />
+            </main>
+        </>
     );
 }

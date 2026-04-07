@@ -1,272 +1,224 @@
-/**
- * Professional Storage Utility
- * 
- * Implements a centralized, structured approach to browser storage.
- * Uses namespaced keys (rc:: pattern) similar to major websites.
- * 
- * Storage Strategy:
- * - localStorage: Persistent user preferences (likes, avatar, theme)
- * - sessionStorage: Temporary session data (viewed pages this session)
- * - Cookies: Auth tokens only (handled by NextAuth)
- * 
- * Key Naming Convention:
- * - rc::u - User data (profile, preferences)
- * - rc::s - Stats tracking (likes, views dedup)
- * - rc::c - Comment/subscriber data
- */
+// =================================================
+// Storage — namespaced localStorage wrapper
+// Client-side only (rc:: prefix = "reader cache")
+// =================================================
 
-// ===== STORAGE KEYS =====
+// =================================================
+// Keys
+// =================================================
 
 export const STORAGE_KEYS = {
-    // User data namespace (rc::u)
-    USER: {
-        PROFILE: 'rc::u:profile',          // { name, email, avatar }
-        PREFERENCES: 'rc::u:preferences',  // { theme, etc. }
-    },
-    // Stats namespace (rc::s)
-    STATS: {
-        LIKES: 'rc::s:likes',              // Record<slug, timestamp>
-        VIEWS: 'rc::s:views',              // Record<slug, timestamp>
-        COMMENT_UPVOTES: 'rc::s:comment-upvotes',  // Record<commentId, timestamp>
-    },
-    // Comment namespace (rc::c)  
-    COMMENT: {
-        AUTHOR: 'rc::c:author',            // { name, email, avatar }
-    },
+    USER:    { PROFILE: 'rc::u:profile', PREFERENCES: 'rc::u:prefs'},
+    STATS:   { LIKES: 'rc::s:likes', VIEWS: 'rc::s:views', COMMENT_UPVOTES: 'rc::s:upvotes' },
+    COMMENT: { AUTHOR: 'rc::c:author', OWN_COMMENTS: 'rc::c:own' },
 } as const;
 
-// ===== TYPE DEFINITIONS =====
+// =================================================
+// Types
+// =================================================
 
-export interface IUserProfile {
-    name: string;
-    email: string;
-    avatar?: string;            // Avatar identifier (e.g., "avatar-1", "avatar-5")
-    subscribedAt?: string;      // ISO date string
-}
+export interface IUserProfile   { name: string; email: string; avatar?: string; subscribedAt?: string }
+export interface ICommentAuthor { name: string; email: string; avatar: string }
+export interface IStatsRecord   { [key: string]: number }
 
-export interface IUserPreferences {
-    theme?: 'light' | 'dark' | 'system';
-}
-
-export interface IStatsRecord {
-    [slug: string]: number;     // timestamp of action
-}
-
-export interface ICommentAuthor {
-    name: string;
-    email: string;
-    avatar: string;
-}
-
-// ===== STORAGE CLASS =====
+// =================================================
+// Storage class
+// =================================================
 
 class SiteStorage {
-    private storage: Storage | null = null;
-
-    constructor() {
-        if (typeof window !== 'undefined') {
-            this.storage = window.localStorage;
-        }
+    private get storage(): Storage | null {
+        return typeof window !== 'undefined' ? window.localStorage : null;
     }
 
-    // ===== GENERIC METHODS =====
+    private namespacedId(id: string, namespace?: string): string {
+        return namespace ? `${namespace}:${id}` : id;
+    }
 
     private get<T>(key: string): T | null {
-        if (!this.storage) return null;
         try {
-            const item = this.storage.getItem(key);
-            return item ? JSON.parse(item) : null;
+            const raw = this.storage?.getItem(key) ?? 'null';
+            return JSON.parse(raw) as T;
         } catch {
             return null;
         }
     }
 
-    private set<T>(key: string, value: T): void {
-        if (!this.storage) return;
+    private set<T>(key: string, val: T): void {
         try {
-            this.storage.setItem(key, JSON.stringify(value));
-        } catch (error) {
-            console.warn('Storage quota exceeded or unavailable:', error);
+            this.storage?.setItem(key, JSON.stringify(val));
+        } catch {
+            // Ignore storage quota/availability failures to avoid breaking UX flows.
         }
     }
 
-    private remove(key: string): void {
-        if (!this.storage) return;
-        this.storage.removeItem(key);
+    remove(key: string): void {
+        this.storage?.removeItem(key);
     }
 
-    // ===== USER PROFILE =====
-
-    getUserProfile(): IUserProfile | null {
+    // User
+    getProfile(): IUserProfile | null {
         return this.get<IUserProfile>(STORAGE_KEYS.USER.PROFILE);
     }
 
+    setProfile(p: IUserProfile): void {
+        this.set(STORAGE_KEYS.USER.PROFILE, p);
+    }
+
+    updateProfile(p: Partial<IUserProfile>): void {
+        this.setProfile({
+            ...(this.getProfile() ?? { name: '', email: '' }),
+            ...p,
+        });
+    }
+
+    // Backward-compatible aliases used in legacy components
+    getUserProfile(): IUserProfile | null {
+        return this.getProfile();
+    }
+
     setUserProfile(profile: IUserProfile): void {
-        this.set(STORAGE_KEYS.USER.PROFILE, profile);
+        this.setProfile(profile);
     }
 
-    updateUserProfile(partial: Partial<IUserProfile>): void {
-        const current = this.getUserProfile() || { name: '', email: '', avatar: '' };
-        this.setUserProfile({ ...current, ...partial });
+    updateUserProfile(profile: Partial<IUserProfile>): void {
+        this.updateProfile(profile);
     }
 
-    // ===== COMMENT AUTHOR =====
-
+    // Comment author
     getCommentAuthor(): ICommentAuthor | null {
         return this.get<ICommentAuthor>(STORAGE_KEYS.COMMENT.AUTHOR);
     }
 
-    setCommentAuthor(author: ICommentAuthor): void {
-        this.set(STORAGE_KEYS.COMMENT.AUTHOR, author);
+    setCommentAuthor(a: ICommentAuthor): void {
+        this.set(STORAGE_KEYS.COMMENT.AUTHOR, a);
     }
 
     hasCommentAuthor(): boolean {
-        return this.getCommentAuthor() !== null;
+        return Boolean(this.getCommentAuthor());
     }
 
-    // ===== LIKES TRACKING =====
-
-    getLikes(): IStatsRecord {
-        return this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) || {};
+    clearCommentAuthor(): void {
+        this.remove(STORAGE_KEYS.COMMENT.AUTHOR);
     }
 
-    hasLiked(slug: string): boolean {
-        const likes = this.getLikes();
-        return slug in likes;
+    // Own comments tracking (to prevent self-upvoting)
+    isOwnComment(commentId: string): boolean {
+        const ownComments = this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
+        return ownComments.includes(commentId);
     }
 
-    setLiked(slug: string): void {
-        const likes = this.getLikes();
-        likes[slug] = Date.now();
-        this.set(STORAGE_KEYS.STATS.LIKES, likes);
-    }
-
-    removeLiked(slug: string): void {
-        const likes = this.getLikes();
-        delete likes[slug];
-        this.set(STORAGE_KEYS.STATS.LIKES, likes);
-    }
-
-    // ===== COMMENT UPVOTES TRACKING =====
-
-    getCommentUpvotes(): IStatsRecord {
-        return this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) || {};
-    }
-
-    hasUpvotedComment(commentId: string): boolean {
-        const upvotes = this.getCommentUpvotes();
-        return commentId in upvotes;
-    }
-
-    setCommentUpvoted(commentId: string): void {
-        const upvotes = this.getCommentUpvotes();
-        upvotes[commentId] = Date.now();
-        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, upvotes);
-    }
-
-    removeCommentUpvote(commentId: string): void {
-        const upvotes = this.getCommentUpvotes();
-        delete upvotes[commentId];
-        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, upvotes);
-    }
-
-    // ===== VIEWS TRACKING (Session-based deduplication) =====
-
-    getViews(): IStatsRecord {
-        return this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) || {};
-    }
-
-    hasViewedRecently(slug: string, hours: number = 1): boolean {
-        const views = this.getViews();
-        const lastViewed = views[slug];
-        if (!lastViewed) return false;
-
-        const hourInMs = hours * 60 * 60 * 1000;
-        return Date.now() - lastViewed < hourInMs;
-    }
-
-    setViewed(slug: string): void {
-        const views = this.getViews();
-        views[slug] = Date.now();
-        this.set(STORAGE_KEYS.STATS.VIEWS, views);
-
-        // Cleanup old entries (older than 7 days)
-        this.cleanupOldViews();
-    }
-
-    private cleanupOldViews(): void {
-        const views = this.getViews();
-        const weekInMs = 7 * 24 * 60 * 60 * 1000;
-        const now = Date.now();
-
-        const cleaned: IStatsRecord = {};
-        for (const [slug, timestamp] of Object.entries(views)) {
-            if (now - timestamp < weekInMs) {
-                cleaned[slug] = timestamp;
-            }
+    addOwnComment(commentId: string): void {
+        const ownComments = this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
+        if (!ownComments.includes(commentId)) {
+            ownComments.push(commentId);
+            this.set(STORAGE_KEYS.COMMENT.OWN_COMMENTS, ownComments);
         }
-
-        this.set(STORAGE_KEYS.STATS.VIEWS, cleaned);
     }
 
-    // ===== PREFERENCES =====
-
-    getPreferences(): IUserPreferences {
-        return this.get<IUserPreferences>(STORAGE_KEYS.USER.PREFERENCES) || {};
+    getOwnComments(): string[] {
+        return this.get<string[]>(STORAGE_KEYS.COMMENT.OWN_COMMENTS) ?? [];
     }
 
-    setPreferences(prefs: Partial<IUserPreferences>): void {
-        const current = this.getPreferences();
-        this.set(STORAGE_KEYS.USER.PREFERENCES, { ...current, ...prefs });
+    // Likes
+    hasLiked(id: string, namespace?: string): boolean {
+        const key = this.namespacedId(id, namespace);
+        return key in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {});
     }
 
-    // ===== UTILITY =====
+    setLiked(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {};
+        data[key] = Date.now();
+        this.set(STORAGE_KEYS.STATS.LIKES, data);
+    }
 
-    /**
-     * Clear all site storage (for debugging/logout)
-     */
+    removeLiked(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.LIKES) ?? {};
+        delete data[key];
+        this.set(STORAGE_KEYS.STATS.LIKES, data);
+    }
+
+    // Comment upvotes
+    hasUpvoted(id: string): boolean {
+        return id in (this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {});
+    }
+
+    setUpvoted(id: string): void {
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {};
+        data[id] = Date.now();
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, data);
+    }
+
+    removeUpvote(id: string): void {
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.COMMENT_UPVOTES) ?? {};
+        delete data[id];
+        this.set(STORAGE_KEYS.STATS.COMMENT_UPVOTES, data);
+    }
+
+    // Backward-compatible aliases used in current comment components
+    hasUpvotedComment(id: string): boolean {
+        return this.hasUpvoted(id);
+    }
+
+    setCommentUpvoted(id: string): void {
+        this.setUpvoted(id);
+    }
+
+    removeCommentUpvote(id: string): void {
+        this.removeUpvote(id);
+    }
+
+    // Views (with TTL dedup)
+    hasViewedRecently(id: string, hours = 1, namespace?: string): boolean {
+        const key = this.namespacedId(id, namespace);
+        const ts = (this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {})[key];
+        return ts ? Date.now() - ts < hours * 3600000 : false;
+    }
+
+    setViewed(id: string, namespace?: string): void {
+        const key = this.namespacedId(id, namespace);
+        const data = this.get<IStatsRecord>(STORAGE_KEYS.STATS.VIEWS) ?? {};
+        data[key] = Date.now();
+
+        // Prune entries older than 7 days
+        const cutoff = Date.now() - 7 * 86400000;
+        this.set(
+            STORAGE_KEYS.STATS.VIEWS,
+            Object.fromEntries(Object.entries(data).filter(([, timestamp]) => timestamp > cutoff))
+        );
+    }
+
     clearAll(): void {
-        Object.values(STORAGE_KEYS.USER).forEach(key => this.remove(key));
-        Object.values(STORAGE_KEYS.STATS).forEach(key => this.remove(key));
-        Object.values(STORAGE_KEYS.COMMENT).forEach(key => this.remove(key));
-    }
-
-    /**
-     * Check if storage is available
-     */
-    isAvailable(): boolean {
-        return this.storage !== null;
+        [STORAGE_KEYS.USER.PROFILE, STORAGE_KEYS.USER.PREFERENCES,
+         STORAGE_KEYS.STATS.LIKES, STORAGE_KEYS.STATS.VIEWS, STORAGE_KEYS.STATS.COMMENT_UPVOTES,
+         STORAGE_KEYS.COMMENT.AUTHOR, STORAGE_KEYS.COMMENT.OWN_COMMENTS].forEach(k => this.remove(k));
     }
 }
 
-// ===== SINGLETON EXPORT =====
-
 export const siteStorage = new SiteStorage();
 
-// ===== AVATAR OPTIONS =====
-
+// =================================================
+// Avatar options
+// =================================================
+// TODO: use the cdn for the images 
 export const AVATAR_OPTIONS = [
-    { id: 'avatar-1', image: '/avatars/avatar-2.png', label: 'Working Man' },
-    { id: 'avatar-2', image: '/avatars/avatar-1.png', label: 'Working Women' },
-    { id: 'avatar-3', image: '/avatars/avatar-3.png', label: 'Man with Beard' },
-    { id: 'avatar-4', image: '/avatars/avatar-4.png', label: 'Funcky Boy' },
-    { id: 'avatar-5', image: '/avatars/avatar-5.png', label: 'British Women' },
-    { id: 'avatar-6', image: '/avatars/avatar-6.png', label: 'Middle Aged Man' },
-    { id: 'avatar-7', image: '/avatars/avatar-7.png', label: 'Women in Saree' },
-    { id: 'avatar-8', image: '/avatars/avatar-8.png', label: 'Old Man' },
-    { id: 'avatar-9', image: '/avatars/avatar-9.png', label: 'Exciting Girl' },
-    { id: 'avatar-10', image: '/avatars/avatar-10.png', label: 'Magical Girl' },
-    { id: 'avatar-11', image: '/avatars/avatar-11.png', label: 'Astronaut' },
-    { id: 'avatar-12', image: '/avatars/avatar-12.png', label: 'Girl With Stick' },
-    { id: 'avatar-13', image: '/avatars/avatar-13.png', label: 'Long Hair Man' },
+    { id: 'avatar-1',  image: '/avatars/avatar-2.png',  label: 'Working Man'    },
+    { id: 'avatar-2',  image: '/avatars/avatar-1.png',  label: 'Working Women'  },
+    { id: 'avatar-3',  image: '/avatars/avatar-3.png',  label: 'Man with Beard' },
+    { id: 'avatar-4',  image: '/avatars/avatar-4.png',  label: 'Funky Boy'      },
+    { id: 'avatar-5',  image: '/avatars/avatar-5.png',  label: 'British Women'  },
+    { id: 'avatar-6',  image: '/avatars/avatar-6.png',  label: 'Middle Aged Man'},
+    { id: 'avatar-7',  image: '/avatars/avatar-7.png',  label: 'Women in Saree' },
+    { id: 'avatar-8',  image: '/avatars/avatar-8.png',  label: 'Old Man'        },
+    { id: 'avatar-9',  image: '/avatars/avatar-9.png',  label: 'Exciting Girl'  },
+    { id: 'avatar-10', image: '/avatars/avatar-10.png', label: 'Magical Girl'   },
+    { id: 'avatar-11', image: '/avatars/avatar-11.png', label: 'Astronaut'      },
+    { id: 'avatar-12', image: '/avatars/avatar-12.png', label: 'Girl With Stick'},
+    { id: 'avatar-13', image: '/avatars/avatar-13.png', label: 'Long Hair Man'  },
 ] as const;
 
 export type AvatarId = typeof AVATAR_OPTIONS[number]['id'];
 
-export const getAvatarById = (id: string): typeof AVATAR_OPTIONS[number] | undefined => {
-    return AVATAR_OPTIONS.find(a => a.id === id);
-};
-
-export const getRandomAvatar = (): typeof AVATAR_OPTIONS[number] => {
-    return AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];
-};
+export const getAvatarById = (id: string) => AVATAR_OPTIONS.find(a => a.id === id);
+export const getRandomAvatar = () => AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)];

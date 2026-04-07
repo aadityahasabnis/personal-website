@@ -3,31 +3,24 @@ import { ArrowLeft } from 'lucide-react';
 
 import { TopicForm } from '../TopicForm';
 
-/**
- * Create New Topic Page
- */
 const NewTopicPage = (): React.ReactElement => {
     return (
-        <div className="max-w-2xl mx-auto space-y-6">
-            {/* Header */}
+        <div className="mx-auto max-w-2xl space-y-6 pb-6">
             <div>
-                <Link 
+                <Link
                     href="/admin/topics"
-                    className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+                    className="mb-4 inline-flex items-center gap-2 text-label text-muted-foreground transition-fast hover:text-foreground"
                 >
-                    <ArrowLeft className="h-4 w-4" />
+                    <ArrowLeft className="size-4" />
                     Back to Topics
                 </Link>
-                <h1 className="text-2xl font-bold">Create New Topic</h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-h1 text-foreground">Create New Topic</h1>
+                <p className="mt-1 text-regular text-muted-foreground">
                     Topics help organize your articles into categories.
                 </p>
             </div>
 
-            {/* Form */}
-            <div className="rounded-xl border bg-card p-6">
-                <TopicForm />
-            </div>
+            <TopicForm />
         </div>
     );
 };

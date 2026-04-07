@@ -1,231 +1,497 @@
 'use client';
 
-import { useState, useTransition, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Save } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
+import { AdminEntityForm, type IFieldConfig, type IStepConfig } from '@/components/form';
+import { getSeoFieldConfig } from '@/components/form/config/seoFields';
+import type { IFormData, IHandleChange } from '@/components/form/form';
+import { PROJECT_STATUS, PUBLISH_STATUS, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
+import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { slugify } from '@/lib/utils';
-import { createProject, updateProject } from '@/server/actions/projects';
-import type { IProject } from '@/interfaces';
-import { RichTextEditor } from '@/components/admin/RichTextEditor';
-import {
-    FormInput,
-    FormTextarea,
-    FormSelect,
-    FormCheckbox,
-    TagInput,
-    FormSection,
-    FormActions,
-    FormError,
-} from '@/components/admin/form';
+import { createProject } from '@/server/new/admin/content/project/createProject';
+import type { IProjectCreateInput, IProjectEdit } from '@/server/new/admin/content/project/types';
+import { updateProject } from '@/server/new/admin/content/project/updateProject';
+
+// =============================================================
+// Form Data Type
+// =============================================================
+
+interface IProjectFormData extends IFormData {
+    // Step 1: Project Details
+    title: string;
+    slug: string;
+    description: string;
+    publishStatus: PublishStatusType;
+    featured: boolean;
+    order: number;
+    tags: string[];
+    coverImage: string;
+
+    // Step 2: Tech & Links
+    techStack: string[];
+    githubUrl: string;
+    liveUrl: string;
+    demoVideo: string;
+    gallery: string[];
+    status: ProjectStatusType | '';
+    startDate: string;
+    completedDate: string;
+
+    // Step 3: Content & SEO
+    body: string;
+    'seo.title': string;
+    'seo.description': string;
+    'seo.keywords': string[];
+    'seo.ogImage': string;
+    'seo.canonicalUrl': string;
+    'seo.noIndex': boolean;
+}
+
+interface IProjectFormSeed extends Partial<IProjectEdit> {
+    _id?: string;
+}
+
+// =============================================================
+// Payload helpers
+// =============================================================
+
+const estimateReadingTime = (html: string): number => {
+    const plain = html
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    if (!plain) return 0;
+    const words = plain.split(' ').filter(Boolean).length;
+    return Math.max(1, Math.ceil(words / 200));
+};
+
+type IProjectSeoPayload = Exclude<IProjectCreateInput['seo'], undefined>;
+
+const parseSeo = (data: IProjectFormData): IProjectSeoPayload => {
+    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
+    if (!title && !description && !keywords?.length && !ogImage && !canonicalUrl && !noIndex) return null;
+    return {
+        title: title || null,
+        description: description || null,
+        keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
+        ogImage: ogImage || null,
+        canonicalUrl: canonicalUrl || null,
+        noIndex: Boolean(noIndex),
+    };
+};
+
+// =============================================================
+// Step Field Builders
+// =============================================================
+
+const buildDetailsFields = (formData: IProjectFormData, isEditing: boolean): Array<IFieldConfig<IProjectFormData>> => [
+    {
+        fieldtype: 'group',
+        title: 'Project Details',
+        subText: 'Identity fields used for URL, listing cards, and metadata defaults.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'input',
+                name: 'title',
+                label: 'Title',
+                placeholder: 'e.g., Portfolio Website',
+                required: true,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'input',
+                name: 'slug',
+                label: 'Slug',
+                placeholder: 'portfolio-website',
+                value: !isEditing && formData.title && !formData.slug ? slugify(formData.title) : formData.slug,
+                required: true,
+                hint: 'Lowercase letters, numbers, and hyphens only. Auto-generated from title.',
+                allowCopy: true,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'textArea',
+                name: 'description',
+                label: 'Description',
+                placeholder: 'A brief summary shown in listings and metadata.',
+                required: true,
+                rows: 3,
+                colsize: 'full',
+            },
+            {
+                fieldtype: 'tagInput',
+                name: 'tags',
+                label: 'Tags',
+                placeholder: 'Type a tag and press Enter…',
+                maxTags: 10,
+                colsize: 3,
+            },
+            {
+                fieldtype: 'input',
+                name: 'coverImage',
+                label: 'Cover Image URL',
+                placeholder: 'https://example.com/cover.png',
+                type: 'url',
+                allowCopy: true,
+                colsize: 3,
+            },
+        ],
+    },
+    {
+        fieldtype: 'group',
+        title: 'Publishing',
+        subText: 'Control publication state and visibility.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'select',
+                name: 'publishStatus',
+                label: 'Publish Status',
+                required: true,
+                options: [
+                    { label: 'Draft', value: PUBLISH_STATUS.DRAFT },
+                    { label: 'Published', value: PUBLISH_STATUS.PUBLISHED },
+                    { label: 'Archived', value: PUBLISH_STATUS.ARCHIVED },
+                ],
+                colsize: 2,
+            },
+            {
+                fieldtype: 'input',
+                name: 'order',
+                label: 'Display Order',
+                type: 'number',
+                inputType: 'number',
+                hint: 'Lower numbers appear first. Default is 0.',
+                colsize: 2,
+            },
+            {
+                fieldtype: 'toggle',
+                name: 'featured',
+                label: 'Featured',
+                hint: 'Featured projects can be pinned in highlights.',
+                colsize: 2,
+            },
+        ],
+    },
+];
+
+const buildTechLinksFields = (_formData: IProjectFormData): Array<IFieldConfig<IProjectFormData>> => [
+    {
+        fieldtype: 'group',
+        title: 'Technology Stack',
+        subText: 'Technologies, frameworks, and tools used in this project.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'tagInput',
+                name: 'techStack',
+                label: 'Tech Stack',
+                placeholder: 'e.g., React, TypeScript, Node.js…',
+                maxTags: 20,
+                colsize: 'full',
+            },
+        ],
+    },
+    {
+        fieldtype: 'group',
+        title: 'Project Links',
+        subText: 'External URLs related to this project.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'input',
+                name: 'githubUrl',
+                label: 'GitHub URL',
+                placeholder: 'https://github.com/username/repo',
+                type: 'url',
+                allowCopy: true,
+                colsize: 3,
+            },
+            {
+                fieldtype: 'input',
+                name: 'liveUrl',
+                label: 'Live URL',
+                placeholder: 'https://example.com',
+                type: 'url',
+                allowCopy: true,
+                colsize: 3,
+            },
+            {
+                fieldtype: 'input',
+                name: 'demoVideo',
+                label: 'Demo Video URL',
+                placeholder: 'https://youtube.com/watch?v=...',
+                type: 'url',
+                allowCopy: true,
+                colsize: 'full',
+            },
+        ],
+    },
+    {
+        fieldtype: 'group',
+        title: 'Project Lifecycle',
+        subText: 'Track the status and timeline of the project.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'select',
+                name: 'status',
+                label: 'Lifecycle Status',
+                options: [
+                    { label: 'Not Set', value: '' },
+                    { label: 'In Progress', value: PROJECT_STATUS.IN_PROGRESS },
+                    { label: 'Live', value: PROJECT_STATUS.LIVE },
+                    { label: 'Archived', value: PROJECT_STATUS.ARCHIVED },
+                ],
+                hint: 'Current development/deployment status.',
+                colsize: 2,
+            },
+            {
+                fieldtype: 'input',
+                name: 'startDate',
+                label: 'Start Date',
+                type: 'date',
+                hint: 'When did work begin?',
+                colsize: 2,
+            },
+            {
+                fieldtype: 'input',
+                name: 'completedDate',
+                label: 'Completed Date',
+                type: 'date',
+                hint: 'When was it finished or launched?',
+                colsize: 2,
+            },
+        ],
+    },
+    {
+        fieldtype: 'group',
+        title: 'Gallery',
+        subText: 'Add screenshot URLs for the project gallery (one per line or comma-separated).',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'tagInput',
+                name: 'gallery',
+                label: 'Gallery Images',
+                placeholder: 'Paste image URL and press Enter…',
+                maxTags: 10,
+                colsize: 'full',
+            },
+        ],
+    },
+];
+
+const buildContentSeoFields = (formData: IProjectFormData): Array<IFieldConfig<IProjectFormData>> => [
+    {
+        fieldtype: 'group',
+        title: 'Project Content',
+        subText: 'Use the rich editor for detailed project description and documentation.',
+        colsize: 'full',
+        fields: [
+            {
+                fieldtype: 'authorly',
+                name: 'body',
+                label: 'Body',
+                required: true,
+                placeholder: 'Describe your project in detail…',
+                minHeight: '560px',
+                colsize: 'full',
+            },
+        ],
+    },
+    ...getSeoFieldConfig(formData, '/projects'),
+];
+
+// =============================================================
+// Step Validators
+// =============================================================
+
+const isDetailsValid = (formData: IProjectFormData): boolean => Boolean(formData.title.trim() && (formData.slug || slugify(formData.title)).trim() && formData.description.trim());
+
+const isTechLinksValid = (_formData: IProjectFormData): boolean => {
+    // Tech & Links step has no required fields
+    return true;
+};
+
+const isContentSeoValid = (formData: IProjectFormData): boolean => Boolean(formData.body.trim());
+
+// =============================================================
+// Props
+// =============================================================
 
 interface IProjectFormProps {
-    project?: IProject;
+    project?: IProjectFormSeed;
     isEditing?: boolean;
 }
 
-const STATUS_OPTIONS = [
-    { value: 'active', label: 'Active' },
-    { value: 'wip', label: 'Work in Progress' },
-    { value: 'archived', label: 'Archived' },
-];
+// =============================================================
+// ProjectForm
+// =============================================================
 
 export const ProjectForm = ({ project, isEditing = false }: IProjectFormProps): React.ReactElement => {
     const router = useRouter();
-    const [isPending, startTransition] = useTransition();
-    const [error, setError] = useState<string | null>(null);
+    const { showSuccess, showError, showLoading, dismiss } = useSnackbar();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Form state
-    const [title, setTitle] = useState(project?.title ?? '');
-    const [slug, setSlug] = useState(project?.slug ?? '');
-    const [description, setDescription] = useState(project?.description ?? '');
-    const [longDescription, setLongDescription] = useState(project?.longDescription ?? '');
-    const [coverImage, setCoverImage] = useState(project?.coverImage ?? '');
-    const [techStack, setTechStack] = useState<string[]>(project?.techStack ?? []);
-    const [tags, setTags] = useState<string[]>(project?.tags ?? []);
-    const [githubUrl, setGithubUrl] = useState(project?.githubUrl ?? '');
-    const [liveUrl, setLiveUrl] = useState(project?.liveUrl ?? '');
-    const [status, setStatus] = useState<string>(project?.status ?? 'active');
-    const [featured, setFeatured] = useState(project?.featured ?? false);
-    const [autoSlug, setAutoSlug] = useState(!isEditing);
+    // =============================================================
+    // Form State
+    // =============================================================
 
-    // Auto-generate slug
-    useEffect(() => {
-        if (autoSlug && title) setSlug(slugify(title));
-    }, [title, autoSlug]);
+    const initialData: IProjectFormData = {
+        // Step 1: Details
+        title: project?.title ?? '',
+        slug: project?.slug ?? '',
+        description: project?.description ?? '',
+        publishStatus: project?.publishStatus ?? PUBLISH_STATUS.DRAFT,
+        featured: project?.featured ?? false,
+        order: project?.order ?? 0,
+        tags: project?.tags ?? [],
+        coverImage: project?.coverImage ?? '',
 
-    // Word count
-    const wordCount = useMemo(() => 
-        longDescription.trim().split(/\s+/).filter(Boolean).length, 
-        [longDescription]
-    );
+        // Step 2: Tech & Links
+        techStack: project?.techStack ?? [],
+        githubUrl: project?.githubUrl ?? '',
+        liveUrl: project?.liveUrl ?? '',
+        demoVideo: project?.demoVideo ?? '',
+        gallery: project?.gallery ?? [],
+        status: project?.status ?? '',
+        startDate: project?.startDate ? project.startDate.split('T')[0] : '',
+        completedDate: project?.completedDate ? project.completedDate.split('T')[0] : '',
 
-    // Submit handler
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError(null);
-
-        if (techStack.length === 0) {
-            setError('At least one technology is required');
-            return;
-        }
-
-        startTransition(async () => {
-            const data = {
-                title,
-                slug,
-                description,
-                longDescription,
-                coverImage: coverImage || undefined,
-                techStack,
-                tags,
-                githubUrl: githubUrl || undefined,
-                liveUrl: liveUrl || undefined,
-                status: status as 'active' | 'wip' | 'archived',
-                featured,
-                order: project?.order ?? 0,
-            };
-
-            const result = isEditing && project
-                ? await updateProject(project.slug, data)
-                : await createProject(data);
-
-            if (result.success) {
-                router.push('/admin/projects');
-                router.refresh();
-            } else {
-                setError(result.error ?? 'Something went wrong');
-            }
-        });
+        // Step 3: Content & SEO
+        body: project?.body ?? '',
+        'seo.title': project?.seo?.title ?? '',
+        'seo.description': project?.seo?.description ?? '',
+        'seo.keywords': project?.seo?.keywords ?? [],
+        'seo.ogImage': project?.seo?.ogImage ?? '',
+        'seo.canonicalUrl': project?.seo?.canonicalUrl ?? '',
+        'seo.noIndex': project?.seo?.noIndex ?? false,
     };
 
+    const { formData, handleChange, setFormData, isModified, resetForm, submitBtnRef } = useFormOperations<IProjectFormData>(initialData);
+
+    // =============================================================
+    // Step Configuration
+    // =============================================================
+
+    const steps: Array<IStepConfig<IProjectFormData>> = useMemo(
+        () => [
+            {
+                id: 'details',
+                label: 'Project Details',
+                description: 'Title, slug & status',
+                fields: (fd: IProjectFormData, _hc: IHandleChange) => buildDetailsFields(fd, isEditing),
+                validate: isDetailsValid,
+                errorMessage: 'Please fill in the required fields (title, slug, description).',
+            },
+            {
+                id: 'techLinks',
+                label: 'Tech & Links',
+                description: 'Stack, URLs & lifecycle',
+                fields: (fd: IProjectFormData, _hc: IHandleChange) => buildTechLinksFields(fd),
+                validate: isTechLinksValid,
+                errorMessage: 'Please check the Tech & Links fields.',
+            },
+            {
+                id: 'contentSeo',
+                label: 'Content & SEO',
+                description: 'Body & optimization',
+                fields: (fd: IProjectFormData, _hc: IHandleChange) => buildContentSeoFields(fd),
+                validate: isContentSeoValid,
+                errorMessage: 'Please add content to your project.',
+            },
+        ],
+        [isEditing],
+    );
+
+    // =============================================================
+    // Handlers
+    // =============================================================
+
+    const handleValidationError = (step: IStepConfig<IProjectFormData>) => {
+        showError('Validation Error', step.errorMessage ?? 'Please fill in all required fields.');
+    };
+
+    const handleSubmit = async (data: IProjectFormData) => {
+        setIsSubmitting(true);
+        const loadingToast = showLoading(isEditing ? 'Updating project...' : 'Creating project...');
+
+        try {
+            const projectId = project?.id ?? project?._id;
+            const resolvedSlug = data.slug || slugify(data.title);
+            const readingTime = estimateReadingTime(data.body);
+
+            const payload: IProjectCreateInput = {
+                slug: resolvedSlug,
+                title: data.title,
+                description: data.description,
+                body: data.body,
+                tags: data.tags,
+                coverImage: data.coverImage || null,
+                readingTime,
+                publishStatus: data.publishStatus,
+                featured: Boolean(data.featured),
+                seo: parseSeo(data),
+                techStack: data.techStack,
+                githubUrl: data.githubUrl || null,
+                liveUrl: data.liveUrl || null,
+                demoVideo: data.demoVideo || null,
+                gallery: data.gallery,
+                status: data.status || null,
+                startDate: data.startDate || null,
+                completedDate: data.completedDate || null,
+                order: Number(data.order) || 0,
+            };
+
+            const response = isEditing && projectId ? await updateProject(projectId, payload) : await createProject(payload);
+
+            dismiss(loadingToast);
+
+            if (!response.success) {
+                showError(response.error, 'Please check your inputs and try again.');
+                return;
+            }
+
+            showSuccess(response.message ?? (isEditing ? 'Project updated successfully' : 'Project created successfully'), 'Redirecting to projects list...');
+
+            setTimeout(() => {
+                router.push('/admin/projects');
+                router.refresh();
+            }, 1000);
+        } catch {
+            dismiss(loadingToast);
+            showError('An unexpected error occurred', 'Please try again or contact support.');
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    // =============================================================
+    // Render
+    // =============================================================
+
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <FormError message={error} />
-
-            <FormSection title="Project Details">
-                <FormInput
-                    label="Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="e.g., Personal Portfolio Website"
-                    required
-                    minLength={3}
-                    maxLength={100}
-                />
-
-                <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <label className="text-sm font-medium">
-                            Slug <span className="text-destructive">*</span>
-                        </label>
-                        <FormCheckbox
-                            label="Auto-generate"
-                            checked={autoSlug}
-                            onChange={(e) => setAutoSlug(e.target.checked)}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground whitespace-nowrap">/projects/</span>
-                        <input
-                            type="text"
-                            value={slug}
-                            onChange={(e) => { setSlug(e.target.value); setAutoSlug(false); }}
-                            placeholder="personal-portfolio-website"
-                            required
-                            pattern="^[a-z0-9-]+$"
-                            className="flex-1 px-4 py-2 border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-ring"
-                        />
-                    </div>
-                    <p className="text-xs text-muted-foreground">Lowercase letters, numbers, and hyphens only</p>
-                </div>
-
-                <FormTextarea
-                    label="Short Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="A brief summary of this project..."
-                    required
-                    maxLength={160}
-                    showCount
-                    hint="Used for SEO and project cards"
-                />
-            </FormSection>
-
-            <FormSection title="Long Description">
-                <RichTextEditor
-                    value={longDescription}
-                    onChange={setLongDescription}
-                    onSave={(html) => setLongDescription(html)}
-                    placeholder="Write detailed project description… press '/' for commands"
-                    minHeight="400px"
-                />
-                <p className="text-xs text-muted-foreground">{wordCount} words</p>
-            </FormSection>
-
-            <FormSection title="Media & Tech">
-                <FormInput
-                    label="Cover Image URL"
-                    type="url"
-                    value={coverImage}
-                    onChange={(e) => setCoverImage(e.target.value)}
-                    placeholder="https://example.com/project-screenshot.jpg"
-                />
-
-                <TagInput
-                    label="Tech Stack"
-                    tags={techStack}
-                    onChange={setTechStack}
-                    placeholder="e.g., Next.js, TypeScript, Tailwind CSS"
-                />
-                {techStack.length === 0 && (
-                    <p className="text-xs text-destructive">At least one technology is required</p>
-                )}
-
-                <TagInput label="Tags" tags={tags} onChange={setTags} placeholder="Add a tag" />
-            </FormSection>
-
-            <FormSection title="Links & Status">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput
-                        label="GitHub URL"
-                        type="url"
-                        value={githubUrl}
-                        onChange={(e) => setGithubUrl(e.target.value)}
-                        placeholder="https://github.com/username/repo"
-                    />
-                    <FormInput
-                        label="Live URL"
-                        type="url"
-                        value={liveUrl}
-                        onChange={(e) => setLiveUrl(e.target.value)}
-                        placeholder="https://project-demo.com"
-                    />
-                </div>
-
-                <div className="flex items-center gap-6">
-                    <FormSelect
-                        label="Status"
-                        value={status}
-                        onChange={setStatus}
-                        options={STATUS_OPTIONS}
-                    />
-                    <div className="pt-6">
-                        <FormCheckbox
-                            label="Featured Project"
-                            checked={featured}
-                            onChange={(e) => setFeatured(e.target.checked)}
-                        />
-                    </div>
-                </div>
-            </FormSection>
-
-            <FormActions
-                cancelHref="/admin/projects"
-                submitLabel={isEditing ? 'Update Project' : 'Create Project'}
-                isPending={isPending || techStack.length === 0}
-                submitIcon={isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-            />
-        </form>
+        <AdminEntityForm<IProjectFormData>
+            entityName='Project'
+            isEditing={isEditing}
+            steps={steps}
+            formData={formData}
+            handleChange={handleChange}
+            setFormData={setFormData}
+            isModified={isModified}
+            onSubmit={handleSubmit}
+            onReset={resetForm}
+            onValidationError={handleValidationError}
+            isSubmitting={isSubmitting}
+            submitBtnRef={submitBtnRef}
+            labels={{
+                submitting: 'Saving…',
+            }}
+        />
     );
 };
+
+export default ProjectForm;

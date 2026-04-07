@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth/admin';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         const formData = await request.formData();
         const file = formData.get('file') as File;
         const folder = (formData.get('folder') as string) || 'portfolio/content';
-        const resourceType = formData.get('resource_type') as string | null;
 
         if (!file) {
             return NextResponse.json(

@@ -1,41 +1,23 @@
-import { ArrowLeft, Layers } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { PageHeader } from '@/components/admin';
+
 import { SubtopicForm } from '../SubtopicForm';
-import { getAllTopics } from '@/server/queries/topics';
 
-async function getFormData() {
-    const topics = await getAllTopics();
-    return { topics };
-}
-
-export default async function NewSubtopicPage() {
-    const { topics } = await getFormData();
-
+const NewSubtopicPage = (): React.ReactElement => {
     return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Link
-                    href="/admin/subtopics"
-                    className="inline-flex items-center justify-center rounded-lg border border-border bg-background p-2 hover:bg-muted transition-colors"
-                    aria-label="Back to subtopics"
-                >
-                    <ArrowLeft className="h-4 w-4" />
+        <div className='mx-auto max-w-2xl space-y-6 pb-6'>
+            <div>
+                <Link href='/admin/subtopics' className='mb-4 inline-flex items-center gap-2 text-label text-muted-foreground transition-fast hover:text-foreground'>
+                    <ArrowLeft className='size-4' />
+                    Back to Subtopics
                 </Link>
-                <PageHeader
-                    title="Create New Subtopic"
-                    description="Add a subtopic to organize articles within a topic"
-                    icon={Layers}
-                />
+                <h1 className='text-h1 text-foreground'>Create New Subtopic</h1>
+                <p className='mt-1 text-regular text-muted-foreground'>Subtopics help organize articles within a topic.</p>
             </div>
 
-            {/* Form */}
-            <div className="max-w-2xl">
-                <div className="rounded-xl border border-border bg-card p-6">
-                    <SubtopicForm topics={topics} />
-                </div>
-            </div>
+            <SubtopicForm />
         </div>
     );
-}
+};
+
+export default NewSubtopicPage;

@@ -1,12 +1,28 @@
 import { v2 as cloudinary } from 'cloudinary';
 
 // Server-side Cloudinary configuration
-cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+const cloudinaryConfig: {
+    cloud_name?: string;
+    api_key?: string;
+    api_secret?: string;
+    secure: true;
+} = {
     secure: true,
-});
+};
+
+if (process.env.CLOUDINARY_CLOUD_NAME) {
+    cloudinaryConfig.cloud_name = process.env.CLOUDINARY_CLOUD_NAME;
+}
+
+if (process.env.CLOUDINARY_API_KEY) {
+    cloudinaryConfig.api_key = process.env.CLOUDINARY_API_KEY;
+}
+
+if (process.env.CLOUDINARY_API_SECRET) {
+    cloudinaryConfig.api_secret = process.env.CLOUDINARY_API_SECRET;
+}
+
+cloudinary.config(cloudinaryConfig);
 
 export interface CloudinaryUploadResult {
     public_id: string;

@@ -1,386 +1,375 @@
 'use client';
 
-import { useMemo, useState, useCallback, useEffect, useRef } from 'react';
+// =============================================================
+// ProjectsTable - Professional Server-Side Table
+// Uses DataTable component with server-action-first architecture
+// Uses useAction hook for TanStack Query mutation benefits
+// =============================================================
+
+import { FolderKanban } from 'lucide-react';
 import Link from 'next/link';
-import { FolderKanban, Calendar, ExternalLink, Github } from 'lucide-react';
+import { useMemo } from 'react';
 
+import { StatusBadge } from '@/components/admin';
+import { DataTable } from '@/components/admin/table';
+import { PROJECT_STATUS, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
+import { useAction } from '@/hooks/server/useAction';
 import { formatDate } from '@/lib/utils';
-import type { IProject } from '@/interfaces';
-import { useAdminTable } from '@/hooks';
+import type { IProjectRow } from '@/server/new/admin/content/project';
 import {
-    DataTable,
-    TableSearch,
-    BulkActionsBar,
-    StatusBadge,
-    DataTableActions,
-    createEditAction,
-    createDeleteAction,
-    createToggleFeaturedAction,
-    createBulkDeleteActionNew,
-    createBulkFeatureAction,
-    createBulkUnfeatureAction,
-    createBulkSetActiveAction,
-    createBulkSetWipAction,
-    createBulkArchiveAction,
-    type IDataTableColumn,
-    type IBulkActionNew,
-    type ITableFilter,
-} from '@/components/admin';
-import { deleteProject, toggleProjectFeatured, updateProjectStatus, reorderProjects } from '@/server/actions/projects';
-import { Button } from '@/components/ui/button';
+    bulkArchiveProjects,
+    bulkDeleteProjects,
+    bulkDraftProjects,
+    bulkPublishProjects,
+    deleteProject,
+    getProjects,
+    setProjectLifecycleStatus,
+    setProjectStatus,
+    toggleProjectFeatured,
+} from '@/server/new/admin/content/project';
 
-// ===== COMPONENT =====
+import {
+    createProjectsTableConfig,
+    type IProjectActionHandlers,
+    type IProjectBulkActionHandlers,
+} from './config';
+
+// =============================================================
+// Types
+// =============================================================
 
 interface IProjectsTableProps {
-    projects: IProject[];
+    /** Initial server-side data for hydration */
+    initialData?: IProjectRow[] | undefined;
+    /** Initial total count for pagination */
+    initialTotal?: number | undefined;
 }
 
-export function ProjectsTable({ projects }: IProjectsTableProps): React.ReactElement {
-    const table = useAdminTable({
-        data: projects,
-        keyExtractor: (p) => p.slug,
-        searchFn: (project, query) =>
-            project.title.toLowerCase().includes(query) ||
-            project.description.toLowerCase().includes(query) ||
-            project.techStack?.some((tech) => tech.toLowerCase().includes(query)) ||
-            project.tags.some((tag) => tag.toLowerCase().includes(query)),
+// =============================================================
+// ProjectsTable Component
+// =============================================================
+
+export function ProjectsTable({ initialData, initialTotal }: IProjectsTableProps): React.ReactElement {
+    const { showSuccess, showError } = useSnackbar();
+
+    // =============================================================
+    // Row Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - DataTableActions handles invalidation
+    // =============================================================
+
+    const setStatusAction = useAction({
+        action: async (project: IProjectRow, status: PublishStatusType) => 
+            setProjectStatus(project.id, status),
+        onSuccess: (_data, response, [, status]) => {
+            const statusLabels = { draft: 'Draft', published: 'Published', archived: 'Archived' };
+            showSuccess(response.message ?? `Project moved to ${statusLabels[status]}`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to change project status');
+        },
     });
 
-    // Local items for drag-and-drop reordering
-    const [localItems, setLocalItems] = useState(projects);
-    const prevFilteredItemsRef = useRef(table.filteredItems);
-    
-    // Sync localItems when filteredItems change - use ref comparison to prevent loops
-    useEffect(() => {
-        if (prevFilteredItemsRef.current !== table.filteredItems) {
-            prevFilteredItemsRef.current = table.filteredItems;
-            setLocalItems(table.filteredItems);
-        }
-    }, [table.filteredItems]);
-
-    // Get unique tech stacks for filter
-    const allTechStacks = useMemo(() => {
-        const techSet = new Set<string>();
-        projects.forEach((p) => p.techStack?.forEach((tech) => techSet.add(tech)));
-        return Array.from(techSet).sort();
-    }, [projects]);
-
-    // ===== FILTERS CONFIG =====
-
-    const tableFilters: ITableFilter[] = useMemo(() => [
-        {
-            id: 'status',
-            label: 'Status',
-            type: 'select',
-            options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Active', value: 'active' },
-                { label: 'Work in Progress', value: 'wip' },
-                { label: 'Archived', value: 'archived' },
-            ],
+    const setLifecycleStatusAction = useAction({
+        action: async (project: IProjectRow, status: ProjectStatusType | null) => 
+            setProjectLifecycleStatus(project.id, status),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Project lifecycle status updated');
         },
-        {
-            id: 'featured',
-            label: 'Featured',
-            type: 'select',
-            options: [
-                { label: 'All', value: 'all' },
-                { label: 'Featured Only', value: 'true' },
-                { label: 'Not Featured', value: 'false' },
-            ],
+        onError: (message) => {
+            showError(message ?? 'Failed to change project lifecycle status');
         },
-        {
-            id: 'techStack',
-            label: 'Tech Stack',
-            type: 'select',
-            options: [
-                { label: 'All Technologies', value: '' },
-                ...allTechStacks.map((tech) => ({ label: tech, value: tech })),
-            ],
+    });
+
+    const toggleFeaturedAction = useAction({
+        action: async (project: IProjectRow) => toggleProjectFeatured(project.id),
+        onSuccess: (_data, response, [project]) => {
+            showSuccess(response.message ?? (project.featured ? 'Project unfeatured' : 'Project featured'));
         },
-    ], [allTechStacks]);
-
-    // ===== ROW ACTIONS =====
-
-    const getRowActions = (project: IProject) => {
-        const actions = [
-            createEditAction(`/admin/projects/${project.slug}/edit`),
-            createToggleFeaturedAction(project.featured || false, () =>
-                table.optimisticUpdate(
-                    project.slug,
-                    (p) => ({ ...p, featured: !p.featured }),
-                    () => toggleProjectFeatured(project.slug)
-                )
-            ),
-        ];
-
-        // Status actions
-        if (project.status !== 'active') {
-            actions.push({
-                label: 'Mark as Active',
-                icon: 'CheckCircle2',
-                action: 'custom' as const,
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        project.slug,
-                        (p) => ({ ...p, status: 'active' as const }),
-                        () => updateProjectStatus(project.slug, 'active')
-                    );
-                },
-            });
-        }
-        if (project.status !== 'wip') {
-            actions.push({
-                label: 'Mark as WIP',
-                icon: 'Clock',
-                action: 'custom' as const,
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        project.slug,
-                        (p) => ({ ...p, status: 'wip' as const }),
-                        () => updateProjectStatus(project.slug, 'wip')
-                    );
-                },
-            });
-        }
-        if (project.status !== 'archived') {
-            actions.push({
-                label: 'Archive',
-                icon: 'Pause',
-                action: 'custom' as const,
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        project.slug,
-                        (p) => ({ ...p, status: 'archived' as const }),
-                        () => updateProjectStatus(project.slug, 'archived')
-                    );
-                },
-            });
-        }
-
-        actions.push(
-            createDeleteAction(
-                () => table.optimisticDelete(project.slug, () => deleteProject(project.slug)),
-                `"${project.title}"`
-            )
-        );
-
-        return actions;
-    };
-
-    // ===== COLUMNS =====
-
-    const columns: IDataTableColumn<IProject>[] = [
-        {
-            id: 'project',
-            header: 'Project',
-            accessor: (project) => (
-                <div className="min-w-0 max-w-md">
-                    <Link
-                        href={`/admin/projects/${project.slug}/edit`}
-                        className="font-medium hover:underline hover:text-accent line-clamp-1 block"
-                    >
-                        {project.title}
-                    </Link>
-                    {project.description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">
-                            {project.description}
-                        </p>
-                    )}
-                </div>
-            ),
-            width: '300px',
+        onError: (message) => {
+            showError(message ?? 'Failed to toggle featured state');
         },
-        {
-            id: 'status',
-            header: 'Status',
-            cell: (project) => <StatusBadge variant="status" value={project.status} />,
-            align: 'center',
-            width: '120px',
-        },
-        {
-            id: 'featured',
-            header: 'Featured',
-            cell: (project) => <StatusBadge variant="featured" value={project.featured || false} />,
-            align: 'center',
-            width: '100px',
-        },
-        {
-            id: 'techStack',
-            header: 'Tech Stack',
-            cell: (project) =>
-                project.techStack?.length ? (
-                    <div className="flex flex-wrap gap-1.5">
-                        {project.techStack.slice(0, 3).map((tech) => (
-                            <span
-                                key={tech}
-                                className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                            >
-                                {tech}
-                            </span>
-                        ))}
-                        {project.techStack.length > 3 && (
-                            <span className="text-xs text-muted-foreground">+{project.techStack.length - 3}</span>
-                        )}
-                    </div>
-                ) : (
-                    <span className="text-sm text-muted-foreground">—</span>
-                ),
-            width: '250px',
-        },
-        {
-            id: 'links',
-            header: 'Links',
-            cell: (project) => (
-                <div className="flex items-center gap-2">
-                    {project.githubUrl && (
-                        <a
-                            href={project.githubUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <Github className="h-4 w-4" />
-                        </a>
-                    )}
-                    {project.liveUrl && (
-                        <a
-                            href={project.liveUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground transition-colors"
-                            onClick={(e) => e.stopPropagation()}
-                        >
-                            <ExternalLink className="h-4 w-4" />
-                        </a>
-                    )}
-                    {!project.githubUrl && !project.liveUrl && (
-                        <span className="text-sm text-muted-foreground">—</span>
-                    )}
-                </div>
-            ),
-            align: 'center',
-            width: '80px',
-        },
-        {
-            id: 'updated',
-            header: 'Last Updated',
-            cell: (project) => (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(project.updatedAt)}
-                </div>
-            ),
-            width: '150px',
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: (project) => <DataTableActions actions={getRowActions(project)} itemName={`"${project.title}"`} />,
-            align: 'right',
-            width: '60px',
-        },
-    ];
+    });
 
-    // ===== BULK ACTIONS =====
+    const deleteAction = useAction({
+        action: async (project: IProjectRow) => deleteProject(project.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Project deleted successfully');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete project');
+        },
+    });
 
-    const bulkActions: IBulkActionNew[] = [
-        createBulkFeatureAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (p) => ({ ...p, featured: true }),
-                async () => { await Promise.all(ids.filter((id) => !table.items.find((p) => p.slug === id)?.featured).map((id) => toggleProjectFeatured(id))); }
-            )
-        ),
-        createBulkUnfeatureAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (p) => ({ ...p, featured: false }),
-                async () => { await Promise.all(ids.filter((id) => table.items.find((p) => p.slug === id)?.featured).map((id) => toggleProjectFeatured(id))); }
-            )
-        ),
-        createBulkSetActiveAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (p) => ({ ...p, status: 'active' as const }),
-                async () => { await Promise.all(ids.map((id) => updateProjectStatus(id, 'active'))); }
-            )
-        ),
-        createBulkSetWipAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (p) => ({ ...p, status: 'wip' as const }),
-                async () => { await Promise.all(ids.map((id) => updateProjectStatus(id, 'wip'))); }
-            )
-        ),
-        createBulkArchiveAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (p) => ({ ...p, status: 'archived' as const }),
-                async () => { await Promise.all(ids.map((id) => updateProjectStatus(id, 'archived'))); }
-            )
-        ),
-        createBulkDeleteActionNew(async (ids) => {
-            await Promise.all(ids.map((id) => table.optimisticDelete(id, () => deleteProject(id))));
+    const rowActionHandlers: IProjectActionHandlers = useMemo(
+        () => ({
+            onSetStatus: async (project: IProjectRow, status: PublishStatusType) => {
+                await setStatusAction.mutateAsync(project, status);
+            },
+            onSetLifecycleStatus: async (project: IProjectRow, status: ProjectStatusType | null) => {
+                await setLifecycleStatusAction.mutateAsync(project, status);
+            },
+            onToggleFeatured: async (project: IProjectRow) => {
+                await toggleFeaturedAction.mutateAsync(project);
+            },
+            onDelete: async (project: IProjectRow) => {
+                await deleteAction.mutateAsync(project);
+            },
         }),
-    ];
-
-    // ===== DRAG & DROP REORDER =====
-
-    const handleReorder = useCallback(async (newOrder: IProject[]) => {
-        setLocalItems(newOrder);
-        const slugs = newOrder.map((p) => p.slug);
-        await reorderProjects(slugs);
-        table.refresh();
-    }, [table]);
-
-    // ===== RENDER =====
-
-    return (
-        <div className="space-y-6">
-            <TableSearch
-                placeholder="Search projects by title, description, or technology..."
-                onSearch={table.setSearchQuery}
-                filters={tableFilters}
-                onFilterChange={table.setFilters}
-                activeFiltersCount={table.activeFiltersCount}
-            />
-
-            <DataTable
-                data={localItems}
-                columns={columns}
-                keyExtractor={(project) => project.slug}
-                selectable
-                selectedIds={table.selectedIds}
-                onSelectionChange={table.setSelectedIds}
-                draggable
-                onReorder={handleReorder}
-                emptyState={
-                    <div className="p-12 text-center">
-                        <FolderKanban className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">No projects found</h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {table.searchQuery || table.activeFiltersCount > 0
-                                ? 'Try adjusting your search or filters'
-                                : 'Create your first project to get started'}
-                        </p>
-                        {!table.searchQuery && table.activeFiltersCount === 0 && (
-                            <Link href="/admin/projects/new">
-                                <Button className="mt-6">Create Project</Button>
-                            </Link>
-                        )}
-                    </div>
-                }
-            />
-
-            <BulkActionsBar
-                selectedCount={table.selectedIds.length}
-                totalCount={localItems.length}
-                actions={bulkActions}
-                onClear={table.clearSelection}
-                onAction={async (action) => action.action(table.selectedIds)}
-            />
-        </div>
+        [setStatusAction.mutateAsync, setLifecycleStatusAction.mutateAsync, toggleFeaturedAction.mutateAsync, deleteAction.mutateAsync],
     );
+
+    // =============================================================
+    // Bulk Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - BulkActionsBar handles invalidation
+    // =============================================================
+
+    const bulkPublishAction = useAction({
+        action: async (_rows: IProjectRow[], ids: string[]) => bulkPublishProjects(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} projects published`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to publish projects');
+        },
+    });
+
+    const bulkDraftAction = useAction({
+        action: async (_rows: IProjectRow[], ids: string[]) => bulkDraftProjects(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} projects moved to draft`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to move projects to draft');
+        },
+    });
+
+    const bulkArchiveAction = useAction({
+        action: async (_rows: IProjectRow[], ids: string[]) => bulkArchiveProjects(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} projects archived`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to archive projects');
+        },
+    });
+
+    const bulkDeleteAction = useAction({
+        action: async (_rows: IProjectRow[], ids: string[]) => bulkDeleteProjects(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} projects deleted`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete projects');
+        },
+    });
+
+    const bulkActionHandlers: IProjectBulkActionHandlers = useMemo(
+        () => ({
+            onBulkPublish: async (rows: IProjectRow[], ids: string[]) => {
+                await bulkPublishAction.mutateAsync(rows, ids);
+            },
+            onBulkDraft: async (rows: IProjectRow[], ids: string[]) => {
+                await bulkDraftAction.mutateAsync(rows, ids);
+            },
+            onBulkArchive: async (rows: IProjectRow[], ids: string[]) => {
+                await bulkArchiveAction.mutateAsync(rows, ids);
+            },
+            onBulkDelete: async (rows: IProjectRow[], ids: string[]) => {
+                await bulkDeleteAction.mutateAsync(rows, ids);
+            },
+        }),
+        [
+            bulkPublishAction.mutateAsync,
+            bulkDraftAction.mutateAsync,
+            bulkArchiveAction.mutateAsync,
+            bulkDeleteAction.mutateAsync,
+        ],
+    );
+
+    // =============================================================
+    // Table Config with Custom Cell Renderers
+    // =============================================================
+
+    const config = useMemo(() => {
+        const baseConfig = createProjectsTableConfig({
+            rowActions: rowActionHandlers,
+            bulkActions: bulkActionHandlers,
+        });
+
+        // Add custom cell renderers
+        const columnsWithRenderers = baseConfig.columns.map((col) => {
+            // Project column - Icon + Title + Slug
+            if (col.id === 'project') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => (
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <FolderKanban className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <Link
+                                    href={`/admin/projects/${project.id}/edit`}
+                                    className="block truncate font-medium hover:text-foreground hover:underline"
+                                >
+                                    {project.title}
+                                </Link>
+                                <p className="text-sm text-muted-foreground">/{project.slug}</p>
+                            </div>
+                        </div>
+                    ),
+                };
+            }
+
+            // Tech Stack column - Badges
+            if (col.id === 'techStack') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => {
+                        const { techStack } = project;
+                        if (!techStack || techStack.length === 0) {
+                            return <span className="text-sm text-muted-foreground">—</span>;
+                        }
+                        
+                        const displayTech = techStack.slice(0, 3);
+                        const remaining = techStack.length - 3;
+                        
+                        return (
+                            <div className="flex flex-wrap gap-1">
+                                {displayTech.map((tech) => (
+                                    <span
+                                        key={tech}
+                                        className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium"
+                                    >
+                                        {tech}
+                                    </span>
+                                ))}
+                                {remaining > 0 && (
+                                    <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                        +{remaining}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    },
+                };
+            }
+
+            // Lifecycle Status column - Project status badge (in_progress/live/archived)
+            if (col.id === 'status') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => {
+                        const { status } = project;
+                        
+                        if (!status) {
+                            return <span className="text-sm text-muted-foreground">—</span>;
+                        }
+                        
+                        const statusConfig = {
+                            [PROJECT_STATUS.IN_PROGRESS]: {
+                                label: 'In Progress',
+                                className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+                            },
+                            [PROJECT_STATUS.LIVE]: {
+                                label: 'Live',
+                                className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                            },
+                            [PROJECT_STATUS.ARCHIVED]: {
+                                label: 'Archived',
+                                className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+                            },
+                        };
+                        
+                        const config = statusConfig[status];
+                        
+                        return (
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+                                {config.label}
+                            </span>
+                        );
+                    },
+                };
+            }
+
+            // Publish Status column - 3-state badge (draft/published/archived)
+            if (col.id === 'publishStatus') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => {
+                        const { publishStatus } = project;
+                        
+                        const statusConfig = {
+                            published: {
+                                label: 'Published',
+                                className: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+                            },
+                            draft: {
+                                label: 'Draft',
+                                className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+                            },
+                            archived: {
+                                label: 'Archived',
+                                className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+                            },
+                        };
+                        
+                        const config = statusConfig[publishStatus];
+                        
+                        return (
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
+                                {config.label}
+                            </span>
+                        );
+                    },
+                };
+            }
+
+            // Featured column - StatusBadge
+            if (col.id === 'featured') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => <StatusBadge variant="featured" value={project.featured} />,
+                };
+            }
+
+            // Reading time column - Minutes badge
+            if (col.id === 'readingTime') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
+                            {project.readingTime} min
+                        </span>
+                    ),
+                };
+            }
+
+            // Updated column - Formatted date
+            if (col.id === 'updatedAt') {
+                return {
+                    ...col,
+                    cell: (project: IProjectRow) => (
+                        <span className="text-sm text-muted-foreground">{formatDate(project.updatedAt)}</span>
+                    ),
+                };
+            }
+
+            return col;
+        });
+
+        return {
+            ...baseConfig,
+            columns: columnsWithRenderers,
+        };
+    }, [rowActionHandlers, bulkActionHandlers]);
+
+    // =============================================================
+    // Render
+    // =============================================================
+
+    return <DataTable config={config} serverAction={getProjects} initialData={initialData} initialTotal={initialTotal} />;
 }
+
+export default ProjectsTable;

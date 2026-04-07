@@ -1,0 +1,36 @@
+# dependencies
+node_modules
+
+# next.js
+.next
+out
+build
+
+# testing
+coverage
+tests
+
+# local environment
+.env
+.env.*
+!.env.example
+
+# vcs/editor
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local artifacts
+*.tsbuildinfo
+.audit-matrix.json
+scripts/*.output.json
+scripts/query-performance*.json
+scripts/query-performance-report.json

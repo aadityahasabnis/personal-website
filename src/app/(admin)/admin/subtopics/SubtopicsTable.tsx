@@ -1,254 +1,271 @@
 'use client';
 
+// =============================================================
+// SubtopicsTable - Professional Server-Side Table
+// Uses DataTable component with server-action-first architecture
+// Uses useAction hook for TanStack Query mutation benefits
+// =============================================================
+
+import { ListTree } from 'lucide-react';
 import Link from 'next/link';
-import { Layers, Calendar } from 'lucide-react';
+import { useMemo } from 'react';
 
+import { StatusBadge } from '@/components/admin';
+import { DataTable } from '@/components/admin/table';
+import type { IApiResponse } from '@/interfaces/actionHelper';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
+import { useAction } from '@/hooks/server/useAction';
 import { formatDate } from '@/lib/utils';
-import type { ISubtopic, ITopic } from '@/interfaces';
-import { useAdminTable } from '@/hooks';
+import type { ISubtopicRow } from '@/server/new/admin/subtopic';
 import {
-    DataTable,
-    TableSearch,
-    BulkActionsBar,
-    StatusBadge,
-    DataTableActions,
-    createEditAction,
-    createDeleteAction,
-    createTogglePublishedAction,
-    createBulkDeleteActionNew,
-    createBulkPublishAction,
-    createBulkUnpublishAction,
-    type IDataTableColumn,
-    type IBulkActionNew,
-    type ITableFilter,
-} from '@/components/admin';
-import { deleteSubtopic, toggleSubtopicPublished } from '@/server/actions/subtopics';
-import { Button } from '@/components/ui/button';
+    bulkDeleteSubtopics,
+    bulkPublishSubtopics,
+    bulkUnpublishSubtopics,
+    deleteSubtopic,
+    getSubtopics,
+    reorderSubtopics,
+    toggleSubtopicPublished,
+} from '@/server/new/admin/subtopic';
 
-// ===== COMPONENT =====
+import {
+    createSubtopicsTableConfig,
+    type ISubtopicActionHandlers,
+    type ISubtopicBulkActionHandlers,
+} from './config';
+
+// =============================================================
+// Types
+// =============================================================
 
 interface ISubtopicsTableProps {
-    subtopics: ISubtopic[];
-    topics: ITopic[];
+    /** Initial server-side data for hydration */
+    initialData?: ISubtopicRow[] | undefined;
+    /** Initial total count for pagination */
+    initialTotal?: number | undefined;
 }
 
-// Helper to create unique key from topicSlug + slug
-const getSubtopicKey = (subtopic: ISubtopic): string => `${subtopic.topicSlug}/${subtopic.slug}`;
+// =============================================================
+// SubtopicsTable Component
+// =============================================================
 
-export function SubtopicsTable({ subtopics, topics }: ISubtopicsTableProps): React.ReactElement {
-    const table = useAdminTable({
-        data: subtopics,
-        keyExtractor: getSubtopicKey,
-        searchFn: (subtopic, query) =>
-            subtopic.title.toLowerCase().includes(query) ||
-            subtopic.slug.toLowerCase().includes(query) ||
-            subtopic.description?.toLowerCase().includes(query) || false,
+export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTableProps): React.ReactElement {
+    const { showSuccess, showError } = useSnackbar();
+
+    // =============================================================
+    // Row Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - DataTableActions handles invalidation
+    // =============================================================
+
+    const togglePublishedAction = useAction({
+        action: async (subtopic: ISubtopicRow) => toggleSubtopicPublished(subtopic.id),
+        onSuccess: (_data, response, [subtopic]) => {
+            showSuccess(response.message ?? (subtopic.published ? 'Subtopic unpublished' : 'Subtopic published'));
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to toggle publish state');
+        },
     });
 
-    // ===== FILTERS CONFIG =====
-
-    const tableFilters: ITableFilter[] = [
-        {
-            id: 'topicSlug',
-            label: 'Parent Topic',
-            type: 'select',
-            options: [
-                { label: 'All Topics', value: 'all' },
-                ...topics.map((t) => ({ label: t.title, value: t.slug })),
-            ],
+    const deleteAction = useAction({
+        action: async (subtopic: ISubtopicRow) => deleteSubtopic(subtopic.id, subtopic.contentCount > 0),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Subtopic deleted successfully');
         },
-        {
-            id: 'published',
-            label: 'Status',
-            type: 'select',
-            options: [
-                { label: 'All Statuses', value: 'all' },
-                { label: 'Published', value: 'true' },
-                { label: 'Draft', value: 'false' },
-            ],
+        onError: (message) => {
+            showError(message ?? 'Failed to delete subtopic');
         },
-    ];
+    });
 
-    // ===== ROW ACTIONS =====
+    const rowActionHandlers: ISubtopicActionHandlers = useMemo(
+        () => ({
+            onTogglePublished: async (subtopic: ISubtopicRow) => {
+                await togglePublishedAction.mutateAsync(subtopic);
+            },
+            onDelete: async (subtopic: ISubtopicRow) => {
+                await deleteAction.mutateAsync(subtopic);
+            },
+        }),
+        [togglePublishedAction.mutateAsync, deleteAction.mutateAsync],
+    );
 
-    const getRowActions = (subtopic: ISubtopic) => {
-        const key = getSubtopicKey(subtopic);
-        return [
-            createEditAction(`/admin/subtopics/${subtopic.topicSlug}/${subtopic.slug}/edit`),
-            createTogglePublishedAction(subtopic.published || false, () =>
-                table.optimisticUpdate(
-                    key,
-                    (s) => ({ ...s, published: !s.published }),
-                    () => toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug)
-                )
-            ),
-            createDeleteAction(
-                () => table.optimisticDelete(key, () => deleteSubtopic(subtopic.topicSlug, subtopic.slug)),
-                `"${subtopic.title}"`
-            ),
-        ];
+    // =============================================================
+    // Bulk Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - BulkActionsBar handles invalidation
+    // =============================================================
+
+    const bulkPublishAction = useAction({
+        action: async (_rows: ISubtopicRow[], ids: string[]) => bulkPublishSubtopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} subtopics published`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to publish subtopics');
+        },
+    });
+
+    const bulkUnpublishAction = useAction({
+        action: async (_rows: ISubtopicRow[], ids: string[]) => bulkUnpublishSubtopics(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} subtopics unpublished`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to unpublish subtopics');
+        },
+    });
+
+    const bulkDeleteAction = useAction({
+        action: async (_rows: ISubtopicRow[], ids: string[]) => bulkDeleteSubtopics(ids, false),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} subtopics deleted`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete subtopics');
+        },
+    });
+
+    const bulkActionHandlers: ISubtopicBulkActionHandlers = useMemo(
+        () => ({
+            onBulkPublish: async (rows: ISubtopicRow[], ids: string[]) => {
+                await bulkPublishAction.mutateAsync(rows, ids);
+            },
+            onBulkUnpublish: async (rows: ISubtopicRow[], ids: string[]) => {
+                await bulkUnpublishAction.mutateAsync(rows, ids);
+            },
+            onBulkDelete: async (rows: ISubtopicRow[], ids: string[]) => {
+                await bulkDeleteAction.mutateAsync(rows, ids);
+            },
+        }),
+        [
+            bulkPublishAction.mutateAsync,
+            bulkUnpublishAction.mutateAsync,
+            bulkDeleteAction.mutateAsync,
+        ],
+    );
+
+    // =============================================================
+    // Reorder Mutation (using useAction for TanStack Query benefits)
+    // CRITICAL: reorderSubtopics requires topicId from first item
+    // =============================================================
+
+    const reorderAction = useAction({
+        action: async (_items: ISubtopicRow[], topicId: string, ids: string[]) => reorderSubtopics(topicId, ids),
+        onSuccess: () => {
+            showSuccess('Subtopics reordered successfully');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to reorder subtopics');
+        },
+    });
+
+    // Wrapper to extract topicId and return IApiResponse for reorder config compatibility
+    const handleReorder = async (items: ISubtopicRow[], ids: string[]): Promise<IApiResponse<boolean>> => {
+        if (items.length === 0) {
+            return {
+                success: false,
+                status: 400,
+                error: 'No items to reorder',
+            };
+        }
+        // Extract topicId from first subtopic (all subtopics in table share same topicId)
+        const topicId = items[0].topicId;
+        return reorderAction.mutateAsync(items, topicId, ids);
     };
 
-    // ===== COLUMNS =====
+    // =============================================================
+    // Table Config with Custom Cell Renderers
+    // =============================================================
 
-    const columns: IDataTableColumn<ISubtopic>[] = [
-        {
-            id: 'subtopic',
-            header: 'Subtopic',
-            accessor: (subtopic) => (
-                <div className="min-w-0 max-w-md">
-                    <Link
-                        href={`/admin/subtopics/${subtopic.topicSlug}/${subtopic.slug}/edit`}
-                        className="font-medium hover:underline hover:text-foreground line-clamp-1 block"
-                    >
-                        {subtopic.title}
-                    </Link>
-                    {subtopic.description && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">{subtopic.description}</p>
-                    )}
-                </div>
-            ),
-            width: '300px',
-        },
-        {
-            id: 'topic',
-            header: 'Parent Topic',
-            cell: (subtopic) => {
-                const topic = topics.find((t) => t.slug === subtopic.topicSlug);
-                return topic ? (
-                    <Link
-                        href={`/admin/topics/${topic.slug}/edit`}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        {topic.title}
-                    </Link>
-                ) : (
-                    <span className="text-sm text-muted-foreground">{subtopic.topicSlug}</span>
-                );
-            },
-            width: '180px',
-        },
-        {
-            id: 'published',
-            header: 'Status',
-            cell: (subtopic) => <StatusBadge variant="published" value={subtopic.published || false} />,
-            align: 'center',
-            width: '120px',
-        },
-        {
-            id: 'articles',
-            header: 'Articles',
-            cell: (subtopic) => (
-                <span className="text-sm text-center text-muted-foreground">
-                    {subtopic.metadata?.articleCount || 0}
-                </span>
-            ),
-            align: 'center',
-            width: '100px',
-        },
-        {
-            id: 'updated',
-            header: 'Last Updated',
-            cell: (subtopic) => (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(subtopic.updatedAt)}
-                </div>
-            ),
-            width: '150px',
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: (subtopic) => <DataTableActions actions={getRowActions(subtopic)} itemName={`"${subtopic.title}"`} />,
-            align: 'right',
-            width: '60px',
-        },
-    ];
+    const config = useMemo(() => {
+        const baseConfig = createSubtopicsTableConfig({
+            rowActions: rowActionHandlers,
+            bulkActions: bulkActionHandlers,
+            onReorder: handleReorder,
+        });
 
-    // ===== BULK ACTIONS =====
-
-    const bulkActions: IBulkActionNew[] = [
-        createBulkPublishAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (s) => ({ ...s, published: true }),
-                async () => {
-                    for (const id of ids) {
-                        const subtopic = table.items.find((s) => getSubtopicKey(s) === id);
-                        if (subtopic && !subtopic.published) await toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug);
-                    }
-                }
-            )
-        ),
-        createBulkUnpublishAction((ids) =>
-            table.optimisticBulkUpdate(
-                ids,
-                (s) => ({ ...s, published: false }),
-                async () => {
-                    for (const id of ids) {
-                        const subtopic = table.items.find((s) => getSubtopicKey(s) === id);
-                        if (subtopic?.published) await toggleSubtopicPublished(subtopic.topicSlug, subtopic.slug);
-                    }
-                }
-            )
-        ),
-        createBulkDeleteActionNew(async (ids) => {
-            for (const id of ids) {
-                const subtopic = table.items.find((s) => getSubtopicKey(s) === id);
-                if (subtopic) await table.optimisticDelete(id, () => deleteSubtopic(subtopic.topicSlug, subtopic.slug));
+        // Add custom cell renderers
+        const columnsWithRenderers = baseConfig.columns.map((col) => {
+            // Subtopic column - Icon + Title + Slug
+            if (col.id === 'subtopic') {
+                return {
+                    ...col,
+                    cell: (subtopic: ISubtopicRow) => (
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <ListTree className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <Link
+                                    href={`/admin/subtopics/${subtopic.id}/edit`}
+                                    className="block truncate font-medium hover:text-foreground hover:underline"
+                                >
+                                    {subtopic.title}
+                                </Link>
+                                <p className="text-sm text-muted-foreground">/{subtopic.slug}</p>
+                            </div>
+                        </div>
+                    ),
+                };
             }
-        }),
-    ];
 
-    // ===== RENDER =====
+            // Topic column - Parent topic name (link to topic edit)
+            if (col.id === 'topic') {
+                return {
+                    ...col,
+                    cell: (subtopic: ISubtopicRow) => (
+                        <Link
+                            href={`/admin/topics/${subtopic.topicId}/edit`}
+                            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+                        >
+                            {subtopic.topicTitle}
+                        </Link>
+                    ),
+                };
+            }
 
-    return (
-        <div className="space-y-6">
-            <TableSearch
-                placeholder="Search subtopics by title or slug..."
-                onSearch={table.setSearchQuery}
-                filters={tableFilters}
-                onFilterChange={table.setFilters}
-                activeFiltersCount={table.activeFiltersCount}
-            />
+            // Articles count column - Badge with count
+            if (col.id === 'contentCount') {
+                return {
+                    ...col,
+                    cell: (subtopic: ISubtopicRow) => (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
+                            {subtopic.contentCount}
+                        </span>
+                    ),
+                };
+            }
 
-            <DataTable
-                data={table.displayedItems}
-                columns={columns}
-                keyExtractor={getSubtopicKey}
-                selectable
-                selectedIds={table.selectedIds}
-                onSelectionChange={table.setSelectedIds}
-                infiniteScroll
-                hasMore={table.hasMore}
-                onLoadMore={async () => table.loadMore()}
-                isLoading={table.isPending}
-                emptyState={
-                    <div className="p-12 text-center">
-                        <Layers className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">No subtopics found</h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {table.searchQuery || table.activeFiltersCount > 0
-                                ? 'Try adjusting your search or filters'
-                                : 'Create your first subtopic to get started'}
-                        </p>
-                        {!table.searchQuery && table.activeFiltersCount === 0 && (
-                            <Link href="/admin/subtopics/new">
-                                <Button className="mt-6">Create Subtopic</Button>
-                            </Link>
-                        )}
-                    </div>
-                }
-            />
+            // Published column - StatusBadge
+            if (col.id === 'published') {
+                return {
+                    ...col,
+                    cell: (subtopic: ISubtopicRow) => <StatusBadge variant="published" value={subtopic.published} />,
+                };
+            }
 
-            <BulkActionsBar
-                selectedCount={table.selectedIds.length}
-                totalCount={table.displayedItems.length}
-                actions={bulkActions}
-                onClear={table.clearSelection}
-                onAction={async (action) => action.action(table.selectedIds)}
-            />
-        </div>
-    );
+            // Updated column - Formatted date
+            if (col.id === 'updatedAt') {
+                return {
+                    ...col,
+                    cell: (subtopic: ISubtopicRow) => (
+                        <span className="text-sm text-muted-foreground">{formatDate(subtopic.updatedAt)}</span>
+                    ),
+                };
+            }
+
+            return col;
+        });
+
+        return {
+            ...baseConfig,
+            columns: columnsWithRenderers,
+        };
+    }, [rowActionHandlers, bulkActionHandlers, handleReorder]);
+
+    // =============================================================
+    // Render
+    // =============================================================
+
+    return <DataTable config={config} serverAction={getSubtopics} initialData={initialData} initialTotal={initialTotal} />;
 }
+
+export default SubtopicsTable;

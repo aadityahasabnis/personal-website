@@ -1,51 +1,46 @@
-import { Suspense } from 'react';
+import { ListTree, Plus } from 'lucide-react';
 import Link from 'next/link';
-import { Layers, Plus } from 'lucide-react';
+import { Suspense } from 'react';
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/admin';
-import { getAllSubtopicsForAdmin } from '@/server/queries/admin';
-import { getAllTopics } from '@/server/queries/topics';
+import { DataTableSkeleton } from '@/components/admin/table';
+import { Button } from '@/components/ui/button';
+import { getSubtopics } from '@/server/new/admin/subtopic';
 import { SubtopicsTable } from './SubtopicsTable';
-import { serializeDocuments } from '@/lib/utils';
-
-/**
- * Subtopics Management Page
- * 
- * List, create, edit, and delete subtopics organized by parent topic
- * Features: Search, Filters, Bulk Actions, Infinite Scroll
- */
+import { SUBTOPICS_TABLE_SKELETON_PROPS } from './config';
 
 const SubtopicsTableWrapper = async (): Promise<React.ReactElement> => {
-    const [subtopics, topics] = await Promise.all([
-        getAllSubtopicsForAdmin(),
-        getAllTopics(),
-    ]);
+    const response = await getSubtopics();
 
-    return <SubtopicsTable subtopics={serializeDocuments(subtopics)} topics={serializeDocuments(topics)} />;
+    if (!response.success || !response.data) {
+        return (
+            <div className='flex h-64 items-center justify-center rounded-xl border border-dashed'>
+                <p className='text-muted-foreground'>Failed to load subtopics</p>
+            </div>
+        );
+    }
+
+    return <SubtopicsTable initialData={response.data} initialTotal={response.pagination.total} />;
 };
 
 const SubtopicsPage = (): React.ReactElement => {
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
+        <div className='space-y-6'>
             <PageHeader
-                title="Subtopics"
-                description="Organize your content with subtopics within each main topic."
-                icon={Layers}
+                title='Subtopics'
+                description='Organize your content with subtopics within each main topic.'
+                icon={ListTree}
                 actions={
-                    <Link href="/admin/subtopics/new">
+                    <Link href='/admin/subtopics/new'>
                         <Button>
-                            <Plus className="h-4 w-4" />
+                            <Plus className='h-4 w-4' />
                             New Subtopic
                         </Button>
                     </Link>
                 }
             />
 
-            {/* Subtopics Table */}
-            <Suspense fallback={<Skeleton className="h-96 w-full rounded-xl" />}>
+            <Suspense fallback={<DataTableSkeleton {...SUBTOPICS_TABLE_SKELETON_PROPS} />}>
                 <SubtopicsTableWrapper />
             </Suspense>
         </div>

@@ -1,119 +1,78 @@
-"use client";
+'use client';
 
-import React from "react";
-import {
-  AlertTriangle,
-  Trash2,
-  Check,
-  Info,
-  type LucideIcon,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import type { MaxWidthDialogType } from "./DialogWrapper";
+import { useState } from 'react';
 
-export type ConfirmationIconType = "warning" | "delete" | "success" | "info";
+import { AlertTriangle, Check, Info, Trash2, type LucideIcon } from 'lucide-react';
 
-const iconMap: Record<
-  ConfirmationIconType,
-  { icon: LucideIcon; className: string }
-> = {
-  warning: { icon: AlertTriangle, className: "text-amber-500" },
-  delete: { icon: Trash2, className: "text-destructive" },
-  success: { icon: Check, className: "text-green-600" },
-  info: { icon: Info, className: "text-primary" },
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+
+import { DialogWrapper } from './DialogWrapper';
+import { type ConfirmationTone, type IConfirmationDialogConfig, type IControlledDialogProps } from './types';
+
+const toneIconMap: Record<ConfirmationTone, { icon: LucideIcon; colorClass: string; confirmVariant: 'default' | 'destructive' }> = {
+    default: { icon: AlertTriangle, colorClass: 'text-warning', confirmVariant: 'default' },
+    destructive: { icon: Trash2, colorClass: 'text-destructive', confirmVariant: 'destructive' },
+    success: { icon: Check, colorClass: 'text-success', confirmVariant: 'default' },
+    warning: { icon: AlertTriangle, colorClass: 'text-warning', confirmVariant: 'default' },
+    info: { icon: Info, colorClass: 'text-primary', confirmVariant: 'default' },
 };
 
-export interface IConfirmationDialogProps {
-  open: boolean;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-  title: string;
-  description: string;
-  message?: string | React.ReactNode;
-  icon?: ConfirmationIconType;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  maxWidth?: MaxWidthDialogType;
-  isLoading?: boolean;
-  variant?: "default" | "destructive";
+export interface IConfirmationDialogProps extends IControlledDialogProps, Omit<IConfirmationDialogConfig, 'type'> {}
+
+export function ConfirmationDialog({
+    open,
+    onClose,
+    onConfirm,
+    title,
+    description,
+    message,
+    confirmLabel = 'Confirm',
+    cancelLabel = 'Cancel',
+    tone = 'default',
+    width = 'sm',
+    closeOnOutsideClick = true,
+}: IConfirmationDialogProps) {
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const selectedTone = toneIconMap[tone];
+    const Icon = selectedTone.icon;
+
+    const handleConfirm = async () => {
+        if (isSubmitting) {
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            await onConfirm();
+            onClose();
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const descriptionProps = description !== undefined ? { description } : {};
+
+    return (
+        <DialogWrapper open={open} onClose={onClose} title={title} width={width} closeOnOutsideClick={closeOnOutsideClick && !isSubmitting} bodyClassName='pt-1' {...descriptionProps}>
+            <div className='flex items-start gap-3'>
+                <span className='flex size-10 shrink-0 items-center justify-center rounded-full bg-muted'>
+                    <Icon className={cn('size-5', selectedTone.colorClass)} />
+                </span>
+                <div className='flex min-w-0 flex-col gap-2'>
+                    {message ? <div className='text-body text-foreground'>{message}</div> : null}
+                    <div className='flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:justify-end'>
+                        <Button type='button' variant='outline' onClick={onClose} disabled={isSubmitting}>
+                            {cancelLabel}
+                        </Button>
+                        <Button type='button' variant={selectedTone.confirmVariant} onClick={() => void handleConfirm()} disabled={isSubmitting}>
+                            {isSubmitting ? 'Processing...' : confirmLabel}
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </DialogWrapper>
+    );
 }
-
-export const ConfirmationDialog: React.FC<IConfirmationDialogProps> = ({
-  open,
-  onClose,
-  onConfirm,
-  title,
-  description,
-  message,
-  icon = "warning",
-  confirmLabel = "Confirm",
-  cancelLabel = "Cancel",
-  maxWidth = "sm",
-  isLoading = false,
-  variant = "default",
-}) => {
-  const IconComponent = iconMap[icon].icon;
-  const iconClassName = iconMap[icon].className;
-
-  const handleConfirm = async () => {
-    await onConfirm();
-    if (!isLoading) onClose();
-  };
-
-  const maxWidthMap: Record<MaxWidthDialogType, string> = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className={cn("p-5 w-full", maxWidthMap[maxWidth])}>
-        <div className="flex gap-3">
-          <div className="shrink-0">
-            <IconComponent className={cn("size-8", iconClassName)} />
-          </div>
-          <DialogHeader className="text-left">
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-        </div>
-
-        {message && (
-          <div className="text-sm text-foreground mt-2">{message}</div>
-        )}
-
-        <div className="flex items-center justify-end gap-3 mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
-            {cancelLabel}
-          </Button>
-          <Button
-            type="button"
-            variant={variant === "destructive" ? "destructive" : "default"}
-            onClick={handleConfirm}
-            disabled={isLoading}
-          >
-            {isLoading ? "Loading..." : confirmLabel}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
 
 export default ConfirmationDialog;

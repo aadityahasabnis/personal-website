@@ -1,0 +1,88 @@
+import type { IAdmin } from '@/interfaces/schema/admin';
+import type { IComment } from '@/interfaces/schema/comment';
+import type { IContact } from '@/interfaces/schema/contact';
+import type { IArticle, IBlog, IContent, IProject } from '@/interfaces/schema/content';
+import type { IMedia } from '@/interfaces/schema/media';
+import type { INewsletter } from '@/interfaces/schema/newsletter';
+import type { IPageStats } from '@/interfaces/schema/pageStats';
+import type { ISubscriber } from '@/interfaces/schema/subscriber';
+import type { ISubtopic } from '@/interfaces/schema/subtopic';
+import type { ITopic } from '@/interfaces/schema/topic';
+import { Document } from 'mongoose';
+
+// ============================================================
+// Mongoose Document Types
+// ============================================================
+
+export interface ITopicDocument extends Omit<ITopic, '_id'>, Document {
+}
+
+export interface ISubtopicDocument extends Omit<ISubtopic, '_id'>, Document {
+}
+
+export interface IContentDocument extends Omit<IContent, '_id'>, Document {
+    publish(): Promise<this>;
+    unpublish(): Promise<this>;
+    isArticle(): boolean;
+    isBlog(): boolean;
+    isProject(): boolean;
+}
+
+export interface IArticleDocument extends Omit<IArticle, '_id'>, Document {
+    publish(): Promise<this>;
+    unpublish(): Promise<this>;
+}
+
+export interface IBlogDocument extends Omit<IBlog, '_id'>, Document {
+    publish(): Promise<this>;
+    unpublish(): Promise<this>;
+}
+
+export interface IProjectDocument extends Omit<IProject, '_id'>, Document {
+    publish(): Promise<this>;
+    unpublish(): Promise<this>;
+}
+
+export interface IPageStatsDocument extends Omit<IPageStats, '_id'>, Document {}
+
+export interface ICommentDocument extends Omit<IComment, '_id'>, Document {
+    approve(): Promise<this>;
+    incrementReplyCount(): Promise<this>;
+    decrementReplyCount(): Promise<this>;
+    incrementUpvotes(): Promise<this>;
+}
+
+export interface ISubscriberDocument extends Omit<ISubscriber, '_id'>, Document {
+    confirm(): Promise<this>;
+    unsubscribe(): Promise<this>;
+    resubscribe(): Promise<this>;
+}
+
+export interface IAdminDocument extends Omit<IAdmin, '_id'>, Document {
+    updateLastLogin(): Promise<this>;
+    setOtp(code: string, expiresAt: Date, targetEmail: string): Promise<this>;
+    clearOtp(): Promise<this>;
+    setPasswordResetToken(token: string, expiresAt: Date): Promise<this>;
+    clearPasswordResetToken(): Promise<this>;
+}
+
+export interface IContactDocument extends Omit<IContact, '_id'>, Document {
+    markAsRead(): Promise<this>;
+    markAsReplied(): Promise<this>;
+    archive(): Promise<this>;
+    unarchive(): Promise<this>;
+}
+
+export interface IMediaDocument extends Omit<IMedia, '_id'>, Document {
+    updateMetadata(updates: Partial<{ description: string; altText: string; tags: string[] }>): Promise<this>;
+    addTags(newTags: string[]): Promise<this>;
+    removeTags(tagsToRemove: string[]): Promise<this>;
+    // Virtual properties
+    sizeFormatted?: string;
+}
+
+export interface INewsletterDocument extends Omit<INewsletter, '_id'>, Document {
+    isDraft(): boolean;
+    isSent(): boolean;
+    markAsSent(recipientCount: number, successCount: number, failureCount: number): Promise<this>;
+}

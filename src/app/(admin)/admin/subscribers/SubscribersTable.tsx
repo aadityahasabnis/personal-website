@@ -1,252 +1,233 @@
 'use client';
 
-import { useCallback } from 'react';
-import { Mail, Calendar, Download } from 'lucide-react';
+// =============================================================
+// SubscribersTable - Professional Server-Side Table
+// Uses DataTable component with server-action-first architecture
+// Uses useAction hook for TanStack Query mutation benefits
+// =============================================================
 
-import { formatDate } from '@/lib/utils';
-import type { ISubscriber } from '@/interfaces';
-import { useAdminTable } from '@/hooks';
+import { Mail } from 'lucide-react';
+import { useMemo } from 'react';
+
+import { DataTable } from '@/components/admin/table';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
+import { useAction } from '@/hooks/server/useAction';
+import { cn, formatDate } from '@/lib/utils';
+import type { IAdminSubscriberRow } from '@/server/new/admin/subscribers';
 import {
-    DataTable,
-    TableSearch,
-    BulkActionsBar,
-    StatusBadge,
-    DataTableActions,
-    createDeleteAction,
-    createBulkDeleteActionNew,
-    type IDataTableColumn,
-    type IDataTableAction,
-    type IBulkActionNew,
-    type ITableFilter,
-} from '@/components/admin';
-import { deleteSubscriber, confirmSubscriber, exportSubscribers } from '@/server/actions/subscribers';
-import { Button } from '@/components/ui/button';
+    bulkDeleteSubscribers,
+    confirmSubscriber,
+    deleteSubscriber,
+    getSubscribers,
+} from '@/server/new/admin/subscribers';
 
-// ===== FILTERS CONFIG =====
+import {
+    createSubscribersTableConfig,
+    SUBSCRIBER_STATUS_CONFIG,
+    type ISubscriberActionHandlers,
+    type ISubscriberBulkActionHandlers,
+    type SubscriberStatusVariant,
+} from './config';
 
-const TABLE_FILTERS: ITableFilter[] = [
-    {
-        id: 'status',
-        label: 'Status',
-        type: 'select',
-        options: [
-            { label: 'All Subscribers', value: 'all' },
-            { label: 'Confirmed', value: 'confirmed' },
-            { label: 'Pending', value: 'pending' },
-            { label: 'Unsubscribed', value: 'unsubscribed' },
-        ],
-    },
-];
-
-// Serialized subscriber type
-type SerializedSubscriber = Omit<ISubscriber, '_id' | 'subscribedAt' | 'unsubscribedAt' | 'createdAt' | 'updatedAt'> & {
-    _id?: string;
-    subscribedAt: string;
-    unsubscribedAt?: string;
-    createdAt?: string;
-    updatedAt?: string;
-};
-
-// ===== COMPONENT =====
+// =============================================================
+// Types
+// =============================================================
 
 interface ISubscribersTableProps {
-    subscribers: SerializedSubscriber[];
+    /** Initial server-side data for hydration */
+    initialData?: IAdminSubscriberRow[] | undefined;
+    /** Initial total count for pagination */
+    initialTotal?: number | undefined;
 }
 
-export function SubscribersTable({ subscribers }: ISubscribersTableProps): React.ReactElement {
-    const table = useAdminTable({
-        data: subscribers,
-        keyExtractor: (s) => s._id || s.email,
-        searchFn: (subscriber, query) =>
-            subscriber.email.toLowerCase().includes(query) ||
-            subscriber.name?.toLowerCase().includes(query) || false,
-    });
+// =============================================================
+// Status Badge Component
+// =============================================================
 
-    // Custom filter logic for subscriber status
-    const filteredByStatus = table.filteredItems.filter((s) => {
-        const status = table.filters.status;
-        if (!status || status === 'all') return true;
-        if (status === 'confirmed') return s.confirmed && !s.unsubscribedAt;
-        if (status === 'pending') return !s.confirmed;
-        if (status === 'unsubscribed') return !!s.unsubscribedAt;
-        return true;
-    }).sort((a, b) => new Date(b.subscribedAt).getTime() - new Date(a.subscribedAt).getTime());
-
-    // ===== EXPORT HANDLER =====
-
-    const handleExport = useCallback(async () => {
-        const statusFilter = table.filters.status as 'all' | 'confirmed' | 'pending' | 'unsubscribed' | undefined;
-        const result = await exportSubscribers(statusFilter && statusFilter !== 'all' ? statusFilter : 'all');
-        
-        if (result.success && result.data) {
-            const blob = new Blob([result.data], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `subscribers-${statusFilter}-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            window.URL.revokeObjectURL(url);
-        }
-    }, [table.filters.status]);
-
-    // ===== ROW ACTIONS =====
-
-    const getRowActions = (subscriber: SerializedSubscriber): IDataTableAction[] => {
-        const actions: IDataTableAction[] = [];
-
-        if (!subscriber.confirmed) {
-            actions.push({
-                label: 'Confirm',
-                icon: 'CheckCircle2',
-                action: 'custom',
-                onClick: async () => {
-                    await table.optimisticUpdate(
-                        subscriber._id || subscriber.email,
-                        (s) => ({ ...s, confirmed: true }),
-                        () => confirmSubscriber(subscriber._id!)
-                    );
-                },
-            });
-        }
-
-        actions.push(
-            createDeleteAction(
-                () => table.optimisticDelete(subscriber._id || subscriber.email, () => deleteSubscriber(subscriber._id!)),
-                subscriber.email
-            )
-        );
-
-        return actions;
-    };
-
-    // ===== COLUMNS =====
-
-    const columns: IDataTableColumn<SerializedSubscriber>[] = [
-        {
-            id: 'subscriber',
-            header: 'Subscriber',
-            accessor: (subscriber) => (
-                <div className="min-w-0 max-w-md">
-                    <p className="font-medium line-clamp-1">{subscriber.email}</p>
-                    {subscriber.name && (
-                        <p className="mt-0.5 text-sm text-muted-foreground line-clamp-1">{subscriber.name}</p>
-                    )}
-                </div>
-            ),
-            width: '350px',
-        },
-        {
-            id: 'status',
-            header: 'Status',
-            cell: (subscriber) => {
-                if (subscriber.unsubscribedAt) return <StatusBadge status="unsubscribed" />;
-                return subscriber.confirmed ? <StatusBadge status="confirmed" /> : <StatusBadge status="pending" />;
-            },
-            align: 'center',
-            width: '120px',
-        },
-        {
-            id: 'subscribed',
-            header: 'Subscribed',
-            cell: (subscriber) => (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {formatDate(new Date(subscriber.subscribedAt))}
-                </div>
-            ),
-            width: '150px',
-        },
-        {
-            id: 'actions',
-            header: '',
-            cell: (subscriber) => <DataTableActions actions={getRowActions(subscriber)} itemName={subscriber.email} />,
-            align: 'right',
-            width: '60px',
-        },
-    ];
-
-    // ===== BULK ACTIONS =====
-
-    const bulkActions: IBulkActionNew[] = [
-        {
-            id: 'confirm',
-            label: 'Confirm Selected',
-            icon: <Mail className="h-4 w-4" />,
-            variant: 'default',
-            action: (ids) => table.optimisticBulkUpdate(
-                ids,
-                (s) => ({ ...s, confirmed: true }),
-                async () => {
-                    const toConfirm = ids
-                        .map((id) => table.items.find((s) => (s._id || s.email) === id))
-                        .filter((s) => s && !s.confirmed);
-                    await Promise.all(toConfirm.map((s) => confirmSubscriber(s!._id!)));
-                }
-            ),
-        },
-        createBulkDeleteActionNew(async (ids) => {
-            await Promise.all(ids.map((id) => table.optimisticDelete(id, () => deleteSubscriber(id))));
-        }),
-    ];
-
-    // ===== RENDER =====
+function SubscriberStatusBadge({ status }: { status: SubscriberStatusVariant }): React.ReactElement {
+    const config = SUBSCRIBER_STATUS_CONFIG[status];
+    const Icon = config.icon;
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-                <div className="flex-1">
-                    <TableSearch
-                        placeholder="Search subscribers by email or name..."
-                        onSearch={table.setSearchQuery}
-                        filters={TABLE_FILTERS}
-                        onFilterChange={table.setFilters}
-                        activeFiltersCount={table.activeFiltersCount}
-                    />
-                </div>
-                <Button
-                    variant="outline"
-                    onClick={handleExport}
-                    disabled={table.isPending || filteredByStatus.length === 0}
-                    className="shrink-0"
-                >
-                    <Download className="h-4 w-4 mr-2" />
-                    Export CSV
-                </Button>
-            </div>
-
-            <DataTable
-                data={filteredByStatus.slice(0, table.displayCount)}
-                columns={columns}
-                keyExtractor={(s) => s._id || s.email}
-                selectable
-                selectedIds={table.selectedIds}
-                onSelectionChange={table.setSelectedIds}
-                infiniteScroll
-                hasMore={filteredByStatus.length > table.displayCount}
-                onLoadMore={async () => table.loadMore()}
-                isLoading={table.isPending}
-                emptyState={
-                    <div className="p-12 text-center">
-                        <Mail className="mx-auto h-12 w-12 text-muted-foreground/50" />
-                        <h3 className="mt-4 text-lg font-semibold">No subscribers found</h3>
-                        <p className="mt-2 text-muted-foreground">
-                            {table.searchQuery || table.activeFiltersCount > 0
-                                ? 'Try adjusting your search or filters'
-                                : 'Subscribers will appear here once they sign up'}
-                        </p>
-                    </div>
-                }
-            />
-
-            <BulkActionsBar
-                selectedCount={table.selectedIds.length}
-                totalCount={filteredByStatus.length}
-                actions={bulkActions}
-                onClear={table.clearSelection}
-                onAction={async (action) => action.action(table.selectedIds)}
-            />
-        </div>
+        <span
+            className={cn(
+                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
+                config.className
+            )}
+        >
+            <Icon className="h-3 w-3" />
+            {config.label}
+        </span>
     );
 }
+
+// =============================================================
+// SubscribersTable Component
+// =============================================================
+
+export function SubscribersTable({ initialData, initialTotal }: ISubscribersTableProps): React.ReactElement {
+    const { showSuccess, showError } = useSnackbar();
+
+    // =============================================================
+    // Row Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - DataTableActions handles invalidation
+    // =============================================================
+
+    const confirmAction = useAction({
+        action: async (subscriber: IAdminSubscriberRow) => confirmSubscriber(subscriber.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Subscriber confirmed');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to confirm subscriber');
+        },
+    });
+
+    const deleteAction = useAction({
+        action: async (subscriber: IAdminSubscriberRow) => deleteSubscriber(subscriber.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Subscriber deleted');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete subscriber');
+        },
+    });
+
+    const rowActionHandlers: ISubscriberActionHandlers = useMemo(
+        () => ({
+            onConfirm: async (subscriber: IAdminSubscriberRow) => {
+                await confirmAction.mutateAsync(subscriber);
+            },
+            onDelete: async (subscriber: IAdminSubscriberRow) => {
+                await deleteAction.mutateAsync(subscriber);
+            },
+        }),
+        [confirmAction.mutateAsync, deleteAction.mutateAsync]
+    );
+
+    // =============================================================
+    // Bulk Action Mutations (using useAction for TanStack Query benefits)
+    // Note: invalidateKeys not needed - BulkActionsBar handles invalidation
+    // =============================================================
+
+    const bulkDeleteAction = useAction({
+        action: async (_rows: IAdminSubscriberRow[], ids: string[]) => bulkDeleteSubscribers(ids),
+        onSuccess: (_data, response, [, ids]) => {
+            showSuccess(response.message ?? `${ids.length} subscribers deleted`);
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to delete subscribers');
+        },
+    });
+
+    const bulkActionHandlers: ISubscriberBulkActionHandlers = useMemo(
+        () => ({
+            onBulkDelete: async (rows: IAdminSubscriberRow[], ids: string[]) => {
+                await bulkDeleteAction.mutateAsync(rows, ids);
+            },
+        }),
+        [bulkDeleteAction.mutateAsync]
+    );
+
+    // =============================================================
+    // Table Config with Custom Cell Renderers
+    // =============================================================
+
+    const config = useMemo(() => {
+        const baseConfig = createSubscribersTableConfig({
+            rowActions: rowActionHandlers,
+            bulkActions: bulkActionHandlers,
+        });
+
+        // Add custom cell renderers
+        const columnsWithRenderers = baseConfig.columns.map((col) => {
+            // Subscriber column - Icon + Email
+            if (col.id === 'subscriber') {
+                return {
+                    ...col,
+                    cell: (subscriber: IAdminSubscriberRow) => (
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <Mail className="h-5 w-5" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="truncate font-medium">{subscriber.email}</p>
+                                {subscriber.name && (
+                                    <p className="text-sm text-muted-foreground">{subscriber.name}</p>
+                                )}
+                            </div>
+                        </div>
+                    ),
+                };
+            }
+
+            // Name column
+            if (col.id === 'name') {
+                return {
+                    ...col,
+                    cell: (subscriber: IAdminSubscriberRow) => (
+                        <span className="text-sm text-muted-foreground">
+                            {subscriber.name ?? '-'}
+                        </span>
+                    ),
+                };
+            }
+
+            // Status column - Custom badge
+            if (col.id === 'status') {
+                return {
+                    ...col,
+                    cell: (subscriber: IAdminSubscriberRow) => (
+                        <SubscriberStatusBadge status={subscriber.status} />
+                    ),
+                };
+            }
+
+            // Subscribed date column - Formatted date
+            if (col.id === 'subscribedAt') {
+                return {
+                    ...col,
+                    cell: (subscriber: IAdminSubscriberRow) => (
+                        <span className="text-sm text-muted-foreground">
+                            {formatDate(subscriber.subscribedAt)}
+                        </span>
+                    ),
+                };
+            }
+
+            // Created date column - Formatted date
+            if (col.id === 'createdAt') {
+                return {
+                    ...col,
+                    cell: (subscriber: IAdminSubscriberRow) => (
+                        <span className="text-sm text-muted-foreground">
+                            {formatDate(subscriber.createdAt)}
+                        </span>
+                    ),
+                };
+            }
+
+            return col;
+        });
+
+        return {
+            ...baseConfig,
+            columns: columnsWithRenderers,
+        };
+    }, [rowActionHandlers, bulkActionHandlers]);
+
+    // =============================================================
+    // Render
+    // =============================================================
+
+    return (
+        <DataTable
+            config={config}
+            serverAction={getSubscribers}
+            initialData={initialData}
+            initialTotal={initialTotal}
+        />
+    );
+}
+
+export default SubscribersTable;

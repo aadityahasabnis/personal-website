@@ -1,0 +1,182 @@
+/* ===== CUSTOM VARIANTS ===== */
+@custom-variant dark (&:is(.dark *));
+
+/* ===== LIGHT MODE VARIABLES ===== */
+:root {
+    --radius: 0.625rem;
+
+    /* Background & Text – neutral/cool base matching purple accent */
+    --bg: oklch(0.98 0.003 285); /* subtle lavender tint, not green */
+    --bg-subtle: oklch(0.96 0.005 285);
+    --fg: oklch(0.18 0.02 285);
+    --fg-muted: oklch(33.441% 0.00699 285.944);
+    --fg-subtle: oklch(0.55 0.015 285);
+
+    /* Surfaces */
+    --surface: oklch(0.95 0.008 285);
+    --surface-hover: oklch(0.92 0.01 285);
+    --card-bg: oklch(1 0 0);
+
+    /* Accent – deeper purple for better contrast */
+    --accent: oklch(0.52 0.24 285);
+    --accent-hover: oklch(0.46 0.26 285);
+    --accent-fg: oklch(0.99 0.002 90); /* near‑white */
+    --accent-subtle: oklch(0.92 0.08 285);
+
+    /* Borders – visible but subtle */
+    --border-color: oklch(0.85 0.012 285);
+    --border-hover: oklch(0.8 0.018 285);
+    --glow-color: oklch(0.52 0.24 285 / 0.3);
+    --glow-accent: oklch(0.52 0.24 285 / 0.5);
+
+    --sphere-1: oklch(0.45 0.24 285 / 0.3); /* lavender – main */
+    --sphere-2: oklch(0.42 0.2 320 / 0.2); /* magenta tint – still purple family */
+    --sphere-3: oklch(0.48 0.16 250 / 0.2); /* blue-purple – cool companion */
+    --sphere-4: oklch(0.5 0.12 30 / 0.2); /* peach – warm, but low chroma */
+    --sphere-5: oklch(0.46 0.18 285 / 0.2); /* back to lavender (unify) */
+
+    /* Gradients */
+    --gradient-start: oklch(0.55 0.24 285);
+    --gradient-mid: oklch(0.52 0.22 310);
+    --gradient-end: oklch(0.58 0.2 250);
+
+    /* Glass Effects */
+    --glass-bg: oklch(1 0 0 / 0.75);
+    --glass-border: oklch(0.88 0.01 285 / 0.5);
+
+    /* Status – more vibrant & recognizable */
+    --success: oklch(0.68 0.22 145);
+    --warning: oklch(0.75 0.18 85);
+    --error: oklch(0.58 0.26 35); /* true red‑orange */
+}
+
+/* ===== DARK MODE VARIABLES ===== */
+.dark {
+    --bg: oklch(0.12 0.025 285);
+    --bg-subtle: oklch(0.15 0.03 285);
+    --fg: oklch(0.96 0.008 285);
+    --fg-muted: oklch(0.68 0.01 285);
+    --fg-subtle: oklch(0.52 0.015 285);
+
+    --surface: oklch(0.17 0.035 285);
+    --surface-hover: oklch(0.21 0.04 285);
+    --card-bg: oklch(0.14 0.03 285);
+
+    --accent: oklch(0.72 0.22 285);
+    --accent-hover: oklch(0.78 0.24 285);
+    --accent-fg: oklch(0.1 0.02 285); /* darker for light accent → 9:1 contrast */
+    --accent-subtle: oklch(0.28 0.12 285);
+
+    --border-color: oklch(0.27 0.035 285);
+    --border-hover: oklch(0.34 0.045 285);
+    --glow-color: oklch(0.72 0.22 285 / 0.35);
+    --glow-accent: oklch(0.72 0.22 285 / 0.6);
+
+    /* Dark Theme – derived from Light above */
+    --sphere-1: oklch(0.55 0.22 285 / 0.3);
+    --sphere-2: oklch(0.5 0.22 320 / 0.2);
+    --sphere-3: oklch(0.6 0.14 250 / 0.22);
+    --sphere-4: oklch(0.58 0.18 30 / 0.2); /* peach on dark */
+    --sphere-5: oklch(0.62 0.16 190 / 0.25); /* cyan on dark */
+
+    --gradient-start: oklch(0.68 0.22 285);
+    --gradient-mid: oklch(0.64 0.2 310);
+    --gradient-end: oklch(0.7 0.18 250);
+
+    --glass-bg: oklch(0.14 0.03 285 / 0.75);
+    --glass-border: oklch(0.28 0.04 285 / 0.5);
+
+    --success: oklch(0.72 0.2 145);
+    --warning: oklch(0.78 0.16 85);
+    --error: oklch(0.62 0.25 35);
+}
+
+/* ===== THEME CONFIGURATION ===== */
+@theme {
+    /* Breakpoints */
+    --breakpoint-xs: 31.25rem;
+    --breakpoint-sm: 40rem;
+    --breakpoint-md: 48rem;
+    --breakpoint-lg: 64rem;
+    --breakpoint-xl: 80rem;
+    --breakpoint-2xl: 96rem;
+    --breakpoint-tab: 56.25rem;
+
+    /* Responsive Font Sizes - Direct Tailwind Utilities */
+    --text-display: clamp(2.5rem, 6vw, 4.5rem);
+    --text-title: clamp(1.75rem, 4vw, 2.5rem);
+    --text-h1: clamp(1.5rem, 3vw, 2rem);
+    --text-h2: clamp(1.25rem, 2.5vw, 1.75rem);
+    --text-h3: clamp(1.125rem, 2vw, 1.5rem);
+    --text-h4: clamp(1rem, 1.5vw, 1.25rem);
+    --text-h5: clamp(0.925rem, 1.25vw, 1.125rem);
+    --text-h6: clamp(0.875rem, 1vw, 1rem);
+    --text-body: clamp(0.9rem, 1vw, 1rem);
+    --text-small: clamp(0.8rem, 0.9vw, 0.875rem);
+    --text-label: clamp(0.75rem, 0.8vw, 0.8125rem);
+
+    /* Border Radius */
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-xl: calc(var(--radius) + 4px);
+    --radius-2xl: calc(var(--radius) + 8px);
+    --radius-3xl: 1.5rem;
+    --radius-4xl: 2rem;
+
+    /* Theme Colors */
+    --color-background: var(--bg);
+    --color-foreground: var(--fg);
+    --color-card: var(--card-bg);
+    --color-card-foreground: var(--fg);
+    --color-primary: var(--accent);
+    --color-primary-foreground: var(--accent-fg);
+    --color-secondary: var(--surface);
+    --color-secondary-foreground: var(--fg);
+    --color-muted: var(--surface);
+    --color-muted-foreground: var(--fg-muted);
+    --color-subtle: var(--fg-subtle);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-fg);
+    --color-destructive: var(--error);
+    --color-destructive-foreground: #fff;
+    --color-border: var(--border-color);
+    --color-ring: var(--accent);
+    --color-input: var(--border-color);
+    --color-popover: var(--card-bg);
+    --color-popover-foreground: var(--fg);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-error: var(--error);
+
+    /* Accent Color Palette */
+    --color-violet-50: oklch(0.97 0.02 285);
+    --color-violet-100: oklch(0.93 0.04 285);
+    --color-violet-200: oklch(0.87 0.08 285);
+    --color-violet-300: oklch(0.78 0.12 285);
+    --color-violet-400: oklch(0.68 0.18 285);
+    --color-violet-500: oklch(0.58 0.22 285);
+    --color-violet-600: oklch(0.5 0.24 285);
+    --color-violet-700: oklch(0.42 0.22 285);
+    --color-violet-800: oklch(0.35 0.18 285);
+    --color-violet-900: oklch(0.28 0.14 285);
+    --color-violet-950: oklch(0.2 0.1 285);
+
+    /* Font Families */
+    --font-sans: var(--font-geist-sans), system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: var(--font-geist-mono), 'SF Mono', 'Fira Code', monospace;
+    --font-nunito: var(--font-nunito), system-ui, sans-serif;
+    --font-delius: var(--font-delius-family), system-ui, serif;
+    --font-tiro-devanagari-marathi: var(--font-tiro-devanagari-marathi), system-ui, sans-serif;
+
+    /* Shadows */
+    --shadow-glow-sm: 0 0 20px -5px var(--glow-color);
+    --shadow-glow-md: 0 0 40px -10px var(--glow-color);
+    --shadow-glow-lg: 0 0 60px -15px var(--glow-color);
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}

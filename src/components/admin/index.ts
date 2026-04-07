@@ -1,71 +1,59 @@
 // ===== Admin Components =====
 
 // Core Components
-export { StatusBadge } from './StatusBadge';
-export { PageHeader } from './PageHeader';
 export { EmptyState } from './EmptyState';
+export { PageHeader } from './PageHeader';
+export { StatusBadge } from './StatusBadge';
 
 // Content Preview
 export { ContentPreview } from './ContentPreview';
 
-// Table Components
-export { DataTable, type IDataTableColumn, type IDataTableProps } from './DataTable';
-export { TableSearch, type ITableSearchProps, type ITableFilter } from './TableSearch';
+// =============================================================
+// New Config-Driven Table System (table/*)
+// =============================================================
+export {
+    createActionsColumn, createArchiveAction as createArchiveRowAction, createBadgeColumn, createBooleanFilter, createBulkAction, createBulkArchiveAction as createBulkArchiveRowAction, createBulkDeleteAction as createBulkDeleteRowAction, createBulkFeatureAction as createBulkFeatureRowAction, createBulkPublishAction as createBulkPublishRowAction, createBulkUnfeatureAction as createBulkUnfeatureRowAction, createBulkUnpublishAction as createBulkUnpublishRowAction,
+    // Config Builders
+    createColumn, createDateColumn, createDeleteAction as createDeleteRowAction,
+    createDuplicateAction as createDuplicateRowAction, createEditAction as createEditRowAction, createFeatureAction as createFeatureRowAction, createFilter, createInfiniteScrollConfig, createMoveDownAction, createMoveUpAction, createNumberColumn, createPaginationConfig, createPublishAction as createPublishRowAction, createReorderConfig, createRestoreAction as createRestoreRowAction, createRowAction, createSelectFilter, createStatusFilter, createTableConfig, createTextColumn, createViewAction as createViewRowAction,
+    // Components
+    DataTable, DataTableActions, DataTableEmptyState, DataTablePagination,
+    BulkActionsBar as NewBulkActionsBar, resolveHref, resolveIcon,
+    resolveLabel, TableSearch,
+    // Hooks
+    useDataTable, useTableContext, type FilterValues,
+    // Types
+    type IColumnConfig,
+    type IDataTableColumn, type IDataTableProps, type IEmptyStateProps, type IFilterConfig, type IBulkAction as INewBulkAction, type IBulkActionsBarProps as INewBulkActionsBarProps, type IPaginationConfig, type IReorderConfig, type IRowAction, type ITableConfig,
+    type ITableContext, type ITableSearchProps
+} from './table';
+
+// =============================================================
+// Legacy Table System (for backward compatibility)
+// =============================================================
+
+// Legacy BulkActionsBar with its types
 export {
     BulkActionsBar,
-    type IBulkActionsBarProps,
-    type IBulkAction as IBulkActionNew,
+    createBulkArchiveAction,
     createBulkSetActiveAction,
     createBulkSetWipAction,
-    createBulkArchiveAction,
+    type IBulkAction as IBulkActionLegacy,
+    type IBulkActionsBarProps
 } from './BulkActionsBar';
 
-// Action Components
-export { DataTableActions, type IDataTableAction } from './DataTableActions';
 
-// Action Helpers
-export {
-    createEditAction,
-    createDeleteAction,
-    createTogglePublishedAction,
-    createToggleFeaturedAction,
-    createViewAction,
-    createDuplicateAction,
-    createBulkPublishAction,
-    createBulkUnpublishAction,
-    createBulkDeleteAction,
-    createBulkFeatureAction,
-    createBulkUnfeatureAction,
-    createBulkDeleteAction as createBulkDeleteActionNew,
-    createBulkPublishActionLegacy,
-    createBulkUnpublishActionLegacy,
-    createBulkDeleteActionLegacy,
-} from './action-helpers';
+// Legacy Filter & Search
+export { SearchFilter, type IFilterGroup, type IFilterOption } from './SearchFilter';
 
-// Filter & Search
-export { SearchFilter, type IFilterOption, type IFilterGroup } from './SearchFilter';
-
-// Bulk Operations (Legacy)
+// Legacy Bulk Operations
 export { BulkActions, type IBulkAction } from './BulkActions';
 
+// =============================================================
 // Layout Components
-export { default as AdminSidebar } from './AdminSidebar';
-export { default as AdminHeader } from './AdminHeader';
+// =============================================================
 export { CommandPalette } from './CommandPalette';
+export { default as AdminHeader } from './layout/AdminHeader';
+export { default as AdminSidebar } from './layout/AdminSidebar';
 export { NotificationsPanel } from './NotificationsPanel';
 
-// Image Components
-export { ImageUpload, type UploadedImage } from './ImageUpload';
-export { ImageGallery, type GalleryImage } from './ImageGallery';
-
-// Form Components
-export {
-    FormInput,
-    FormTextarea,
-    FormSelect,
-    FormCheckbox,
-    TagInput,
-    FormSection,
-    FormActions,
-    FormError,
-} from './form';

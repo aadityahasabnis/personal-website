@@ -1,0 +1,108 @@
+import { SITE_CONFIG } from '@/constants/siteConstants';
+import type { Metadata } from 'next';
+
+interface IMetadataFactoryOptions {
+    title: string;
+    description: string;
+    canonicalPath: string;
+    keywords?: string[];
+    includeAuthor?: boolean;
+    includeSocial?: boolean;
+    socialType?: 'article' | 'website';
+    imageUrl?: string;
+    openGraph?: {
+        publishedTime?: string;
+        modifiedTime?: string;
+        authors?: string[];
+        tags?: string[];
+    };
+    robots?: Metadata['robots'];
+    other?: Record<string, string>;
+}
+
+const toAbsoluteUrl = (value: string): string => {
+    return /^https?:\/\//.test(value) ? value : `${SITE_CONFIG.url}${value}`;
+};
+
+/**
+ * Shared metadata factory for route-level generateMetadata functions.
+ *
+ * Usage (article/blog/project/note detail pages):
+ * createPageMetadata({
+ *   title,
+ *   description,
+ *   canonicalPath: '/blogs/my-post',
+ *   includeSocial: true,
+ *   socialType: 'article',
+ *   imageUrl,
+ *   robots: { index: true, follow: true },
+ * });
+ *
+ * Usage (search page):
+ * createPageMetadata({
+ *   title: hasQuery ? `Search: ${query}` : 'Search',
+ *   description: `Search ${SITE_CONFIG.name} content across articles, blogs, and projects.`,
+ *   canonicalPath: SITE_CONFIG.seo.search.path,
+ *   robots: hasQuery ? { index: false, follow: true } : { index: true, follow: true },
+ * });
+ */
+export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
+    const canonical = toAbsoluteUrl(options.canonicalPath);
+    const image = options.imageUrl
+        ? toAbsoluteUrl(options.imageUrl)
+        : `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
+
+    const metadata: Metadata = {
+        title: options.title,
+        description: options.description,
+        alternates: {
+            canonical,
+        },
+        ...(options.keywords && options.keywords.length > 0
+            ? { keywords: options.keywords.join(', ') }
+            : {}),
+        ...(options.robots ? { robots: options.robots } : {}),
+        ...(options.other ? { other: options.other } : {}),
+    };
+
+    if (options.includeAuthor) {
+        metadata.authors = [{ name: SITE_CONFIG.author.name, url: SITE_CONFIG.url }];
+        metadata.creator = SITE_CONFIG.author.name;
+        metadata.publisher = SITE_CONFIG.author.name;
+    }
+
+    if (options.includeSocial) {
+        metadata.openGraph = {
+            title: options.title,
+            description: options.description,
+            url: canonical,
+            siteName: SITE_CONFIG.name,
+            locale: SITE_CONFIG.seo.ogLocale,
+            type: options.socialType ?? 'website',
+            images: [{ url: image, width: 1200, height: 630, alt: options.title }],
+            ...(options.openGraph?.publishedTime
+                ? { publishedTime: options.openGraph.publishedTime }
+                : {}),
+            ...(options.openGraph?.modifiedTime
+                ? { modifiedTime: options.openGraph.modifiedTime }
+                : {}),
+            ...(options.openGraph?.authors && options.openGraph.authors.length > 0
+                ? { authors: options.openGraph.authors }
+                : {}),
+            ...(options.openGraph?.tags && options.openGraph.tags.length > 0
+                ? { tags: options.openGraph.tags }
+                : {}),
+        };
+
+        metadata.twitter = {
+            card: 'summary_large_image',
+            title: options.title,
+            description: options.description,
+            creator: SITE_CONFIG.seo.twitterHandle,
+            site: SITE_CONFIG.seo.twitterHandle,
+            images: [image],
+        };
+    }
+
+    return metadata;
+}

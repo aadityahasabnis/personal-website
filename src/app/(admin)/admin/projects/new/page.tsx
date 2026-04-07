@@ -1,36 +1,21 @@
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { ArrowLeft, FolderKanban } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { PageHeader } from '@/components/admin';
 import { ProjectForm } from '../ProjectForm';
-
-/**
- * Create New Project Page
- */
 
 const NewProjectPage = (): React.ReactElement => {
     return (
-        <div className="space-y-6">
-            {/* Page Header */}
-            <PageHeader
-                title="Create New Project"
-                description="Showcase your work, skills, and accomplishments."
-                icon={FolderKanban}
-                actions={
-                    <Link href="/admin/projects">
-                        <Button variant="outline">
-                            <ArrowLeft className="h-4 w-4" />
-                            Back to Projects
-                        </Button>
-                    </Link>
-                }
-            />
-
-            {/* Form */}
-            <div className="rounded-xl border bg-card p-6">
-                <ProjectForm />
+        <div className='mx-auto max-w-6xl space-y-6 pb-6'>
+            <div>
+                <Link href='/admin/projects' className='mb-4 inline-flex items-center gap-2 text-label text-muted-foreground transition-fast hover:text-foreground'>
+                    <ArrowLeft className='size-4' />
+                    Back to Projects
+                </Link>
+                <h1 className='text-h1 text-foreground'>Create New Project</h1>
+                <p className='mt-1 text-regular text-muted-foreground'>Use the stepper to configure details, tech stack, and content.</p>
             </div>
+
+            <ProjectForm />
         </div>
     );
 };

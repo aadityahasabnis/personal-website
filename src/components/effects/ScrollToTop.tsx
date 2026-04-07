@@ -1,7 +1,7 @@
 'use client';
 
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
-import { usePathname } from 'next/navigation';
 
 /**
  * ScrollReset - Scrolls to top on route navigation.
@@ -10,10 +10,12 @@ import { usePathname } from 'next/navigation';
  */
 export const ScrollReset = () => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const search = searchParams.toString();
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' });
-    }, [pathname]);
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }, [pathname, search]);
 
     return null;
 };
