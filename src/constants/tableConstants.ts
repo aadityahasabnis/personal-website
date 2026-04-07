@@ -73,3 +73,16 @@ export const COMMENT_CONTENT_TYPE_FILTER_OPTIONS = [
     { label: 'Blog', value: 'blog' },
     { label: 'Project', value: 'project' },
 ];
+
+// =============================================================
+// Newsletter Filter Constants
+// =============================================================
+
+/**
+ * Newsletter status filter options
+ * Filter component automatically adds "All" option
+ */
+export const NEWSLETTER_STATUS_FILTER_OPTIONS = [
+    { label: 'Draft', value: 'draft' },
+    { label: 'Sent', value: 'sent' },
+];

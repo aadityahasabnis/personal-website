@@ -24,12 +24,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      // {
-      //   protocol: 'https',
-      //   hostname: 'picsum.photos', // is this correct? -> yes or no? - 
-      //   port: '',
-      //   pathname: '/**',
-      // }
       {
         // Cloudinary — used for article cover images and OG images
         protocol: 'https',

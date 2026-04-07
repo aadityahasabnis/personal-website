@@ -28,6 +28,7 @@ const navItems: INavItem[] = [
     { label: 'Comments', href: '/admin/comments', icon: MessageSquare },
     { label: 'Contacts', href: '/admin/contacts', icon: MessageSquare },
     { label: 'Subscribers', href: '/admin/subscribers', icon: Mail },
+    { label: 'Newsletters', href: '/admin/newsletters', icon: Mail },
 ];
 
 const bottomNavItems: INavItem[] = [{ label: 'Settings', href: '/admin/settings', icon: Settings }];

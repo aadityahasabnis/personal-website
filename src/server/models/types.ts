@@ -3,6 +3,7 @@ import type { IComment } from '@/interfaces/schema/comment';
 import type { IContact } from '@/interfaces/schema/contact';
 import type { IArticle, IBlog, IContent, IProject } from '@/interfaces/schema/content';
 import type { IMedia } from '@/interfaces/schema/media';
+import type { INewsletter } from '@/interfaces/schema/newsletter';
 import type { IPageStats } from '@/interfaces/schema/pageStats';
 import type { ISubscriber } from '@/interfaces/schema/subscriber';
 import type { ISubtopic } from '@/interfaces/schema/subtopic';
@@ -78,4 +79,10 @@ export interface IMediaDocument extends Omit<IMedia, '_id'>, Document {
     removeTags(tagsToRemove: string[]): Promise<this>;
     // Virtual properties
     sizeFormatted?: string;
+}
+
+export interface INewsletterDocument extends Omit<INewsletter, '_id'>, Document {
+    isDraft(): boolean;
+    isSent(): boolean;
+    markAsSent(recipientCount: number, successCount: number, failureCount: number): Promise<this>;
 }
