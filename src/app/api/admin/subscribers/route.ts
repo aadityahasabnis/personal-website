@@ -7,13 +7,14 @@ import {
     exportSubscribers,
     getSubscribers,
     getSubscriberStats,
+    markSubscriberPending,
     type ISubscribersTableQuery,
     type SubscriberFilter,
 } from '@/server/new/admin/subscribers';
 
 import { parseJsonBody, requireAdmin, toHttp } from '../_shared';
 
-type SubscriberMutationAction = 'confirm' | 'delete' | 'bulk-delete' | 'export';
+type SubscriberMutationAction = 'confirm' | 'mark-pending' | 'delete' | 'bulk-delete' | 'export';
 
 interface ISubscriberMutationBody {
     action: SubscriberMutationAction;
@@ -84,6 +85,11 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
                     return NextResponse.json({ success: false, status: 400, error: 'Missing subscriberId' }, { status: 400 });
                 }
                 return toHttp(await confirmSubscriber(body.subscriberId));
+            case 'mark-pending':
+                if (!body.subscriberId) {
+                    return NextResponse.json({ success: false, status: 400, error: 'Missing subscriberId' }, { status: 400 });
+                }
+                return toHttp(await markSubscriberPending(body.subscriberId));
             case 'delete':
                 if (!body.subscriberId) {
                     return NextResponse.json({ success: false, status: 400, error: 'Missing subscriberId' }, { status: 400 });

@@ -15,16 +15,9 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
             lowercase: true,
             match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
         },
-        name: {
-            type: String,
-            default: null,
-            trim: true,
-            minlength: [2, 'Name must be at least 2 characters'],
-            maxlength: [100, 'Name cannot exceed 100 characters'],
-        },
         confirmed: {
             type: Boolean,
-            default: false,
+            default: true,
         },
         subscribedAt: {
             type: Date,
@@ -96,6 +89,7 @@ SubscriberSchema.methods.unsubscribe = async function (this: ISubscriberDocument
 
 SubscriberSchema.methods.resubscribe = async function (this: ISubscriberDocument) {
     this.unsubscribedAt = null;
+    this.confirmed = true;
     this.subscribedAt = new Date();
     return this.save();
 };

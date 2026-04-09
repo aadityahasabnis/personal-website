@@ -62,9 +62,7 @@ export default async function Page() {
     const { featuredTopics, allTopics } = await getArticlesHubData();
     const allUniqueTopics = [...featuredTopics, ...allTopics];
 
-    const breadcrumbSchema = generateBreadcrumbSchema([
-        { name: 'Articles', url: `${SITE_CONFIG.url}/articles` },
-    ]);
+    const breadcrumbSchema = generateBreadcrumbSchema([{ name: 'Articles', url: `${SITE_CONFIG.url}/articles` }]);
 
     const collectionSchema = {
         '@context': 'https://schema.org',
@@ -92,21 +90,21 @@ export default async function Page() {
         <>
             <JsonLd data={combinedSchema} />
             <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
-            {/* Page Header */}
-            <PageHeader
-                title='Articles'
-                label='Knowledge Based'
-                description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
-            />
+                {/* Page Header */}
+                <PageHeader
+                    title='Articles'
+                    label='Knowledge Based'
+                    description='Explore in-depth articles organized by topic. From data structures to web development, find comprehensive tutorials and guides.'
+                />
 
-            <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
-                <section className='flex flex-col gap-8'>
-                    {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
-                    <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
-                </section>
-            </FadeIn>
+                <FadeIn direction='up' distance={20} duration={0.5} delay={0.32}>
+                    <section className='flex flex-col gap-8'>
+                        {featuredTopics.length > 0 && <TopicGroup label='Featured Topics' icon={<StarIcon className='size-5' />} topics={featuredTopics} />}
+                        <TopicGroup label='All Topics' icon={<FileText className='size-5' />} topics={allTopics} />
+                    </section>
+                </FadeIn>
 
-            <ScrollToTop />
+                <ScrollToTop />
             </main>
         </>
     );

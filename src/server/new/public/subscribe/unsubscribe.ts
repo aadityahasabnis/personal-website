@@ -26,7 +26,7 @@ export const unsubscribe = async (
             return success(
                 {
                     email,
-                    confirmed: false,
+                    confirmed: true,
                     state: 'unsubscribed',
                 },
                 'If this email was subscribed, it has been unsubscribed.',
@@ -38,7 +38,7 @@ export const unsubscribe = async (
         return success(
             {
                 email: subscriber.email,
-                confirmed: subscriber.confirmed,
+                confirmed: true,
                 state: 'unsubscribed',
             },
             'You have been unsubscribed successfully.',

@@ -5,16 +5,13 @@ import { connectDB } from '@/lib/db/connectDB';
 import Subscriber from '@/server/models/Subscriber';
 import type { ISubscriberDocument } from '@/server/models/types';
 import { created, error, handleError, success } from '../../utils/helper';
-import { isValidSubscriberEmail, normalizeSubscriberEmail, validateSubscriberName } from './shared';
+import { isValidSubscriberEmail, normalizeSubscriberEmail } from './shared';
 import type { ISubscribeInput, ISubscriptionResult } from './types';
 
 interface ISubscriberLookup {
     _id: ISubscriberDocument['_id'];
     email: string;
-    name: string | null;
-    confirmed: boolean;
     unsubscribedAt: Date | null;
-    subscribedAt: Date;
 }
 
 // ========================================================
@@ -28,27 +25,23 @@ export const subscribe = async (
         const email = normalizeSubscriberEmail(input.email ?? '');
         if (!isValidSubscriberEmail(email)) return error('Invalid email address', 400);
 
-        const nameValidation = validateSubscriberName(input.name);
-        if (nameValidation.errorMessage) return error(nameValidation.errorMessage, 400);
-
         await connectDB();
 
         const existing = await Subscriber.findOne({ email })
-            .select('_id email name confirmed unsubscribedAt subscribedAt')
+            .select('_id email unsubscribedAt')
             .lean<ISubscriberLookup | null>();
 
         if (!existing) {
             try {
                 const doc = await Subscriber.create({
                     email,
-                    name: nameValidation.name,
-                    confirmed: false,
+                    confirmed: true,
                 });
 
                 return created(
                     {
                         email: doc.email,
-                        confirmed: doc.confirmed,
+                        confirmed: true,
                         state: 'created',
                     },
                     'Subscription saved. You will receive updates soon.',
@@ -68,39 +61,33 @@ export const subscribe = async (
 
         if (!targetId) return error('Subscriber not found', 404);
 
-        const subscriber = await Subscriber.findById(targetId).select('email name confirmed unsubscribedAt');
+        const subscriber = await Subscriber.findById(targetId).select('email confirmed unsubscribedAt');
         if (!subscriber) return error('Subscriber not found', 404);
 
         if (subscriber.unsubscribedAt) {
-            if (nameValidation.name && !subscriber.name) subscriber.name = nameValidation.name;
             await subscriber.resubscribe();
 
             return success(
                 {
                     email: subscriber.email,
-                    confirmed: subscriber.confirmed,
+                    confirmed: true,
                     state: 'resubscribed',
                 },
                 'Welcome back. Your subscription is active again.',
             );
         }
 
-        if (nameValidation.name && !subscriber.name) {
-            subscriber.name = nameValidation.name;
-            await subscriber.save();
+        if (!subscriber.confirmed) {
+            await subscriber.confirm();
         }
-
-        const state = subscriber.confirmed ? 'active' : 'pending';
 
         return success(
             {
                 email: subscriber.email,
-                confirmed: subscriber.confirmed,
-                state,
+                confirmed: true,
+                state: 'active',
             },
-            subscriber.confirmed
-                ? 'This email is already subscribed.'
-                : 'This email is already subscribed and pending confirmation.',
+            'This email is already subscribed.',
         );
     } catch (err) {
         return handleError(err, 'Failed to subscribe');
@@ -110,8 +97,8 @@ export const subscribe = async (
 /*
 API Responses:
 - 201: New subscriber created.
-- 200: Existing active/pending subscriber returned or unsubscribed record reactivated.
-- 400: Invalid email or name value.
+- 200: Existing active subscriber returned or unsubscribed record reactivated.
+- 400: Invalid email value.
 - 404: Subscriber lookup race condition after existence check.
 - 500: Unexpected server/database error.
 */

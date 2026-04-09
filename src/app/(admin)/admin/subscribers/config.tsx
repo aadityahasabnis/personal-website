@@ -35,7 +35,7 @@ export const SUBSCRIBERS_QUERY_KEY = ['admin', 'subscribers'] as const;
 // Search Fields
 // =============================================================
 
-export const SUBSCRIBERS_SEARCH_FIELDS: (keyof IAdminSubscriberRow)[] = ['email', 'name'];
+export const SUBSCRIBERS_SEARCH_FIELDS: (keyof IAdminSubscriberRow)[] = ['email'];
 
 // =============================================================
 // Filters Configuration
@@ -51,30 +51,20 @@ export const SUBSCRIBER_STATUS_FILTER_OPTIONS = [
     { label: 'Unsubscribed', value: 'unsubscribed' satisfies SubscriberFilter },
 ];
 
-export const SUBSCRIBERS_FILTERS: IFilterConfig[] = [
-    createSelectFilter('filter', 'Status', SUBSCRIBER_STATUS_FILTER_OPTIONS),
-];
+export const SUBSCRIBERS_FILTERS: IFilterConfig[] = [createSelectFilter('filter', 'Status', SUBSCRIBER_STATUS_FILTER_OPTIONS)];
 
 // =============================================================
 // Column Definitions
 // =============================================================
 
 export const createSubscribersColumns = (): IColumnConfig<IAdminSubscriberRow>[] => [
-    // Subscriber Column (Icon + Email + Name)
+    // Subscriber Column (Icon + Email)
     createColumn<IAdminSubscriberRow>({
         id: 'subscriber',
         header: 'Subscriber',
         width: '300px',
         minWidth: '250px',
         // Cell renderer is handled in component
-    }),
-
-    // Name Column (separate for sorting)
-    createColumn<IAdminSubscriberRow>({
-        id: 'name',
-        header: 'Name',
-        width: '180px',
-        // Cell renderer handled in component
     }),
 
     // Status Column
@@ -85,28 +75,18 @@ export const createSubscribersColumns = (): IColumnConfig<IAdminSubscriberRow>[]
         {
             width: '130px',
             align: 'center',
-        }
+        },
     ),
 
     // Subscribed Date Column
-    createDateColumn<IAdminSubscriberRow>(
-        'subscribedAt',
-        'Subscribed',
-        'subscribedAt',
-        {
-            width: '150px',
-        }
-    ),
+    createDateColumn<IAdminSubscriberRow>('subscribedAt', 'Subscribed', 'subscribedAt', {
+        width: '150px',
+    }),
 
     // Created Date Column
-    createDateColumn<IAdminSubscriberRow>(
-        'createdAt',
-        'Created',
-        'createdAt',
-        {
-            width: '150px',
-        }
-    ),
+    createDateColumn<IAdminSubscriberRow>('createdAt', 'Created', 'createdAt', {
+        width: '150px',
+    }),
 ];
 
 // =============================================================
@@ -115,13 +95,11 @@ export const createSubscribersColumns = (): IColumnConfig<IAdminSubscriberRow>[]
 
 export interface ISubscriberActionHandlers {
     onConfirm: (subscriber: IAdminSubscriberRow) => Promise<void>;
+    onMarkPending: (subscriber: IAdminSubscriberRow) => Promise<void>;
     onDelete: (subscriber: IAdminSubscriberRow) => Promise<void>;
 }
 
-export const createSubscriberRowActions = (
-    handlers: ISubscriberActionHandlers
-): IRowAction<IAdminSubscriberRow>[] => [
-    // Confirm Action (only for pending subscribers)
+export const createSubscriberRowActions = (handlers: ISubscriberActionHandlers): IRowAction<IAdminSubscriberRow>[] => [
     createRowAction<IAdminSubscriberRow>({
         id: 'confirm',
         label: 'Confirm',
@@ -131,16 +109,21 @@ export const createSubscriberRowActions = (
         isVisible: (subscriber) => subscriber.status === 'pending',
     }),
 
+    createRowAction<IAdminSubscriberRow>({
+        id: 'mark-pending',
+        label: 'Mark Pending',
+        icon: UserMinus,
+        type: 'custom',
+        onClick: handlers.onMarkPending,
+        isVisible: (subscriber) => subscriber.status === 'confirmed',
+    }),
+
     // Delete Action
-    createDeleteAction<IAdminSubscriberRow>(
-        handlers.onDelete,
-        {
-            itemName: (subscriber) => subscriber.email,
-            confirmTitle: 'Delete Subscriber',
-            confirmMessage: (subscriber) =>
-                `Are you sure you want to delete "${subscriber.email}"? This action cannot be undone.`,
-        }
-    ),
+    createDeleteAction<IAdminSubscriberRow>(handlers.onDelete, {
+        itemName: (subscriber) => subscriber.email,
+        confirmTitle: 'Delete Subscriber',
+        confirmMessage: (subscriber) => `Are you sure you want to delete "${subscriber.email}"? This action cannot be undone.`,
+    }),
 ];
 
 // =============================================================
@@ -151,9 +134,7 @@ export interface ISubscriberBulkActionHandlers {
     onBulkDelete: (rows: IAdminSubscriberRow[], ids: string[]) => Promise<void>;
 }
 
-export const createSubscriberBulkActions = (
-    handlers: ISubscriberBulkActionHandlers
-): IBulkAction<IAdminSubscriberRow>[] => [
+export const createSubscriberBulkActions = (handlers: ISubscriberBulkActionHandlers): IBulkAction<IAdminSubscriberRow>[] => [
     // Bulk Delete
     createBulkAction<IAdminSubscriberRow>({
         id: 'bulk-delete',
@@ -162,8 +143,7 @@ export const createSubscriberBulkActions = (
         onClick: handlers.onBulkDelete,
         confirm: {
             title: 'Delete Subscribers',
-            message: (count) =>
-                `Are you sure you want to delete ${count} subscribers? This action cannot be undone.`,
+            message: (count) => `Are you sure you want to delete ${count} subscribers? This action cannot be undone.`,
             confirmLabel: 'Delete All',
             cancelLabel: 'Cancel',
         },
@@ -179,9 +159,7 @@ export interface ISubscribersTableConfigOptions {
     bulkActions: ISubscriberBulkActionHandlers;
 }
 
-export const createSubscribersTableConfig = (
-    options: ISubscribersTableConfigOptions
-): ITableConfig<IAdminSubscriberRow> =>
+export const createSubscribersTableConfig = (options: ISubscribersTableConfigOptions): ITableConfig<IAdminSubscriberRow> =>
     createTableConfig<IAdminSubscriberRow>({
         // Identity
         tableKey: SUBSCRIBERS_TABLE_KEY,
@@ -204,7 +182,7 @@ export const createSubscribersTableConfig = (
 
         // Search
         searchable: true,
-        searchPlaceholder: 'Search by email or name...',
+        searchPlaceholder: 'Search by email...',
         searchFields: SUBSCRIBERS_SEARCH_FIELDS,
 
         // Filters
@@ -235,10 +213,7 @@ export const createSubscribersTableConfig = (
 
 export type SubscriberStatusVariant = 'confirmed' | 'pending' | 'unsubscribed';
 
-export const SUBSCRIBER_STATUS_CONFIG: Record<
-    SubscriberStatusVariant,
-    { label: string; icon: typeof UserCheck; className: string }
-> = {
+export const SUBSCRIBER_STATUS_CONFIG: Record<SubscriberStatusVariant, { label: string; icon: typeof UserCheck; className: string }> = {
     confirmed: {
         label: 'Confirmed',
         icon: UserCheck,

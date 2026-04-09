@@ -7,6 +7,7 @@ import type { QueryKey } from '@tanstack/react-query';
 import type { IFormData, IHandleChange } from '@/components/form/form';
 import FormWrapper, { type IFieldConfig } from '@/components/form/FormWrapper';
 import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useSnackbar, type ISnackbarDescription } from '@/hooks/form/useSnackbar';
 import { useAction, type ActionFn } from '@/hooks/server/useAction';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 
@@ -34,6 +35,7 @@ export interface IActionFormProps<TFormBody extends IFormData, TResult> {
     hideActionable?: boolean | undefined;
     navigateBackRequired?: boolean | undefined;
     requireModification?: boolean | undefined;
+    snackbar?: ISnackbarDescription | ((formData: TFormBody) => ISnackbarDescription) | undefined;
     onSecondaryClick?: (() => void) | undefined;
     onSuccess?: ((payload: IActionFormSuccessPayload<TFormBody, TResult>) => void) | undefined;
     onError?: ((payload: IActionFormErrorPayload) => void) | undefined;
@@ -52,10 +54,12 @@ export function ActionForm<TFormBody extends IFormData, TResult>({
     hideActionable,
     navigateBackRequired,
     requireModification = true,
+    snackbar,
     onSecondaryClick,
     onSuccess,
     onError,
 }: IActionFormProps<TFormBody, TResult>) {
+    const { triggerActionSnackbar } = useSnackbar();
     const { formData, setFormData, handleChange, isModified, resetForm, submitBtnRef } = useFormOperations<TFormBody>(initialData ?? {});
 
     const actionOptions = {
@@ -73,7 +77,7 @@ export function ActionForm<TFormBody extends IFormData, TResult>({
         event.preventDefault();
 
         const payload = transformPayload ? transformPayload(formData) : formData;
-        const response = await mutateAsync(payload);
+        const response = snackbar ? await triggerActionSnackbar(mutateAsync(payload), typeof snackbar === 'function' ? snackbar(formData) : snackbar) : await mutateAsync(payload);
 
         if (response.success) {
             onSuccess?.({

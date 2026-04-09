@@ -10,7 +10,7 @@ const Footer = () => {
 
     return (
         <footer className='relative border-border ' role='contentinfo'>
-            <div className='mx-auto border-t border-border grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-5xl'>
+            <div className='mx-auto grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-5xl'>
                 <section className='flex flex-col gap-4'>
                     <Link
                         href='/'

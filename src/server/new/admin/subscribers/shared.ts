@@ -7,7 +7,6 @@ import type { IAdminSubscriberRow, SubscriberFilter, SubscriberRowStatus } from 
 interface ISubscriberRowDoc {
     _id: ObjectId;
     email: string;
-    name?: string | null;
     confirmed?: boolean;
     subscribedAt: Date;
     unsubscribedAt?: Date | null;
@@ -15,7 +14,7 @@ interface ISubscriberRowDoc {
     updatedAt: Date;
 }
 
-const ALLOWED_SORT_FIELDS = new Set(['subscribedAt', 'updatedAt', 'createdAt', 'email', 'name', 'confirmed']);
+const ALLOWED_SORT_FIELDS = new Set(['subscribedAt', 'updatedAt', 'createdAt', 'email', 'confirmed']);
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -42,10 +41,7 @@ export const buildSubscriberMatch = (
 
     if (query?.trim()) {
         const q = escapeRegex(query.trim());
-        match.$or = [
-            { email: { $regex: q, $options: 'i' } },
-            { name: { $regex: q, $options: 'i' } },
-        ];
+        match.email = { $regex: q, $options: 'i' };
     }
 
     return match;
@@ -61,7 +57,6 @@ export const buildSubscriberSort = (sort?: ISortParams): Record<string, 1 | -1> 
 export const toAdminSubscriberRow = (doc: ISubscriberRowDoc): IAdminSubscriberRow => ({
     id: doc._id.toString(),
     email: doc.email,
-    name: doc.name ?? null,
     confirmed: Boolean(doc.confirmed),
     status: resolveStatus(doc),
     subscribedAt: doc.subscribedAt.toISOString(),
@@ -87,10 +82,9 @@ export const normalizeSubscriberIds = (subscriberIds: string[]): string[] => {
 const csvEscape = (value: string): string => `"${value.replace(/"/g, '""')}"`;
 
 export const toSubscribersCsv = (rows: IAdminSubscriberRow[]): string => {
-    const headers = ['Email', 'Name', 'Status', 'Confirmed', 'Subscribed At', 'Unsubscribed At'];
+    const headers = ['Email', 'Status', 'Confirmed', 'Subscribed At', 'Unsubscribed At'];
     const lines = rows.map((row) => [
         row.email,
-        row.name ?? '',
         row.status,
         row.confirmed ? 'Yes' : 'No',
         row.subscribedAt,

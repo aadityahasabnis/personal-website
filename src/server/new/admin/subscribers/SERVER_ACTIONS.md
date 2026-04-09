@@ -7,6 +7,7 @@ This module provides canonical admin-side subscriber management actions.
 - table query with filter/search/sort/pagination
 - subscriber stats query
 - confirm subscriber
+- mark subscriber pending
 - delete one or many subscribers
 - export filtered CSV
 
@@ -15,6 +16,7 @@ This module provides canonical admin-side subscriber management actions.
 - src/server/new/admin/subscribers/getSubscribers.ts
 - src/server/new/admin/subscribers/getSubscriberStats.ts
 - src/server/new/admin/subscribers/confirmSubscriber.ts
+- src/server/new/admin/subscribers/markSubscriberPending.ts
 - src/server/new/admin/subscribers/deleteSubscriber.ts
 - src/server/new/admin/subscribers/bulkDeleteSubscribers.ts
 - src/server/new/admin/subscribers/exportSubscribers.ts
@@ -47,8 +49,12 @@ This module provides canonical admin-side subscriber management actions.
 
 ### `confirmSubscriber(subscriberId)`
 
-- Confirms pending subscribers via model instance method `confirm()`.
-- Rejects confirm operation for unsubscribed records.
+- Marks a pending subscriber as confirmed.
+
+### `markSubscriberPending(subscriberId)`
+
+- Admin-only status change from confirmed to pending.
+- Rejects operation for unsubscribed records.
 
 ### `deleteSubscriber(subscriberId)`
 

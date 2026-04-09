@@ -14,20 +14,9 @@ import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
 import { cn, formatDate } from '@/lib/utils';
 import type { IAdminSubscriberRow } from '@/server/new/admin/subscribers';
-import {
-    bulkDeleteSubscribers,
-    confirmSubscriber,
-    deleteSubscriber,
-    getSubscribers,
-} from '@/server/new/admin/subscribers';
+import { bulkDeleteSubscribers, confirmSubscriber, deleteSubscriber, getSubscribers, markSubscriberPending } from '@/server/new/admin/subscribers';
 
-import {
-    createSubscribersTableConfig,
-    SUBSCRIBER_STATUS_CONFIG,
-    type ISubscriberActionHandlers,
-    type ISubscriberBulkActionHandlers,
-    type SubscriberStatusVariant,
-} from './config';
+import { createSubscribersTableConfig, SUBSCRIBER_STATUS_CONFIG, type ISubscriberActionHandlers, type ISubscriberBulkActionHandlers, type SubscriberStatusVariant } from './config';
 
 // =============================================================
 // Types
@@ -49,13 +38,8 @@ function SubscriberStatusBadge({ status }: { status: SubscriberStatusVariant }):
     const Icon = config.icon;
 
     return (
-        <span
-            className={cn(
-                'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium',
-                config.className
-            )}
-        >
-            <Icon className="h-3 w-3" />
+        <span className={cn('inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium', config.className)}>
+            <Icon className='h-3 w-3' />
             {config.label}
         </span>
     );
@@ -83,6 +67,16 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
         },
     });
 
+    const markPendingAction = useAction({
+        action: async (subscriber: IAdminSubscriberRow) => markSubscriberPending(subscriber.id),
+        onSuccess: (_data, response) => {
+            showSuccess(response.message ?? 'Subscriber marked as pending');
+        },
+        onError: (message) => {
+            showError(message ?? 'Failed to mark subscriber as pending');
+        },
+    });
+
     const deleteAction = useAction({
         action: async (subscriber: IAdminSubscriberRow) => deleteSubscriber(subscriber.id),
         onSuccess: (_data, response) => {
@@ -98,11 +92,14 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
             onConfirm: async (subscriber: IAdminSubscriberRow) => {
                 await confirmAction.mutateAsync(subscriber);
             },
+            onMarkPending: async (subscriber: IAdminSubscriberRow) => {
+                await markPendingAction.mutateAsync(subscriber);
+            },
             onDelete: async (subscriber: IAdminSubscriberRow) => {
                 await deleteAction.mutateAsync(subscriber);
             },
         }),
-        [confirmAction.mutateAsync, deleteAction.mutateAsync]
+        [confirmAction, markPendingAction, deleteAction],
     );
 
     // =============================================================
@@ -126,7 +123,7 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
                 await bulkDeleteAction.mutateAsync(rows, ids);
             },
         }),
-        [bulkDeleteAction.mutateAsync]
+        [bulkDeleteAction],
     );
 
     // =============================================================
@@ -146,29 +143,14 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
                 return {
                     ...col,
                     cell: (subscriber: IAdminSubscriberRow) => (
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                <Mail className="h-5 w-5" />
+                        <div className='flex items-center gap-3'>
+                            <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+                                <Mail className='h-5 w-5' />
                             </div>
-                            <div className="min-w-0">
-                                <p className="truncate font-medium">{subscriber.email}</p>
-                                {subscriber.name && (
-                                    <p className="text-sm text-muted-foreground">{subscriber.name}</p>
-                                )}
+                            <div className='min-w-0'>
+                                <p className='truncate font-medium'>{subscriber.email}</p>
                             </div>
                         </div>
-                    ),
-                };
-            }
-
-            // Name column
-            if (col.id === 'name') {
-                return {
-                    ...col,
-                    cell: (subscriber: IAdminSubscriberRow) => (
-                        <span className="text-sm text-muted-foreground">
-                            {subscriber.name ?? '-'}
-                        </span>
                     ),
                 };
             }
@@ -177,9 +159,7 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
             if (col.id === 'status') {
                 return {
                     ...col,
-                    cell: (subscriber: IAdminSubscriberRow) => (
-                        <SubscriberStatusBadge status={subscriber.status} />
-                    ),
+                    cell: (subscriber: IAdminSubscriberRow) => <SubscriberStatusBadge status={subscriber.status} />,
                 };
             }
 
@@ -187,11 +167,7 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
             if (col.id === 'subscribedAt') {
                 return {
                     ...col,
-                    cell: (subscriber: IAdminSubscriberRow) => (
-                        <span className="text-sm text-muted-foreground">
-                            {formatDate(subscriber.subscribedAt)}
-                        </span>
-                    ),
+                    cell: (subscriber: IAdminSubscriberRow) => <span className='text-sm text-muted-foreground'>{formatDate(subscriber.subscribedAt)}</span>,
                 };
             }
 
@@ -199,11 +175,7 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
             if (col.id === 'createdAt') {
                 return {
                     ...col,
-                    cell: (subscriber: IAdminSubscriberRow) => (
-                        <span className="text-sm text-muted-foreground">
-                            {formatDate(subscriber.createdAt)}
-                        </span>
-                    ),
+                    cell: (subscriber: IAdminSubscriberRow) => <span className='text-sm text-muted-foreground'>{formatDate(subscriber.createdAt)}</span>,
                 };
             }
 
@@ -220,14 +192,7 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
     // Render
     // =============================================================
 
-    return (
-        <DataTable
-            config={config}
-            serverAction={getSubscribers}
-            initialData={initialData}
-            initialTotal={initialTotal}
-        />
-    );
+    return <DataTable config={config} serverAction={getSubscribers} initialData={initialData} initialTotal={initialTotal} />;
 }
 
 export default SubscribersTable;

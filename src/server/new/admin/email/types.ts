@@ -55,7 +55,6 @@ export interface ISendEmailResult {
 export interface INewsletterRecipientStatus {
     subscriberId: string;
     email: string;
-    name: string | null;
     status: EmailStatusType;
     messageId?: string;
     error?: string;

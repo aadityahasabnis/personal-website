@@ -1,158 +1,212 @@
 'use client';
 
-import { CustomInput } from '@/components/form';
-import type { IFormData } from '@/components/form/form';
 import { NEWSLETTER_SECTION } from '@/constants/homeConstants';
-import { useFormOperations } from '@/hooks/form/useFormOperations';
+import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
+import { siteStorage } from '@/lib/storage';
 import { subscribe, type ISubscribeInput, type ISubscriptionResult } from '@/server/new/public/subscribe';
-import { motion } from 'framer-motion';
-import { CheckCircle, Loader2, Send } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { CheckCircle, Loader2, Mail } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-type NewsletterStatus = 'idle' | 'success' | 'error';
+// =============================================================
+// Types
+// =============================================================
 
-interface INewsletterFormData extends IFormData {
-    email?: string;
+interface INewsletterFormData {
+    email: string;
 }
 
-const getEmailValue = (value: unknown): string => (typeof value === 'string' ? value : '');
+type NewsletterVariant = 'landing' | 'inline';
 
-export const NewsletterSection = () => {
-    const [status, setStatus] = useState<NewsletterStatus>('idle');
-    const [message, setMessage] = useState('');
-    const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+interface INewsletterSectionProps {
+    variant?: NewsletterVariant;
+    className?: string;
+}
 
-    const { formData, handleChange, resetForm } = useFormOperations<INewsletterFormData>({
-        email: '',
-    });
+interface INewsletterSubscribeFieldProps {
+    value: string;
+    inputDisabled: boolean;
+    submitDisabled: boolean;
+    pending: boolean;
+    isSubmitted: boolean;
+    placeholder: string;
+    submitLabel: string;
+    subscribedLabel: string;
+    loadingLabel: string;
+    onChange: (value: string) => void;
+    onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
+    className?: string;
+}
+
+const NewsletterSubscribeField = ({
+    value,
+    inputDisabled,
+    submitDisabled,
+    pending,
+    isSubmitted,
+    placeholder,
+    submitLabel,
+    subscribedLabel,
+    loadingLabel,
+    onChange,
+    onSubmit,
+    className,
+}: INewsletterSubscribeFieldProps): React.ReactElement => {
+    return (
+        <form onSubmit={onSubmit} className={className}>
+            <div className='flex items-stretch overflow-hidden bg-background border border-border rounded-xl shadow-sm'>
+                <input
+                    type='email'
+                    value={value}
+                    onChange={(event) => onChange(event.target.value)}
+                    placeholder={placeholder}
+                    required
+                    disabled={inputDisabled}
+                    aria-label={NEWSLETTER_SECTION.emailLabel}
+                    className='flex-1 px-4 py-3 text-body text-foreground bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 rounded-l-xl'
+                />
+                <button
+                    type='submit'
+                    disabled={submitDisabled}
+                    className='flex items-center justify-center gap-2 px-5 text-label font-medium text-primary-foreground bg-primary border-l border-primary transition-base hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 rounded-r-xl'
+                >
+                    {pending ? <Loader2 className='size-4 animate-spin' /> : isSubmitted ? <CheckCircle className='size-4' /> : <Mail className='size-4' />}
+                    <span>{pending ? loadingLabel : isSubmitted ? subscribedLabel : submitLabel}</span>
+                </button>
+            </div>
+        </form>
+    );
+};
+
+// =============================================================
+// NewsletterSection Component
+// =============================================================
+
+export const NewsletterSection = ({ variant = 'landing', className }: INewsletterSectionProps) => {
+    const [subscribedEmail, setSubscribedEmail] = useState<string | null>(null);
+    const [formData, setFormData] = useState<INewsletterFormData>({ email: '' });
+    const { showWarning, triggerActionSnackbar } = useSnackbar();
 
     const { mutateAsync, pending } = useAction<ISubscriptionResult, [ISubscribeInput]>({
         action: subscribe,
     });
 
-    const clearFeedbackTimer = () => {
-        if (!feedbackTimerRef.current) return;
+    const normalizedEmail = formData.email.trim().toLowerCase();
+    const isSubmitted = Boolean(subscribedEmail && normalizedEmail && subscribedEmail === normalizedEmail);
+    const isInputDisabled = pending;
+    const isSubmitDisabled = pending || isSubmitted || normalizedEmail.length === 0;
 
-        clearTimeout(feedbackTimerRef.current);
-        feedbackTimerRef.current = null;
-    };
+    useEffect(() => {
+        const frameId = window.requestAnimationFrame(() => {
+            const storedSubscribedEmail = siteStorage.getSubscribedEmail();
+            const storedProfileEmail = siteStorage.getProfile()?.email ?? '';
 
-    const queueFeedbackReset = () => {
-        clearFeedbackTimer();
-        feedbackTimerRef.current = setTimeout(() => {
-            setStatus('idle');
-            setMessage('');
-        }, NEWSLETTER_SECTION.feedbackResetTimeoutMs);
-    };
+            setSubscribedEmail(storedSubscribedEmail);
+            setFormData((previous) => {
+                if (previous.email.trim().length > 0) {
+                    return previous;
+                }
 
-    useEffect(
-        () => () => {
-            clearFeedbackTimer();
-        },
-        [],
-    );
+                return {
+                    email: storedSubscribedEmail ?? storedProfileEmail,
+                };
+            });
+        });
 
-    const handleSubmit = async (e: React.FormEvent) => {
+        return () => {
+            window.cancelAnimationFrame(frameId);
+        };
+    }, []);
+
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         if (pending) return;
 
-        const email = getEmailValue(formData.email).trim();
+        const email = normalizedEmail;
+
         if (!email) {
-            setStatus('error');
-            setMessage(NEWSLETTER_SECTION.feedback.emptyEmail);
-            queueFeedbackReset();
+            showWarning(NEWSLETTER_SECTION.feedback.emptyEmail);
             return;
         }
 
-        try {
-            const result = await mutateAsync({ email });
-
-            if (result.success) {
-                setStatus('success');
-                setMessage(result.message || NEWSLETTER_SECTION.feedback.successFallback);
-                resetForm();
-            } else {
-                setStatus('error');
-                setMessage(result.error || NEWSLETTER_SECTION.feedback.errorFallback);
-            }
-        } catch {
-            setStatus('error');
-            setMessage(NEWSLETTER_SECTION.feedback.errorFallback);
+        if (siteStorage.isEmailSubscribed(email)) {
+            showWarning(NEWSLETTER_SECTION.feedback.alreadySubscribed);
+            return;
         }
 
-        queueFeedbackReset();
+        const response = await triggerActionSnackbar(
+            mutateAsync({
+                email,
+            }),
+            {
+                loadingMessage: NEWSLETTER_SECTION.loadingMessage,
+                successMessage: NEWSLETTER_SECTION.successMessage,
+                errorMessage: NEWSLETTER_SECTION.feedback.errorFallback,
+            },
+        );
+
+        if (response.success) {
+            const persistedEmail = siteStorage.setSubscription(email) ?? email;
+            setSubscribedEmail(persistedEmail);
+            setFormData({ email: persistedEmail });
+        }
     };
+    const isInline = variant === 'inline';
 
-    const emailValue = getEmailValue(formData.email);
-    const isSubmitDisabled = pending || status === 'success';
+    if (isInline) {
+        return (
+            <section className={`relative ${className ?? ''}`}>
+                <div className='relative p-4 bg-card border border-border rounded-xl shadow-sm md:p-5'>
+                    <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                        <p className='text-small text-muted-foreground'>{NEWSLETTER_SECTION.inlineDescription}</p>
 
-    return (
-        <section className='relative overflow-hidden py-24'>
-            <div className='absolute inset-0 pointer-events-none bg-linear-to-b from-transparent via-violet-300/20 to-transparent dark:via-violet-700/10' />
-
-            <div className='relative container-narrow'>
-                <div className='relative overflow-hidden p-8 text-center rounded-3xl glass-card md:p-12'>
-                    <div className='absolute top-0 right-0 h-64 w-64 translate-x-1/2 -translate-y-1/2 rounded-full bg-(--sphere-1) blur-3xl' />
-                    <div className='absolute bottom-0 left-0 h-48 w-48 -translate-x-1/2 translate-y-1/2 rounded-full bg-(--sphere-2) blur-3xl' />
-
-                    <div className='relative z-10'>
-                        <span className='mb-4 block text-label font-medium uppercase tracking-widest text-primary'>{NEWSLETTER_SECTION.label}</span>
-                        <h2 className='mb-4 text-h1 font-semibold text-foreground'>{NEWSLETTER_SECTION.title}</h2>
-                        <p className='mx-auto mb-8 max-w-lg text-body text-muted-foreground'>{NEWSLETTER_SECTION.description}</p>
-
-                        <form onSubmit={handleSubmit} className='mx-auto max-w-md'>
-                            <div className='flex flex-col gap-3 sm:flex-row'>
-                                <CustomInput<INewsletterFormData>
-                                    name='email'
-                                    type='email'
-                                    value={emailValue}
-                                    onChange={handleChange}
-                                    placeholder={NEWSLETTER_SECTION.emailPlaceholder}
-                                    required
-                                    disabled={isSubmitDisabled}
-                                    containerClassName='flex-1'
-                                    inputClassName='px-4 h-12 text-foreground placeholder:text-muted-foreground bg-background border-border rounded-xl focus:ring-primary'
-                                />
-                                <motion.button
-                                    type='submit'
-                                    disabled={isSubmitDisabled}
-                                    whileHover={{ scale: !isSubmitDisabled ? 1.02 : 1 }}
-                                    whileTap={{ scale: !isSubmitDisabled ? 0.98 : 1 }}
-                                    className='inline-flex items-center justify-center gap-2 whitespace-nowrap px-5 py-3 text-label font-medium btn-primary disabled:opacity-50'
-                                >
-                                    {pending ? (
-                                        <Loader2 className='size-5 animate-spin' />
-                                    ) : status === 'success' ? (
-                                        <>
-                                            <CheckCircle className='size-5' />
-                                            {NEWSLETTER_SECTION.subscribedLabel}
-                                        </>
-                                    ) : (
-                                        <>
-                                            {NEWSLETTER_SECTION.submitLabel}
-                                            <Send className='size-4' />
-                                        </>
-                                    )}
-                                </motion.button>
-                            </div>
-
-                            {message && (
-                                <motion.p
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className={`mt-4 text-small ${status === 'success' ? 'text-success' : 'text-destructive'}`}
-                                    aria-live='polite'
-                                >
-                                    {message}
-                                </motion.p>
-                            )}
-                        </form>
-
-                        <p className='mt-6 text-small text-muted-foreground'>{NEWSLETTER_SECTION.subscribersLabel}</p>
+                        <NewsletterSubscribeField
+                            value={formData.email}
+                            onChange={(email) => {
+                                setFormData({ email });
+                            }}
+                            onSubmit={handleSubmit}
+                            inputDisabled={isInputDisabled}
+                            submitDisabled={isSubmitDisabled}
+                            pending={pending}
+                            isSubmitted={isSubmitted}
+                            placeholder={NEWSLETTER_SECTION.emailPlaceholder}
+                            submitLabel={NEWSLETTER_SECTION.inlineSubmitLabel}
+                            subscribedLabel={NEWSLETTER_SECTION.inlineSubscribedLabel}
+                            loadingLabel={NEWSLETTER_SECTION.loadingMessage}
+                            className='w-full md:w-auto md:min-w-2xl'
+                        />
                     </div>
                 </div>
+            </section>
+        );
+    }
+
+    return (
+        <section className={`flex flex-col gap-4 mx-auto px-6 lg:px-8 max-w-5xl ${className}`}>
+            <div className='flex flex-col gap-4 overflow-hidden p-6 md:p-10 bg-card border border-border rounded-2xl shadow-sm backdrop-blur-sm'>
+                <div className='flex flex-col gap-2 text-center'>
+                    <h2 className='text-h1 font-semibold text-foreground'>{NEWSLETTER_SECTION.title}</h2>
+
+                    <p className='hidden md:block mx-auto text-body text-muted-foreground'>{NEWSLETTER_SECTION.description}</p>
+                </div>
+
+                <NewsletterSubscribeField
+                    value={formData.email}
+                    onChange={(email) => {
+                        setFormData({ email });
+                    }}
+                    onSubmit={handleSubmit}
+                    inputDisabled={isInputDisabled}
+                    submitDisabled={isSubmitDisabled}
+                    pending={pending}
+                    isSubmitted={isSubmitted}
+                    placeholder={NEWSLETTER_SECTION.emailPlaceholder}
+                    submitLabel={NEWSLETTER_SECTION.submitLabel}
+                    subscribedLabel={NEWSLETTER_SECTION.subscribedLabel}
+                    loadingLabel={NEWSLETTER_SECTION.loadingMessage}
+                />
             </div>
         </section>
     );

@@ -4,14 +4,13 @@
 
 export interface ISubscribeInput {
     email: string;
-    name?: string | null;
 }
 
 export interface IUnsubscribeInput {
     email: string;
 }
 
-export type SubscriptionState = 'created' | 'pending' | 'active' | 'resubscribed' | 'unsubscribed';
+export type SubscriptionState = 'created' | 'active' | 'resubscribed' | 'unsubscribed';
 
 export interface ISubscriptionResult {
     email: string;
