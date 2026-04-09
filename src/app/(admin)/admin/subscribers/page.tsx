@@ -17,18 +17,13 @@ const SubscribersTableWrapper = async (): Promise<React.ReactElement> => {
 
     if (!response.success || !response.data) {
         return (
-            <div className="flex h-64 items-center justify-center rounded-xl border border-dashed">
-                <p className="text-muted-foreground">Failed to load subscribers</p>
+            <div className='flex h-64 items-center justify-center rounded-xl border border-dashed'>
+                <p className='text-muted-foreground'>Failed to load subscribers</p>
             </div>
         );
     }
 
-    return (
-        <SubscribersTable
-            initialData={response.data}
-            initialTotal={response.pagination.total}
-        />
-    );
+    return <SubscribersTable initialData={response.data} initialTotal={response.pagination.total} />;
 };
 
 // =============================================================
@@ -37,12 +32,8 @@ const SubscribersTableWrapper = async (): Promise<React.ReactElement> => {
 
 const SubscribersPage = (): React.ReactElement => {
     return (
-        <div className="space-y-6">
-            <PageHeader
-                title="Subscribers"
-                description="Manage your newsletter subscribers. View, confirm, or remove subscribers."
-                icon={Mail}
-            />
+        <div className='space-y-6'>
+            <PageHeader title='Subscribers' description='Manage your newsletter subscribers. View, update status, or remove subscribers.' icon={Mail} />
 
             <Suspense fallback={<DataTableSkeleton {...SUBSCRIBERS_TABLE_SKELETON_PROPS} />}>
                 <SubscribersTableWrapper />

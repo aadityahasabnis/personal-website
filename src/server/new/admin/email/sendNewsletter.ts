@@ -54,7 +54,7 @@ export const sendNewsletter = async (
         await connectDB();
 
         // Get subscribers - either selected or all active
-        let subscribers: Array<{ _id: mongoose.Types.ObjectId; email: string; name: string | null }>;
+        let subscribers: Array<{ _id: mongoose.Types.ObjectId; email: string }>;
 
         if (input.subscriberIds && input.subscriberIds.length > 0) {
             // Validate all subscriber IDs
@@ -69,7 +69,7 @@ export const sendNewsletter = async (
                 confirmed: true,
                 unsubscribedAt: null,
             })
-                .select('_id email name')
+                .select('_id email')
                 .lean();
 
             if (subscribers.length === 0) {
@@ -125,7 +125,6 @@ export const sendNewsletter = async (
                     results.push({
                         subscriberId: subscriber._id.toString(),
                         email: subscriber.email,
-                        name: subscriber.name,
                         status: EMAIL_STATUS.FAILED,
                         error: 'Invalid email address format',
                     });
@@ -135,7 +134,7 @@ export const sendNewsletter = async (
 
                 // Generate personalized email content
                 const { html, text } = newsletterEmailTemplate(
-                    subscriber.name,
+                    null,
                     input.subject,
                     input.htmlContent,
                     input.previewText
@@ -156,7 +155,6 @@ export const sendNewsletter = async (
                     const successResult: INewsletterRecipientStatus = {
                         subscriberId: subscriber._id.toString(),
                         email: subscriber.email,
-                        name: subscriber.name,
                         status: EMAIL_STATUS.SENT,
                     };
                     if (result.messageId) successResult.messageId = result.messageId;
@@ -166,7 +164,6 @@ export const sendNewsletter = async (
                     const failResult: INewsletterRecipientStatus = {
                         subscriberId: subscriber._id.toString(),
                         email: subscriber.email,
-                        name: subscriber.name,
                         status: EMAIL_STATUS.FAILED,
                     };
                     if (result.error) failResult.error = result.error;

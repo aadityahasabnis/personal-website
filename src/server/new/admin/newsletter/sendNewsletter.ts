@@ -51,7 +51,7 @@ export const sendNewsletter = async (newsletterId: string): Promise<IApiResponse
         // Prepare email payloads for all subscribers
         const emailPayloads = subscribers.map((subscriber) => {
             const { html, text } = newsletterEmailTemplate(
-                subscriber.name,
+                null,
                 newsletter.subject,
                 newsletter.body,
                 newsletter.previewText ?? undefined

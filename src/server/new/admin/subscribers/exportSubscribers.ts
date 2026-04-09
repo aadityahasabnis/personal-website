@@ -23,7 +23,7 @@ export const exportSubscribers = async (
 
         const match = buildSubscriberMatch(filter);
         const docs = await Subscriber.find(match)
-            .select('_id email name confirmed subscribedAt unsubscribedAt createdAt updatedAt')
+            .select('_id email confirmed subscribedAt unsubscribedAt createdAt updatedAt')
             .sort({ subscribedAt: -1 })
             .lean();
 

@@ -27,7 +27,7 @@ export const getSubscribers = async (
 
         const [docs, total] = await Promise.all([
             Subscriber.find(match)
-                .select('_id email name confirmed subscribedAt unsubscribedAt createdAt updatedAt')
+                .select('_id email confirmed subscribedAt unsubscribedAt createdAt updatedAt')
                 .sort(sort)
                 .skip(offset)
                 .limit(limit)

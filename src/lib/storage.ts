@@ -17,7 +17,14 @@ export const STORAGE_KEYS = {
 // Types
 // =================================================
 
-export interface IUserProfile   { name: string; email: string; avatar?: string; subscribedAt?: string }
+export interface IUserProfile   {
+    name: string;
+    email: string;
+    avatar?: string;
+    subscribedAt?: string;
+    subscribedEmail?: string;
+    isSubscribed?: boolean;
+}
 export interface ICommentAuthor { name: string; email: string; avatar: string }
 export interface IStatsRecord   { [key: string]: number }
 
@@ -32,6 +39,10 @@ class SiteStorage {
 
     private namespacedId(id: string, namespace?: string): string {
         return namespace ? `${namespace}:${id}` : id;
+    }
+
+    private normalizeEmail(email: string): string {
+        return email.trim().toLowerCase();
     }
 
     private get<T>(key: string): T | null {
@@ -82,6 +93,48 @@ class SiteStorage {
 
     updateUserProfile(profile: Partial<IUserProfile>): void {
         this.updateProfile(profile);
+    }
+
+    getSubscribedEmail(): string | null {
+        const profile = this.getProfile();
+        if (!profile?.isSubscribed) return null;
+
+        const subscribedEmail = this.normalizeEmail(profile.subscribedEmail ?? profile.email ?? '');
+        return subscribedEmail || null;
+    }
+
+    isEmailSubscribed(email: string): boolean {
+        const normalizedEmail = this.normalizeEmail(email);
+        if (!normalizedEmail) return false;
+
+        return this.getSubscribedEmail() === normalizedEmail;
+    }
+
+    setSubscription(email: string): string | null {
+        const normalizedEmail = this.normalizeEmail(email);
+        if (!normalizedEmail) return null;
+
+        const existingProfile = this.getProfile();
+        const existingAuthor = this.getCommentAuthor();
+        const resolvedName = existingProfile?.name || existingAuthor?.name || normalizedEmail.split('@')[0] || '';
+        const resolvedAvatar = existingProfile?.avatar || existingAuthor?.avatar || getRandomAvatar().image;
+
+        this.setProfile({
+            name: resolvedName,
+            email: normalizedEmail,
+            avatar: resolvedAvatar,
+            subscribedAt: new Date().toISOString(),
+            subscribedEmail: normalizedEmail,
+            isSubscribed: true,
+        });
+
+        this.setCommentAuthor({
+            name: resolvedName,
+            email: normalizedEmail,
+            avatar: resolvedAvatar,
+        });
+
+        return normalizedEmail;
     }
 
     // Comment author

@@ -90,7 +90,6 @@ export interface ITestEmailData {
 
 export interface INewsletterRecipientResult {
     email: string;
-    name: string | null;
     status: EmailStatusType;
     messageId?: string;
     error?: string;

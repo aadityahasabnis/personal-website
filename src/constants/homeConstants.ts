@@ -38,18 +38,24 @@ export const ABOUT_PREVIEW_SECTION = {
 
 export const NEWSLETTER_SECTION = {
     label: 'Newsletter',
-    title: 'Stay Updated',
-    description: 'Get the latest articles, tutorials, and updates delivered straight to your inbox. No spam, unsubscribe anytime.',
-    emailPlaceholder: 'Enter your email',
+    title: 'Stay Updated with Newsletter',
+    description: 'Subscribe to receive the latest articles, tutorials, blogs and updates straight to your inbox. No spam, unsubscribe anytime.',
+    inlineDescription: 'Get new articles in your inbox.',
+    emailPlaceholder: 'Type your email...',
+    emailLabel: 'Email Address',
     submitLabel: 'Subscribe',
+    inlineSubmitLabel: 'Join',
     subscribedLabel: 'Subscribed!',
-    subscribersLabel: 'Join 500+ subscribers',
+    inlineSubscribedLabel: 'Joined',
     feedbackResetTimeoutMs: 5000,
     feedback: {
         emptyEmail: 'Please enter a valid email address.',
+        alreadySubscribed: 'You are already subscribed with this email.',
         successFallback: 'Thanks for subscribing!',
         errorFallback: 'Something went wrong. Please try again.',
     },
+    loadingMessage: 'Subscribing...',
+    successMessage: 'Welcome aboard!',
 } as const;
 
 // ============================================================

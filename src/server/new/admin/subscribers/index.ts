@@ -4,4 +4,6 @@ export * from './deleteSubscriber';
 export * from './exportSubscribers';
 export * from './getSubscribers';
 export * from './getSubscriberStats';
+export * from './markSubscriberPending';
 export * from './types';
+

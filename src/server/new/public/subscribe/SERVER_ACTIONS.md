@@ -19,10 +19,9 @@ This module owns newsletter subscription mutations for public-facing surfaces.
 
 1. Email is normalized to lowercase trimmed value.
 2. Email must match shared schema validation pattern.
-3. Optional name is validated with schema-length limits.
-4. Existing unsubscribed records are reactivated with `resubscribe()`.
-5. Unsubscribe uses the model `unsubscribe()` instance method.
-6. Repeated subscribe calls are idempotent and return clear subscription state.
+3. Existing unsubscribed records are reactivated with `resubscribe()`.
+4. Unsubscribe uses the model `unsubscribe()` instance method.
+5. Repeated subscribe calls are idempotent and return clear subscription state.
 
 ## Action behaviors
 
@@ -31,7 +30,8 @@ This module owns newsletter subscription mutations for public-facing surfaces.
 - New email: creates record and returns `state: created`.
 - Existing unsubscribed: reactivates record and returns `state: resubscribed`.
 - Existing active confirmed: returns `state: active`.
-- Existing pending: returns `state: pending`.
+
+All subscribe flows enforce `confirmed: true`.
 
 ### `unsubscribe(input)`
 
@@ -45,7 +45,6 @@ import { subscribe } from '@/server/new/public/subscribe';
 
 const result = await subscribe({
     email: 'reader@example.com',
-    name: 'Reader',
 });
 
 if (!result.success) {

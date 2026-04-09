@@ -11,6 +11,7 @@ export const EMAIL_TYPE = {
     PASSWORD_RESET: 'PASSWORD_RESET',
     TEST: 'TEST',
     NEWSLETTER: 'NEWSLETTER',
+    CONTACT_RESPONSE: 'CONTACT_RESPONSE',
 } as const;
 export type EmailType = (typeof EMAIL_TYPE)[keyof typeof EMAIL_TYPE];
 

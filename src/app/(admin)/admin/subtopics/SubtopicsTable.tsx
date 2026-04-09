@@ -12,26 +12,14 @@ import { useMemo } from 'react';
 
 import { StatusBadge } from '@/components/admin';
 import { DataTable } from '@/components/admin/table';
-import type { IApiResponse } from '@/interfaces/actionHelper';
 import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import { formatDate } from '@/lib/utils';
 import type { ISubtopicRow } from '@/server/new/admin/subtopic';
-import {
-    bulkDeleteSubtopics,
-    bulkPublishSubtopics,
-    bulkUnpublishSubtopics,
-    deleteSubtopic,
-    getSubtopics,
-    reorderSubtopics,
-    toggleSubtopicPublished,
-} from '@/server/new/admin/subtopic';
+import { bulkDeleteSubtopics, bulkPublishSubtopics, bulkUnpublishSubtopics, deleteSubtopic, getSubtopics, reorderSubtopics, toggleSubtopicPublished } from '@/server/new/admin/subtopic';
 
-import {
-    createSubtopicsTableConfig,
-    type ISubtopicActionHandlers,
-    type ISubtopicBulkActionHandlers,
-} from './config';
+import { createSubtopicsTableConfig, type ISubtopicActionHandlers, type ISubtopicBulkActionHandlers } from './config';
 
 // =============================================================
 // Types
@@ -135,11 +123,7 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
                 await bulkDeleteAction.mutateAsync(rows, ids);
             },
         }),
-        [
-            bulkPublishAction.mutateAsync,
-            bulkUnpublishAction.mutateAsync,
-            bulkDeleteAction.mutateAsync,
-        ],
+        [bulkPublishAction.mutateAsync, bulkUnpublishAction.mutateAsync, bulkDeleteAction.mutateAsync],
     );
 
     // =============================================================
@@ -189,18 +173,15 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
                 return {
                     ...col,
                     cell: (subtopic: ISubtopicRow) => (
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                <ListTree className="h-5 w-5" />
+                        <div className='flex items-center gap-3'>
+                            <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+                                <ListTree className='h-5 w-5' />
                             </div>
-                            <div className="min-w-0">
-                                <Link
-                                    href={`/admin/subtopics/${subtopic.id}/edit`}
-                                    className="block truncate font-medium hover:text-foreground hover:underline"
-                                >
+                            <div className='min-w-0'>
+                                <Link href={`/admin/subtopics/${subtopic.id}/edit`} className='block truncate font-medium hover:text-foreground hover:underline'>
                                     {subtopic.title}
                                 </Link>
-                                <p className="text-sm text-muted-foreground">/{subtopic.slug}</p>
+                                <p className='text-sm text-muted-foreground'>/{subtopic.slug}</p>
                             </div>
                         </div>
                     ),
@@ -212,10 +193,7 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
                 return {
                     ...col,
                     cell: (subtopic: ISubtopicRow) => (
-                        <Link
-                            href={`/admin/topics/${subtopic.topicId}/edit`}
-                            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-                        >
+                        <Link href={`/admin/topics/${subtopic.topicId}/edit`} className='text-sm text-muted-foreground hover:text-foreground hover:underline'>
                             {subtopic.topicTitle}
                         </Link>
                     ),
@@ -226,11 +204,7 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
             if (col.id === 'contentCount') {
                 return {
                     ...col,
-                    cell: (subtopic: ISubtopicRow) => (
-                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
-                            {subtopic.contentCount}
-                        </span>
-                    ),
+                    cell: (subtopic: ISubtopicRow) => <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium'>{subtopic.contentCount}</span>,
                 };
             }
 
@@ -238,7 +212,7 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
             if (col.id === 'published') {
                 return {
                     ...col,
-                    cell: (subtopic: ISubtopicRow) => <StatusBadge variant="published" value={subtopic.published} />,
+                    cell: (subtopic: ISubtopicRow) => <StatusBadge variant='published' value={subtopic.published} />,
                 };
             }
 
@@ -246,9 +220,7 @@ export function SubtopicsTable({ initialData, initialTotal }: ISubtopicsTablePro
             if (col.id === 'updatedAt') {
                 return {
                     ...col,
-                    cell: (subtopic: ISubtopicRow) => (
-                        <span className="text-sm text-muted-foreground">{formatDate(subtopic.updatedAt)}</span>
-                    ),
+                    cell: (subtopic: ISubtopicRow) => <span className='text-sm text-muted-foreground'>{formatDate(subtopic.updatedAt)}</span>,
                 };
             }
 
