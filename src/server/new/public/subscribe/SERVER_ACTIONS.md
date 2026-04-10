@@ -7,6 +7,7 @@ This module owns newsletter subscription mutations for public-facing surfaces.
 - subscribe with duplicate-safe behavior
 - resubscribe via model instance method when previously unsubscribed
 - unsubscribe by email
+- trigger welcome email delivery on created/resubscribed states
 
 ## Implementation Files
 
@@ -22,6 +23,7 @@ This module owns newsletter subscription mutations for public-facing surfaces.
 3. Existing unsubscribed records are reactivated with `resubscribe()`.
 4. Unsubscribe uses the model `unsubscribe()` instance method.
 5. Repeated subscribe calls are idempotent and return clear subscription state.
+6. Welcome email copy is centralized in `src/constants/emailConstants.ts` and reused by templates/actions.
 
 ## Action behaviors
 
@@ -30,6 +32,11 @@ This module owns newsletter subscription mutations for public-facing surfaces.
 - New email: creates record and returns `state: created`.
 - Existing unsubscribed: reactivates record and returns `state: resubscribed`.
 - Existing active confirmed: returns `state: active`.
+
+Welcome email behavior:
+
+- `state: created` and `state: resubscribed` attempt to send welcome email via mail utilities.
+- email delivery failures are intentionally non-blocking and do not fail subscription writes.
 
 All subscribe flows enforce `confirmed: true`.
 

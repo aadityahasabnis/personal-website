@@ -3,7 +3,7 @@
 // Professional Config-Driven Table Setup
 // =============================================================
 
-import { Archive, ArchiveRestore, CheckCheck, Eye, Mail, MailOpen } from 'lucide-react';
+import { Archive, ArchiveRestore, CheckCheck, Eye, Mail, MailOpen, Reply } from 'lucide-react';
 
 import {
     createBadgeColumn,
@@ -130,6 +130,16 @@ export const createContactRowActions = (
         onClick: (contact) => {
             handlers.onView(contact);
         },
+    },
+
+    // Respond Action
+    {
+        id: 'respond',
+        label: 'Respond',
+        icon: Reply,
+        type: 'custom',
+        href: (contact) => `/admin/contacts/${contact.id}/response`,
+        isVisible: (contact) => contact.status !== 'archived',
     },
 
     // Mark as Read Action

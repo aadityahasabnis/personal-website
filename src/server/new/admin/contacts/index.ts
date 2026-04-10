@@ -7,6 +7,7 @@ export * from './getContacts';
 export * from './getContactStats';
 export * from './markContactAsRead';
 export * from './markContactAsReplied';
+export * from './sendContactResponse';
 export * from './types';
 export * from './unarchiveContact';
 

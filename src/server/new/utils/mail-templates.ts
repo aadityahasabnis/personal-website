@@ -2,7 +2,35 @@
 // Email Templates - HTML email templates with lavender theme
 // ============================================================
 
-import { DEFAULT_SENDER, EMAIL_COLORS } from '@/constants/emailConstants';
+import {
+    DEFAULT_SENDER,
+    EMAIL_COLORS,
+    WELCOME_EMAIL_CONTENT,
+} from '@/constants/emailConstants';
+
+const escapeHtml = (value: string): string =>
+    value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+const htmlToTextContent = (htmlContent: string): string =>
+    htmlContent
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/p>/gi, '\n\n')
+        .replace(/<\/div>/gi, '\n')
+        .replace(/<\/li>/gi, '\n')
+        .replace(/<li>/gi, '• ')
+        .replace(/<[^>]+>/g, '')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .trim();
 
 // ============================================================
 // Base Layout - Common wrapper for all emails
@@ -340,22 +368,9 @@ export const newsletterEmailTemplate = (
     previewText?: string
 ): { html: string; text: string } => {
     const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
-    
+
     // Strip HTML for text version
-    const textContent = htmlContent
-        .replace(/<br\s*\/?>/gi, '\n')
-        .replace(/<\/p>/gi, '\n\n')
-        .replace(/<\/div>/gi, '\n')
-        .replace(/<\/li>/gi, '\n')
-        .replace(/<li>/gi, '• ')
-        .replace(/<[^>]+>/g, '')
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .trim();
+    const textContent = htmlToTextContent(htmlContent);
 
     const html = baseLayout(
         `
@@ -388,6 +403,61 @@ ${DEFAULT_SENDER.website}`;
 };
 
 // ============================================================
+// Contact Response Email Template
+// ============================================================
+
+export const contactResponseEmailTemplate = (
+    recipientName: string | null,
+    subject: string,
+    htmlContent: string,
+    originalSubject: string,
+    originalMessage: string,
+): { html: string; text: string } => {
+    const greeting = recipientName ? `Hello ${escapeHtml(recipientName)}` : 'Hello';
+    const safeOriginalSubject = escapeHtml(originalSubject);
+    const safeOriginalMessage = escapeHtml(originalMessage).replace(/\n/g, '<br>');
+    const textContent = htmlToTextContent(htmlContent);
+
+    const html = baseLayout(
+        `
+        <p class="greeting">${greeting},</p>
+        <p>Thank you for reaching out. Here is my response to your message:</p>
+        <div class="newsletter-content">
+            ${htmlContent}
+        </div>
+        <div class="divider"></div>
+        <p class="text-muted" style="margin-bottom: 8px;">Original subject: <strong>${safeOriginalSubject}</strong></p>
+        <div style="margin-top: 12px; border: 1px solid ${EMAIL_COLORS.border}; border-left: 4px solid ${EMAIL_COLORS.primary}; border-radius: 10px; background: ${EMAIL_COLORS.lightBg}; padding: 14px;">
+            <p class="text-muted" style="margin-bottom: 8px; font-weight: 600;">Your message</p>
+            <p style="margin: 0;">${safeOriginalMessage}</p>
+        </div>
+        <p class="text-subtle" style="margin-top: 20px;">If you have more questions, feel free to reply to this email.</p>
+        `,
+        subject,
+        `Response from ${DEFAULT_SENDER.name}`,
+    );
+
+    const text = `${greeting},
+
+Thank you for reaching out. Here is my response to your message:
+
+${textContent}
+
+---
+Original subject: ${originalSubject}
+
+Your message:
+${originalMessage}
+
+If you have more questions, feel free to reply to this email.
+
+${DEFAULT_SENDER.name}
+${DEFAULT_SENDER.website}`;
+
+    return { html, text };
+};
+
+// ============================================================
 // Welcome Email Template (for new subscribers)
 // ============================================================
 
@@ -395,41 +465,43 @@ export const welcomeEmailTemplate = (
     recipientName: string | null
 ): { html: string; text: string } => {
     const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
+    const updatesHtml = WELCOME_EMAIL_CONTENT.updates
+        .map((item) => `<li style="margin-bottom: 8px;">${item}</li>`)
+        .join('');
+    const updatesText = WELCOME_EMAIL_CONTENT.updates
+        .map((item) => `• ${item}`)
+        .join('\n');
 
     const html = baseLayout(
         `
         <p class="greeting">${greeting},</p>
-        <p>Thank you for subscribing to my newsletter! I'm excited to have you join the community.</p>
-        <p>You'll receive updates about:</p>
+        <p>${WELCOME_EMAIL_CONTENT.intro}</p>
+        <p>${WELCOME_EMAIL_CONTENT.updatesHeading}</p>
         <ul style="color: ${EMAIL_COLORS.textDark}; padding-left: 20px;">
-            <li style="margin-bottom: 8px;">New articles and blog posts</li>
-            <li style="margin-bottom: 8px;">Project updates and launches</li>
-            <li style="margin-bottom: 8px;">Tips, insights, and behind-the-scenes content</li>
+            ${updatesHtml}
         </ul>
         <p style="text-align: center; margin-top: 32px;">
-            <a href="https://${DEFAULT_SENDER.website}" class="btn-primary">Visit My Website</a>
+            <a href="https://${DEFAULT_SENDER.website}" class="btn-primary">${WELCOME_EMAIL_CONTENT.ctaLabel}</a>
         </p>
         <div class="divider"></div>
         <p class="text-subtle">
-            Feel free to reply to any of my emails - I read and respond to every message.
+            ${WELCOME_EMAIL_CONTENT.replyHint}
         </p>
         `,
-        `Welcome to ${DEFAULT_SENDER.name}'s Newsletter`,
-        'Thanks for subscribing! Excited to have you here.'
+        WELCOME_EMAIL_CONTENT.subject,
+        WELCOME_EMAIL_CONTENT.previewText,
     );
 
     const text = `${greeting},
 
-Thank you for subscribing to my newsletter! I'm excited to have you join the community.
+${WELCOME_EMAIL_CONTENT.intro}
 
-You'll receive updates about:
-• New articles and blog posts
-• Project updates and launches
-• Tips, insights, and behind-the-scenes content
+${WELCOME_EMAIL_CONTENT.updatesHeading}
+${updatesText}
 
 Visit my website: https://${DEFAULT_SENDER.website}
 
-Feel free to reply to any of my emails - I read and respond to every message.
+${WELCOME_EMAIL_CONTENT.replyHint}
 
 ${DEFAULT_SENDER.name}
 ${DEFAULT_SENDER.website}`;

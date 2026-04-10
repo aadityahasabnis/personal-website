@@ -10,6 +10,7 @@ Supported capabilities:
 - get single contact by id
 - read dashboard stats by status
 - mark read / mark replied
+- send direct response email to a contact and mark replied
 - archive / unarchive
 - delete and bulk delete
 - bulk archive
@@ -21,6 +22,7 @@ Supported capabilities:
 - src/server/new/admin/contacts/getContactStats.ts
 - src/server/new/admin/contacts/markContactAsRead.ts
 - src/server/new/admin/contacts/markContactAsReplied.ts
+- src/server/new/admin/contacts/sendContactResponse.ts
 - src/server/new/admin/contacts/archiveContact.ts
 - src/server/new/admin/contacts/unarchiveContact.ts
 - src/server/new/admin/contacts/deleteContact.ts

@@ -1,10 +1,13 @@
 'use server';
 
+import { EMAIL_TYPE, WELCOME_EMAIL_CONTENT } from '@/constants/emailConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Subscriber from '@/server/models/Subscriber';
 import type { ISubscriberDocument } from '@/server/models/types';
 import { created, error, handleError, success } from '../../utils/helper';
+import { isEmailConfigured, sendEmailWithRetry } from '../../utils/mail';
+import { welcomeEmailTemplate } from '../../utils/mail-templates';
 import { isValidSubscriberEmail, normalizeSubscriberEmail } from './shared';
 import type { ISubscribeInput, ISubscriptionResult } from './types';
 
@@ -13,6 +16,26 @@ interface ISubscriberLookup {
     email: string;
     unsubscribedAt: Date | null;
 }
+
+const sendWelcomeEmailSafely = async (email: string): Promise<void> => {
+    try {
+        if (!isEmailConfigured()) return;
+
+        const { html, text } = welcomeEmailTemplate(null);
+
+        await sendEmailWithRetry(
+            {
+                to: email,
+                subject: WELCOME_EMAIL_CONTENT.subject,
+                html,
+                text,
+            },
+            EMAIL_TYPE.WELCOME,
+        );
+    } catch {
+        // Welcome email is a non-blocking side effect for subscription success.
+    }
+};
 
 // ========================================================
 // Mutation: Public Subscribe
@@ -37,6 +60,8 @@ export const subscribe = async (
                     email,
                     confirmed: true,
                 });
+
+                await sendWelcomeEmailSafely(doc.email);
 
                 return created(
                     {
@@ -66,6 +91,7 @@ export const subscribe = async (
 
         if (subscriber.unsubscribedAt) {
             await subscriber.resubscribe();
+            await sendWelcomeEmailSafely(subscriber.email);
 
             return success(
                 {

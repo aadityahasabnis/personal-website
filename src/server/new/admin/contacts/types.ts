@@ -30,3 +30,15 @@ export interface IAdminContactStats {
     replied: number;
     archived: number;
 }
+
+export interface IContactResponseInput {
+    subject: string;
+    body: string;
+}
+
+export interface IContactResponseResult {
+    contactId: string;
+    email: string;
+    status: ContactStatusType;
+    messageId?: string;
+}

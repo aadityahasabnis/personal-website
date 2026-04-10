@@ -11,6 +11,7 @@ export const EMAIL_TYPE = {
     PASSWORD_RESET: 'PASSWORD_RESET',
     TEST: 'TEST',
     NEWSLETTER: 'NEWSLETTER',
+    WELCOME: 'WELCOME',
     CONTACT_RESPONSE: 'CONTACT_RESPONSE',
 } as const;
 export type EmailType = (typeof EMAIL_TYPE)[keyof typeof EMAIL_TYPE];
@@ -64,6 +65,26 @@ export const EMAIL_RATE_LIMIT = {
 export const DEFAULT_SENDER = {
     name: 'Aaditya Hasabnis',
     website: 'aadityahasabnis.com',
+} as const;
+
+// ============================================================
+// Welcome Email Content - Shared copy for onboarding emails
+// ============================================================
+
+export const WELCOME_EMAIL_CONTENT = {
+    subject: `Welcome to ${DEFAULT_SENDER.name}'s Newsletter`,
+    previewText: 'Thanks for subscribing! Excited to have you here.',
+    intro:
+        "Thank you for subscribing to my newsletter! I'm excited to have you join the community.",
+    updatesHeading: "You'll receive updates about:",
+    updates: [
+        'New articles and blog posts',
+        'Project updates and launches',
+        'Tips, insights, and behind-the-scenes content',
+    ],
+    ctaLabel: 'Visit My Website',
+    replyHint:
+        'Feel free to reply to any of my emails - I read and respond to every message.',
 } as const;
 
 // ============================================================

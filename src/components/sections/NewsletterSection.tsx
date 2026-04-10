@@ -1,11 +1,14 @@
 'use client';
 
+import { EmailLottie } from '@/components/lotties/Lotties';
 import { NEWSLETTER_SECTION } from '@/constants/homeConstants';
 import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
 import { siteStorage } from '@/lib/storage';
+import { cn } from '@/lib/utils';
 import { subscribe, type ISubscribeInput, type ISubscriptionResult } from '@/server/new/public/subscribe';
 import { CheckCircle, Loader2, Mail } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 // =============================================================
@@ -24,6 +27,7 @@ interface INewsletterSectionProps {
 }
 
 interface INewsletterSubscribeFieldProps {
+    variant: NewsletterVariant;
     value: string;
     inputDisabled: boolean;
     submitDisabled: boolean;
@@ -39,6 +43,7 @@ interface INewsletterSubscribeFieldProps {
 }
 
 const NewsletterSubscribeField = ({
+    variant,
     value,
     inputDisabled,
     submitDisabled,
@@ -52,9 +57,18 @@ const NewsletterSubscribeField = ({
     onSubmit,
     className,
 }: INewsletterSubscribeFieldProps): React.ReactElement => {
+    const isInline = variant === 'inline';
+
     return (
-        <form onSubmit={onSubmit} className={className}>
-            <div className='flex items-stretch overflow-hidden bg-background border border-border rounded-xl shadow-sm'>
+        <form onSubmit={onSubmit} className={cn('w-full', className)}>
+            <div
+                className={cn(
+                    'flex flex-col gap-2 w-full',
+                    isInline
+                        ? 'sm:flex-row sm:items-stretch sm:gap-0 sm:overflow-hidden sm:bg-background sm:border sm:border-border sm:rounded-lg sm:shadow-sm'
+                        : 'md:flex-row md:items-stretch md:gap-0 md:overflow-hidden md:bg-background md:border md:border-border md:rounded-lg md:shadow-sm',
+                )}
+            >
                 <input
                     type='email'
                     value={value}
@@ -63,14 +77,24 @@ const NewsletterSubscribeField = ({
                     required
                     disabled={inputDisabled}
                     aria-label={NEWSLETTER_SECTION.emailLabel}
-                    className='flex-1 px-4 py-3 text-body text-foreground bg-transparent outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60 rounded-l-xl'
+                    className={cn(
+                        'block px-4 py-3 w-full text-body text-foreground bg-background border border-border rounded-lg outline-none transition-base placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60',
+                        isInline
+                            ? 'sm:flex-1 sm:bg-transparent sm:border-transparent sm:rounded-none sm:rounded-l-lg sm:focus:border-transparent sm:focus:ring-0'
+                            : 'md:flex-1 md:bg-transparent md:border-transparent md:rounded-none md:rounded-l-lg md:focus:border-transparent md:focus:ring-0',
+                    )}
                 />
                 <button
                     type='submit'
                     disabled={submitDisabled}
-                    className='flex items-center justify-center gap-2 px-5 text-label font-medium text-primary-foreground bg-primary border-l border-primary transition-base hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60 rounded-r-xl'
+                    className={cn(
+                        'flex items-center justify-center gap-1 px-3.5 py-2 w-full text-small font-medium text-primary-foreground bg-primary border border-primary rounded-lg transition-base hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-60',
+                        isInline
+                            ? 'sm:w-auto sm:shrink-0 sm:border-l sm:border-primary sm:rounded-none sm:rounded-r-lg sm:ring-0'
+                            : 'md:w-auto md:shrink-0 md:border-l md:border-primary md:rounded-none md:rounded-r-lg md:ring-0',
+                    )}
                 >
-                    {pending ? <Loader2 className='size-4 animate-spin' /> : isSubmitted ? <CheckCircle className='size-4' /> : <Mail className='size-4' />}
+                    {pending ? <Loader2 className='size-3.5 animate-spin' /> : isSubmitted ? <CheckCircle className='size-3.5' /> : <Mail className='size-3.5' />}
                     <span>{pending ? loadingLabel : isSubmitted ? subscribedLabel : submitLabel}</span>
                 </button>
             </div>
@@ -156,57 +180,65 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
 
     if (isInline) {
         return (
-            <section className={`relative ${className ?? ''}`}>
-                <div className='relative p-4 bg-card border border-border rounded-xl shadow-sm md:p-5'>
-                    <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-                        <p className='text-small text-muted-foreground'>{NEWSLETTER_SECTION.inlineDescription}</p>
-
-                        <NewsletterSubscribeField
-                            value={formData.email}
-                            onChange={(email) => {
-                                setFormData({ email });
-                            }}
-                            onSubmit={handleSubmit}
-                            inputDisabled={isInputDisabled}
-                            submitDisabled={isSubmitDisabled}
-                            pending={pending}
-                            isSubmitted={isSubmitted}
-                            placeholder={NEWSLETTER_SECTION.emailPlaceholder}
-                            submitLabel={NEWSLETTER_SECTION.inlineSubmitLabel}
-                            subscribedLabel={NEWSLETTER_SECTION.inlineSubscribedLabel}
-                            loadingLabel={NEWSLETTER_SECTION.loadingMessage}
-                            className='w-full md:w-auto md:min-w-2xl'
-                        />
-                    </div>
-                </div>
-            </section>
-        );
-    }
-
-    return (
-        <section className={`flex flex-col gap-4 mx-auto px-6 lg:px-8 max-w-5xl ${className}`}>
-            <div className='flex flex-col gap-4 overflow-hidden p-6 md:p-10 bg-card border border-border rounded-2xl shadow-sm backdrop-blur-sm'>
-                <div className='flex flex-col gap-2 text-center'>
-                    <h2 className='text-h1 font-semibold text-foreground'>{NEWSLETTER_SECTION.title}</h2>
-
-                    <p className='hidden md:block mx-auto text-body text-muted-foreground'>{NEWSLETTER_SECTION.description}</p>
-                </div>
-
+            <section className={cn('relative w-full', className)}>
                 <NewsletterSubscribeField
+                    variant='inline'
                     value={formData.email}
-                    onChange={(email) => {
-                        setFormData({ email });
-                    }}
+                    onChange={(email) => setFormData({ email })}
                     onSubmit={handleSubmit}
                     inputDisabled={isInputDisabled}
                     submitDisabled={isSubmitDisabled}
                     pending={pending}
                     isSubmitted={isSubmitted}
                     placeholder={NEWSLETTER_SECTION.emailPlaceholder}
-                    submitLabel={NEWSLETTER_SECTION.submitLabel}
-                    subscribedLabel={NEWSLETTER_SECTION.subscribedLabel}
+                    submitLabel={NEWSLETTER_SECTION.inlineSubmitLabel}
+                    subscribedLabel={NEWSLETTER_SECTION.inlineSubscribedLabel}
                     loadingLabel={NEWSLETTER_SECTION.loadingMessage}
                 />
+            </section>
+        );
+    }
+
+    return (
+        <section className={cn('relative mx-auto w-full max-w-5xl px-6 lg:px-8 py-12 md:py-20', className)}>
+            <div className='flex flex-col md:flex-row gap-8 p-6 bg-card border border-border rounded-2xl overflow-hidden md:gap-10 md:p-8'>
+                <div className='relative flex items-center justify-center md:w-1/4'>
+                    <EmailLottie className='size-44 md:size-40 lg:size-56' />
+                </div>
+
+                <div className='relative flex flex-1 flex-col gap-4'>
+                    <p className='text-label text-muted-foreground'>{NEWSLETTER_SECTION.label}</p>
+                    <h2 className='text-h2 text-foreground'>{NEWSLETTER_SECTION.title}</h2>
+                    <p className='text-body text-muted-foreground'>{NEWSLETTER_SECTION.description}</p>
+                    <NewsletterSubscribeField
+                        variant='landing'
+                        value={formData.email}
+                        onChange={(email) => setFormData({ email })}
+                        onSubmit={handleSubmit}
+                        inputDisabled={isInputDisabled}
+                        submitDisabled={isSubmitDisabled}
+                        pending={pending}
+                        isSubmitted={isSubmitted}
+                        placeholder={NEWSLETTER_SECTION.emailPlaceholder}
+                        submitLabel={NEWSLETTER_SECTION.submitLabel}
+                        subscribedLabel={NEWSLETTER_SECTION.subscribedLabel}
+                        loadingLabel={NEWSLETTER_SECTION.loadingMessage}
+                    />
+
+                    {NEWSLETTER_SECTION.disclaimer && (
+                        <p className='text-small leading-relaxed text-muted-foreground'>
+                            {NEWSLETTER_SECTION.disclaimer.text1}
+                            <Link href='/privacy' className='mx-1 text-foreground font-medium decoration-border transition-base hover:text-primary hover:decoration-primary'>
+                                {NEWSLETTER_SECTION.disclaimer.privacyLink}
+                            </Link>
+                            {NEWSLETTER_SECTION.disclaimer.text2}
+                            <Link href='/terms' className='mx-1 text-foreground font-medium decoration-border transition-base hover:text-primary hover:decoration-primary'>
+                                {NEWSLETTER_SECTION.disclaimer.termsLink}
+                            </Link>
+                            {NEWSLETTER_SECTION.disclaimer.text3}
+                        </p>
+                    )}
+                </div>
             </div>
         </section>
     );

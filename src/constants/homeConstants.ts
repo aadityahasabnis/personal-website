@@ -39,7 +39,7 @@ export const ABOUT_PREVIEW_SECTION = {
 export const NEWSLETTER_SECTION = {
     label: 'Newsletter',
     title: 'Stay Updated with Newsletter',
-    description: 'Subscribe to receive the latest articles, tutorials, blogs and updates straight to your inbox. No spam, unsubscribe anytime.',
+    description: 'Subscribe to receive the latest articles, blogs and updates from Aaditya. No spam, unsubscribe anytime.',
     inlineDescription: 'Get new articles in your inbox.',
     emailPlaceholder: 'Type your email...',
     emailLabel: 'Email Address',
@@ -56,6 +56,13 @@ export const NEWSLETTER_SECTION = {
     },
     loadingMessage: 'Subscribing...',
     successMessage: 'Welcome aboard!',
+    disclaimer: {
+        text1: 'By subscribing, you agree to our ',
+        privacyLink: 'Privacy Policy',
+        text2: ' and ',
+        termsLink: 'Terms of Service',
+        text3: '.',
+    },
 } as const;
 
 // ============================================================
