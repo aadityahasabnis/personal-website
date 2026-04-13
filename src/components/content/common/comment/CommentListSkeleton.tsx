@@ -19,7 +19,7 @@ export const CommentListSkeleton = ({ className }: ICommentListSkeletonProps) =>
     return (
         <div className={cn('space-y-4', className)} aria-hidden='true'>
             {/* First comment with reply */}
-            <div className='p-4 bg-card border border-border rounded-lg'>
+            <div className='p-4 bg-card border border-border rounded-xl shadow-sm'>
                 <div className='flex gap-3'>
                     <Skeleton className='shrink-0 w-9 h-9 rounded-full' />
                     <div className='flex-1 space-y-2'>
@@ -38,7 +38,7 @@ export const CommentListSkeleton = ({ className }: ICommentListSkeletonProps) =>
             </div>
 
             {/* Second comment */}
-            <div className='p-4 bg-card border border-border rounded-lg'>
+            <div className='p-4 bg-card border border-border rounded-xl shadow-sm'>
                 <div className='flex gap-3'>
                     <Skeleton className='shrink-0 w-9 h-9 rounded-full' />
                     <div className='flex-1 space-y-2'>

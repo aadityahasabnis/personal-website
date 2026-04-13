@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertCircle, CheckCircle, Loader2, MessageSquare, RefreshCw, Send, X } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useMemo, useState, type FormEvent } from 'react';
 
 import { useAction, useActionQuery } from '@/hooks';
 import { AVATAR_OPTIONS, siteStorage } from '@/lib/storage';
@@ -22,6 +22,26 @@ const DEFAULT_AVATAR_ID = 'avatar-1';
 
 type ISubmitState = 'idle' | 'success' | 'error';
 
+const safeAvatarId = (avatar: string | null | undefined): string => {
+    if (!avatar) return DEFAULT_AVATAR_ID;
+    // Storage may contain either an avatar id or an image URL/path.
+    const byId = AVATAR_OPTIONS.find((o) => o.id === avatar);
+    if (byId) return byId.id;
+    const byImage = AVATAR_OPTIONS.find((o) => o.image === avatar);
+    return byImage?.id ?? DEFAULT_AVATAR_ID;
+};
+
+const findCommentById = (id: string, commentList: ICommentNode[]): ICommentNode | null => {
+    for (const comment of commentList) {
+        if (comment.id === id) return comment;
+        if (comment.replies.length > 0) {
+            const found = findCommentById(id, comment.replies);
+            if (found) return found;
+        }
+    }
+    return null;
+};
+
 // =============================================================
 // Component
 // =============================================================
@@ -30,12 +50,12 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
     const queryKey = useMemo(() => ['public-comments', contentType, contentId, COMMENTS_LIMIT], [contentType, contentId]);
 
     // Form state
-    const [authorName, setAuthorName] = useState('');
-    const [authorEmail, setAuthorEmail] = useState('');
+    const [authorName, setAuthorName] = useState(() => siteStorage.getCommentAuthor()?.name ?? siteStorage.getUserProfile()?.name ?? '');
+    const [authorEmail, setAuthorEmail] = useState(() => siteStorage.getCommentAuthor()?.email ?? siteStorage.getUserProfile()?.email ?? '');
     const [body, setBody] = useState('');
     const [replyingTo, setReplyingTo] = useState<string | null>(null);
     const [isComposerOpen, setIsComposerOpen] = useState(false);
-    const [selectedAvatar, setSelectedAvatar] = useState<string>(DEFAULT_AVATAR_ID);
+    const [selectedAvatar, setSelectedAvatar] = useState<string>(() => safeAvatarId(siteStorage.getCommentAuthor()?.avatar ?? siteStorage.getUserProfile()?.avatar));
     const [submitState, setSubmitState] = useState<ISubmitState>('idle');
     const [feedbackMessage, setFeedbackMessage] = useState<string>('');
     const [pendingUpvoteId, setPendingUpvoteId] = useState<string | null>(null);
@@ -44,29 +64,7 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
     // Helpers
     const buildUpvoteKey = useCallback((commentId: string): string => `${contentType}:${contentId}:${commentId}`, [contentId, contentType]);
 
-    const resolveAvatarId = useCallback((avatarId: string | null | undefined): string => {
-        if (!avatarId) return DEFAULT_AVATAR_ID;
-        return AVATAR_OPTIONS.some((o) => o.id === avatarId) ? avatarId : DEFAULT_AVATAR_ID;
-    }, []);
-
-    // Load stored author
-    useEffect(() => {
-        const commentAuthor = siteStorage.getCommentAuthor();
-        const userProfile = siteStorage.getUserProfile();
-
-        if (commentAuthor) {
-            setAuthorName(commentAuthor.name);
-            setAuthorEmail(commentAuthor.email);
-            setSelectedAvatar(resolveAvatarId(commentAuthor.avatar));
-            return;
-        }
-
-        if (userProfile) {
-            if (userProfile.name) setAuthorName(userProfile.name);
-            if (userProfile.email) setAuthorEmail(userProfile.email);
-            setSelectedAvatar(resolveAvatarId(userProfile.avatar));
-        }
-    }, [resolveAvatarId]);
+    // Note: author fields are initialized from localStorage via useState initializers.
 
     // Query
     const commentsQuery = useActionQuery<ICommentsListResult>({
@@ -158,28 +156,19 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
     const totalComments = commentsQuery.data?.total ?? 0;
     const isSubmitting = createCommentAction.pending;
 
-    // Find the comment being replied to (handles nested comments recursively)
-    const findCommentById = useCallback((id: string, commentList: ICommentNode[]): ICommentNode | null => {
-        for (const comment of commentList) {
-            if (comment.id === id) return comment;
-            if (comment.replies.length > 0) {
-                const found = findCommentById(id, comment.replies);
-                if (found) return found;
-            }
-        }
-        return null;
-    }, []);
-
     const replyingToComment = replyingTo ? findCommentById(replyingTo, comments) : null;
 
     return (
-        <section className={cn('mt-12', className)} aria-label='Comments'>
+        <section className={cn('mt-12 max-w-full overflow-x-hidden', className)} aria-label='Comments'>
             {/* Header */}
-            <div className='flex items-center justify-between gap-4 pb-4 border-b border-border'>
-                <h2 className='flex items-center gap-2 text-h4 font-semibold text-foreground'>
-                    <MessageSquare className='w-5 h-5 text-primary' />
-                    <span>Comments{totalComments > 0 && ` (${totalComments})`}</span>
-                </h2>
+            <div className='flex flex-col gap-3 pb-4 border-b border-border sm:flex-row sm:items-center sm:justify-between'>
+                <div className='min-w-0'>
+                    <h2 className='flex items-center gap-2 text-h4 font-semibold text-foreground'>
+                        <MessageSquare className='w-5 h-5 text-primary' />
+                        <span className='truncate'>Comments{totalComments > 0 && ` (${totalComments})`}</span>
+                    </h2>
+                    <p className='mt-1 text-small text-muted-foreground'>Thoughts, questions, and feedback.</p>
+                </div>
 
                 <div className='flex items-center gap-2'>
                     {/* Refresh button */}
@@ -187,7 +176,12 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                         type='button'
                         onClick={() => commentsQuery.refetch()}
                         disabled={commentsQuery.isFetching}
-                        className='inline-flex items-center justify-center h-9 w-9 text-muted-foreground bg-muted border border-border rounded-md transition-fast hover:text-foreground hover:border-foreground/20 disabled:opacity-50'
+                        className={cn(
+                            'inline-flex items-center justify-center h-9 w-9 rounded-md border transition-fast',
+                            'text-muted-foreground bg-background border-border',
+                            'hover:text-foreground hover:border-foreground/20 hover:bg-muted/40',
+                            'disabled:opacity-50',
+                        )}
                         aria-label='Refresh comments'
                     >
                         <RefreshCw className={cn('w-4 h-4', commentsQuery.isFetching && 'animate-spin')} />
@@ -203,9 +197,10 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                         className={cn(
                             'inline-flex items-center gap-2 h-9 px-3 text-small font-medium rounded-md border transition-fast',
                             isComposerOpen
-                                ? 'text-muted-foreground bg-muted border-border hover:text-foreground hover:border-foreground/20'
+                                ? 'text-foreground bg-background border-border hover:border-foreground/20 hover:bg-muted/40'
                                 : 'text-primary-foreground bg-primary border-primary hover:bg-primary/90',
                         )}
+                        aria-expanded={isComposerOpen}
                     >
                         {isComposerOpen ? (
                             <>
@@ -224,10 +219,12 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
 
             {/* Feedback */}
             {submitState !== 'idle' && (
-                <div className={cn(
-                    'flex items-start gap-3 mt-4 p-3 border rounded-md',
-                    submitState === 'success' ? 'text-success bg-success/5 border-success/20' : 'text-destructive bg-destructive/5 border-destructive/20',
-                )}>
+                <div
+                    className={cn(
+                        'flex items-start gap-3 mt-4 p-3 border rounded-md',
+                        submitState === 'success' ? 'text-success bg-success/5 border-success/20' : 'text-destructive bg-destructive/5 border-destructive/20',
+                    )}
+                >
                     {submitState === 'success' ? <CheckCircle className='shrink-0 w-4 h-4 mt-0.5' /> : <AlertCircle className='shrink-0 w-4 h-4 mt-0.5' />}
                     <p className='flex-1 text-small'>{feedbackMessage}</p>
                     <button type='button' onClick={() => setSubmitState('idle')} className='shrink-0 p-0.5 rounded transition-fast hover:bg-foreground/10'>
@@ -238,7 +235,15 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
 
             {/* Form */}
             {isComposerOpen && (
-                <form onSubmit={handleSubmit} className='mt-6 p-4 bg-card border border-border rounded-lg'>
+                <form
+                    onSubmit={handleSubmit}
+                    className={cn(
+                        'mt-6 p-4 rounded-xl border border-border',
+                        'bg-card shadow-sm',
+                        'w-full max-w-full min-w-0 [min-inline-size:0]',
+                        'focus-within:border-foreground/20 focus-within:ring-1 focus-within:ring-primary/20',
+                    )}
+                >
                     {/* Reply indicator */}
                     {replyingTo && (
                         <div className='flex items-center justify-between gap-3 mb-4 px-3 py-2 text-small bg-primary/5 border-l-2 border-primary rounded-r-md'>
@@ -271,7 +276,11 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                                 value={authorName}
                                 onChange={(e) => setAuthorName(e.target.value)}
                                 placeholder='Your name'
-                                className='block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md transition-fast placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary'
+                                className={cn(
+                                    'block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md transition-fast',
+                                    'placeholder:text-muted-foreground',
+                                    'focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                                )}
                             />
                         </div>
 
@@ -286,7 +295,11 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                                 value={authorEmail}
                                 onChange={(e) => setAuthorEmail(e.target.value)}
                                 placeholder='you@example.com'
-                                className='block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md transition-fast placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary'
+                                className={cn(
+                                    'block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md transition-fast',
+                                    'placeholder:text-muted-foreground',
+                                    'focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                                )}
                             />
                             <p className='mt-1 text-label text-muted-foreground'>Not published</p>
                         </div>
@@ -306,7 +319,11 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                             value={body}
                             onChange={(e) => setBody(e.target.value)}
                             placeholder='Share your thoughts...'
-                            className='block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md resize-y transition-fast placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary'
+                            className={cn(
+                                'block w-full px-3 py-2 text-body text-foreground bg-background border border-border rounded-md resize-y transition-fast',
+                                'placeholder:text-muted-foreground',
+                                'focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary',
+                            )}
                         />
                     </div>
 
@@ -315,7 +332,11 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                         <button
                             type='submit'
                             disabled={isSubmitting}
-                            className='inline-flex items-center gap-2 h-9 px-4 text-small font-medium text-primary-foreground bg-primary border border-primary rounded-md transition-fast hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed'
+                            className={cn(
+                                'inline-flex items-center gap-2 h-9 px-4 text-small font-medium rounded-md border transition-fast',
+                                'text-primary-foreground bg-primary border-primary hover:bg-primary/90',
+                                'disabled:opacity-50 disabled:cursor-not-allowed',
+                            )}
                         >
                             {isSubmitting ? <Loader2 className='w-4 h-4 animate-spin' /> : <Send className='w-4 h-4' />}
                             <span>{isSubmitting ? 'Posting...' : replyingTo ? 'Post reply' : 'Post comment'}</span>

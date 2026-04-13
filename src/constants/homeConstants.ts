@@ -15,9 +15,9 @@ export const HERO_SECTION = {
         href: '/about',
     },
     stats: [
-        { value: '5+', label: 'Years' },
-        { value: '20+', label: 'Projects' },
-        { value: '10k+', label: 'Lines' },
+        { value: '1+', label: 'Years' },
+        { value: '10+', label: 'Projects' },
+        { value: '30k+', label: 'Lines' },
     ],
     particleCount: 1500,
 } as const;
