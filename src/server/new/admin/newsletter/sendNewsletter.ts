@@ -1,19 +1,27 @@
 'use server';
 
-import type { IApiResponse } from '@/interfaces/actionHelper';
 import { EMAIL_TYPE } from '@/constants/emailConstants';
+import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Newsletter from '@/server/models/Newsletter';
 import Subscriber from '@/server/models/Subscriber';
 import { error, handleError, success } from '../../utils/helper';
-import { getAdminId } from '../shared';
 import { sendEmailBatch, type IBatchEmailResult } from '../../utils/mail';
 import { newsletterEmailTemplate } from '../../utils/mail-templates';
+import { getAdminId } from '../shared';
 import {
     parseNewsletterObjectId,
     revalidateAdminNewslettersPaths,
 } from './shared';
 import type { ISendNewsletterResult } from './types';
+
+const resolveRecipientName = (
+    name: string | null | undefined,
+): string | null => {
+    const normalizedName = name?.trim();
+    if (normalizedName) return normalizedName;
+    return null;
+};
 
 // ============================================================
 // Send Newsletter
@@ -48,10 +56,23 @@ export const sendNewsletter = async (newsletterId: string): Promise<IApiResponse
             return error('No active subscribers to send to', 400);
         }
 
+        const subscribersWithName = subscribers.map((subscriber) => ({
+            ...subscriber,
+            normalizedName: resolveRecipientName(subscriber.name),
+        }));
+
+        const missingNameCount = subscribersWithName.filter((subscriber) => !subscriber.normalizedName).length;
+        if (missingNameCount > 0) {
+            return error(
+                `Cannot send newsletter: ${String(missingNameCount)} active subscriber(s) are missing a required name. Update names in Admin > Subscribers first.`,
+                409,
+            );
+        }
+
         // Prepare email payloads for all subscribers
-        const emailPayloads = subscribers.map((subscriber) => {
+        const emailPayloads = subscribersWithName.map((subscriber) => {
             const { html, text } = newsletterEmailTemplate(
-                null,
+                subscriber.normalizedName,
                 newsletter.subject,
                 newsletter.body,
                 newsletter.previewText ?? undefined

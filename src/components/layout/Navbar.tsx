@@ -16,16 +16,14 @@ const Navbar = () => {
     const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
     const scrolled = useScrollPosition(50);
     const pathname = usePathname();
+    const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
     const currentYear = new Date().getFullYear();
+    const isMobileMenuVisible = isMobileMenuOpen && mobileMenuPath === pathname;
 
     const isActivePath = (href: string): boolean => pathname === href || (href !== '/' && pathname.startsWith(href));
 
     useEffect(() => {
-        setMobileMenuOpen(false);
-    }, [pathname]);
-
-    useEffect(() => {
-        if (isMobileMenuOpen) {
+        if (isMobileMenuVisible) {
             document.body.style.overflow = 'hidden';
         } else {
             document.body.style.overflow = '';
@@ -33,7 +31,7 @@ const Navbar = () => {
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isMobileMenuOpen]);
+    }, [isMobileMenuVisible]);
 
     return (
         <>
@@ -95,14 +93,23 @@ const Navbar = () => {
                             <ThemeToggle />
                             <button
                                 type='button'
-                                onClick={() => setMobileMenuOpen((prev) => !prev)}
+                                onClick={() => {
+                                    if (isMobileMenuVisible) {
+                                        setMobileMenuOpen(false);
+                                        setMobileMenuPath(null);
+                                        return;
+                                    }
+
+                                    setMobileMenuOpen(true);
+                                    setMobileMenuPath(pathname);
+                                }}
                                 aria-controls='mobile-navigation-menu'
-                                aria-expanded={isMobileMenuOpen}
-                                aria-label={isMobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+                                aria-expanded={isMobileMenuVisible}
+                                aria-label={isMobileMenuVisible ? 'Close navigation menu' : 'Open navigation menu'}
                                 className='inline-flex items-center justify-center size-10 rounded-md text-foreground transition-base hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                             >
                                 <AnimatePresence mode='wait'>
-                                    {isMobileMenuOpen ? (
+                                    {isMobileMenuVisible ? (
                                         <motion.span
                                             key='close'
                                             initial={{ opacity: 0, rotate: -90 }}
@@ -131,7 +138,7 @@ const Navbar = () => {
             </motion.header>
 
             <AnimatePresence>
-                {isMobileMenuOpen && (
+                {isMobileMenuVisible && (
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -147,7 +154,10 @@ const Navbar = () => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             className='absolute inset-0 bg-background/95 backdrop-blur-2xl'
-                            onClick={() => setMobileMenuOpen(false)}
+                            onClick={() => {
+                                setMobileMenuOpen(false);
+                                setMobileMenuPath(null);
+                            }}
                             aria-hidden='true'
                         />
 
@@ -168,7 +178,10 @@ const Navbar = () => {
                                         <motion.div key={link.href} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 + index * 0.05 }}>
                                             <Link
                                                 href={link.href}
-                                                onClick={() => setMobileMenuOpen(false)}
+                                                onClick={() => {
+                                                    setMobileMenuOpen(false);
+                                                    setMobileMenuPath(null);
+                                                }}
                                                 aria-current={isActive ? 'page' : undefined}
                                                 className={cn(
                                                     'relative inline-flex items-center py-2 text-small font-medium tracking-tight transition-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
@@ -193,7 +206,10 @@ const Navbar = () => {
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className='mt-12'>
                                 <Link
                                     href='/contact'
-                                    onClick={() => setMobileMenuOpen(false)}
+                                    onClick={() => {
+                                        setMobileMenuOpen(false);
+                                        setMobileMenuPath(null);
+                                    }}
                                     aria-label='Go to contact page'
                                     className='inline-flex items-center gap-3 pb-1 text-h3 font-medium text-foreground border-b border-foreground transition-base hover:text-primary hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
                                 >

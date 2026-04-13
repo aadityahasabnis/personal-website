@@ -148,7 +148,8 @@ export function SubscribersTable({ initialData, initialTotal }: ISubscribersTabl
                                 <Mail className='h-5 w-5' />
                             </div>
                             <div className='min-w-0'>
-                                <p className='truncate font-medium'>{subscriber.email}</p>
+                                <p className='truncate font-medium'>{subscriber.name ?? 'Missing Name'}</p>
+                                <p className='truncate text-sm text-muted-foreground'>{subscriber.email}</p>
                             </div>
                         </div>
                     ),

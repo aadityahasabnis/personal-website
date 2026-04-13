@@ -94,26 +94,26 @@ export const WELCOME_EMAIL_CONTENT = {
 
 export const EMAIL_COLORS = {
     // Primary lavender (oklch(0.55 0.24 285) ≈ #9b87f5)
-    primary: '#9b87f5',
-    primaryHover: '#8b77e5',
+    primary: '#7a67de',
+    primaryHover: '#6957cd',
     // Light backgrounds
-    lightBg: '#f5f3ff',
-    subtleBg: '#faf9fe',
+    lightBg: '#efebff',
+    subtleBg: '#f5f2ff',
     // Text colors
-    textDark: '#1a1a2e',
-    textMuted: '#6b6b8f',
-    textSubtle: '#9999b3',
+    textDark: '#15162f',
+    textMuted: '#4f5173',
+    textSubtle: '#74779a',
     // Gradient (for header)
-    gradientStart: '#9b87f5',
-    gradientMid: '#a78bfa',
-    gradientEnd: '#8b5cf6',
+    gradientStart: '#6f5fd2',
+    gradientMid: '#7f70e4',
+    gradientEnd: '#5f50bf',
     // Status colors
     success: '#10b981',
     warning: '#f59e0b',
     error: '#ef4444',
     // Borders
-    border: '#e5e5f0',
-    borderLight: '#f0f0f8',
+    border: '#dbd7f0',
+    borderLight: '#ece9fb',
 } as const;
 
 // ============================================================

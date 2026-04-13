@@ -9,12 +9,18 @@ import { EMAIL_RATE_LIMIT, EMAIL_STATUS, EMAIL_TYPE } from '@/constants/emailCon
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
 import Subscriber from '@/server/models/Subscriber';
+import mongoose from 'mongoose';
+import { error, handleError, success } from '../../utils/helper';
 import { isEmailConfigured, sendEmailWithRetry, validateEmail } from '../../utils/mail';
 import { newsletterEmailTemplate } from '../../utils/mail-templates';
-import { error, handleError, success } from '../../utils/helper';
 import { getAdminId } from '../shared';
 import type { INewsletterRecipientStatus, INewsletterResult, ISendNewsletterInput } from './types';
-import mongoose from 'mongoose';
+
+interface INewsletterSubscriber {
+    _id: mongoose.Types.ObjectId;
+    email: string;
+    name?: string | null;
+}
 
 // ============================================================
 // Delay Helper
@@ -22,6 +28,14 @@ import mongoose from 'mongoose';
 
 const delay = (ms: number): Promise<void> => 
     new Promise((resolve) => setTimeout(resolve, ms));
+
+const normalizeRecipientName = (
+    name: string | null | undefined,
+): string | null => {
+    const normalizedName = name?.trim();
+    if (normalizedName) return normalizedName;
+    return null;
+};
 
 // ============================================================
 // Send Newsletter Server Action
@@ -54,7 +68,7 @@ export const sendNewsletter = async (
         await connectDB();
 
         // Get subscribers - either selected or all active
-        let subscribers: Array<{ _id: mongoose.Types.ObjectId; email: string }>;
+        let subscribers: INewsletterSubscriber[];
 
         if (input.subscriberIds && input.subscriberIds.length > 0) {
             // Validate all subscriber IDs
@@ -69,7 +83,7 @@ export const sendNewsletter = async (
                 confirmed: true,
                 unsubscribedAt: null,
             })
-                .select('_id email')
+                .select('_id email name')
                 .lean();
 
             if (subscribers.length === 0) {
@@ -84,10 +98,23 @@ export const sendNewsletter = async (
             }
         }
 
+        const subscribersWithName = subscribers.map((subscriber) => ({
+            ...subscriber,
+            normalizedName: normalizeRecipientName(subscriber.name),
+        }));
+
+        const missingNameCount = subscribersWithName.filter((subscriber) => !subscriber.normalizedName).length;
+        if (missingNameCount > 0) {
+            return error(
+                `Cannot send newsletter: ${String(missingNameCount)} active subscriber(s) are missing a required name. Update names in Admin > Subscribers first.`,
+                409,
+            );
+        }
+
         // Check rate limit warning
-        if (subscribers.length > EMAIL_RATE_LIMIT.warningThreshold) {
+        if (subscribersWithName.length > EMAIL_RATE_LIMIT.warningThreshold) {
             console.warn(
-                `[Newsletter] Warning: Sending to ${subscribers.length} subscribers. ` +
+                `[Newsletter] Warning: Sending to ${subscribersWithName.length} subscribers. ` +
                 `Gmail daily limit is ${EMAIL_RATE_LIMIT.dailyLimit}.`
             );
         }
@@ -100,18 +127,18 @@ export const sendNewsletter = async (
         // Calculate batches
         const batchSize = EMAIL_RATE_LIMIT.batchSize;
         const batchDelayMs = EMAIL_RATE_LIMIT.batchDelayMs;
-        const totalBatches = Math.ceil(subscribers.length / batchSize);
+        const totalBatches = Math.ceil(subscribersWithName.length / batchSize);
 
         console.log(
-            `[Newsletter] Starting send to ${subscribers.length} subscribers ` +
+            `[Newsletter] Starting send to ${subscribersWithName.length} subscribers ` +
             `in ${totalBatches} batches of ${batchSize}`
         );
 
         // Process subscribers in batches
         for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
             const batchStart = batchIndex * batchSize;
-            const batchEnd = Math.min(batchStart + batchSize, subscribers.length);
-            const batch = subscribers.slice(batchStart, batchEnd);
+            const batchEnd = Math.min(batchStart + batchSize, subscribersWithName.length);
+            const batch = subscribersWithName.slice(batchStart, batchEnd);
 
             console.log(
                 `[Newsletter] Processing batch ${batchIndex + 1}/${totalBatches} ` +
@@ -134,7 +161,7 @@ export const sendNewsletter = async (
 
                 // Generate personalized email content
                 const { html, text } = newsletterEmailTemplate(
-                    null,
+                    subscriber.normalizedName,
                     input.subject,
                     input.htmlContent,
                     input.previewText
@@ -181,11 +208,11 @@ export const sendNewsletter = async (
 
         console.log(
             `[Newsletter] Completed: ${sentCount} sent, ${failedCount} failed ` +
-            `out of ${subscribers.length} total`
+            `out of ${subscribersWithName.length} total`
         );
 
         return success({
-            totalRecipients: subscribers.length,
+            totalRecipients: subscribersWithName.length,
             sent: sentCount,
             failed: failedCount,
             results,

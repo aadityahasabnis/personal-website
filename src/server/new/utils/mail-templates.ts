@@ -1,5 +1,5 @@
 // ============================================================
-// Email Templates - HTML email templates with lavender theme
+// Email Templates - HTML email templates with premium lavender theme
 // ============================================================
 
 import {
@@ -7,6 +7,14 @@ import {
     EMAIL_COLORS,
     WELCOME_EMAIL_CONTENT,
 } from '@/constants/emailConstants';
+
+type BaseLayoutOptions = {
+    title: string;
+    previewText?: string;
+    headerTitle?: string;
+};
+const EMAIL_FONT_STACK_PRIMARY = "Roboto, 'Helvetica Neue', Helvetica, Arial, sans-serif";
+const EMAIL_FONT_STACK_SIGNATURE = "'Times New Roman', Georgia,  Times, serif";
 
 const escapeHtml = (value: string): string =>
     value
@@ -32,213 +40,377 @@ const htmlToTextContent = (htmlContent: string): string =>
         .replace(/&#39;/g, "'")
         .trim();
 
+const renderPreviewText = (previewText?: string): string => {
+    if (!previewText) {
+        return '';
+    }
+
+    return `<div style="display:none;font-size:1px;color:${EMAIL_COLORS.subtleBg};line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${escapeHtml(previewText)}</div>`;
+};
+
+const renderPremiumHeader = (title: string): string => `
+    <tr>
+        <td style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
+                <tr>
+                    <td style="height:2px;line-height:2px;font-size:2px;background-color:${EMAIL_COLORS.primary};background-image:linear-gradient(145deg, ${EMAIL_COLORS.gradientStart} 0%, ${EMAIL_COLORS.gradientMid} 52%, ${EMAIL_COLORS.gradientEnd} 100%);">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td class="header-pad" style="padding:16px 24px;background-color:${EMAIL_COLORS.lightBg};">
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
+                            <tr>
+                               <td valign="middle" align="center" style="text-align:center;">
+                                    <p style="margin:2px 0 0 0;color:${EMAIL_COLORS.textDark};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:17px;line-height:1.35;font-weight:700;">${escapeHtml(title)}</p>
+                                    <p style="margin:-1px 0 0 0;">
+                                        <a href="http://${DEFAULT_SENDER.website}" style="color:${EMAIL_COLORS.textSubtle};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:11px;line-height:1.35;text-decoration:none;">www.${DEFAULT_SENDER.website}</a>
+                                    </p>
+                                </td>
+                                <td width="24" valign="middle" align="right">
+                                    <table role="presentation" cellpadding="0" cellspacing="0">
+                                        <tr>
+                                            <td align="right">
+                                                <table role="presentation" cellpadding="0" cellspacing="0">
+                                                    <tr>
+                                                        <td style="width:7px;height:7px;border-radius:4px;background-color:#ffffff;border:1px solid ${EMAIL_COLORS.border};line-height:7px;font-size:7px;">&nbsp;</td>
+                                                        <td style="width:5px;">&nbsp;</td>
+                                                        <td style="width:12px;height:12px;border-radius:6px;background-color:${EMAIL_COLORS.primary};line-height:12px;font-size:12px;">&nbsp;</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="height:5px;line-height:5px;font-size:5px;">&nbsp;</td>
+                                        </tr>
+                                        <tr>
+                                            <td align="right">
+                                                <table role="presentation" cellpadding="0" cellspacing="0" width="18" style="width:18px;">
+                                                    <tr>
+                                                        <td style="height:2px;line-height:2px;font-size:2px;background-color:${EMAIL_COLORS.primary};">&nbsp;</td>
+                                                    </tr>
+                                                </table>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+`;
+
+const renderPremiumFooter = (): string => {
+    const year = new Date().getFullYear();
+
+    return `
+    <tr>
+        <td style="padding:0;">
+            <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
+                <tr>
+                    <td style="height:2px;line-height:2px;font-size:2px;background-color:${EMAIL_COLORS.primary};background-image:linear-gradient(90deg, ${EMAIL_COLORS.gradientStart} 0%, ${EMAIL_COLORS.gradientMid} 50%, ${EMAIL_COLORS.gradientEnd} 100%);">&nbsp;</td>
+                </tr>
+                <tr>
+                    <td class="footer-pad" style="padding:16px 24px;background-color:${EMAIL_COLORS.lightBg};">
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;">
+                            <tr>
+                                <td align="left" style="vertical-align:middle;">
+                                    <a href="https://${DEFAULT_SENDER.website}/articles" style="color:${EMAIL_COLORS.textSubtle};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:12px;line-height:1.4;text-decoration:none;">Articles</a>
+                                    <span style="color:${EMAIL_COLORS.textMuted};">&nbsp;|&nbsp;</span>
+                                    <a href="https://${DEFAULT_SENDER.website}/blogs" style="color:${EMAIL_COLORS.textSubtle};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:12px;line-height:1.4;text-decoration:none;">Blogs</a>
+                                    <span style="color:${EMAIL_COLORS.textMuted};">&nbsp;|&nbsp;</span>
+                                    <a href="https://${DEFAULT_SENDER.website}/projects" style="color:${EMAIL_COLORS.textSubtle};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:12px;line-height:1.4;text-decoration:none;">Projects</a>
+                                </td>
+                                <td align="right" style="vertical-align:middle;">
+                                    <span style="font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:12px;">
+                                        <a href="https://github.com/aadityahasabnis" style="color:${EMAIL_COLORS.textSubtle};text-decoration:none;">GitHub</a>
+                                        <span style="color:${EMAIL_COLORS.textMuted};">&nbsp;|&nbsp;</span>
+                                        <a href="https://www.linkedin.com/in/aadityahasabnis" style="color:${EMAIL_COLORS.textSubtle};text-decoration:none;">LinkedIn</a>
+                                        <span style="color:${EMAIL_COLORS.textMuted};">&nbsp;|&nbsp;</span>
+                                        <a href="https://www.instagram.com/creative_northstar" style="color:${EMAIL_COLORS.textSubtle};text-decoration:none;">Instagram</a>
+                                        <span style="color:${EMAIL_COLORS.textMuted};">&nbsp;|&nbsp;</span>
+                                        <a href="https://x.com/aadityahasabnis" style="color:${EMAIL_COLORS.textSubtle};text-decoration:none;">X</a>
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;margin-top:8px;">
+                            <tr>
+                                <td style="height:1px;line-height:1px;font-size:1px;background-color:${EMAIL_COLORS.border};">&nbsp;</td>
+                            </tr>
+                        </table>
+
+                        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;margin-top:8px;">
+                            <tr>
+                                <td align="left" style="color:${EMAIL_COLORS.textDark};font-family:${EMAIL_FONT_STACK_SIGNATURE};font-size:14px;line-height:1.3;">Built and written by Aaditya.</td>
+                                <td align="right" style="color:${EMAIL_COLORS.textSubtle};font-family:${EMAIL_FONT_STACK_PRIMARY};font-size:12px;line-height:1.3;">© ${year} ${DEFAULT_SENDER.name}</td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    `;
+};
+
 // ============================================================
 // Base Layout - Common wrapper for all emails
 // ============================================================
 
-const baseLayout = (content: string, title: string, previewText?: string): string => `
+const baseLayout = (content: string, options: BaseLayoutOptions): string => {
+    const safeTitle = escapeHtml(options.title);
+    const safePreviewText = options.previewText
+        ? escapeHtml(options.previewText)
+        : undefined;
+    const headerTitle = options.headerTitle || options.title;
+
+    return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <title>${title}</title>
-    ${previewText ? `<meta name="description" content="${previewText}">` : ''}
-    <!--[if mso]>
-    <noscript>
-        <xml>
-            <o:OfficeDocumentSettings>
-                <o:PixelsPerInch>96</o:PixelsPerInch>
-            </o:OfficeDocumentSettings>
-        </xml>
-    </noscript>
-    <![endif]-->
+    <title>${safeTitle}</title>
+    ${safePreviewText ? `<meta name="description" content="${safePreviewText}">` : ''}
     <style>
-        /* Reset styles */
         body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
         table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
         img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; }
-        
-        /* Base styles */
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: ${EMAIL_COLORS.textDark};
             margin: 0;
             padding: 0;
-            background-color: ${EMAIL_COLORS.subtleBg};
             width: 100% !important;
             height: 100% !important;
+            background-color: ${EMAIL_COLORS.subtleBg};
+            font-family: ${EMAIL_FONT_STACK_PRIMARY};
         }
-        
-        /* Container */
-        .email-container {
-            max-width: 600px;
-            margin: 0 auto;
-            background-color: #ffffff;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Header with gradient */
-        .email-header {
-            background: linear-gradient(135deg, ${EMAIL_COLORS.gradientStart} 0%, ${EMAIL_COLORS.gradientMid} 50%, ${EMAIL_COLORS.gradientEnd} 100%);
-            padding: 40px 30px;
-            text-align: center;
-        }
-        
-        .email-header h1 {
-            color: #ffffff;
-            margin: 0;
-            font-size: 28px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-        
-        .email-header .tagline {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 14px;
-            margin-top: 8px;
-            font-weight: 400;
-        }
-        
-        /* Content area */
-        .email-content {
-            padding: 40px 30px;
-        }
-        
-        /* Footer */
-        .email-footer {
-            background-color: ${EMAIL_COLORS.lightBg};
-            padding: 24px 30px;
-            text-align: center;
-            font-size: 13px;
-            color: ${EMAIL_COLORS.textMuted};
-            border-top: 1px solid ${EMAIL_COLORS.border};
-        }
-        
-        .email-footer a {
-            color: ${EMAIL_COLORS.primary};
-            text-decoration: none;
-        }
-        
-        .email-footer a:hover {
-            text-decoration: underline;
-        }
-        
-        /* Button styles */
-        .btn-primary {
-            display: inline-block;
-            background: linear-gradient(135deg, ${EMAIL_COLORS.gradientStart} 0%, ${EMAIL_COLORS.gradientEnd} 100%);
-            color: #ffffff !important;
-            padding: 16px 36px;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 16px;
-            margin: 24px 0;
-            box-shadow: 0 4px 14px -3px ${EMAIL_COLORS.primary}66;
-            transition: transform 0.2s ease;
-        }
-        
-        /* OTP box */
-        .otp-box {
-            background-color: ${EMAIL_COLORS.lightBg};
-            border: 2px dashed ${EMAIL_COLORS.primary};
-            padding: 24px;
-            text-align: center;
-            margin: 24px 0;
-            border-radius: 12px;
-        }
-        
-        .otp-code {
-            font-size: 36px;
-            font-weight: 700;
-            color: ${EMAIL_COLORS.primary};
-            letter-spacing: 10px;
-            margin: 0;
-            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-        }
-        
-        /* Typography */
-        .text-muted {
-            color: ${EMAIL_COLORS.textMuted};
-            font-size: 14px;
-        }
-        
-        .text-subtle {
-            color: ${EMAIL_COLORS.textSubtle};
-            font-size: 12px;
-        }
-        
-        p {
-            margin: 0 0 16px 0;
-            color: ${EMAIL_COLORS.textDark};
-        }
-        
-        .greeting {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 20px;
-        }
-        
-        /* Divider */
-        .divider {
-            height: 1px;
-            background-color: ${EMAIL_COLORS.border};
-            margin: 24px 0;
-        }
-        
-        /* Link styles */
+
         a {
             color: ${EMAIL_COLORS.primary};
+            text-decoration: none;
         }
-        
-        /* Mobile responsive */
+
+        .shell {
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid ${EMAIL_COLORS.border};
+            border-radius: 18px;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+
+        .content-cell {
+            padding: 20px 24px 22px 24px;
+            background-color: #ffffff;
+            text-align: left;
+        }
+
+        p {
+            margin: 0 0 14px 0;
+            color: ${EMAIL_COLORS.textDark};
+            font-size: 15px;
+            line-height: 1.68;
+            text-align: left;
+        }
+
+        .greeting {
+            margin: 0 0 16px 0;
+            font-size: 18px;
+            line-height: 1.5;
+            font-weight: 600;
+        }
+
+        .small-copy {
+            margin: 0;
+            color: ${EMAIL_COLORS.textSubtle};
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .muted-copy {
+            margin: 0;
+            color: ${EMAIL_COLORS.textMuted};
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .divider {
+            height: 1px;
+            line-height: 1px;
+            font-size: 1px;
+            background-color: ${EMAIL_COLORS.border};
+        }
+
+        .card-panel {
+            border: 1px solid ${EMAIL_COLORS.border};
+            border-radius: 12px;
+            background-color: ${EMAIL_COLORS.lightBg};
+        }
+
+        .card-cell {
+            padding: 18px 20px;
+        }
+
+        .panel-title {
+            margin: 0 0 8px 0;
+            color: ${EMAIL_COLORS.textMuted};
+            font-size: 11px;
+            line-height: 1.2;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .cta-link {
+            display: inline-block;
+            padding: 12px 22px;
+            border: 1px solid ${EMAIL_COLORS.primaryHover};
+            border-radius: 10px;
+            background-color: ${EMAIL_COLORS.primary};
+            color: #ffffff !important;
+            font-size: 14px;
+            line-height: 1.2;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .footer-nav-link {
+            color: ${EMAIL_COLORS.textSubtle} !important;
+            text-decoration: none;
+        }
+
+        .footer-nav-link:hover {
+            color: ${EMAIL_COLORS.primaryHover} !important;
+            text-decoration: underline !important;
+        }
+
+        .otp-box {
+            margin: 14px 0 0 0;
+            border: 2px dashed ${EMAIL_COLORS.primary};
+            border-radius: 10px;
+            background-color: ${EMAIL_COLORS.lightBg};
+            padding: 18px;
+            text-align: center;
+        }
+
+        .otp-code {
+            margin: 0;
+            color: ${EMAIL_COLORS.primary};
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 34px;
+            line-height: 1.25;
+            letter-spacing: 8px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .response-panel {
+            border: 1px solid ${EMAIL_COLORS.border};
+            border-left: 5px solid ${EMAIL_COLORS.primary};
+            border-radius: 12px;
+            background-color: ${EMAIL_COLORS.lightBg};
+        }
+
+        .original-panel {
+            border: 1px solid ${EMAIL_COLORS.borderLight};
+            border-radius: 12px;
+            background-color: #fcfbff;
+        }
+
+        .newsletter-content p {
+            margin: 0 0 14px 0;
+            color: ${EMAIL_COLORS.textDark};
+            font-size: 15px;
+            line-height: 1.68;
+        }
+
+        .newsletter-content ul,
+        .newsletter-content ol {
+            margin: 0 0 14px 20px;
+            padding: 0;
+        }
+
+        .newsletter-content li {
+            margin: 0 0 8px 0;
+            color: ${EMAIL_COLORS.textDark};
+        }
+
         @media only screen and (max-width: 620px) {
-            .email-container {
-                margin: 0 !important;
+            .outer-pad {
+                padding: 16px 8px !important;
+            }
+
+            .shell {
                 border-radius: 0 !important;
             }
-            .email-header, .email-content, .email-footer {
-                padding-left: 20px !important;
-                padding-right: 20px !important;
+
+            .header-pad {
+                padding: 12px 16px !important;
             }
+
+            .content-cell {
+                padding: 18px 16px 20px 16px !important;
+            }
+
+            .footer-pad {
+                padding: 12px 16px !important;
+            }
+
             .otp-code {
-                font-size: 28px;
-                letter-spacing: 6px;
+                font-size: 28px !important;
+                letter-spacing: 6px !important;
+            }
+
+            .footer-nav-cell {
+                font-size: 11px !important;
             }
         }
     </style>
 </head>
 <body>
-    ${previewText ? `<div style="display:none;font-size:1px;color:#ffffff;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">${previewText}</div>` : ''}
-    <table role="presentation" cellpadding="0" cellspacing="0" style="width: 100%; background-color: ${EMAIL_COLORS.subtleBg}; padding: 40px 20px;">
+    ${renderPreviewText(options.previewText)}
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;background-color:${EMAIL_COLORS.subtleBg};">
         <tr>
-            <td align="center">
-                <div class="email-container">
-                    <div class="email-header">
-                        <h1>${DEFAULT_SENDER.name}</h1>
-                        <div class="tagline">${DEFAULT_SENDER.website}</div>
-                    </div>
-                    <div class="email-content">
-                        ${content}
-                    </div>
-                    <div class="email-footer">
-                        <p style="margin: 0 0 8px 0;">&copy; ${new Date().getFullYear()} ${DEFAULT_SENDER.name}. All rights reserved.</p>
-                        <p class="text-subtle" style="margin: 0;">
-                            <a href="https://${DEFAULT_SENDER.website}">${DEFAULT_SENDER.website}</a>
-                        </p>
-                    </div>
-                </div>
+            <td class="outer-pad" align="center" style="padding:32px 12px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" width="600" class="shell" style="width:100%;max-width:600px;border-collapse:separate;">
+                    ${renderPremiumHeader(headerTitle)}
+                    <tr>
+                        <td class="content-cell">
+                            ${content}
+                        </td>
+                    </tr>
+                    ${renderPremiumFooter()}
+                </table>
             </td>
         </tr>
     </table>
 </body>
 </html>
 `;
+};
+
+const getGreeting = (
+    recipientName: string | null | undefined
+): { html: string; text: string } => {
+    const normalizedName = recipientName?.trim();
+
+    if (!normalizedName) {
+        return {
+            html: 'Hello',
+            text: 'Hello',
+        };
+    }
+
+    return {
+        html: `Hello ${escapeHtml(normalizedName)}`,
+        text: `Hello ${normalizedName}`,
+    };
+};
 
 // ============================================================
 // OTP Verification Email Template
@@ -249,30 +421,46 @@ export const otpEmailTemplate = (
     otp: string,
     expiresIn = '10 minutes'
 ): { html: string; text: string } => {
-    const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
-    
+    const greeting = getGreeting(recipientName);
+    const safeOtp = escapeHtml(otp);
+    const safeExpiresIn = escapeHtml(expiresIn);
+
     const html = baseLayout(
         `
-        <p class="greeting">${greeting},</p>
+        <p class="greeting">${greeting.html},</p>
         <p>Your verification code is:</p>
+
         <div class="otp-box">
-            <p class="otp-code">${otp}</p>
+            <p class="otp-code">${safeOtp}</p>
         </div>
-        <p class="text-muted">This code will expire in <strong>${expiresIn}</strong>.</p>
-        <div class="divider"></div>
-        <p class="text-subtle">If you didn't request this code, please ignore this email or contact us if you have concerns.</p>
+
+        <p class="muted-copy" style="margin-top:10px;">This code expires in <strong>${safeExpiresIn}</strong>.</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="original-panel" style="width:100%;margin-top:14px;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title">Security Note</p>
+                    <p class="small-copy">Never share this code with anyone. If you did not request it, you can safely ignore this email.</p>
+                </td>
+            </tr>
+        </table>
         `,
-        'Verification Code',
-        `Your verification code is ${otp}`
+        {
+            title: 'Verification Code',
+            previewText: `Your verification code is ${otp}`,
+            headerTitle: 'Verification Code',
+        }
     );
 
-    const text = `${greeting},
+    const text = `${greeting.text},
 
-Your verification code is: ${otp}
+Use the secure verification code below to continue your request:
 
-This code will expire in ${expiresIn}.
+${otp}
 
-If you didn't request this code, please ignore this email.
+This code expires in ${expiresIn}.
+
+Never share this code with anyone. If you did not request it, you can safely ignore this email.
 
 ${DEFAULT_SENDER.name}
 ${DEFAULT_SENDER.website}`;
@@ -289,36 +477,60 @@ export const passwordResetEmailTemplate = (
     resetLink: string,
     expiresIn = '1 hour'
 ): { html: string; text: string } => {
-    const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
+    const greeting = getGreeting(recipientName);
+    const safeResetLink = escapeHtml(resetLink);
+    const safeExpiresIn = escapeHtml(expiresIn);
 
     const html = baseLayout(
         `
-        <p class="greeting">${greeting},</p>
-        <p>We received a request to reset your password. Click the button below to create a new password:</p>
-        <p style="text-align: center;">
-            <a href="${resetLink}" class="btn-primary">Reset Password</a>
-        </p>
-        <p class="text-muted">This link will expire in <strong>${expiresIn}</strong>.</p>
-        <div class="divider"></div>
-        <p class="text-subtle">If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.</p>
-        <p class="text-subtle" style="margin-top: 16px; word-break: break-all;">
-            If the button doesn't work, copy and paste this link into your browser:<br>
-            <a href="${resetLink}" style="font-size: 11px;">${resetLink}</a>
-        </p>
+        <p class="greeting">${greeting.html},</p>
+        <p>We received a request to reset your account password.</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="card-panel" style="width:100%;margin:14px 0 0 0;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title">Action Required</p>
+                    <p>For security, use the button below to create a new password. This reset link expires in <strong>${safeExpiresIn}</strong>.</p>
+                    <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0 0;">
+                        <tr>
+                            <td>
+                                <a href="${safeResetLink}" class="cta-link">Reset Password</a>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="original-panel" style="width:100%;margin-top:14px;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title">Fallback Link</p>
+                    <p class="small-copy" style="word-break:break-all;"><a href="${safeResetLink}" style="color:${EMAIL_COLORS.textMuted};text-decoration:underline;">${safeResetLink}</a></p>
+                </td>
+            </tr>
+        </table>
+
+        <p class="small-copy" style="margin-top:14px;">If you did not request this reset, no action is required and your current password remains unchanged.</p>
         `,
-        'Reset Your Password',
-        'Password reset requested. Click to reset your password.'
+        {
+            title: 'Reset Your Password',
+            previewText:
+                'Password reset requested. Use the secure link to continue.',
+            headerTitle: 'Reset Password',
+        }
     );
 
-    const text = `${greeting},
+    const text = `${greeting.text},
 
-We received a request to reset your password.
+We received a request to reset your account password.
 
-Click here to reset: ${resetLink}
+Use this link to reset your password:
+${resetLink}
 
-This link will expire in ${expiresIn}.
+This link expires in ${expiresIn}.
 
-If you didn't request this, you can safely ignore this email. Your password will remain unchanged.
+If you did not request this reset, no action is required and your current password remains unchanged.
 
 ${DEFAULT_SENDER.name}
 ${DEFAULT_SENDER.website}`;
@@ -334,16 +546,26 @@ export const testEmailTemplate = (
     subject: string,
     body: string
 ): { html: string; text: string } => {
+    const safeBody = escapeHtml(body).replace(/\n/g, '<br>');
+
     const html = baseLayout(
         `
-        <p>${body.replace(/\n/g, '<br>')}</p>
-        <div class="divider"></div>
-        <p class="text-subtle" style="margin-top: 24px;">
-            This is a test email sent from the administrator panel at ${DEFAULT_SENDER.website}.
-        </p>
+        <p class="greeting">Hello Aaditya,</p>
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="card-panel" style="width:100%;margin:14px 0 0 0;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title">Test Message</p>
+                    <p>${safeBody}</p>
+                </td>
+            </tr>
+        </table>
+        <p class="small-copy" style="margin-top:14px;">This is a controlled test message from the administrator panel.</p>
         `,
-        subject,
-        'Test email from administrator panel'
+        {
+            title: subject,
+            previewText: 'Test email from administrator panel',
+            headerTitle: 'Test Email',
+        }
     );
 
     const text = `${body}
@@ -367,34 +589,49 @@ export const newsletterEmailTemplate = (
     htmlContent: string,
     previewText?: string
 ): { html: string; text: string } => {
-    const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
-
-    // Strip HTML for text version
+    const greeting = getGreeting(recipientName);
     const textContent = htmlToTextContent(htmlContent);
 
     const html = baseLayout(
         `
-        <p class="greeting">${greeting},</p>
-        <div class="newsletter-content">
-            ${htmlContent}
-        </div>
-        <div class="divider"></div>
-        <p class="text-subtle" style="text-align: center;">
-            You received this email because you're subscribed to updates from ${DEFAULT_SENDER.name}.<br>
-            <a href="https://${DEFAULT_SENDER.website}/unsubscribe" style="color: ${EMAIL_COLORS.textSubtle};">Unsubscribe</a>
+        <p class="greeting">${greeting.html},</p>
+        <p>Here is your latest update from my writing and building desk.</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="card-panel" style="width:100%;margin:14px 0 0 0;">
+            <tr>
+                <td class="card-cell">
+                    <div class="newsletter-content cbr-content">
+                        ${htmlContent}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;margin-top:14px;">
+            <tr>
+                <td class="divider">&nbsp;</td>
+            </tr>
+        </table>
+
+        <p class="small-copy" style="margin-top:12px;font-size:11px;line-height:1.5;">
+            You are receiving this because you subscribed to updates from ${escapeHtml(DEFAULT_SENDER.name)}.
+            <a href="https://${DEFAULT_SENDER.website}/unsubscribe" style="color:${EMAIL_COLORS.textSubtle};text-decoration:underline;">Unsubscribe</a>
         </p>
         `,
-        subject,
-        previewText || `Newsletter from ${DEFAULT_SENDER.name}`
+        {
+            title: subject,
+            previewText: previewText || `Newsletter from ${DEFAULT_SENDER.name}`,
+            headerTitle: 'Newsletter',
+        }
     );
 
-    const text = `${greeting},
+    const text = `${greeting.text},
 
 ${textContent}
 
 ---
-You received this email because you're subscribed to updates from ${DEFAULT_SENDER.name}.
-To unsubscribe, visit: https://${DEFAULT_SENDER.website}/unsubscribe
+You received this because you subscribed to updates from ${DEFAULT_SENDER.name}.
+Unsubscribe: https://${DEFAULT_SENDER.website}/unsubscribe
 
 ${DEFAULT_SENDER.name}
 ${DEFAULT_SENDER.website}`;
@@ -413,43 +650,59 @@ export const contactResponseEmailTemplate = (
     originalSubject: string,
     originalMessage: string,
 ): { html: string; text: string } => {
-    const greeting = recipientName ? `Hello ${escapeHtml(recipientName)}` : 'Hello';
+    const greeting = getGreeting(recipientName);
     const safeOriginalSubject = escapeHtml(originalSubject);
     const safeOriginalMessage = escapeHtml(originalMessage).replace(/\n/g, '<br>');
     const textContent = htmlToTextContent(htmlContent);
 
     const html = baseLayout(
         `
-        <p class="greeting">${greeting},</p>
-        <p>Thank you for reaching out. Here is my response to your message:</p>
-        <div class="newsletter-content">
-            ${htmlContent}
-        </div>
-        <div class="divider"></div>
-        <p class="text-muted" style="margin-bottom: 8px;">Original subject: <strong>${safeOriginalSubject}</strong></p>
-        <div style="margin-top: 12px; border: 1px solid ${EMAIL_COLORS.border}; border-left: 4px solid ${EMAIL_COLORS.primary}; border-radius: 10px; background: ${EMAIL_COLORS.lightBg}; padding: 14px;">
-            <p class="text-muted" style="margin-bottom: 8px; font-weight: 600;">Your message</p>
-            <p style="margin: 0;">${safeOriginalMessage}</p>
-        </div>
-        <p class="text-subtle" style="margin-top: 20px;">If you have more questions, feel free to reply to this email.</p>
+        <p class="greeting">${greeting.html},</p>
+        <p>Thank you for your message. I reviewed your note and shared my response below.</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="response-panel" style="width:100%;margin:14px 0 0 0;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title" style="color:${EMAIL_COLORS.primary};">My Response</p>
+                    <div class="newsletter-content cbr-content">
+                        ${htmlContent}
+                    </div>
+                </td>
+            </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="original-panel" style="width:100%;margin-top:14px;">
+            <tr>
+                <td class="card-cell">
+                    <p class="panel-title">Your Original Message</p>
+                    <p class="small-copy" style="margin:0 0 8px 0;">Subject: <strong>${safeOriginalSubject}</strong></p>
+                    <p class="muted-copy" style="margin:0;">${safeOriginalMessage}</p>
+                </td>
+            </tr>
+        </table>
+
+        <p class="small-copy" style="margin-top:14px;">If you need clarification, reply to this email and I will continue from here.</p>
         `,
-        subject,
-        `Response from ${DEFAULT_SENDER.name}`,
+        {
+            title: subject,
+            previewText: `Response from ${DEFAULT_SENDER.name}`,
+            headerTitle: 'Response from Aaditya',
+        }
     );
 
-    const text = `${greeting},
+    const text = `${greeting.text},
 
-Thank you for reaching out. Here is my response to your message:
+Thank you for your message. I reviewed your note and shared my response below:
 
 ${textContent}
 
 ---
-Original subject: ${originalSubject}
+Your original subject: ${originalSubject}
 
-Your message:
+Your original message:
 ${originalMessage}
 
-If you have more questions, feel free to reply to this email.
+If you need clarification, reply to this email and I will continue from here.
 
 ${DEFAULT_SENDER.name}
 ${DEFAULT_SENDER.website}`;
@@ -460,13 +713,14 @@ ${DEFAULT_SENDER.website}`;
 // ============================================================
 // Welcome Email Template (for new subscribers)
 // ============================================================
-
 export const welcomeEmailTemplate = (
     recipientName: string | null
 ): { html: string; text: string } => {
-    const greeting = recipientName ? `Hello ${recipientName}` : 'Hello';
+    const firstName = recipientName?.trim().split(' ')[0] || '';
+    const personalGreeting = firstName ? `Hey ${escapeHtml(firstName)}` : 'Hey there';
+    
     const updatesHtml = WELCOME_EMAIL_CONTENT.updates
-        .map((item) => `<li style="margin-bottom: 8px;">${item}</li>`)
+        .map((item) => `<li style="margin-bottom:6px;">${escapeHtml(item)}</li>`)
         .join('');
     const updatesText = WELCOME_EMAIL_CONTENT.updates
         .map((item) => `• ${item}`)
@@ -474,37 +728,51 @@ export const welcomeEmailTemplate = (
 
     const html = baseLayout(
         `
-        <p class="greeting">${greeting},</p>
-        <p>${WELCOME_EMAIL_CONTENT.intro}</p>
-        <p>${WELCOME_EMAIL_CONTENT.updatesHeading}</p>
-        <ul style="color: ${EMAIL_COLORS.textDark}; padding-left: 20px;">
-            ${updatesHtml}
-        </ul>
-        <p style="text-align: center; margin-top: 32px;">
-            <a href="https://${DEFAULT_SENDER.website}" class="btn-primary">${WELCOME_EMAIL_CONTENT.ctaLabel}</a>
-        </p>
-        <div class="divider"></div>
-        <p class="text-subtle">
-            ${WELCOME_EMAIL_CONTENT.replyHint}
-        </p>
+        <p class="greeting" style="margin:0 0 12px 0;">${personalGreeting},</p>
+        
+        <p style="margin:0 0 16px 0;">${escapeHtml(WELCOME_EMAIL_CONTENT.intro)}</p>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="card-panel" style="width:100%;margin:16px 0 0 0;">
+            <tr>
+                <td class="card-cell">
+                    <p style="margin:0 0 8px 0;">${escapeHtml(WELCOME_EMAIL_CONTENT.updatesHeading)}</p>
+                    <ul style="margin:0;padding:0 0 0 20px;color:${EMAIL_COLORS.textDark};">
+                        ${updatesHtml}
+                    </ul>
+                </td>
+            </tr>
+        </table>
+
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;margin-top:18px;">
+            <tr>
+                <td align="center">
+                    <a href="https://${DEFAULT_SENDER.website}" class="cta-link">${escapeHtml(WELCOME_EMAIL_CONTENT.ctaLabel)}</a>
+                </td>
+            </tr>
+        </table>
+
+        <p class="small-copy" style="margin-top:16px;text-align:center;">${escapeHtml(WELCOME_EMAIL_CONTENT.replyHint)}</p>
         `,
-        WELCOME_EMAIL_CONTENT.subject,
-        WELCOME_EMAIL_CONTENT.previewText,
+        {
+            title: WELCOME_EMAIL_CONTENT.subject,
+            previewText: WELCOME_EMAIL_CONTENT.previewText,
+            headerTitle: 'Welcome',
+        }
     );
 
-    const text = `${greeting},
+    const text = `${personalGreeting},
 
 ${WELCOME_EMAIL_CONTENT.intro}
 
+What to expect:
 ${WELCOME_EMAIL_CONTENT.updatesHeading}
 ${updatesText}
 
-Visit my website: https://${DEFAULT_SENDER.website}
+Visit the site: https://${DEFAULT_SENDER.website}
 
 ${WELCOME_EMAIL_CONTENT.replyHint}
 
-${DEFAULT_SENDER.name}
-${DEFAULT_SENDER.website}`;
+— Aaditya`;
 
     return { html, text };
 };

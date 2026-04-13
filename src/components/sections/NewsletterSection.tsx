@@ -16,6 +16,7 @@ import { useEffect, useState } from 'react';
 // =============================================================
 
 interface INewsletterFormData {
+    name: string;
     email: string;
 }
 
@@ -28,32 +29,42 @@ interface INewsletterSectionProps {
 
 interface INewsletterSubscribeFieldProps {
     variant: NewsletterVariant;
-    value: string;
+    nameValue: string;
+    emailValue: string;
     inputDisabled: boolean;
     submitDisabled: boolean;
     pending: boolean;
     isSubmitted: boolean;
-    placeholder: string;
+    namePlaceholder: string;
+    emailPlaceholder: string;
+    nameLabel: string;
+    emailLabel: string;
     submitLabel: string;
     subscribedLabel: string;
     loadingLabel: string;
-    onChange: (value: string) => void;
+    onNameChange: (value: string) => void;
+    onEmailChange: (value: string) => void;
     onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
     className?: string;
 }
 
 const NewsletterSubscribeField = ({
     variant,
-    value,
+    nameValue,
+    emailValue,
     inputDisabled,
     submitDisabled,
     pending,
     isSubmitted,
-    placeholder,
+    namePlaceholder,
+    emailPlaceholder,
+    nameLabel,
+    emailLabel,
     submitLabel,
     subscribedLabel,
     loadingLabel,
-    onChange,
+    onNameChange,
+    onEmailChange,
     onSubmit,
     className,
 }: INewsletterSubscribeFieldProps): React.ReactElement => {
@@ -63,25 +74,46 @@ const NewsletterSubscribeField = ({
         <form onSubmit={onSubmit} className={cn('w-full', className)}>
             <div
                 className={cn(
-                    'flex flex-col gap-2 w-full',
+                    'flex flex-col w-full gap-2',
                     isInline
                         ? 'sm:flex-row sm:items-stretch sm:gap-0 sm:overflow-hidden sm:bg-background sm:border sm:border-border sm:rounded-lg sm:shadow-sm'
                         : 'md:flex-row md:items-stretch md:gap-0 md:overflow-hidden md:bg-background md:border md:border-border md:rounded-lg md:shadow-sm',
                 )}
             >
                 <input
+                    type='text'
+                    name='name'
+                    value={nameValue}
+                    onChange={(event) => onNameChange(event.target.value)}
+                    placeholder={namePlaceholder}
+                    autoComplete='name'
+                    required
+                    maxLength={80}
+                    disabled={inputDisabled}
+                    aria-label={nameLabel}
+                    className={cn(
+                        'block w-full px-4 py-3 text-body text-foreground bg-background border border-border rounded-lg outline-none transition-base placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60',
+                        isInline
+                            ? 'sm:flex-[0.85] sm:bg-transparent sm:border-transparent sm:border-r sm:border-r-border sm:rounded-none sm:rounded-l-lg sm:focus:border-transparent sm:focus:ring-0'
+                            : 'md:flex-[0.85] md:bg-transparent md:border-transparent md:border-r md:border-r-border md:rounded-none md:rounded-l-lg md:focus:border-transparent md:focus:ring-0',
+                    )}
+                />
+                <input
                     type='email'
-                    value={value}
-                    onChange={(event) => onChange(event.target.value)}
-                    placeholder={placeholder}
+                    name='email'
+                    value={emailValue}
+                    onChange={(event) => onEmailChange(event.target.value)}
+                    placeholder={emailPlaceholder}
+                    autoComplete='email'
+                    inputMode='email'
                     required
                     disabled={inputDisabled}
-                    aria-label={NEWSLETTER_SECTION.emailLabel}
+                    aria-label={emailLabel}
                     className={cn(
-                        'block px-4 py-3 w-full text-body text-foreground bg-background border border-border rounded-lg outline-none transition-base placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60',
+                        'block w-full px-4 py-3 text-body text-foreground bg-background border border-border rounded-lg outline-none transition-base placeholder:text-muted-foreground focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:cursor-not-allowed disabled:opacity-60',
                         isInline
-                            ? 'sm:flex-1 sm:bg-transparent sm:border-transparent sm:rounded-none sm:rounded-l-lg sm:focus:border-transparent sm:focus:ring-0'
-                            : 'md:flex-1 md:bg-transparent md:border-transparent md:rounded-none md:rounded-l-lg md:focus:border-transparent md:focus:ring-0',
+                            ? 'sm:flex-[1.45] sm:bg-transparent sm:border-transparent sm:rounded-none sm:focus:border-transparent sm:focus:ring-0'
+                            : 'md:flex-[1.45] md:bg-transparent md:border-transparent md:rounded-none md:focus:border-transparent md:focus:ring-0',
                     )}
                 />
                 <button
@@ -108,31 +140,32 @@ const NewsletterSubscribeField = ({
 
 export const NewsletterSection = ({ variant = 'landing', className }: INewsletterSectionProps) => {
     const [subscribedEmail, setSubscribedEmail] = useState<string | null>(null);
-    const [formData, setFormData] = useState<INewsletterFormData>({ email: '' });
+    const [formData, setFormData] = useState<INewsletterFormData>({ name: '', email: '' });
     const { showWarning, triggerActionSnackbar } = useSnackbar();
 
     const { mutateAsync, pending } = useAction<ISubscriptionResult, [ISubscribeInput]>({
         action: subscribe,
     });
 
+    const normalizedName = formData.name.trim().replace(/\s+/g, ' ');
     const normalizedEmail = formData.email.trim().toLowerCase();
     const isSubmitted = Boolean(subscribedEmail && normalizedEmail && subscribedEmail === normalizedEmail);
     const isInputDisabled = pending;
-    const isSubmitDisabled = pending || isSubmitted || normalizedEmail.length === 0;
+    const isSubmitDisabled = pending || isSubmitted || normalizedName.length === 0 || normalizedEmail.length === 0;
 
     useEffect(() => {
         const frameId = window.requestAnimationFrame(() => {
             const storedSubscribedEmail = siteStorage.getSubscribedEmail();
-            const storedProfileEmail = siteStorage.getProfile()?.email ?? '';
+            const storedProfile = siteStorage.getProfile();
+            const storedCommentAuthor = siteStorage.getCommentAuthor();
+            const storedProfileEmail = storedProfile?.email ?? '';
+            const storedName = storedProfile?.name?.trim() || storedCommentAuthor?.name?.trim() || '';
 
             setSubscribedEmail(storedSubscribedEmail);
             setFormData((previous) => {
-                if (previous.email.trim().length > 0) {
-                    return previous;
-                }
-
                 return {
-                    email: storedSubscribedEmail ?? storedProfileEmail,
+                    name: previous.name.trim().length > 0 ? previous.name : storedName,
+                    email: previous.email.trim().length > 0 ? previous.email : (storedSubscribedEmail ?? storedProfileEmail),
                 };
             });
         });
@@ -147,6 +180,11 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
 
         if (pending) return;
 
+        if (!normalizedName) {
+            showWarning(NEWSLETTER_SECTION.feedback.emptyName);
+            return;
+        }
+
         const email = normalizedEmail;
 
         if (!email) {
@@ -159,9 +197,12 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
             return;
         }
 
+        const subscriberName = normalizedName;
+
         const response = await triggerActionSnackbar(
             mutateAsync({
                 email,
+                name: subscriberName,
             }),
             {
                 loadingMessage: NEWSLETTER_SECTION.loadingMessage,
@@ -171,9 +212,9 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
         );
 
         if (response.success) {
-            const persistedEmail = siteStorage.setSubscription(email) ?? email;
+            const persistedEmail = siteStorage.setSubscription(email, subscriberName) ?? email;
             setSubscribedEmail(persistedEmail);
-            setFormData({ email: persistedEmail });
+            setFormData({ name: subscriberName, email: persistedEmail });
         }
     };
     const isInline = variant === 'inline';
@@ -183,14 +224,19 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
             <section className={cn('relative w-full', className)}>
                 <NewsletterSubscribeField
                     variant='inline'
-                    value={formData.email}
-                    onChange={(email) => setFormData({ email })}
+                    nameValue={formData.name}
+                    emailValue={formData.email}
+                    onNameChange={(name) => setFormData((previous) => ({ ...previous, name }))}
+                    onEmailChange={(email) => setFormData((previous) => ({ ...previous, email }))}
                     onSubmit={handleSubmit}
                     inputDisabled={isInputDisabled}
                     submitDisabled={isSubmitDisabled}
                     pending={pending}
                     isSubmitted={isSubmitted}
-                    placeholder={NEWSLETTER_SECTION.emailPlaceholder}
+                    namePlaceholder={NEWSLETTER_SECTION.namePlaceholder}
+                    emailPlaceholder={NEWSLETTER_SECTION.emailPlaceholder}
+                    nameLabel={NEWSLETTER_SECTION.nameLabel}
+                    emailLabel={NEWSLETTER_SECTION.emailLabel}
                     submitLabel={NEWSLETTER_SECTION.inlineSubmitLabel}
                     subscribedLabel={NEWSLETTER_SECTION.inlineSubscribedLabel}
                     loadingLabel={NEWSLETTER_SECTION.loadingMessage}
@@ -212,14 +258,19 @@ export const NewsletterSection = ({ variant = 'landing', className }: INewslette
                     <p className='text-body text-muted-foreground'>{NEWSLETTER_SECTION.description}</p>
                     <NewsletterSubscribeField
                         variant='landing'
-                        value={formData.email}
-                        onChange={(email) => setFormData({ email })}
+                        nameValue={formData.name}
+                        emailValue={formData.email}
+                        onNameChange={(name) => setFormData((previous) => ({ ...previous, name }))}
+                        onEmailChange={(email) => setFormData((previous) => ({ ...previous, email }))}
                         onSubmit={handleSubmit}
                         inputDisabled={isInputDisabled}
                         submitDisabled={isSubmitDisabled}
                         pending={pending}
                         isSubmitted={isSubmitted}
-                        placeholder={NEWSLETTER_SECTION.emailPlaceholder}
+                        namePlaceholder={NEWSLETTER_SECTION.namePlaceholder}
+                        emailPlaceholder={NEWSLETTER_SECTION.emailPlaceholder}
+                        nameLabel={NEWSLETTER_SECTION.nameLabel}
+                        emailLabel={NEWSLETTER_SECTION.emailLabel}
                         submitLabel={NEWSLETTER_SECTION.submitLabel}
                         subscribedLabel={NEWSLETTER_SECTION.subscribedLabel}
                         loadingLabel={NEWSLETTER_SECTION.loadingMessage}

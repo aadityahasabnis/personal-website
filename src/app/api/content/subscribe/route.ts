@@ -7,7 +7,7 @@ import { parseJsonBody, toHttp } from '../_shared';
 
 interface ISubscribeBody {
     email: string;
-    name?: string;
+    name: string;
 }
 
 export const runtime = 'nodejs';
@@ -29,7 +29,7 @@ export const POST = async (request: NextRequest): Promise<NextResponse> => {
     return toHttp(
         await subscribe({
             email: body.email,
-            ...(typeof body.name === 'string' ? { name: body.name } : {}),
+            name: body.name,
         })
     );
 };
@@ -40,7 +40,7 @@ export const OPTIONS = (): NextResponse => {
         methods: ['POST'],
         bodySchema: {
             email: 'string required',
-            name: 'string optional',
+            name: 'string required',
         },
         action: 'subscribe',
     });

@@ -6,6 +6,7 @@ import type { IAdminSubscriberRow, SubscriberFilter, SubscriberRowStatus } from 
 
 interface ISubscriberRowDoc {
     _id: ObjectId;
+    name?: string | null;
     email: string;
     confirmed?: boolean;
     subscribedAt: Date;
@@ -14,13 +15,18 @@ interface ISubscriberRowDoc {
     updatedAt: Date;
 }
 
-const ALLOWED_SORT_FIELDS = new Set(['subscribedAt', 'updatedAt', 'createdAt', 'email', 'confirmed']);
+const ALLOWED_SORT_FIELDS = new Set(['subscribedAt', 'updatedAt', 'createdAt', 'email', 'name', 'confirmed']);
 
 const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 const resolveStatus = (doc: Pick<ISubscriberRowDoc, 'confirmed' | 'unsubscribedAt'>): SubscriberRowStatus => {
     if (doc.unsubscribedAt) return 'unsubscribed';
     return doc.confirmed ? 'confirmed' : 'pending';
+};
+
+const resolveSubscriberName = (name: string | null | undefined): string | null => {
+    const normalized = name?.trim().replace(/\s+/g, ' ');
+    return normalized && normalized.length > 0 ? normalized : null;
 };
 
 export const buildSubscriberMatch = (
@@ -41,7 +47,10 @@ export const buildSubscriberMatch = (
 
     if (query?.trim()) {
         const q = escapeRegex(query.trim());
-        match.email = { $regex: q, $options: 'i' };
+        match.$or = [
+            { email: { $regex: q, $options: 'i' } },
+            { name: { $regex: q, $options: 'i' } },
+        ];
     }
 
     return match;
@@ -56,6 +65,7 @@ export const buildSubscriberSort = (sort?: ISortParams): Record<string, 1 | -1> 
 
 export const toAdminSubscriberRow = (doc: ISubscriberRowDoc): IAdminSubscriberRow => ({
     id: doc._id.toString(),
+    name: resolveSubscriberName(doc.name),
     email: doc.email,
     confirmed: Boolean(doc.confirmed),
     status: resolveStatus(doc),
@@ -82,8 +92,9 @@ export const normalizeSubscriberIds = (subscriberIds: string[]): string[] => {
 const csvEscape = (value: string): string => `"${value.replace(/"/g, '""')}"`;
 
 export const toSubscribersCsv = (rows: IAdminSubscriberRow[]): string => {
-    const headers = ['Email', 'Status', 'Confirmed', 'Subscribed At', 'Unsubscribed At'];
+    const headers = ['Name', 'Email', 'Status', 'Confirmed', 'Subscribed At', 'Unsubscribed At'];
     const lines = rows.map((row) => [
+        row.name ?? '',
         row.email,
         row.status,
         row.confirmed ? 'Yes' : 'No',

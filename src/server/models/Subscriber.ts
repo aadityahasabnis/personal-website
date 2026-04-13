@@ -15,6 +15,12 @@ const SubscriberSchema = new Schema<ISubscriberDocument>(
             lowercase: true,
             match: [VALIDATION_PATTERNS.EMAIL, 'Please provide a valid email address'],
         },
+        name: {
+            type: String,
+            required: [true, 'Name is required'],
+            trim: true,
+            maxlength: [80, 'Name is too long'],
+        },
         confirmed: {
             type: Boolean,
             default: true,

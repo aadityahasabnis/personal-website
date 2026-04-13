@@ -35,7 +35,7 @@ export const SUBSCRIBERS_QUERY_KEY = ['admin', 'subscribers'] as const;
 // Search Fields
 // =============================================================
 
-export const SUBSCRIBERS_SEARCH_FIELDS: (keyof IAdminSubscriberRow)[] = ['email'];
+export const SUBSCRIBERS_SEARCH_FIELDS: (keyof IAdminSubscriberRow)[] = ['name', 'email'];
 
 // =============================================================
 // Filters Configuration
@@ -120,9 +120,9 @@ export const createSubscriberRowActions = (handlers: ISubscriberActionHandlers):
 
     // Delete Action
     createDeleteAction<IAdminSubscriberRow>(handlers.onDelete, {
-        itemName: (subscriber) => subscriber.email,
+        itemName: (subscriber) => `${subscriber.name ?? 'Missing Name'} (${subscriber.email})`,
         confirmTitle: 'Delete Subscriber',
-        confirmMessage: (subscriber) => `Are you sure you want to delete "${subscriber.email}"? This action cannot be undone.`,
+        confirmMessage: (subscriber) => `Are you sure you want to delete "${subscriber.name ?? 'Missing Name'}" (${subscriber.email})? This action cannot be undone.`,
     }),
 ];
 
@@ -182,7 +182,7 @@ export const createSubscribersTableConfig = (options: ISubscribersTableConfigOpt
 
         // Search
         searchable: true,
-        searchPlaceholder: 'Search by email...',
+        searchPlaceholder: 'Search by name or email...',
         searchFields: SUBSCRIBERS_SEARCH_FIELDS,
 
         // Filters

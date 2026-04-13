@@ -14,6 +14,7 @@ export type SubscriberRowStatus = 'confirmed' | 'pending' | 'unsubscribed';
 
 export interface IAdminSubscriberRow {
     id: string;
+    name: string | null;
     email: string;
     confirmed: boolean;
     status: SubscriberRowStatus;

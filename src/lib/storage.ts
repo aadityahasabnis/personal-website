@@ -45,6 +45,10 @@ class SiteStorage {
         return email.trim().toLowerCase();
     }
 
+    private normalizeName(name: string): string {
+        return name.trim().replace(/\s+/g, ' ');
+    }
+
     private get<T>(key: string): T | null {
         try {
             const raw = this.storage?.getItem(key) ?? 'null';
@@ -110,13 +114,16 @@ class SiteStorage {
         return this.getSubscribedEmail() === normalizedEmail;
     }
 
-    setSubscription(email: string): string | null {
+    setSubscription(email: string, name?: string): string | null {
         const normalizedEmail = this.normalizeEmail(email);
         if (!normalizedEmail) return null;
 
         const existingProfile = this.getProfile();
         const existingAuthor = this.getCommentAuthor();
-        const resolvedName = existingProfile?.name || existingAuthor?.name || normalizedEmail.split('@')[0] || '';
+        const explicitName = this.normalizeName(name ?? '');
+        const profileName = this.normalizeName(existingProfile?.name ?? '');
+        const authorName = this.normalizeName(existingAuthor?.name ?? '');
+        const resolvedName = explicitName || profileName || authorName || 'Subscriber';
         const resolvedAvatar = existingProfile?.avatar || existingAuthor?.avatar || getRandomAvatar().image;
 
         this.setProfile({

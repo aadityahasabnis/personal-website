@@ -8,20 +8,28 @@ import type { ISubscriberDocument } from '@/server/models/types';
 import { created, error, handleError, success } from '../../utils/helper';
 import { isEmailConfigured, sendEmailWithRetry } from '../../utils/mail';
 import { welcomeEmailTemplate } from '../../utils/mail-templates';
-import { isValidSubscriberEmail, normalizeSubscriberEmail } from './shared';
+import {
+    isValidSubscriberEmail,
+    normalizeSubscriberEmail,
+    normalizeSubscriberName,
+} from './shared';
 import type { ISubscribeInput, ISubscriptionResult } from './types';
 
 interface ISubscriberLookup {
     _id: ISubscriberDocument['_id'];
     email: string;
+    name?: string | null;
     unsubscribedAt: Date | null;
 }
 
-const sendWelcomeEmailSafely = async (email: string): Promise<void> => {
+const sendWelcomeEmailSafely = async (
+    email: string,
+    recipientName: string | null,
+): Promise<void> => {
     try {
         if (!isEmailConfigured()) return;
 
-        const { html, text } = welcomeEmailTemplate(null);
+        const { html, text } = welcomeEmailTemplate(recipientName);
 
         await sendEmailWithRetry(
             {
@@ -46,22 +54,26 @@ export const subscribe = async (
 ): Promise<IApiResponse<ISubscriptionResult>> => {
     try {
         const email = normalizeSubscriberEmail(input.email ?? '');
+        const subscriberName = normalizeSubscriberName(input.name ?? null);
+
         if (!isValidSubscriberEmail(email)) return error('Invalid email address', 400);
+        if (!subscriberName) return error('Name is required', 400);
 
         await connectDB();
 
         const existing = await Subscriber.findOne({ email })
-            .select('_id email unsubscribedAt')
+            .select('_id email name unsubscribedAt')
             .lean<ISubscriberLookup | null>();
 
         if (!existing) {
             try {
                 const doc = await Subscriber.create({
                     email,
+                    name: subscriberName,
                     confirmed: true,
                 });
 
-                await sendWelcomeEmailSafely(doc.email);
+                await sendWelcomeEmailSafely(doc.email, doc.name ?? subscriberName);
 
                 return created(
                     {
@@ -86,12 +98,18 @@ export const subscribe = async (
 
         if (!targetId) return error('Subscriber not found', 404);
 
-        const subscriber = await Subscriber.findById(targetId).select('email confirmed unsubscribedAt');
+        const subscriber = await Subscriber.findById(targetId).select('email name confirmed unsubscribedAt');
         if (!subscriber) return error('Subscriber not found', 404);
+
+        const currentName = subscriber.name?.trim() ?? null;
+        const shouldPersistName = Boolean(subscriberName && currentName !== subscriberName);
+        if (shouldPersistName) {
+            subscriber.name = subscriberName;
+        }
 
         if (subscriber.unsubscribedAt) {
             await subscriber.resubscribe();
-            await sendWelcomeEmailSafely(subscriber.email);
+            await sendWelcomeEmailSafely(subscriber.email, subscriber.name ?? subscriberName);
 
             return success(
                 {
@@ -105,6 +123,8 @@ export const subscribe = async (
 
         if (!subscriber.confirmed) {
             await subscriber.confirm();
+        } else if (shouldPersistName) {
+            await subscriber.save();
         }
 
         return success(

@@ -1,73 +1,53 @@
-import { PreviewCard, PreviewCardPanel, PreviewCardTrigger } from '@/components/animate-ui/components/base/preview-card';
+import { Scales } from '@/components/ui/scales';
 import { ABOUT_PREVIEW_SECTION } from '@/constants/homeConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
-import { ArrowRight, ArrowUpRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 
 export const AboutPreview = () => {
-    const authorMonogram = SITE_CONFIG.shortName || 'AH';
-    const topSkills = ABOUT_PREVIEW_SECTION.skills.slice(0, 3);
+    const profileImageSrc = '/avatars/avatar-1.png';
 
     return (
-        <section className='relative py-24'>
+        <section className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
             <div className='container-wide'>
                 <div className='grid items-center gap-12 lg:grid-cols-2'>
                     <div className='relative'>
-                        <div className='relative mx-auto aspect-square max-w-md lg:mx-0'>
-                            <div className='absolute -inset-4 rounded-3xl bg-linear-to-br from-violet-400/20 via-violet-500/15 to-violet-600/20 blur-2xl' />
-                            <div className='absolute inset-0 rounded-3xl gradient-border' />
+                        <div className='relative mx-auto max-w-5xl'>
+                            <div className='absolute -inset-3 rounded-3xl bg-linear-to-br from-violet-400/15 via-violet-500/10 to-violet-600/15 blur-xl' />
 
-                            <PreviewCard followCursor='x'>
-                                <PreviewCardTrigger
-                                    href={ABOUT_PREVIEW_SECTION.cta.href}
-                                    aria-label='Open full about page'
-                                    className='relative flex items-center justify-center overflow-hidden aspect-square rounded-2xl bg-muted transition-base hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                                >
-                                    <span className='text-display font-semibold gradient-text'>{authorMonogram}</span>
-
-                                    <span className='absolute right-4 bottom-4 inline-flex items-center gap-1 px-2.5 py-1 text-label font-medium text-violet-700 bg-violet-100/90 rounded-full dark:text-violet-200 dark:bg-violet-900/50'>
-                                        Profile
-                                        <ArrowUpRight className='size-3.5' aria-hidden='true' />
-                                    </span>
-                                </PreviewCardTrigger>
-
-                                <PreviewCardPanel side='right' sideOffset={14} align='center' className='p-0 w-80 text-foreground bg-card border-border shadow-glow-sm'>
-                                    <div className='flex flex-col gap-4 p-5'>
-                                        <div className='flex items-start justify-between gap-4'>
-                                            <div className='flex items-center gap-3'>
-                                                <div className='flex size-12 items-center justify-center rounded-full text-h4 font-semibold text-violet-700 bg-violet-100 dark:text-violet-200 dark:bg-violet-900/40'>
-                                                    {authorMonogram}
-                                                </div>
-
-                                                <div>
-                                                    <p className='text-body font-semibold text-foreground'>{SITE_CONFIG.author.name}</p>
-                                                    <p className='text-small text-muted-foreground'>{SITE_CONFIG.author.jobTitle}</p>
-                                                </div>
-                                            </div>
-
-                                            <span className='px-2 py-1 text-label font-medium text-violet-700 bg-violet-100 rounded-md dark:text-violet-200 dark:bg-violet-900/40'>Open to work</span>
-                                        </div>
-
-                                        <p className='text-small leading-relaxed text-muted-foreground'>{SITE_CONFIG.author.bio}</p>
-
-                                        <div className='flex flex-wrap gap-2'>
-                                            {topSkills.map((skill) => (
-                                                <span key={skill} className='px-2.5 py-1 text-label font-medium text-muted-foreground bg-muted rounded-md'>
-                                                    {skill}
-                                                </span>
-                                            ))}
-                                        </div>
-
-                                        <Link
-                                            href={ABOUT_PREVIEW_SECTION.cta.href}
-                                            className='inline-flex items-center justify-between gap-2 text-small font-medium text-foreground rounded-sm transition-base hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-                                        >
-                                            View full profile
-                                            <ArrowRight className='size-4' aria-hidden='true' />
-                                        </Link>
+                            <Link
+                                href={ABOUT_PREVIEW_SECTION.cta.href}
+                                aria-label='Open full about page'
+                                className='relative block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
+                            >
+                                <div className='relative aspect-4/5 w-full rounded-2xl bg-muted'>
+                                    <div className='absolute -inset-y-[20%] -left-5 h-[140%] w-5 sm:-left-6 sm:w-6'>
+                                        <Scales size={8} className='rounded-2xl mask-t-from-90% mask-b-from-90%' />
                                     </div>
-                                </PreviewCardPanel>
-                            </PreviewCard>
+                                    <div className='absolute -inset-y-[20%] -right-5 h-[140%] w-5 sm:-right-6 sm:w-6'>
+                                        <Scales size={8} className='rounded-2xl mask-t-from-90% mask-b-from-90%' />
+                                    </div>
+                                    <div className='absolute -inset-x-[20%] -top-5 h-5 w-[140%] sm:-top-6 sm:h-6'>
+                                        <Scales size={8} className='rounded-2xl mask-r-from-90% mask-l-from-90%' />
+                                    </div>
+                                    <div className='absolute -inset-x-[20%] -bottom-5 h-5 w-[140%] sm:-bottom-6 sm:h-6'>
+                                        <Scales size={8} className='rounded-2xl mask-r-from-90% mask-l-from-90%' />
+                                    </div>
+
+                                    <div className='relative z-10 h-full w-full overflow-hidden rounded-2xl border border-border bg-card shadow-glow-sm'>
+                                        <Image src={profileImageSrc} alt={`${SITE_CONFIG.author.name} profile portrait`} fill className='object-cover' sizes='(min-width: 1024px) 32rem, 100vw' />
+                                    </div>
+
+                                    <div className='absolute inset-x-3 bottom-3 z-20 flex items-center justify-between gap-3 rounded-xl border border-border bg-card/95 p-3 backdrop-blur-xs sm:inset-x-4 sm:bottom-4'>
+                                        <div>
+                                            <p className='text-body font-semibold text-foreground'>{SITE_CONFIG.author.name}</p>
+                                            <p className='text-small text-muted-foreground'>{SITE_CONFIG.author.jobTitle}</p>
+                                        </div>
+                                        <ArrowRight className='size-4 text-primary' aria-hidden='true' />
+                                    </div>
+                                </div>
+                            </Link>
                         </div>
                     </div>
 

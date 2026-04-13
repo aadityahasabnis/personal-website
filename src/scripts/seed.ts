@@ -728,7 +728,7 @@ async function seed(): Promise<void> {
         },
         {
             email: 'reader.three@example.com',
-            name: null,
+            name: 'Reader Three',
             confirmed: true,
             subscribedAt: daysAgo(50),
             unsubscribedAt: daysAgo(12),

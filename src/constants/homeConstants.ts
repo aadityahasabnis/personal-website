@@ -41,6 +41,8 @@ export const NEWSLETTER_SECTION = {
     title: 'Stay Updated with Newsletter',
     description: 'Subscribe to receive the latest articles, blogs and updates from Aaditya. No spam, unsubscribe anytime.',
     inlineDescription: 'Get new articles in your inbox.',
+    namePlaceholder: 'Your name',
+    nameLabel: 'Full Name',
     emailPlaceholder: 'Type your email...',
     emailLabel: 'Email Address',
     submitLabel: 'Subscribe',
@@ -49,6 +51,7 @@ export const NEWSLETTER_SECTION = {
     inlineSubscribedLabel: 'Joined',
     feedbackResetTimeoutMs: 5000,
     feedback: {
+        emptyName: 'Please enter your name.',
         emptyEmail: 'Please enter a valid email address.',
         alreadySubscribed: 'You are already subscribed with this email.',
         successFallback: 'Thanks for subscribing!',

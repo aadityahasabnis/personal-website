@@ -2,7 +2,7 @@ import { parseMarkdown } from '@/lib/markdown/parse';
 import { processHtmlServer } from '@/lib/markdown/processHtmlServer';
 import { stampHeadingIds } from '@/lib/markdown/toc';
 
-import 'authorly-editor/styles/renderer.css';
+// import 'authorly-editor/styles/renderer.css';
 
 import { cn } from '@/lib/utils';
 

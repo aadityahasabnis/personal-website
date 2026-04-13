@@ -4,6 +4,7 @@
 
 export interface ISubscribeInput {
     email: string;
+    name: string;
 }
 
 export interface IUnsubscribeInput {
