@@ -19,7 +19,6 @@ interface ICommentItemProps {
     onUpvote: (commentId: string) => void;
     hasUpvoted: (commentId: string) => boolean;
     pendingUpvoteId: string | null;
-    failedUpvoteId: string | null;
     depth?: number;
 }
 
@@ -27,7 +26,7 @@ interface ICommentItemProps {
 // Component
 // =============================================================
 
-export const CommentItem = ({ comment, onReply, onUpvote, hasUpvoted, pendingUpvoteId, failedUpvoteId, depth = 0 }: ICommentItemProps) => {
+export const CommentItem = ({ comment, onReply, onUpvote, hasUpvoted, pendingUpvoteId, depth = 0 }: ICommentItemProps) => {
     const avatar = getAvatarById(comment.author.avatar ?? 'avatar-1');
     const serverUpvoted = hasUpvoted(comment.id);
     const isPending = pendingUpvoteId === comment.id;
@@ -142,16 +141,7 @@ export const CommentItem = ({ comment, onReply, onUpvote, hasUpvoted, pendingUpv
             {comment.replies.length > 0 && (
                 <div className='mt-3 space-y-3'>
                     {comment.replies.map((reply) => (
-                        <CommentItem
-                            key={reply.id}
-                            comment={reply}
-                            onReply={onReply}
-                            onUpvote={onUpvote}
-                            hasUpvoted={hasUpvoted}
-                            pendingUpvoteId={pendingUpvoteId}
-                            failedUpvoteId={failedUpvoteId}
-                            depth={depth + 1}
-                        />
+                        <CommentItem key={reply.id} comment={reply} onReply={onReply} onUpvote={onUpvote} hasUpvoted={hasUpvoted} pendingUpvoteId={pendingUpvoteId} depth={depth + 1} />
                     ))}
                 </div>
             )}

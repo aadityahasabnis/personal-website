@@ -59,7 +59,6 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
     const [submitState, setSubmitState] = useState<ISubmitState>('idle');
     const [feedbackMessage, setFeedbackMessage] = useState<string>('');
     const [pendingUpvoteId, setPendingUpvoteId] = useState<string | null>(null);
-    const [failedUpvoteId, setFailedUpvoteId] = useState<string | null>(null);
 
     // Helpers
     const buildUpvoteKey = useCallback((commentId: string): string => `${contentType}:${contentId}:${commentId}`, [contentId, contentType]);
@@ -105,11 +104,9 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
         onSuccess: (_, __, [commentId]) => {
             siteStorage.setCommentUpvoted(buildUpvoteKey(commentId));
             setPendingUpvoteId(null);
-            setFailedUpvoteId(null);
         },
-        onError: (message, _, [commentId]) => {
+        onError: (message) => {
             setPendingUpvoteId(null);
-            setFailedUpvoteId(commentId);
             setSubmitState('error');
             setFeedbackMessage(message);
         },
@@ -126,7 +123,6 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
         async (commentId: string) => {
             if (hasUpvoted(commentId) || pendingUpvoteId === commentId || siteStorage.isOwnComment(commentId)) return;
             setPendingUpvoteId(commentId);
-            setFailedUpvoteId(null);
             // Don't set storage here - let onSuccess handle it after server confirms
             await upvoteCommentAction.mutateAsync(commentId);
         },
@@ -240,7 +236,7 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
                     className={cn(
                         'mt-6 p-4 rounded-xl border border-border',
                         'bg-card shadow-sm',
-                        'w-full max-w-full min-w-0 [min-inline-size:0]',
+                        'w-full max-w-full min-w-0 min-inline-0',
                         'focus-within:border-foreground/20 focus-within:ring-1 focus-within:ring-primary/20',
                     )}
                 >
@@ -369,15 +365,7 @@ export const ContentComment = ({ contentType, contentId, className }: IContentCo
             {comments.length > 0 && (
                 <div className='mt-6 space-y-4'>
                     {comments.map((comment) => (
-                        <CommentItem
-                            key={comment.id}
-                            comment={comment}
-                            onReply={handleReply}
-                            onUpvote={handleUpvote}
-                            hasUpvoted={hasUpvoted}
-                            pendingUpvoteId={pendingUpvoteId}
-                            failedUpvoteId={failedUpvoteId}
-                        />
+                        <CommentItem key={comment.id} comment={comment} onReply={handleReply} onUpvote={handleUpvote} hasUpvoted={hasUpvoted} pendingUpvoteId={pendingUpvoteId} />
                     ))}
                 </div>
             )}

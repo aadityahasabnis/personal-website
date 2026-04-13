@@ -1,8 +1,8 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react';
 import Image from 'next/image';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AVATAR_OPTIONS } from '@/lib/storage';
 import { cn } from '@/lib/utils';
@@ -22,8 +22,11 @@ interface ICommentAvatarPickerProps {
 
 export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatarPickerProps) => {
     const scrollRef = useRef<HTMLDivElement>(null);
+    const itemRefs = useRef<Array<HTMLButtonElement | null>>([]);
     const [canScrollLeft, setCanScrollLeft] = useState(false);
     const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const selectedIndex = useMemo(() => AVATAR_OPTIONS.findIndex((avatar) => avatar.id === selectedAvatar), [selectedAvatar]);
 
     const updateScrollState = useCallback(() => {
         const el = scrollRef.current;
@@ -34,6 +37,12 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
         setCanScrollRight(el.scrollLeft < maxScrollLeft - 1);
     }, []);
 
+    const scrollToAvatar = useCallback((index: number, behavior: ScrollBehavior = 'smooth') => {
+        const target = itemRefs.current[index];
+        if (!target) return;
+        target.scrollIntoView({ behavior, inline: 'center', block: 'nearest' });
+    }, []);
+
     const scroll = useCallback((direction: 'left' | 'right') => {
         if (!scrollRef.current) return;
         scrollRef.current.scrollBy({
@@ -41,6 +50,31 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
             behavior: 'smooth',
         });
     }, []);
+
+    const selectAtOffset = useCallback(
+        (offset: number) => {
+            const nextIndex = Math.min(Math.max(selectedIndex + offset, 0), AVATAR_OPTIONS.length - 1);
+            const nextAvatar = AVATAR_OPTIONS[nextIndex];
+            if (!nextAvatar) return;
+            onSelect(nextAvatar.id);
+            scrollToAvatar(nextIndex);
+        },
+        [onSelect, scrollToAvatar, selectedIndex],
+    );
+
+    const handleKeyDown = useCallback(
+        (event: React.KeyboardEvent<HTMLDivElement>) => {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                selectAtOffset(-1);
+            }
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                selectAtOffset(1);
+            }
+        },
+        [selectAtOffset],
+    );
 
     useEffect(() => {
         const el = scrollRef.current;
@@ -57,8 +91,16 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
         };
     }, [updateScrollState]);
 
+    useEffect(() => {
+        if (selectedIndex < 0) return;
+        scrollToAvatar(selectedIndex, 'smooth');
+    }, [scrollToAvatar, selectedIndex]);
+
+    const avatarButtonBase =
+        'relative flex shrink-0 items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-background border border-border/70 transition-fast snap-center hover:border-foreground/20 focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary))]';
+
     return (
-        <fieldset className='space-y-2 w-full max-w-full min-w-0 [min-inline-size:0]'>
+        <fieldset className='w-full max-w-full min-w-0 space-y-2 min-inline-0'>
             <legend className='text-small font-medium text-foreground'>Choose your avatar</legend>
 
             <div className='relative w-full max-w-full'>
@@ -66,77 +108,40 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
                  * The scroll area must be allowed to shrink inside flex/grid parents.
                  * `min-w-0` prevents the avatar row from overflowing its frame.
                  */}
-                <div
-                    className={cn(
-                        'relative overflow-hidden rounded-lg border border-border bg-muted/30 px-3 py-2',
-                        // Reserve space for chevrons on desktop only.
-                        'sm:px-10',
-                    )}
-                >
+                <div className={cn('relative overflow-hidden px-9 py-2 bg-muted/30 border border-border rounded-lg', 'sm:px-10')}>
                     {/* Edge fades (more reliable than mask-image across browsers) */}
-                    <div aria-hidden className='pointer-events-none absolute inset-y-0 left-0 w-6 sm:w-8 bg-gradient-to-r from-muted/30 to-transparent' />
-                    <div aria-hidden className='pointer-events-none absolute inset-y-0 right-0 w-6 sm:w-8 bg-gradient-to-l from-muted/30 to-transparent' />
+                    <div aria-hidden className='absolute inset-y-0 left-0 w-7 pointer-events-none bg-linear-to-r from-muted/30 to-transparent sm:w-8' />
+                    <div aria-hidden className='absolute inset-y-0 right-0 w-7 pointer-events-none bg-linear-to-l from-muted/30 to-transparent sm:w-8' />
 
-                    {/* Mobile: wrap into a grid to avoid any horizontal overflow. */}
-                    <div className='grid grid-cols-5 gap-1.5 sm:hidden justify-items-center'>
-                        {AVATAR_OPTIONS.map((avatar) => {
-                            const isSelected = selectedAvatar === avatar.id;
-                            return (
-                                <button
-                                    key={avatar.id}
-                                    type='button'
-                                    onClick={() => onSelect(avatar.id)}
-                                    className={cn(
-                                        'group relative flex items-center justify-center w-8 h-8 rounded-full overflow-hidden bg-background',
-                                        'border border-border/70 transition-fast',
-                                        'hover:border-foreground/20',
-                                        isSelected
-                                            ? 'shadow-[inset_0_0_0_2px_hsl(var(--primary))]'
-                                            : 'shadow-[inset_0_0_0_0px_transparent]',
-                                        'focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary))]',
-                                    )}
-                                    aria-label={avatar.label}
-                                    aria-pressed={isSelected}
-                                    title={avatar.label}
-                                >
-                                    <Image src={avatar.image} alt={avatar.label} width={32} height={32} className='w-full h-full object-cover' />
-                                    {isSelected && (
-                                        <span className='absolute inset-0 flex items-center justify-center bg-primary/55'>
-                                            <Check className='w-4 h-4 text-primary-foreground' strokeWidth={3} />
-                                        </span>
-                                    )}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Desktop: horizontal scroller with chevrons. */}
                     <div
                         ref={scrollRef}
                         onScroll={updateScrollState}
+                        onKeyDown={handleKeyDown}
+                        role='radiogroup'
+                        aria-label='Avatar options'
+                        tabIndex={0}
                         className={cn(
-                            'hidden sm:flex w-full min-w-0 gap-2 overflow-x-auto overflow-y-hidden scroll-smooth overscroll-x-contain',
+                            'flex w-full min-w-0 gap-2 overflow-x-auto overflow-y-hidden py-1 scroll-smooth overscroll-x-contain snap-x snap-mandatory',
                             '[scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden',
                         )}
                     >
-                        {AVATAR_OPTIONS.map((avatar) => {
+                        {AVATAR_OPTIONS.map((avatar, index) => {
                             const isSelected = selectedAvatar === avatar.id;
                             return (
                                 <button
                                     key={avatar.id}
+                                    ref={(node) => {
+                                        itemRefs.current[index] = node;
+                                    }}
                                     type='button'
-                                    onClick={() => onSelect(avatar.id)}
-                                    className={cn(
-                                        'group relative flex shrink-0 items-center justify-center w-10 h-10 rounded-full overflow-hidden bg-background',
-                                        'border border-border/70 transition-fast',
-                                        'hover:border-foreground/20',
-                                        isSelected
-                                            ? 'shadow-[inset_0_0_0_2px_hsl(var(--primary))]'
-                                            : 'shadow-[inset_0_0_0_0px_transparent]',
-                                        'focus-visible:outline-none focus-visible:shadow-[inset_0_0_0_2px_hsl(var(--primary))]',
-                                    )}
+                                    onClick={() => {
+                                        onSelect(avatar.id);
+                                        scrollToAvatar(index);
+                                    }}
+                                    className={cn(avatarButtonBase, isSelected ? 'shadow-[inset_0_0_0_2px_hsl(var(--primary))]' : 'shadow-[inset_0_0_0_0px_transparent]')}
+                                    role='radio'
+                                    aria-checked={isSelected}
                                     aria-label={avatar.label}
-                                    aria-pressed={isSelected}
                                     title={avatar.label}
                                 >
                                     <Image src={avatar.image} alt={avatar.label} width={40} height={40} className='w-full h-full object-cover' />
@@ -156,12 +161,11 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
                     onClick={() => scroll('left')}
                     disabled={!canScrollLeft}
                     className={cn(
-                        'absolute left-2 top-1/2 -translate-y-1/2',
-                        'inline-flex items-center justify-center w-8 h-8 rounded-md border',
-                        'bg-background/80 backdrop-blur text-muted-foreground border-border shadow-sm transition-fast',
+                        'absolute top-1/2 left-1 -translate-y-1/2',
+                        'inline-flex items-center justify-center w-7 h-7 bg-background/80 border border-border rounded-md',
+                        'text-muted-foreground shadow-sm backdrop-blur transition-fast',
                         'hover:text-foreground hover:border-foreground/20',
                         'disabled:opacity-40 disabled:cursor-not-allowed',
-                        'hidden sm:inline-flex',
                     )}
                     aria-label='Scroll left'
                 >
@@ -173,12 +177,11 @@ export const CommentAvatarPicker = ({ selectedAvatar, onSelect }: ICommentAvatar
                     onClick={() => scroll('right')}
                     disabled={!canScrollRight}
                     className={cn(
-                        'absolute right-2 top-1/2 -translate-y-1/2',
-                        'inline-flex items-center justify-center w-8 h-8 rounded-md border',
-                        'bg-background/80 backdrop-blur text-muted-foreground border-border shadow-sm transition-fast',
+                        'absolute top-1/2 right-1 -translate-y-1/2',
+                        'inline-flex items-center justify-center w-7 h-7 bg-background/80 border border-border rounded-md',
+                        'text-muted-foreground shadow-sm backdrop-blur transition-fast',
                         'hover:text-foreground hover:border-foreground/20',
                         'disabled:opacity-40 disabled:cursor-not-allowed',
-                        'hidden sm:inline-flex',
                     )}
                     aria-label='Scroll right'
                 >
