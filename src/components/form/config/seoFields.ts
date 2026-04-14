@@ -1,4 +1,5 @@
 import { SITE_CONFIG } from '@/constants/siteConstants';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { slugify } from '@/lib/utils';
 import type { IFieldConfig } from '../FormWrapper';
 import type { IFormData } from '../form';
@@ -27,6 +28,13 @@ export const getSeoFieldConfig = <TFormBody extends IFormData & IBaseSeoFormCont
     const derivedSlug = formData.slug || (formData.title ? slugify(formData.title) : 'your-slug-here');
     const derivedCanonical = `${SITE_CONFIG.url}${canonicalBasePath}/${derivedSlug}`;
     const derivedTagsText = formData.tags && formData.tags.length > 0 ? formData.tags.join(', ') : 'Press enter to add SEO keywords';
+    const derivedOgTitle = formData.title || 'Untitled Content';
+    const derivedOgSubtitle = formData.description || 'Generated social preview image';
+    const derivedOgImage = buildDynamicOgImageUrl({
+        title: derivedOgTitle,
+        subtitle: derivedOgSubtitle,
+        tags: formData.tags ?? [],
+    });
 
     return [
         {
@@ -64,9 +72,9 @@ export const getSeoFieldConfig = <TFormBody extends IFormData & IBaseSeoFormCont
                     fieldtype: 'input',
                     name: 'seo.ogImage',
                     label: 'OG Image URL',
-                    placeholder: formData.coverImage || `${SITE_CONFIG.url}/og-default.png`,
+                    placeholder: derivedOgImage,
                     type: 'url',
-                    hint: 'Open Graph image (1200×630). Falls back to cover image.',
+                    hint: 'Open Graph image (1200×630). Auto-generated via /api/og when left blank; custom URL overrides it.',
                     allowCopy: true,
                     colsize: 'full',
                 },

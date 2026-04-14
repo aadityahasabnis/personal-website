@@ -1,26 +1,33 @@
 {
-  "name": "Aaditya Hasabnis",
-  "short_name": "Aaditya",
-  "description": "Personal site for articles, notes, and projects",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#8b5cf6",
-  "icons": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "any",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "/favicon-16x16.png",
-      "sizes": "16x16",
-      "type": "image/png"
-    },
-    {
-      "src": "/apple-touch-icon.png",
-      "sizes": "180x180",
-      "type": "image/png"
-    }
-  ]
+    "name": "Aaditya Hasabnis",
+    "short_name": "Aaditya",
+    "description": "Personal site for articles, blogs, and projects",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
+    "lang": "en-US",
+    "dir": "ltr",
+    "display": "standalone",
+    "display_override": ["standalone", "minimal-ui", "browser"],
+    "background_color": "#ffffff",
+    "theme_color": "#8b5cf6",
+    "categories": ["technology", "education", "productivity", "Writing", "software engineering", "Creative Problem Solving"],
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "any",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "/favicon-16x16.png",
+            "sizes": "16x16",
+            "type": "image/png"
+        },
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        }
+    ]
 }

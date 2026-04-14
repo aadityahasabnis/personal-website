@@ -2,15 +2,37 @@ import { AdminLoginFlow } from '@/components/admin/auth/AdminLoginFlow';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { env } from '@/env';
 import { auth } from '@/lib/auth/admin';
+import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { Loader2 } from 'lucide-react';
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense, type ReactElement } from 'react';
 
-export const metadata: Metadata = {
-    title: `Admin Login | ${SITE_CONFIG.name}`,
-    robots: 'noindex, nofollow',
-};
+const adminLoginOgImage = buildDynamicOgImageUrl({
+    title: 'Admin Login',
+    eyebrow: SITE_CONFIG.name,
+    subtitle: 'Secure sign-in portal for content management.',
+    tags: ['admin', 'secure', 'login'],
+});
+
+export const metadata: Metadata = createPageMetadata({
+    title: 'Admin Login',
+    description: `Secure admin login for ${SITE_CONFIG.name}.`,
+    canonicalPath: '/admin/login',
+    includeSocial: true,
+    socialType: 'website',
+    imageUrl: adminLoginOgImage,
+    robots: {
+        index: false,
+        follow: false,
+        googleBot: {
+            index: false,
+            follow: false,
+            noimageindex: true,
+        },
+    },
+});
 
 const AdminLoginPage = async (): Promise<ReactElement> => {
     const session = await auth();
