@@ -642,3 +642,33 @@
         animation: none !important;
     }
 }
+/* ===== PREMIUM SHIMMER (GLASS LIGHT SWEEP) ===== */
+.shimmer {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.shimmer::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: linear-gradient(120deg, transparent 30%, rgba(139, 92, 246, 0.08) 40%, rgba(139, 92, 246, 0.15) 50%, rgba(139, 92, 246, 0.08) 60%, transparent 70%);
+    transform: translateX(-120%) rotate(12deg);
+    animation: shimmer-sweep 4s ease-in-out infinite;
+}
+
+.dark .shimmer::before {
+    background: linear-gradient(120deg, transparent 30%, rgba(139, 92, 246, 0.06) 40%, rgba(139, 92, 246, 0.12) 50%, rgba(139, 92, 246, 0.06) 60%, transparent 70%);
+}
+
+@keyframes shimmer-sweep {
+    0% {
+        transform: translateX(-120%) rotate(12deg);
+    }
+    100% {
+        transform: translateX(120%) rotate(12deg);
+    }
+}

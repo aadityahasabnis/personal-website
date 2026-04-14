@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { JsonLd, combineSchemas, generateBreadcrumbSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
 import { FileText, StarIcon } from 'lucide-react';
@@ -15,6 +16,12 @@ export const revalidate = 600;
 const description = `Explore articles on software development, DSA, web technologies, and more by ${SITE_CONFIG.author.name}.`;
 const FEATURED_TOPICS_DEFAULT_COUNT = 2 * 1; // Always should be multiple of 2
 const TOPICS_PAGE_LIMIT = 200;
+const articlesOgImage = buildDynamicOgImageUrl({
+    title: 'Articles',
+    eyebrow: 'Knowledge Base',
+    subtitle: 'In-depth guides on software engineering, DSA, and web systems.',
+    tags: ['articles', 'engineering', 'dsa', 'web'],
+});
 
 export const metadata: Metadata = createPageMetadata({
     title: 'Articles',
@@ -23,6 +30,7 @@ export const metadata: Metadata = createPageMetadata({
     keywords: ['articles', 'tutorials', 'software development', 'web development', 'DSA', SITE_CONFIG.author.name],
     includeSocial: true,
     socialType: 'website',
+    imageUrl: articlesOgImage,
     robots: {
         index: true,
         follow: true,

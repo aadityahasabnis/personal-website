@@ -7,9 +7,16 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { getPublishedProjects, type IPublicProjectListItem } from '@/server/new/public/content/project';
 
 const description = `Projects and work by ${SITE_CONFIG.author.name}. Open source contributions, side projects, and professional work.`;
+const projectsOgImage = buildDynamicOgImageUrl({
+    title: 'Projects',
+    eyebrow: 'Work',
+    subtitle: 'Open source contributions, production systems, and engineering experiments.',
+    tags: ['projects', 'portfolio', 'opensource', 'builds'],
+});
 
 export const metadata: Metadata = createPageMetadata({
     title: 'Projects',
@@ -18,6 +25,7 @@ export const metadata: Metadata = createPageMetadata({
     keywords: ['projects', 'open source', 'side projects', 'web development', SITE_CONFIG.author.name],
     includeSocial: true,
     socialType: 'website',
+    imageUrl: projectsOgImage,
     robots: {
         index: true,
         follow: true,

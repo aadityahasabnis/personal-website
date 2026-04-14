@@ -6,6 +6,7 @@ import { ContentComment } from '@/components/content/common/comment/ContentComme
 import { ContentLikes, ContentViews } from '@/components/content/common/stats';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { getPublishedBlogByPath, getPublishedBlogStaticPaths, type IPublicBlogDetail } from '@/server/new/public/content/blog';
 
 interface IBlogDetailPageProps {
@@ -32,7 +33,15 @@ export const generateMetadata = async ({ params }: IBlogDetailPageProps): Promis
     const blog = blogResult.data;
     const title = blog.seo?.title ?? blog.title;
     const description = blog.seo?.description ?? blog.description;
-    const image = blog.seo?.ogImage ?? blog.coverImage ?? undefined;
+    const image =
+        blog.seo?.ogImage ??
+        blog.coverImage ??
+        buildDynamicOgImageUrl({
+            title,
+            eyebrow: 'Blog Post',
+            subtitle: description,
+            tags: (blog.tags ?? []).slice(0, 4),
+        });
     const keywords = Array.from(new Set([...(blog.tags ?? []), SITE_CONFIG.author.name, 'blog', 'engineering']));
     const publishedTime = blog.publishedAt;
 
@@ -44,7 +53,7 @@ export const generateMetadata = async ({ params }: IBlogDetailPageProps): Promis
         includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
-        ...(image ? { imageUrl: image } : {}),
+        imageUrl: image,
         openGraph: {
             ...(publishedTime ? { publishedTime } : {}),
             modifiedTime: blog.updatedAt,

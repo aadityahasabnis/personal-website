@@ -5,10 +5,17 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { getPublishedBlogs, type IPublicBlogListItem } from '@/server/new/public/content/blog';
 
 const description = `Blog posts by ${SITE_CONFIG.author.name} on engineering, web development, and continuous learning.`;
 const BLOGS_PAGE_LIMIT = 60;
+const blogsOgImage = buildDynamicOgImageUrl({
+    title: 'Blogs',
+    eyebrow: 'Writing',
+    subtitle: 'Engineering notes, lessons, and practical web development insights.',
+    tags: ['blogs', 'engineering', 'writing', 'web'],
+});
 
 const getBlogsPageData = async (): Promise<{ blogs: IPublicBlogListItem[] }> => {
     const blogsResult = await getPublishedBlogs({
@@ -29,6 +36,7 @@ export const metadata: Metadata = createPageMetadata({
     canonicalPath: '/blogs',
     includeSocial: true,
     socialType: 'website',
+    imageUrl: blogsOgImage,
     robots: {
         index: true,
         follow: true,

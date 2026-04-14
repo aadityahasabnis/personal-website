@@ -1,21 +1,17 @@
 'use client';
 
 import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
-
-const data = {
-  name: 'Animate UI',
-  username: 'animate_ui',
-  image:
-    'https://pbs.twimg.com/profile_images/1950218390741618688/72447Y7e_400x400.jpg',
-  bio: 'A fully animated, open-source component distribution built with React, TypeScript, Tailwind CSS, and Motion.',
-  stats: { following: 200, followers: 2900, posts: 120 },
-  socialLinks: {
-    linkedin: 'https://linkedin.com',
-    github: 'https://github.com',
-    twitter: 'https://twitter.com',
-  },
-};
+import { SOCIAL_LINKS } from '@/constants/siteConstants';
 
 export const FlipCardDemo = () => {
-  return <FlipCard data={data} />;
+    return (
+        <FlipCard
+            name='Aaditya Hasabnis'
+            role='Frontend Engineer • UI Systems Builder'
+            username='creative_northstar'
+            image='https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aadizz-emoji.png-MW'
+            tagline='Building high-performance, animated UI systems with clean architecture and premium user experiences.'
+            links={SOCIAL_LINKS}
+        />
+    );
 };

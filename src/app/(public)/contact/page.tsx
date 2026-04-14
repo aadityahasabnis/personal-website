@@ -1,37 +1,45 @@
-import { ArrowUpRight, Clock, Mail, MapPin, MessageSquare } from 'lucide-react';
+import { ABOUT_PAGE_CONTENT } from '@/constants/aboutConstants';
+import { SITE_CONFIG } from '@/constants/siteConstants';
+import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
+import { JsonLd, combineSchemas, generatePersonSchema, generateWebSiteSchema } from '@/lib/seo';
+import { Clock, Mail, MapPin, MessageSquare } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
-import { ContactForm } from '@/components/sections/ContactForm';
-import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
+import { ContactForm } from '@/app/(public)/contact/ContactForm';
+import PageHeader from '@/components/layout/PageHeader';
+import FadeIn from '@/components/motion/FadeIn';
 
-const description = `Get in touch with ${SITE_CONFIG.author.name}. I am open to collaboration, job opportunities, and general inquiries.`;
+const description = `Contact ${SITE_CONFIG.author.name} for collaboration, hiring, and product engineering projects across frontend, backend, and cloud systems.`;
 
-export const metadata: Metadata = {
+const keywordSet = new Set<string>(['contact', SITE_CONFIG.author.name, 'collaboration', 'hiring', 'software engineer', 'frontend', 'backend', 'cloud infrastructure']);
+
+const contactOgImage = buildDynamicOgImageUrl({
+    title: 'Contact',
+    eyebrow: SITE_CONFIG.author.name,
+    subtitle: 'Open for collaboration, consulting, and product engineering opportunities.',
+    tags: ['contact', 'collaboration', 'hiring', 'engineering'],
+});
+
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
+export const metadata: Metadata = createPageMetadata({
     title: 'Contact',
     description,
-    keywords: ['contact', SITE_CONFIG.author.name, 'hire', 'collaboration', 'freelance'].join(', '),
-    alternates: {
-        canonical: `${SITE_CONFIG.url}/contact`,
+    canonicalPath: '/contact',
+    keywords: Array.from(keywordSet),
+    includeAuthor: true,
+    includeSocial: true,
+    socialType: 'website',
+    imageUrl: contactOgImage,
+    robots: {
+        index: true,
+        follow: true,
     },
-    openGraph: {
-        title: `Contact | ${SITE_CONFIG.name}`,
-        description,
-        url: `${SITE_CONFIG.url}/contact`,
-        siteName: SITE_CONFIG.name,
-        locale: 'en_US',
-        type: 'website',
-        images: [{ url: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`, width: 1200, height: 630, alt: 'Contact' }],
-    },
-    twitter: {
-        card: 'summary_large_image',
-        title: `Contact | ${SITE_CONFIG.name}`,
-        description,
-        creator: SITE_CONFIG.seo.twitterHandle,
-        site: SITE_CONFIG.seo.twitterHandle,
-        images: [`${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`],
-    },
-};
+});
+
+const contactSchema = combineSchemas(generatePersonSchema(), generateWebSiteSchema());
 
 // Contact info items
 const CONTACT_INFO = [
@@ -44,7 +52,7 @@ const CONTACT_INFO = [
     {
         icon: MapPin,
         label: 'Location',
-        value: 'Pune, Kothrud',
+        value: ABOUT_PAGE_CONTENT.identity.location,
         href: null,
     },
     {
@@ -66,97 +74,69 @@ const CONTACT_INFO = [
  */
 const ContactPage = () => {
     return (
-        <div className='min-h-screen'>
-            {/* Header Section */}
-            <div className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl text-center'>
-                <p className='text-sm font-medium uppercase tracking-widest text-[var(--accent)] mb-4'>Contact</p>
-                <h1 className='text-3xl md:text-4xl lg:text-5xl font-light tracking-tight text-[var(--fg)]'>Get in Touch</h1>
-                <p className='mt-6 text-lg text-[var(--fg-muted)] max-w-2xl mx-auto leading-relaxed'>
-                    Have a question, project idea, or just want to say hello? I&apos;d love to hear from you. Fill out the form below or reach out through any of my social channels.
-                </p>
-                <div className='mt-8 w-16 h-px bg-[var(--accent)] mx-auto' />
-            </div>
+        <>
+            <JsonLd data={contactSchema} />
 
-            {/* Content */}
-            <div className='max-w-5xl mx-auto px-6 lg:px-8 pb-24'>
-                <div className='grid gap-12 lg:grid-cols-[1fr_320px]'>
-                    {/* Contact Form */}
-                    <div className='order-2 lg:order-1'>
-                        <div className='rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6 sm:p-8'>
-                            <div className='mb-8'>
-                                <h2 className='text-xl font-medium text-[var(--fg)] flex items-center gap-2'>
-                                    <MessageSquare className='size-5 text-[var(--accent)]' />
+            <main className='relative mx-auto flex flex-col px-6 py-20 lg:px-8 md:py-24 max-w-5xl'>
+                <PageHeader
+                    title='Build Something Reliable Together'
+                    label='Contact'
+                    description='Open to collaboration, consulting, and product engineering opportunities. Share your context, timeline, and goals, and I will respond with a clear next step.'
+                />
+
+                <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]'>
+                    <FadeIn direction='up' delay={0.05} duration={0.55} distance={18}>
+                        <section className='relative flex flex-col gap-6 p-6 sm:p-8 rounded-xl border border-border bg-card shadow-none transition-slow hover:border-primary/25 hover:shadow-md'>
+                            <div className='flex flex-col gap-2'>
+                                <h2 className='flex items-center gap-2 text-h3 font-semibold text-foreground'>
+                                    <MessageSquare className='size-5 text-primary' />
                                     Send a Message
                                 </h2>
-                                <p className='mt-2 text-sm text-[var(--fg-muted)]'>Fill out the form and I&apos;ll get back to you as soon as possible.</p>
+                                <p className='text-body text-muted-foreground'>Use the form for project inquiries, hiring conversations, or collaboration requests.</p>
                             </div>
                             <ContactForm />
-                        </div>
-                    </div>
+                        </section>
+                    </FadeIn>
 
-                    {/* Sidebar */}
-                    <aside className='order-1 lg:order-2 space-y-6'>
-                        {/* Contact Info */}
-                        <div className='rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6'>
-                            <h3 className='text-sm font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6'>Contact Info</h3>
-                            <ul className='space-y-5'>
-                                {CONTACT_INFO.map((item) => (
-                                    <li key={item.label} className='flex items-start gap-4'>
-                                        <div className='p-2 rounded-lg bg-[var(--surface)]'>
-                                            <item.icon className='size-4 text-[var(--accent)]' />
-                                        </div>
-                                        <div>
-                                            <p className='text-xs font-medium uppercase tracking-wider text-[var(--fg-muted)] mb-1'>{item.label}</p>
-                                            {item.href ? (
-                                                <a href={item.href} className='text-sm text-[var(--fg)] hover:text-[var(--accent)] transition-colors'>
-                                                    {item.value}
-                                                </a>
-                                            ) : (
-                                                <p className='text-sm text-[var(--fg)]'>{item.value}</p>
-                                            )}
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-
-                        {/* Social Links */}
-                        <div className='rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)] p-6'>
-                            <h3 className='text-sm font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-6'>Connect Online</h3>
-                            <ul className='space-y-3'>
-                                {SOCIAL_LINKS.map((link) => (
-                                    <li key={link.id}>
-                                        <Link
-                                            href={link.url}
-                                            target='_blank'
-                                            rel='noopener noreferrer'
-                                            className='group flex items-center justify-between text-sm text-[var(--fg)] hover:text-[var(--accent)] transition-colors capitalize'
-                                        >
-                                            <span className='flex items-center gap-3'>
-                                                <span className='size-1.5 rounded-full bg-[var(--accent)]' />
-                                                {link.platform}
+                    <aside className='flex flex-col gap-5'>
+                        <FadeIn direction='up' delay={0.1} duration={0.55} distance={18}>
+                            <section className='relative flex flex-col gap-5 p-6 rounded-xl border border-border bg-card shadow-none transition-slow hover:border-primary/25 hover:shadow-md'>
+                                <h2 className='text-h6 font-semibold text-foreground'>Contact Info</h2>
+                                <ul className='flex flex-col gap-4'>
+                                    {CONTACT_INFO.map((item) => (
+                                        <li key={item.label} className='flex items-start gap-3'>
+                                            <span className='flex size-9 items-center justify-center rounded-lg border border-border bg-background'>
+                                                <item.icon className='size-4 text-primary' />
                                             </span>
-                                            <ArrowUpRight className='size-4 opacity-0 group-hover:opacity-100 transition-opacity' />
-                                        </Link>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
+                                            <div className='flex flex-col gap-1'>
+                                                <p className='text-small font-medium uppercase tracking-wide text-muted-foreground'>{item.label}</p>
+                                                {item.href ? (
+                                                    <a href={item.href} className='text-body text-foreground transition-fast hover:text-primary'>
+                                                        {item.value}
+                                                    </a>
+                                                ) : (
+                                                    <p className='text-body text-foreground'>{item.value}</p>
+                                                )}
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </section>
+                        </FadeIn>
 
-                        {/* Availability */}
-                        <div className='rounded-2xl border border-[var(--accent)]/30 bg-[var(--accent)]/5 p-6'>
-                            <div className='flex items-center gap-2 mb-3'>
-                                <span className='size-2 rounded-full bg-[var(--success)] animate-pulse' />
-                                <h3 className='font-medium text-[var(--fg)]'>Currently Available</h3>
-                            </div>
-                            <p className='text-sm text-[var(--fg-muted)] leading-relaxed'>
-                                I&apos;m open to freelance projects, consulting work, and full-time opportunities. Let&apos;s discuss how I can help with your project.
-                            </p>
-                        </div>
+                        <FadeIn direction='up' delay={0.2} duration={0.55} distance={18}>
+                            <section className='relative flex flex-col gap-3 p-6 rounded-xl border border-primary/30 bg-primary/5'>
+                                <div className='flex items-center gap-2'>
+                                    <span className='size-2 rounded-full bg-success animate-pulse' />
+                                    <h2 className='text-h6 font-semibold text-foreground'>Currently Available</h2>
+                                </div>
+                                <p className='text-body leading-relaxed text-muted-foreground'>Available for freelance projects, technical consulting, and full-time product engineering roles.</p>
+                            </section>
+                        </FadeIn>
                     </aside>
                 </div>
-            </div>
-        </div>
+            </main>
+        </>
     );
 };
 

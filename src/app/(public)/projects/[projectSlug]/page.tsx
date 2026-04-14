@@ -6,6 +6,7 @@ import { ContentComment } from '@/components/content/common/comment/ContentComme
 import { ContentLikes, ContentViews } from '@/components/content/common/stats';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { getPublishedProjectByPath, getPublishedProjectStaticPaths, type IPublicProjectDetail } from '@/server/new/public/content/project';
 
 interface IProjectDetailPageProps {
@@ -32,7 +33,15 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
     const project = projectResult.data;
     const title = project.seo?.title ?? project.title;
     const description = project.seo?.description ?? project.description;
-    const image = project.seo?.ogImage ?? project.coverImage ?? undefined;
+    const image =
+        project.seo?.ogImage ??
+        project.coverImage ??
+        buildDynamicOgImageUrl({
+            title,
+            eyebrow: 'Project',
+            subtitle: description,
+            tags: [...(project.tags ?? []), ...(project.techStack ?? [])].slice(0, 4),
+        });
     const keywords = Array.from(new Set([...(project.tags ?? []), ...(project.techStack ?? []), SITE_CONFIG.author.name, 'project', 'portfolio']));
     const publishedTime = project.publishedAt;
 
@@ -44,7 +53,7 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
         includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
-        ...(image ? { imageUrl: image } : {}),
+        imageUrl: image,
         openGraph: {
             ...(publishedTime ? { publishedTime } : {}),
             modifiedTime: project.updatedAt,

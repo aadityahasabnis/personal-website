@@ -8,6 +8,7 @@ import { ContentComment } from '@/components/content/common/comment/ContentComme
 import { ContentLikes, ContentViews } from '@/components/content/common/stats';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { JsonLd, combineSchemas, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
 import { getPublishedArticleByPath, getPublishedArticleStaticPaths, type IPublicArticleDetail } from '@/server/new/public/content/article';
 
@@ -38,7 +39,15 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
     const article = articleResult.data;
     const title = article.seo?.title ?? article.title;
     const description = article.seo?.description ?? article.description;
-    const image = article.seo?.ogImage ?? article.coverImage ?? undefined;
+    const image =
+        article.seo?.ogImage ??
+        article.coverImage ??
+        buildDynamicOgImageUrl({
+            title,
+            eyebrow: article.topic.title,
+            subtitle: description,
+            tags: article.tags.slice(0, 4),
+        });
     const keywords = Array.from(
         new Set([...(article.seo?.keywords ?? article.tags), article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name, 'tutorial', 'guide', 'learn']),
     );
@@ -51,7 +60,7 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
         includeAuthor: true,
         includeSocial: true,
         socialType: 'article',
-        ...(image ? { imageUrl: image } : {}),
+        imageUrl: image,
         openGraph: {
             ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
             modifiedTime: article.updatedAt,

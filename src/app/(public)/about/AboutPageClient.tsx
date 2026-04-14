@@ -1,217 +1,212 @@
-'use client';
-
+import { FlipCard } from '@/components/animate-ui/components/community/flip-card';
+import FadeIn from '@/components/motion/FadeIn';
+import { ScrollVelocityContainer, ScrollVelocityRow } from '@/components/ui/scroll-based-velocity';
+import { ABOUT_PAGE_CONTENT } from '@/constants/aboutConstants';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
-import { motion } from 'framer-motion';
-import { ArrowUpRight, Briefcase, Mail, MapPin } from 'lucide-react';
+import { ArrowUpRight, Briefcase, Lightbulb, Mail, MapPin, PencilIcon, UsersRound } from 'lucide-react';
 import Link from 'next/link';
-
-// ===== DATA =====
-
-const SKILLS = {
-    'Languages & Frameworks': ['TypeScript', 'JavaScript', 'React', 'Next.js', 'Node.js', 'Python'],
-    'Databases & Tools': ['MongoDB', 'PostgreSQL', 'Redis', 'Docker', 'Git'],
-    'Design & UI': ['Tailwind CSS', 'Framer Motion', 'Figma', 'CSS-in-JS'],
-};
-
-interface IExperience {
-    title: string;
-    company: string;
-    period: string;
-    description: string;
-    current?: boolean;
-}
-
-const EXPERIENCE: IExperience[] = [
-    {
-        title: 'Senior Software Engineer',
-        company: 'Tech Company',
-        period: '2022 - Present',
-        description: 'Leading frontend architecture and development for high-traffic web applications.',
-        current: true,
-    },
-    {
-        title: 'Full Stack Developer',
-        company: 'Startup Inc',
-        period: '2020 - 2022',
-        description: 'Built full-stack features for a B2B SaaS platform serving 10,000+ users.',
-    },
-    {
-        title: 'Frontend Developer',
-        company: 'Agency Co',
-        period: '2018 - 2020',
-        description: 'Created responsive, accessible websites for diverse clients.',
-    },
-];
-
-const VALUES = [
-    {
-        title: 'Clarity Over Cleverness',
-        description: 'I write code that humans can read. The best code is not the cleverest, but the clearest.',
-    },
-    {
-        title: 'Learn in Public',
-        description: 'I share what I learn through writing. Teaching is the best way to solidify understanding.',
-    },
-    {
-        title: 'Ship Early, Iterate Often',
-        description: 'Perfect is the enemy of good. I believe in getting feedback early and improving continuously.',
-    },
-];
-
-// ===== ANIMATION VARIANTS =====
-
-const fadeIn = {
-    initial: { opacity: 0, y: 20 },
-    animate: { opacity: 1, y: 0 },
-};
-
-const staggerContainer = {
-    animate: {
-        transition: {
-            staggerChildren: 0.1,
-        },
-    },
-};
 
 /**
  * About Page Client Component
  * Contains all client-side animations and interactivity
  */
 export default function AboutPageClient() {
+    const { collaboration, experience, identity, principles, skills } = ABOUT_PAGE_CONTENT;
+    const sectionHeadingClass = 'mb-6 flex items-center gap-2 text-h2 font-semibold text-foreground';
+    const flipCardLinks = SOCIAL_LINKS.map(({ ariaLabel, id, url }) => ({ ariaLabel, id, url }));
+
     return (
-        <div className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
-            {/* Hero Section */}
-            <section className='mb-20'>
-                <div className='flex flex-col md:flex-row gap-10 md:gap-16 items-start'>
-                    {/* Avatar */}
-                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }} className='shrink-0'>
-                        <div className='relative size-40 md:size-48 rounded-2xl overflow-hidden bg-[var(--surface)] border border-[var(--border-color)]'>
-                            {/* Placeholder — replace src with actual avatar image when available */}
-                            <div className='absolute inset-0 flex items-center justify-center text-5xl font-light text-[var(--fg-subtle)]'>{SITE_CONFIG.author.name.charAt(0)}</div>
+        <div className='relative mx-auto flex flex-col gap-16 px-6 py-20 md:py-24 lg:px-8 max-w-5xl'>
+            <section aria-labelledby='about-identity' className='relative'>
+                <div className='flex flex-col items-center gap-10 md:flex-row md:items-start md:gap-16'>
+                    <FadeIn direction='up' duration={0.55} distance={22} className='w-full md:w-auto'>
+                        <div className='flex w-full justify-center md:block'>
+                            <FlipCard
+                                name={SITE_CONFIG.author.name}
+                                role={identity.cardRole}
+                                username={identity.cardUsername}
+                                image={identity.cardImage}
+                                tagline={identity.cardTagline}
+                                links={flipCardLinks}
+                                centerContent={
+                                    <div key='center-wrap' className='relative flex items-center justify-center px-3'>
+                                        <div key='center-inner' className='relative flex items-center justify-center gap-2 px-4 py-2 text-7xl'>
+                                            <span key='center-label' className='inline-flex items-center gap-1 whitespace-nowrap font-semibold leading-none tracking-[0.14em] text-violet-200'>
+                                                <span key='center-open' aria-hidden='true'>
+                                                    &lt;
+                                                </span>
+                                                <PencilIcon key='center-icon' className='size-14 text-violet-300' aria-hidden='true' />
+                                                <span key='center-close' aria-hidden='true'>
+                                                    &gt;
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                }
+                            />
                         </div>
-                    </motion.div>
+                    </FadeIn>
 
-                    {/* Bio */}
-                    <div className='flex-1'>
-                        <motion.p {...fadeIn} transition={{ delay: 0.1 }} className='text-sm font-medium uppercase tracking-widest text-[var(--accent)] mb-4'>
-                            About
-                        </motion.p>
+                    <article className='flex w-full flex-1 flex-col gap-6'>
+                        <FadeIn direction='up' delay={0.05} duration={0.55} distance={18}>
+                            <p className='text-label font-medium uppercase tracking-widest text-primary'>{identity.label}</p>
+                        </FadeIn>
 
-                        <motion.h1 {...fadeIn} transition={{ delay: 0.2 }} className='text-3xl md:text-4xl font-light tracking-tight mb-6'>
-                            {SITE_CONFIG.author.name}
-                        </motion.h1>
+                        <FadeIn direction='up' delay={0.1} duration={0.55} distance={20}>
+                            <h1 id='about-identity' className='text-title font-semibold tracking-tight text-foreground'>
+                                {identity.title}
+                            </h1>
+                        </FadeIn>
 
-                        <motion.p {...fadeIn} transition={{ delay: 0.3 }} className='text-lg text-[var(--fg-muted)] leading-relaxed mb-6'>
-                            I&apos;m a software engineer passionate about building products that make a difference. I write about web development, software architecture, and the craft of programming.
-                        </motion.p>
+                        <FadeIn direction='up' delay={0.15} duration={0.55} distance={20}>
+                            <p className='text-body font-medium text-primary'>{identity.tagline}</p>
+                        </FadeIn>
 
-                        {/* Quick info */}
-                        <motion.div {...fadeIn} transition={{ delay: 0.4 }} className='flex flex-wrap gap-6 text-sm text-[var(--fg-muted)]'>
-                            <span className='flex items-center gap-2'>
-                                <MapPin className='size-4' />
-                                Pune, Kothrud
-                            </span>
-                            <a href={`mailto:${SITE_CONFIG.email}`} className='flex items-center gap-2 hover:text-[var(--fg)] transition-colors'>
-                                <Mail className='size-4' />
-                                {SITE_CONFIG.email}
-                            </a>
-                        </motion.div>
+                        <FadeIn direction='up' delay={0.2} duration={0.55} distance={22}>
+                            <p className='text-body leading-relaxed text-muted-foreground'>{identity.summary}</p>
+                        </FadeIn>
 
-                        {/* CTAs */}
-                        <motion.div {...fadeIn} transition={{ delay: 0.5 }} className='flex flex-wrap gap-4 mt-8'>
-                            <Link href='/contact' className='inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--fg)] text-[var(--bg)] font-medium hover:opacity-90 transition-opacity'>
-                                Get in Touch
-                            </Link>
-                            <Link
-                                href='/articles'
-                                className='inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[var(--border-color)] text-[var(--fg)] font-medium hover:border-[var(--border-hover)] transition-colors'
-                            >
-                                Read Articles
-                            </Link>
-                        </motion.div>
-                    </div>
+                        <FadeIn direction='up' delay={0.25} duration={0.55} distance={16}>
+                            <div className='flex flex-wrap items-center gap-6 text-small text-muted-foreground'>
+                                <span className='flex items-center gap-2'>
+                                    <MapPin className='size-4' />
+                                    {identity.location}
+                                </span>
+                                <a href={`mailto:${SITE_CONFIG.email}`} className='flex items-center gap-2 transition-fast hover:text-foreground'>
+                                    <Mail className='size-4' />
+                                    {SITE_CONFIG.email}
+                                </a>
+                            </div>
+                        </FadeIn>
+
+                        <FadeIn direction='up' delay={0.3} duration={0.55} distance={16}>
+                            <div className='flex flex-wrap items-center gap-4'>
+                                <Link
+                                    href={identity.ctas.primary.href}
+                                    className='inline-flex items-center gap-2 px-6 py-3 text-label font-semibold rounded-full bg-primary text-primary-foreground transition-fast hover:opacity-90'
+                                >
+                                    {identity.ctas.primary.label}
+                                </Link>
+                                <Link
+                                    href={identity.ctas.secondary.href}
+                                    className='inline-flex items-center gap-2 px-6 py-3 text-label font-semibold rounded-full border border-border bg-background text-foreground transition-fast hover:border-primary/50 hover:text-primary'
+                                >
+                                    {identity.ctas.secondary.label}
+                                </Link>
+                                <Link href={identity.ctas.tertiary.href} className='inline-flex items-center gap-2 text-small font-semibold text-primary transition-fast hover:text-violet-500'>
+                                    {identity.ctas.tertiary.label}
+                                    <ArrowUpRight className='size-4' />
+                                </Link>
+                            </div>
+                        </FadeIn>
+                    </article>
                 </div>
             </section>
 
-            {/* Skills Section */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }} className='mb-20'>
-                <h2 className='text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8'>Skills & Technologies</h2>
-                <div className='grid gap-8 md:grid-cols-3'>
-                    {Object.entries(SKILLS).map(([category, skills]) => (
-                        <div key={category}>
-                            <h3 className='text-sm font-medium text-[var(--fg)] mb-4'>{category}</h3>
-                            <div className='flex flex-wrap gap-2'>
-                                {skills.map((skill) => (
-                                    <span key={skill} className='px-3 py-1.5 text-sm rounded-full bg-[var(--surface)] text-[var(--fg-muted)] border border-[var(--border-color)]'>
-                                        {skill}
-                                    </span>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </motion.section>
-
-            {/* Experience Section */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className='mb-20'>
-                <h2 className='text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8 flex items-center gap-2'>
-                    <Briefcase className='size-4' />
-                    Experience
+            <section aria-labelledby='about-skills' className='relative'>
+                <h2 id='about-skills' className='sr-only'>
+                    {skills.title}
                 </h2>
-                <motion.div className='space-y-8' variants={staggerContainer} initial='initial' animate='animate'>
-                    {EXPERIENCE.map((exp, i) => (
-                        <motion.div key={i} variants={fadeIn} transition={{ delay: 0.8 + i * 0.1 }} className='relative pl-6 border-l-2 border-[var(--border-color)]'>
-                            {/* Timeline dot */}
-                            <div className={`absolute -left-[5px] top-1.5 size-2 rounded-full ${exp.current ? 'bg-[var(--accent)]' : 'bg-[var(--fg-subtle)]'}`} />
+                <FadeIn direction='up' duration={0.55} distance={18}>
+                    <div className='relative overflow-hidden mask-[linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)] mask-no-repeat mask-size-[100%_100%] [-webkit-mask-image:linear-gradient(to_right,transparent_0%,black_10%,black_90%,transparent_100%)] [-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]'>
+                        <ScrollVelocityContainer className='space-y-4 py-1'>
+                            {skills.rows.map((row, index) => (
+                                <div key={row.title} className='space-y-1'>
+                                    <ScrollVelocityRow
+                                        direction={row.direction ?? 1}
+                                        baseVelocity={row.baseVelocity}
+                                        className={index === 0 ? 'py-1 text-h5 font-semibold text-foreground' : 'py-1 text-small text-muted-foreground'}
+                                    >
+                                        {row.items.map((item) => (
+                                            <span key={item} className='mx-3 inline-flex items-center'>
+                                                {item}
+                                            </span>
+                                        ))}
+                                    </ScrollVelocityRow>
+                                </div>
+                            ))}
+                        </ScrollVelocityContainer>
+                    </div>
+                </FadeIn>
+            </section>
 
-                            <div className='flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1 mb-2'>
-                                <h3 className='font-medium text-[var(--fg)]'>{exp.title}</h3>
-                                <span className='text-sm text-[var(--fg-subtle)]'>{exp.period}</span>
-                            </div>
-                            <p className='text-sm text-[var(--accent)] mb-2'>{exp.company}</p>
-                            <p className='text-[var(--fg-muted)]'>{exp.description}</p>
-                        </motion.div>
-                    ))}
-                </motion.div>
-            </motion.section>
+            <section aria-labelledby='about-experience' className='relative'>
+                <FadeIn direction='up' duration={0.55} distance={18}>
+                    <h2 id='about-experience' className={sectionHeadingClass}>
+                        <Briefcase className='size-5 text-primary' />
+                        {experience.title}
+                    </h2>
+                </FadeIn>
+                <div className='flex flex-col gap-6'>
+                    {experience.items.map((item, index) => (
+                        <FadeIn key={item.title} direction='up' delay={0.05 * index} duration={0.5} distance={14}>
+                            <article className='relative flex flex-col gap-2.5 pl-8'>
+                                <div className='absolute left-0 top-0 flex h-full w-4 flex-col items-center'>
+                                    <div className={`mt-1 block size-2.5 shrink-0 rounded-full border border-primary/50 ${item.current ? 'bg-primary' : 'bg-background'}`} />
+                                    <div className='mt-2 h-full w-px shrink-0 bg-linear-to-b from-primary/50 via-border to-transparent' />
+                                </div>
 
-            {/* Values Section */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }} className='mb-20'>
-                <h2 className='text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8'>What I Believe</h2>
-                <div className='grid gap-8 md:grid-cols-3'>
-                    {VALUES.map((value, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1.1 + i * 0.1 }}
-                            className='p-6 rounded-2xl border border-[var(--border-color)] bg-[var(--card-bg)]'
-                        >
-                            <h3 className='font-medium text-[var(--fg)] mb-2'>{value.title}</h3>
-                            <p className='text-sm text-[var(--fg-muted)] leading-relaxed'>{value.description}</p>
-                        </motion.div>
+                                <div className='flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
+                                    <h3 className='text-h5 font-semibold text-foreground'>{item.title}</h3>
+                                    <p className='text-small text-muted-foreground sm:text-right'>{item.period}</p>
+                                </div>
+
+                                <p className='text-small font-medium text-primary'>{item.company}</p>
+                                <div className='flex flex-col gap-2'>
+                                    {item.description.map((paragraph) => (
+                                        <p key={paragraph} className='text-body leading-relaxed text-muted-foreground'>
+                                            {paragraph}
+                                        </p>
+                                    ))}
+                                </div>
+                                {item.current ? <span className='text-label font-semibold text-primary'>Current</span> : null}
+                            </article>
+                        </FadeIn>
                     ))}
                 </div>
-            </motion.section>
+            </section>
 
-            {/* Connect Section */}
-            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }} className='pt-12 border-t border-[var(--border-color)]'>
-                <h2 className='text-xs font-medium uppercase tracking-widest text-[var(--fg-muted)] mb-8'>Connect</h2>
-                <div className='flex flex-wrap gap-6'>
-                    {SOCIAL_LINKS.map((link) => (
-                        <Link
-                            key={link.id}
-                            href={link.url}
-                            target={'_blank'}
-                            rel={'noopener noreferrer'}
-                            className='group inline-flex items-center gap-2 text-[var(--fg)] hover:text-[var(--accent)] transition-colors'
-                        >
-                            <span className='capitalize'>{link.platform}</span>
-                            <ArrowUpRight className='size-4 opacity-0 group-hover:opacity-100 transition-opacity' />
-                        </Link>
+            <section aria-labelledby='about-principles' className='relative'>
+                <FadeIn direction='up' duration={0.55} distance={18}>
+                    <h2 id='about-principles' className={sectionHeadingClass}>
+                        <Lightbulb className='size-5 text-primary' />
+                        {principles.title}
+                    </h2>
+                </FadeIn>
+                <div className='grid gap-5 md:grid-cols-3'>
+                    {principles.items.map((principle, index) => (
+                        <FadeIn key={principle.title} direction='up' delay={0.05 * index} duration={0.5} distance={16}>
+                            <article className='relative flex h-full flex-col gap-3 p-6 rounded-xl border border-border bg-card shadow-none transition-slow hover:border-primary/25 hover:shadow-md'>
+                                <h3 className='text-h5 font-semibold leading-snug text-foreground'>{principle.title}</h3>
+                                <p className='text-body leading-relaxed text-muted-foreground'>{principle.description}</p>
+                            </article>
+                        </FadeIn>
                     ))}
                 </div>
-            </motion.section>
+            </section>
+
+            <section aria-labelledby='about-collaboration' className='relative'>
+                <FadeIn direction='up' duration={0.55} distance={18}>
+                    <div className='relative flex flex-col gap-6'>
+                        <h2 id='about-collaboration' className={sectionHeadingClass}>
+                            <UsersRound className='size-5 text-primary' />
+                            {collaboration.title}
+                        </h2>
+                        <p className='sr-only'>{collaboration.subtitle}</p>
+                        <div className='grid gap-5 md:grid-cols-2'>
+                            {collaboration.available.map((item) => (
+                                <article
+                                    key={item.title}
+                                    className='relative flex h-full flex-col gap-3 p-6 rounded-xl border border-border bg-card shadow-none transition-slow hover:border-primary/25 hover:shadow-md'
+                                >
+                                    <h3 className='text-h5 font-semibold leading-snug text-foreground'>{item.title}</h3>
+                                    <p className='text-body leading-relaxed text-muted-foreground'>{item.description}</p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </FadeIn>
+            </section>
         </div>
     );
 }

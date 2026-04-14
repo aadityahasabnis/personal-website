@@ -1,115 +1,102 @@
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Github, Linkedin, Twitter } from 'lucide-react';
-import { easeOut, motion } from 'motion/react';
+import { SOCIAL_LINKS } from '@/constants/siteConstants';
+import { motion } from 'motion/react';
+import Image from 'next/image';
 import * as React from 'react';
 
-export interface FlipCardData {
+type TFlipCardLink = {
+    id: (typeof SOCIAL_LINKS)[number]['id'];
+    url: string;
+    ariaLabel: string;
+};
+
+type Props = {
     name: string;
+    role: string;
     username: string;
     image: string;
-    bio: string;
-    stats: {
-        following: number;
-        followers: number;
-        posts?: number;
-    };
-    socialLinks?: {
-        linkedin?: string;
-        github?: string;
-        twitter?: string;
-    };
-}
+    tagline: string;
+    links: ReadonlyArray<TFlipCardLink>;
+    centerContent?: React.ReactNode;
+};
 
-interface FlipCardProps {
-    data: FlipCardData;
-}
+export const FlipCard = ({ name, role, username, image, tagline, links, centerContent }: Props) => {
+    const [flip, setFlip] = React.useState(false);
+    const touch = typeof window !== 'undefined' && 'ontouchstart' in window;
 
-export function FlipCard({ data }: FlipCardProps) {
-    const [isFlipped, setIsFlipped] = React.useState(false);
+    const toggle = () => (touch ? setFlip(!flip) : null);
 
-    const isTouchDevice = typeof window !== 'undefined' && 'ontouchstart' in window;
-
-    const handleClick = () => {
-        if (isTouchDevice) setIsFlipped(!isFlipped);
-    };
-
-    const handleMouseEnter = () => {
-        if (!isTouchDevice) setIsFlipped(true);
-    };
-
-    const handleMouseLeave = () => {
-        if (!isTouchDevice) setIsFlipped(false);
-    };
-
-    const cardVariants = {
-        front: { rotateY: 0, transition: { duration: 0.5, ease: easeOut } },
-        back: { rotateY: 180, transition: { duration: 0.5, ease: easeOut } },
-    };
+    const variants = { front: { rotateY: 0 }, back: { rotateY: 180 } };
 
     return (
-        <div className='mt-2 relative w-40 h-60 md:w-60 md:h-80 perspective-1000 cursor-pointer mx-auto' onClick={handleClick} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-            {/* FRONT: Profile */}
+        <div className='relative w-72 h-96 perspective-1000 mx-auto cursor-pointer' onClick={toggle} onMouseEnter={() => !touch && setFlip(true)} onMouseLeave={() => !touch && setFlip(false)}>
+            {/* FRONT */}
             <motion.div
-                className='absolute inset-0 backface-hidden rounded-md border-2 border-foreground/20 px-4 py-6 flex flex-col items-center justify-center bg-gradient-to-br from-muted via-background to-muted text-center'
-                animate={isFlipped ? 'back' : 'front'}
-                variants={cardVariants}
+                className='absolute inset-0 backface-hidden rounded-2xl bg-linear-to-br from-violet-500/10 via-card/80 to-violet-600/5 backdrop-blur-sm border border-violet-500/20 flex flex-col items-center justify-center text-center p-6'
+                animate={flip ? 'back' : 'front'}
+                variants={variants}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
                 style={{ transformStyle: 'preserve-3d' }}
             >
-                <img src={data.image} alt={data.name} className='size-20 md:size-24 rounded-full object-cover mb-4 border-2' />
-                <h2 className='text-lg font-bold text-foreground'>{data.name}</h2>
-                <p className='text-sm text-muted-foreground'>@{data.username}</p>
+                <div className='pointer-events-none absolute inset-0 overflow-hidden rounded-2xl'>
+                    <div className='shimmer' />
+                </div>
+
+                <div className='relative size-48 mb-4'>
+                    <Image src={image} alt={name} fill sizes='176px' loading='eager' fetchPriority='high' className='object-contain drop-shadow-glow-sm' />
+                </div>
+
+                <h2 className='text-2xl font-semibold bg-linear-to-r from-foreground to-foreground/80 bg-clip-text text-transparent'>{name}</h2>
+                <p className='text-sm text-violet-400 font-medium mt-1'>{role}</p>
+                <p className='text-xs text-muted-foreground mt-2'>@{username}</p>
             </motion.div>
 
-            {/* BACK: Bio + Stats + Socials */}
+            {/* BACK */}
             <motion.div
-                className='absolute inset-0 backface-hidden rounded-md border-2 border-foreground/20 px-4 py-6 flex flex-col justify-between items-center gap-y-4 bg-gradient-to-tr from-muted via-background to-muted '
+                className='absolute inset-0 backface-hidden rounded-2xl bg-linear-to-tr from-violet-600/10 via-card/90 to-violet-500/5 backdrop-blur-sm border border-violet-500/20 flex flex-col items-center justify-between p-6 text-center'
                 initial={{ rotateY: 180 }}
-                animate={isFlipped ? 'front' : 'back'}
-                variants={cardVariants}
-                style={{ transformStyle: 'preserve-3d', rotateY: 180 }}
+                animate={flip ? 'front' : 'back'}
+                variants={variants}
+                transition={{ duration: 0.6, ease: 'easeInOut' }}
+                style={{ transformStyle: 'preserve-3d' }}
             >
-                <p className='text-xs md:text-sm text-muted-foreground text-center'>{data.bio}</p>
-
-                <div className='px-6 flex items-center justify-between w-full'>
-                    <div>
-                        <p className='text-base font-bold'>{data.stats.following}</p>
-                        <p className='text-xs text-muted-foreground'>Following</p>
-                    </div>
-                    <div>
-                        <p className='text-base font-bold'>{data.stats.followers}</p>
-                        <p className='text-xs text-muted-foreground'>Followers</p>
-                    </div>
-                    {data.stats.posts && (
-                        <div>
-                            <p className='text-base font-bold'>{data.stats.posts}</p>
-                            <p className='text-xs text-muted-foreground'>Posts</p>
-                        </div>
-                    )}
+                <div className='pointer-events-none absolute inset-0 overflow-hidden rounded-2xl'>
+                    <div className='shimmer' />
                 </div>
 
-                {/* Social Media Icons */}
-                <div className='flex items-center justify-center gap-4'>
-                    {data.socialLinks?.linkedin && (
-                        <a href={data.socialLinks.linkedin} target='_blank' rel='noopener noreferrer' className='hover:scale-105 transition-transform'>
-                            <Linkedin size={20} />
-                        </a>
-                    )}
-                    {data.socialLinks?.github && (
-                        <a href={data.socialLinks.github} target='_blank' rel='noopener noreferrer' className='hover:scale-105 transition-transform'>
-                            <Github size={20} />
-                        </a>
-                    )}
-                    {data.socialLinks?.twitter && (
-                        <a href={data.socialLinks.twitter} target='_blank' rel='noopener noreferrer' className='hover:scale-105 transition-transform'>
-                            <Twitter size={20} />
-                        </a>
-                    )}
+                <div className='mt-2'>
+                    <p className='text-sm text-muted-foreground leading-relaxed'>{tagline}</p>
                 </div>
 
-                <Button>Follow</Button>
+                {centerContent ? <React.Fragment key='back-center-content'>{centerContent}</React.Fragment> : null}
+
+                <div className='w-full mt-4'>
+                    <p className='mb-2 text-xs font-semibold tracking-wide text-violet-400'>CONNECT</p>
+                    <div className='flex flex-wrap items-center justify-center gap-1'>
+                        {links.map(({ id, url, ariaLabel }) => {
+                            const Icon = SOCIAL_LINKS.find((item) => item.id === id)?.icon;
+
+                            if (!Icon) {
+                                return null;
+                            }
+
+                            return (
+                                <a
+                                    key={id}
+                                    href={url}
+                                    aria-label={ariaLabel}
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='flex size-8 items-center justify-center rounded-full border border-violet-500/20 bg-violet-500/10 transition-all duration-300 hover:scale-105 hover:border-violet-500/40 hover:bg-violet-500/20'
+                                >
+                                    <Icon size={14} className='text-violet-400 transition-colors hover:text-violet-300' />
+                                </a>
+                            );
+                        })}
+                    </div>
+                </div>
             </motion.div>
         </div>
     );
-}
+};

@@ -6,6 +6,7 @@ import { SubtopicAccordion } from '@/components/content/article/SubtopicAccordio
 import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
+import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, getPublishedTopicTreeBySlug } from '@/server/new/public/content/article';
 
@@ -45,6 +46,15 @@ export async function generateMetadata({ params }: ITopicPageProps): Promise<Met
         return { title: 'Topic Not Found' };
     }
 
+    const topicOgImage = topic.coverImage
+        ? topic.coverImage
+        : buildDynamicOgImageUrl({
+              title: topic.title,
+              eyebrow: 'Article Topic',
+              subtitle: topic.description,
+              tags: ['articles', 'topic', 'guides'],
+          });
+
     return createPageMetadata({
         title: topic.title,
         description: topic.description,
@@ -52,7 +62,7 @@ export async function generateMetadata({ params }: ITopicPageProps): Promise<Met
         keywords: [topic.title, 'articles', 'tutorials', 'guide', SITE_CONFIG.author.name],
         includeSocial: true,
         socialType: 'website',
-        ...(topic.coverImage ? { imageUrl: topic.coverImage } : {}),
+        imageUrl: topicOgImage,
         robots: {
             index: true,
             follow: true,

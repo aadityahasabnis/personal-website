@@ -17,22 +17,9 @@ import { useSnackbar } from '@/hooks/form/useSnackbar';
 import { useAction } from '@/hooks/server/useAction';
 import { formatDate } from '@/lib/utils';
 import type { IBlogRow } from '@/server/new/admin/content/blog';
-import {
-    bulkArchiveBlogs,
-    bulkDeleteBlogs,
-    bulkDraftBlogs,
-    bulkPublishBlogs,
-    deleteBlog,
-    getBlogs,
-    setBlogStatus,
-    toggleBlogFeatured,
-} from '@/server/new/admin/content/blog';
+import { bulkArchiveBlogs, bulkDeleteBlogs, bulkDraftBlogs, bulkPublishBlogs, deleteBlog, getBlogs, setBlogStatus, toggleBlogFeatured } from '@/server/new/admin/content/blog';
 
-import {
-    createBlogsTableConfig,
-    type IBlogActionHandlers,
-    type IBlogBulkActionHandlers,
-} from './config';
+import { createBlogsTableConfig, type IBlogActionHandlers, type IBlogBulkActionHandlers } from './config';
 
 // =============================================================
 // Types
@@ -58,8 +45,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
     // =============================================================
 
     const setStatusAction = useAction({
-        action: async (blog: IBlogRow, status: PublishStatusType) => 
-            setBlogStatus(blog.id, status),
+        action: async (blog: IBlogRow, status: PublishStatusType) => setBlogStatus(blog.id, status),
         onSuccess: (_data, response, [, status]) => {
             const statusLabels = { draft: 'Draft', published: 'Published', archived: 'Archived' };
             showSuccess(response.message ?? `Blog moved to ${statusLabels[status]}`);
@@ -164,12 +150,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
                 await bulkDeleteAction.mutateAsync(rows, ids);
             },
         }),
-        [
-            bulkPublishAction.mutateAsync,
-            bulkDraftAction.mutateAsync,
-            bulkArchiveAction.mutateAsync,
-            bulkDeleteAction.mutateAsync,
-        ],
+        [bulkPublishAction.mutateAsync, bulkDraftAction.mutateAsync, bulkArchiveAction.mutateAsync, bulkDeleteAction.mutateAsync],
     );
 
     // =============================================================
@@ -189,18 +170,15 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
                 return {
                     ...col,
                     cell: (blog: IBlogRow) => (
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                <FileText className="h-5 w-5" />
+                        <div className='flex items-center gap-3'>
+                            <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary'>
+                                <FileText className='h-5 w-5' />
                             </div>
-                            <div className="min-w-0">
-                                <Link
-                                    href={`/admin/blogs/${blog.id}/edit`}
-                                    className="block truncate font-medium hover:text-foreground hover:underline"
-                                >
+                            <div className='min-w-0'>
+                                <Link href={`/admin/blogs/${blog.id}/edit`} className='block truncate font-medium hover:text-foreground hover:underline'>
                                     {blog.title}
                                 </Link>
-                                <p className="text-sm text-muted-foreground">/{blog.slug}</p>
+                                <p className='text-sm text-muted-foreground'>/{blog.slug}</p>
                             </div>
                         </div>
                     ),
@@ -213,7 +191,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
                     ...col,
                     cell: (blog: IBlogRow) => {
                         const { publishStatus } = blog;
-                        
+
                         // Custom 3-state status badge for blogs
                         const statusConfig = {
                             published: {
@@ -229,14 +207,10 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
                                 className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
                             },
                         };
-                        
+
                         const config = statusConfig[publishStatus];
-                        
-                        return (
-                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>
-                                {config.label}
-                            </span>
-                        );
+
+                        return <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${config.className}`}>{config.label}</span>;
                     },
                 };
             }
@@ -245,7 +219,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
             if (col.id === 'featured') {
                 return {
                     ...col,
-                    cell: (blog: IBlogRow) => <StatusBadge variant="featured" value={blog.featured} />,
+                    cell: (blog: IBlogRow) => <StatusBadge variant='featured' value={blog.featured} />,
                 };
             }
 
@@ -253,11 +227,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
             if (col.id === 'readingTime') {
                 return {
                     ...col,
-                    cell: (blog: IBlogRow) => (
-                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
-                            {blog.readingTime} min
-                        </span>
-                    ),
+                    cell: (blog: IBlogRow) => <span className='inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium'>{blog.readingTime} min</span>,
                 };
             }
 
@@ -265,9 +235,7 @@ export function BlogsTable({ initialData, initialTotal }: IBlogsTableProps): Rea
             if (col.id === 'updatedAt') {
                 return {
                     ...col,
-                    cell: (blog: IBlogRow) => (
-                        <span className="text-sm text-muted-foreground">{formatDate(blog.updatedAt)}</span>
-                    ),
+                    cell: (blog: IBlogRow) => <span className='text-sm text-muted-foreground'>{formatDate(blog.updatedAt)}</span>,
                 };
             }
 

@@ -156,13 +156,13 @@ const ContactForm = () => {
 
     if (status === 'success') {
         return (
-            <div className='p-8 text-center bg-card border border-border rounded-2xl'>
-                <CheckCircle className='mx-auto size-12 text-success' />
-                <h3 className='mt-4 text-title font-semibold text-foreground'>{CONTACT_FORM_COPY.status.successTitle}</h3>
-                <p className='mt-2 text-body text-muted-foreground'>{CONTACT_FORM_COPY.status.successDescription}</p>
+            <div className='flex flex-col items-center gap-3 p-8 rounded-xl border border-success/30 bg-success/10 text-center'>
+                <CheckCircle className='size-12 text-success' />
+                <h3 className='text-title font-semibold text-foreground'>{CONTACT_FORM_COPY.status.successTitle}</h3>
+                <p className='max-w-md text-body text-muted-foreground'>{CONTACT_FORM_COPY.status.successDescription}</p>
                 <button
                     type='button'
-                    className='inline-flex items-center justify-center gap-2 mt-6 px-6 py-3 text-label font-medium text-foreground bg-card border border-border rounded-full transition-fast hover:border-primary/40'
+                    className='inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full border border-border bg-background text-label font-medium text-foreground transition-fast hover:border-primary/40'
                     onClick={() => {
                         setStatus('idle');
                         setMessage('');
@@ -175,9 +175,9 @@ const ContactForm = () => {
     }
 
     return (
-        <form onSubmit={onSubmit} className='space-y-6'>
+        <form onSubmit={onSubmit} aria-busy={pending} className='flex flex-col gap-5'>
             {status === 'error' && (
-                <div className='flex items-center gap-3 p-4 text-small text-destructive bg-destructive/10 border border-destructive/30 rounded-xl'>
+                <div className='flex items-start gap-3 p-4 rounded-xl border border-destructive/30 bg-destructive/10 text-small text-destructive' role='alert' aria-live='polite'>
                     <AlertCircle className='size-5 shrink-0' />
                     {message || CONTACT_FORM_COPY.status.errorFallback}
                 </div>
@@ -248,10 +248,10 @@ const ContactForm = () => {
             <button
                 type='submit'
                 disabled={pending}
+                aria-busy={pending}
                 className={cn(
-                    'inline-flex items-center gap-2 px-8 py-3 text-label font-medium rounded-full transition-fast',
-                    'text-primary-foreground bg-primary',
-                    'hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed',
+                    'inline-flex w-full items-center justify-center gap-2 px-8 py-3 rounded-full bg-primary text-label font-semibold text-primary-foreground transition-fast sm:w-auto',
+                    'hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60',
                 )}
             >
                 {pending ? (
