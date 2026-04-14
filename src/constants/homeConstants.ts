@@ -24,12 +24,12 @@ export const HERO_SECTION = {
 
 export const ABOUT_PREVIEW_SECTION = {
     label: 'About Me',
-    title: 'Crafting Digital Experiences with Passion',
+    title: 'Thoughtful Building and Problem Solving',
     paragraphs: [
-        "I'm a full-stack developer with a passion for creating beautiful, functional, and user-centric digital experiences. With over 5 years of experience in the industry, I've had the privilege of working on diverse projects ranging from startups to enterprise applications.",
-        "Beyond coding, I enjoy writing about technology, sharing knowledge through articles, and contributing to open-source projects. I believe in continuous learning and staying updated with the latest trends in web development.",
+        "I build full-stack applications with a strong focus on backend systems, designing APIs and infrastructure that are reliable, scalable, and built for real-world use.",
+        "Beyond development, I enjoy creative problem solving and writing—sharing ideas, breaking down complex concepts, and exploring system design through blogs and technical insights."
     ],
-    skills: ['React', 'Next.js', 'TypeScript', 'Node.js', 'MongoDB', 'Tailwind'],
+    skills: [ 'Fullstack', 'Backend', 'APIs', 'Systems', 'Writing', 'Problem Solving', 'Socializing'],
     cta: {
         label: 'More About Me',
         href: '/about',
