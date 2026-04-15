@@ -128,7 +128,7 @@ export default async function TopicPage({ params }: ITopicPageProps) {
             {/* JSON-LD Structured Data */}
             <JsonLd data={combinedSchema} />
 
-            <main className='mx-auto px-6 lg:px-8 py-20 md:py-24 max-w-5xl'>
+            <main className='mx-auto px-4 py-16 max-w-5xl sm:px-6 lg:px-8 md:py-20'>
                 <ArticleHeader
                     breadcrumbs={breadcrumbs}
                     title={topicData.topic.title}

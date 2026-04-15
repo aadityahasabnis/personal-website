@@ -114,7 +114,10 @@ interface IRootLayoutProps {
 const RootLayout = ({ children }: IRootLayoutProps) => {
     return (
         <html lang='en' suppressHydrationWarning>
-            <body className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${delius.variable} ${tiroDevanagariMarathi.variable} min-h-screen bg-background font-sans antialiased`}>
+            <body
+                suppressHydrationWarning
+                className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${delius.variable} ${tiroDevanagariMarathi.variable} min-h-screen bg-background font-sans antialiased`}
+            >
                 <Providers>{children}</Providers>
             </body>
         </html>

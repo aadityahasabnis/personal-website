@@ -1,11 +1,12 @@
 import { PROJECT_STATUS, type ProjectStatusType } from '@/constants/schemaConstants';
-import { ArrowUpRight, ExternalLink, FolderOpen, Github } from 'lucide-react';
+import { ArrowUpRight, ExternalLink, FolderOpen } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 import { Pill } from '@/components/ui/pill';
 import { cn, formatDate } from '@/lib/utils';
 import type { IPublicProjectListItem } from '@/server/new/public/content/project';
+import { FaGithub } from 'react-icons/fa';
 
 const MAX_VISIBLE_TECH_STACK = 4;
 
@@ -108,7 +109,7 @@ export const ProjectCard = ({ project, variant = 'default', className }: IProjec
                                 rel='noopener noreferrer'
                                 className='inline-flex items-center gap-2 rounded-md border border-border bg-background px-3 py-1.5 text-label font-medium text-foreground transition-base hover:border-primary/40 hover:text-primary'
                             >
-                                <Github className='size-4' aria-hidden='true' />
+                                <FaGithub className='size-4' aria-hidden='true' />
                                 <span>Code</span>
                             </Link>
                         )}

@@ -8,11 +8,11 @@ export const AboutPreview = () => {
     const profileImageSrc = 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aaditya-hasabnis-about-img.jpg-Km';
 
     return (
-        <section aria-labelledby='about-heading' className='mx-auto max-w-5xl min-h-screen px-6 lg:px-8 flex items-center'>
-            <div className='flex flex-col lg:flex-row items-start gap-12'>
+        <section aria-labelledby='about-heading' className='mx-auto flex items-start px-6 py-16 max-w-5xl lg:items-center lg:px-8 lg:py-20 lg:min-h-screen'>
+            <div className='flex w-full flex-col items-start gap-10 lg:flex-row lg:gap-12'>
                 {/* Image Column */}
-                <div className='relative w-full lg:w-[42%]'>
-                    <Link href={ABOUT_PREVIEW_SECTION.cta.href} aria-label='Open full about page' className='group relative block w-full max-w-sm'>
+                <div className='relative flex w-full justify-center lg:block lg:w-[42%]'>
+                    <Link href={ABOUT_PREVIEW_SECTION.cta.href} aria-label='Open full about page' className='group relative block w-full max-w-sm lg:mx-0'>
                         {/* Glow (controlled, not leaking) */}
                         <div className='absolute inset-0 rounded-full blur-2xl opacity-60 transition group-hover:opacity-80 bg-[radial-gradient(circle,var(--glow-accent),transparent_70%)]' />
 

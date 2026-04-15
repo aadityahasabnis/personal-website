@@ -9,7 +9,7 @@ interface ArticleContentProps {
 }
 
 export const ArticleContent = async ({ content, className }: ArticleContentProps) => {
-    return <ContentBody content={content} className={cn('max-w-none px-6 lg:px-0', className)} />;
+    return <ContentBody content={content} className={cn(className)} />;
 };
 
 interface ArticleStatsProps {

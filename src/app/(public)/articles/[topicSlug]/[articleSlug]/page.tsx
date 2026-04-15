@@ -6,6 +6,7 @@ import { ArticleHeader } from '@/components/content/article/ArticleHeader';
 import { ArticleContent } from '@/components/content/common/ArticleContent';
 import { ContentComment } from '@/components/content/common/comment/ContentComment';
 import { ContentLikes, ContentViews } from '@/components/content/common/stats';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
@@ -150,35 +151,34 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
             <JsonLd data={combinedSchema} />
             <ScrollToTop />
 
-            <main className='mx-auto px-6 py-20 max-w-4xl md:py-28 lg:px-8'>
-                <article className='article-content' itemScope itemType='https://schema.org/TechArticle'>
-                    <ArticleHeader
-                        breadcrumbs={breadcrumbs}
-                        title={article.title}
-                        description={article.description}
-                        coverImage={article.coverImage ?? article.seo?.ogImage ?? null}
-                        readingTime={article.readingTime}
-                        {...(article.publishedAt ? { publishedAt: article.publishedAt } : {})}
-                        updatedAt={article.updatedAt}
-                        tags={article.tags}
-                    />
+            <article className='pb-16 md:pb-20' itemScope itemType='https://schema.org/TechArticle'>
+                <ArticleHeader
+                    breadcrumbs={breadcrumbs}
+                    title={article.title}
+                    description={article.description}
+                    coverImage={article.coverImage ?? article.seo?.ogImage ?? null}
+                    readingTime={article.readingTime}
+                    {...(article.publishedAt ? { publishedAt: article.publishedAt } : {})}
+                    updatedAt={article.updatedAt}
+                    tags={article.tags}
+                />
 
-                    {content ? (
+                {content ? (
+                    <FadeIn direction='up' distance={20} duration={0.5} delay={0.2} trigger='always'>
                         <ArticleContent content={content} />
-                    ) : (
-                        <div className='py-12 text-body text-muted-foreground'>
-                            <p>This article is being prepared. Check back soon.</p>
-                        </div>
-                    )}
+                    </FadeIn>
+                ) : (
+                    <p className='py-12 text-body text-muted-foreground'>This article is being prepared. Check back soon.</p>
+                )}
 
+                <FadeIn direction='up' distance={12} duration={0.4} delay={0.3} trigger='always'>
                     <section className='flex items-center gap-3 mt-8' aria-label='Article engagement stats'>
                         <ContentViews contentType='articles' contentId={article.id} />
                         <ContentLikes contentType='articles' contentId={article.id} />
                     </section>
-                </article>
-
+                </FadeIn>
                 <ContentComment contentType='articles' contentId={article.id} />
-            </main>
+            </article>
         </>
     );
 };

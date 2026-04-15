@@ -2,6 +2,7 @@
 
 import type { ITocItem } from '@/lib/markdown';
 import { cn } from '@/lib/utils';
+import { BookOpenCheck } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 export type { ITocItem } from '@/lib/markdown';
@@ -12,7 +13,7 @@ export interface ITableOfContentsProps {
     topOffset?: number;
 }
 
-const indent = (level: number) => `${(level - 2) * 0.75}rem`;
+const indent = (level: number) => `${(level - 2) * 0.625}rem`;
 
 export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableOfContentsProps) => {
     const [activeId, setActiveId] = useState<string>('');
@@ -80,10 +81,6 @@ export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableO
             moveIndicator(id);
         };
 
-        const id = computeActive();
-        setActiveId(id);
-        moveIndicator(id);
-
         const onScroll = () => {
             if (rafRef.current !== null) return;
             rafRef.current = requestAnimationFrame(tick);
@@ -91,6 +88,9 @@ export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableO
             if (idleRef.current !== null) clearTimeout(idleRef.current);
             idleRef.current = setTimeout(unlock, 150);
         };
+
+        // Prime active state after mount without setting state directly in the effect body.
+        onScroll();
 
         window.addEventListener('scroll', onScroll, { passive: true });
         window.addEventListener('scrollend', unlock);
@@ -130,9 +130,12 @@ export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableO
 
     return (
         <nav className={cn('select-none', className)} aria-label='On this page'>
-            <p className='mb-3 text-label font-semibold tracking-wide uppercase text-muted-foreground'>On this page</p>
+            <p className='mb-4 flex items-center gap-2 px-2 text-label font-semibold uppercase tracking-wide text-muted-foreground'>
+                <BookOpenCheck className='size-3.5 shrink-0' />
+                <span className='truncate'>On this page</span>
+            </p>
 
-            <div className='relative flex gap-3'>
+            <div className='relative flex gap-2.5'>
                 <div className='relative flex-none self-stretch w-px'>
                     <div
                         className='absolute inset-0 rounded-full'
@@ -145,14 +148,14 @@ export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableO
                         className='absolute left-1/2 w-0.75 rounded-full transition-[top,height] duration-300 ease-out -translate-x-1/2'
                         style={{
                             top: indicatorY,
-                            height: indicatorH || 24,
+                            height: indicatorH || 20,
                             background: 'linear-gradient(to bottom, var(--accent), oklch(from var(--accent) l c h / 0.4))',
                             boxShadow: '0 0 6px 1px oklch(from var(--accent) l c h / 0.35)',
                         }}
                     />
                 </div>
 
-                <ul ref={listRef} className='flex flex-col flex-1 gap-0.5 min-w-0'>
+                <ul ref={listRef} className='flex flex-col flex-1 gap-px min-w-0'>
                     {headings.map(({ id, text, level }) => {
                         const isActive = activeId === id;
                         return (
@@ -169,7 +172,7 @@ export const TableOfContents = ({ headings, className, topOffset = 80 }: ITableO
                                     onClick={scrollTo(id)}
                                     title={text}
                                     className={cn(
-                                        'block py-1 text-label leading-snug truncate',
+                                        'block py-0.5 text-xs leading-snug truncate',
                                         'transition-colors duration-200',
                                         !isActive && 'text-muted-foreground hover:text-foreground',
                                         isActive && 'font-medium text-primary',

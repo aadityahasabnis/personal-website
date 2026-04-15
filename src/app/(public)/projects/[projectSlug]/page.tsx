@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { ProjectContent, ProjectHeader } from '@/components/content';
 import { ContentComment } from '@/components/content/common/comment/ContentComment';
 import { ContentLikes, ContentViews } from '@/components/content/common/stats';
+import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
@@ -79,18 +80,34 @@ export default async function ProjectDetailPage({ params }: IProjectDetailPagePr
     const content = project.html ?? project.body ?? '';
 
     return (
-        <main className='mx-auto px-6 py-16 max-w-4xl lg:px-8'>
+        <main className='mx-auto px-4 py-16 max-w-5xl sm:px-6 lg:px-8 md:py-20'>
             <article>
-                <ProjectHeader project={project} />
+                <ProjectHeader
+                    project={project}
+                    breadcrumbs={[
+                        { label: 'Projects', href: '/projects' },
+                        { label: project.title, href: `/projects/${projectSlug}` },
+                    ]}
+                />
 
-                {content ? <ProjectContent content={content} /> : <p className='text-body text-muted-foreground'>This project write-up is being prepared.</p>}
+                {content ? (
+                    <FadeIn direction='up' distance={20} duration={0.5} delay={0.2} trigger='always'>
+                        <ProjectContent content={content} />
+                    </FadeIn>
+                ) : (
+                    <p className='text-body text-muted-foreground'>This project write-up is being prepared.</p>
+                )}
 
-                <section className='flex items-center gap-3 mt-8' aria-label='Project engagement stats'>
-                    <ContentViews contentType='projects' contentId={project.id} />
-                    <ContentLikes contentType='projects' contentId={project.id} />
-                </section>
+                <FadeIn direction='up' distance={12} duration={0.4} delay={0.3} trigger='always'>
+                    <section className='flex items-center gap-3 mt-8' aria-label='Project engagement stats'>
+                        <ContentViews contentType='projects' contentId={project.id} />
+                        <ContentLikes contentType='projects' contentId={project.id} />
+                    </section>
+                </FadeIn>
 
-                <ContentComment contentType='projects' contentId={project.id} className='mt-12' />
+                <FadeIn direction='up' distance={16} duration={0.45} delay={0.35} trigger='always'>
+                    <ContentComment contentType='projects' contentId={project.id} className='mt-12' />
+                </FadeIn>
             </article>
         </main>
     );

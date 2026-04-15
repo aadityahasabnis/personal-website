@@ -74,101 +74,116 @@
 /* ===== DARK MODE ALIAS FOR AUTHORLY RENDERER ===== */
 /* renderer.css uses .cbr-content.cbr-dark for dark mode, but our theme uses html.dark.
    This makes .dark .cbr-content behave like .cbr-content.cbr-dark */
-.dark .cbr-content {
+/* Light-mode safety: keep inline code tokens readable when root is not dark */
+html:not(.dark) .cbr-content code {
+    background: #f3f4f6 !important;
+    border: 1px solid #e5e7eb !important;
+    color: #551e39 !important;
+}
+
+/* Don't apply inline token styles to block code surfaces */
+html:not(.dark) .cbr-content pre code,
+html:not(.dark) .cbr-content .cbr-code-block code {
+    background: none !important;
+    border: none !important;
+    color: inherit;
+}
+
+html.dark .cbr-content {
     color: #f9fafb;
 }
-.dark .cbr-content a {
+html.dark .cbr-content a {
     color: #60a5fa;
 }
-.dark .cbr-content a:hover {
+html.dark .cbr-content a:hover {
     color: #3b82f6;
 }
-.dark .cbr-content li.cbr-checked-item {
+html.dark .cbr-content li.cbr-checked-item {
     color: #9ca3af;
 }
-.dark .cbr-content blockquote {
+html.dark .cbr-content blockquote {
     background: rgba(59, 130, 246, 0.1);
     border-left-color: #3b82f6;
 }
-.dark .cbr-content code:not(.cbr-code-block code) {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #374151;
-    color: #f472b6;
+html.dark .cbr-content code:not(.cbr-code-block code) {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid #374151 !important;
+    color: #f472b6 !important;
 }
-.dark .cbr-content .cbr-code-wrapper {
+html.dark .cbr-content .cbr-code-wrapper {
     border-color: #27272a;
     background: #011627;
     box-shadow:
         0 10px 15px -3px rgba(0, 0, 0, 0.3),
         0 4px 6px -2px rgba(0, 0, 0, 0.2);
 }
-.dark .cbr-content .cbr-code-toolbar {
+html.dark .cbr-content .cbr-code-toolbar {
     background: rgba(39, 39, 42, 0.5);
     border-bottom-color: #27272a;
 }
-.dark .cbr-content .cbr-code-lang {
+html.dark .cbr-content .cbr-code-lang {
     color: #a1a1aa;
 }
-.dark .cbr-content .cbr-code-copy {
+html.dark .cbr-content .cbr-code-copy {
     color: #a1a1aa;
 }
-.dark .cbr-content .cbr-code-copy:hover {
+html.dark .cbr-content .cbr-code-copy:hover {
     background: #27272a;
     color: #e4e4e7;
 }
-.dark .cbr-content .cbr-code-block {
+html.dark .cbr-content .cbr-code-block {
     background: #011627;
 }
-.dark .cbr-content .cbr-code-block code {
+html.dark .cbr-content .cbr-code-block code {
     color: #d1d5db;
 }
-.dark .cbr-content figure[data-block-type='video'] > div {
+html.dark .cbr-content figure[data-block-type='video'] > div {
     background: #111827;
 }
-.dark .cbr-content th,
-.dark .cbr-content td {
+html.dark .cbr-content th,
+html.dark .cbr-content td {
     border-color: #374151;
 }
-.dark .cbr-content th {
+html.dark .cbr-content th {
     background: #374151;
 }
-.dark .cbr-content hr {
+html.dark .cbr-content hr {
     border-top-color: #374151;
 }
-.dark .cbr-content aside[data-callout-type='info'],
-.dark .cbr-content .cb-callout[data-callout-type='info'] {
+html.dark .cbr-content aside[data-callout-type='info'],
+html.dark .cbr-content .cb-callout[data-callout-type='info'] {
     background: rgba(59, 130, 246, 0.1);
     border-color: rgba(59, 130, 246, 0.3);
 }
-.dark .cbr-content aside[data-callout-type='success'],
-.dark .cbr-content .cb-callout[data-callout-type='success'] {
+html.dark .cbr-content aside[data-callout-type='success'],
+html.dark .cbr-content .cb-callout[data-callout-type='success'] {
     background: rgba(16, 185, 129, 0.1);
     border-color: rgba(16, 185, 129, 0.3);
 }
-.dark .cbr-content aside[data-callout-type='warning'],
-.dark .cbr-content .cb-callout[data-callout-type='warning'] {
+html.dark .cbr-content aside[data-callout-type='warning'],
+html.dark .cbr-content .cb-callout[data-callout-type='warning'] {
     background: rgba(245, 158, 11, 0.1);
     border-color: rgba(245, 158, 11, 0.3);
 }
-.dark .cbr-content aside[data-callout-type='error'],
-.dark .cbr-content .cb-callout[data-callout-type='error'] {
+html.dark .cbr-content aside[data-callout-type='error'],
+html.dark .cbr-content .cb-callout[data-callout-type='error'] {
     background: rgba(239, 68, 68, 0.1);
     border-color: rgba(239, 68, 68, 0.3);
 }
-.dark .cbr-content aside[data-callout-type='note'],
-.dark .cbr-content .cb-callout[data-callout-type='note'] {
+html.dark .cbr-content aside[data-callout-type='note'],
+html.dark .cbr-content .cb-callout[data-callout-type='note'] {
     background: #374151;
     border-color: #374151;
 }
-.dark .cbr-content details {
+html.dark .cbr-content details {
     border-color: #374151;
 }
-.dark .cbr-content summary {
+html.dark .cbr-content summary {
     background: #111827;
 }
-.dark .cbr-content summary:hover {
+html.dark .cbr-content summary:hover {
     background: #374151;
 }
-.dark .cbr-content details[open] summary {
+html.dark .cbr-content details[open] summary {
     border-bottom-color: #374151;
 }

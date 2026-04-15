@@ -1,5 +1,4 @@
-import { Facebook, Github, Instagram, Linkedin } from 'lucide-react';
-import { FaPinterest } from "react-icons/fa";
+import { FaFacebook, FaGithub, FaInstagram, FaLinkedin, FaPinterest } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 
 // ============================================================
@@ -88,7 +87,7 @@ export const SOCIAL_LINKS = [
     url: 'https://github.com/aadityahasabnis',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on GitHub',
-    icon: Github,
+    icon: FaGithub,
   },
   {
     id: 'X',
@@ -104,7 +103,7 @@ export const SOCIAL_LINKS = [
     url: 'https://linkedin.com/in/aadityahasabnis',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on LinkedIn',
-    icon: Linkedin,
+    icon: FaLinkedin,
   },
   {
     id: 'instagram',
@@ -112,7 +111,7 @@ export const SOCIAL_LINKS = [
     url: 'https://instagram.com/creative_northstar',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on Instagram',
-    icon: Instagram
+    icon: FaInstagram
   },
   {
     id: 'facebook',
@@ -120,7 +119,7 @@ export const SOCIAL_LINKS = [
     url: 'https://www.facebook.com/profile.php?id=100016312514133',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on Facebook',
-    icon: Facebook
+    icon: FaFacebook
   },
   {
     id: 'pinterest',

@@ -9,7 +9,7 @@ const Footer = () => {
     const copyrightText = `© ${currentYear} ${SITE_CONFIG.name}. All rights reserved.`;
 
     return (
-        <footer className='relative border-border ' role='contentinfo'>
+        <footer className='relative border-border' role='contentinfo'>
             <div className='mx-auto grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-5xl'>
                 <section className='flex flex-col gap-4'>
                     <Link
