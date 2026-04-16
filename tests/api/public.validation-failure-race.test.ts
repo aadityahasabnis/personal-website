@@ -261,7 +261,7 @@ describe('public api validation, failure paths, and race expansions', () => {
             if (subscribeCount === 1) {
                 return { success: true, status: 201, data: { email: 'race@example.com', confirmed: false, state: 'created' } };
             }
-            return { success: true, status: 200, data: { email: 'race@example.com', confirmed: false, state: 'pending' } };
+            return { success: true, status: 200, data: { email: 'race@example.com', confirmed: false, state: 'active' } };
         });
 
         const commentRequests = await Promise.all(

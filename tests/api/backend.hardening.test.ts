@@ -358,7 +358,7 @@ describe('backend hardening tests', () => {
     });
 
     it('subscribe rejects invalid email field', async () => {
-        const result = await subscribe({ email: 'invalid-email' });
+        const result = await subscribe({ email: 'invalid-email', name: 'Test User' });
         expect(result.success).toBe(false);
         if (result.success) return;
         expect(result.status).toBe(400);

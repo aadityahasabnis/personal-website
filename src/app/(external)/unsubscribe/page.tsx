@@ -9,7 +9,7 @@ import { unsubscribe, type ISubscriptionResult } from '@/server/new/public/subsc
 import { CheckCircle2, Mail, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 interface IUnsubscribeFormData extends IFormData {
     email: string;
@@ -31,7 +31,7 @@ const unsubscribeFields: Array<IFieldConfig<IUnsubscribeFormData>> = [
     },
 ];
 
-const UnsubscribePage = () => {
+const UnsubscribePageContent = () => {
     const searchParams = useSearchParams();
     const [prefilledEmail, setPrefilledEmail] = useState('');
     const [lastUnsubscribedEmail, setLastUnsubscribedEmail] = useState<string | null>(null);
@@ -137,6 +137,25 @@ const UnsubscribePage = () => {
                 </aside>
             </div>
         </main>
+    );
+};
+
+const UnsubscribePage = () => {
+    return (
+        <Suspense
+            fallback={
+                <main className='relative mx-auto flex w-full max-w-5xl flex-col px-6 py-20 lg:px-8 md:py-24'>
+                    <PageHeader
+                        label='Unsubscribe'
+                        title='Manage Your Newsletter Preferences'
+                        description='Enter the email you used for the newsletter and we will unsubscribe it immediately.'
+                        align='left'
+                    />
+                </main>
+            }
+        >
+            <UnsubscribePageContent />
+        </Suspense>
     );
 };
 

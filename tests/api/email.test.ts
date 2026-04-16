@@ -495,8 +495,8 @@ describe('admin email API', () => {
                     sent: 4,
                     failed: 1,
                     results: [
-                        { subscriberId: 'sub-1', email: 'a@example.com', name: 'A', status: 'SENT', messageId: 'msg-1' },
-                        { subscriberId: 'sub-2', email: 'invalid', name: 'B', status: 'FAILED', error: 'Invalid email' },
+                        { subscriberId: 'sub-1', email: 'a@example.com', status: 'SENT', messageId: 'msg-1' },
+                        { subscriberId: 'sub-2', email: 'invalid', status: 'FAILED', error: 'Invalid email' },
                     ],
                 },
             });
