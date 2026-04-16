@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, getPublishedTopicTreeBySlug } from '@/server/new/public/content/article';
 
 // ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
@@ -52,7 +52,7 @@ export async function generateMetadata({ params }: ITopicPageProps): Promise<Met
               title: topic.title,
               eyebrow: 'Article Topic',
               subtitle: topic.description,
-              tags: ['articles', 'topic', 'guides'],
+              tags: ['articles', 'topic', 'guides', 'engineering', 'writing', 'systems', 'web'],
           });
 
     return createPageMetadata({
@@ -121,7 +121,16 @@ export default async function TopicPage({ params }: ITopicPageProps) {
         topicSlug,
         topicData.topic.title,
     );
-    const combinedSchema = combineSchemas(topicSchema, articleListSchema, breadcrumbSchema);
+    const combinedSchema = combineSchemas(
+        topicSchema,
+        articleListSchema,
+        breadcrumbSchema,
+        generateWebPageSchema({
+            title: topicData.topic.title,
+            description: topicData.topic.description,
+            path: `/articles/${topicSlug}`,
+        }),
+    );
 
     return (
         <>

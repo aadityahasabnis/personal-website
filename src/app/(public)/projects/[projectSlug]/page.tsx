@@ -8,6 +8,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedProjectByPath, getPublishedProjectStaticPaths, type IPublicProjectDetail } from '@/server/new/public/content/project';
 
 interface IProjectDetailPageProps {
@@ -39,11 +40,13 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
         project.coverImage ??
         buildDynamicOgImageUrl({
             title,
-            eyebrow: 'Project',
+            eyebrow: 'Engineering',
             subtitle: description,
-            tags: [...(project.tags ?? []), ...(project.techStack ?? [])].slice(0, 4),
+            tags: ['engineering', 'systems', 'web', 'products'],
         });
-    const keywords = Array.from(new Set([...(project.tags ?? []), ...(project.techStack ?? []), SITE_CONFIG.author.name, 'project', 'portfolio']));
+    const keywords = Array.from(
+        new Set([...(project.tags ?? []), ...(project.techStack ?? []), 'web development', 'software engineering', 'system design', 'problem solving', SITE_CONFIG.author.name]),
+    );
     const publishedTime = project.publishedAt;
 
     return createPageMetadata({
@@ -78,37 +81,54 @@ export default async function ProjectDetailPage({ params }: IProjectDetailPagePr
 
     const project: IPublicProjectDetail = projectResult.data;
     const content = project.html ?? project.body ?? '';
+    const schema = combineSchemas(
+        generatePersonSchema(),
+        generateWebSiteSchema(),
+        generateWebPageSchema({
+            title: project.title,
+            description: project.description,
+            path: `/projects/${projectSlug}`,
+        }),
+        generateBreadcrumbSchema([
+            { name: 'Home', url: SITE_CONFIG.url },
+            { name: 'Projects', url: `${SITE_CONFIG.url}/projects` },
+            { name: project.title, url: `${SITE_CONFIG.url}/projects/${projectSlug}` },
+        ]),
+    );
 
     return (
-        <main className='mx-auto px-4 py-16 max-w-5xl sm:px-6 lg:px-8 md:py-20'>
-            <article>
-                <ProjectHeader
-                    project={project}
-                    breadcrumbs={[
-                        { label: 'Projects', href: '/projects' },
-                        { label: project.title, href: `/projects/${projectSlug}` },
-                    ]}
-                />
+        <>
+            <JsonLd data={schema} />
+            <main className='mx-auto px-4 py-16 max-w-5xl sm:px-6 lg:px-8 md:py-20'>
+                <article>
+                    <ProjectHeader
+                        project={project}
+                        breadcrumbs={[
+                            { label: 'Projects', href: '/projects' },
+                            { label: project.title, href: `/projects/${projectSlug}` },
+                        ]}
+                    />
 
-                {content ? (
-                    <FadeIn direction='up' distance={20} duration={0.5} delay={0.2} trigger='always'>
-                        <ProjectContent content={content} />
+                    {content ? (
+                        <FadeIn direction='up' distance={20} duration={0.5} delay={0.2} trigger='always'>
+                            <ProjectContent content={content} />
+                        </FadeIn>
+                    ) : (
+                        <p className='text-body text-muted-foreground'>This project write-up is being prepared.</p>
+                    )}
+
+                    <FadeIn direction='up' distance={12} duration={0.4} delay={0.3} trigger='always'>
+                        <section className='flex items-center gap-3 mt-8' aria-label='Project engagement stats'>
+                            <ContentViews contentType='projects' contentId={project.id} />
+                            <ContentLikes contentType='projects' contentId={project.id} />
+                        </section>
                     </FadeIn>
-                ) : (
-                    <p className='text-body text-muted-foreground'>This project write-up is being prepared.</p>
-                )}
 
-                <FadeIn direction='up' distance={12} duration={0.4} delay={0.3} trigger='always'>
-                    <section className='flex items-center gap-3 mt-8' aria-label='Project engagement stats'>
-                        <ContentViews contentType='projects' contentId={project.id} />
-                        <ContentLikes contentType='projects' contentId={project.id} />
-                    </section>
-                </FadeIn>
-
-                <FadeIn direction='up' distance={16} duration={0.45} delay={0.35} trigger='always'>
-                    <ContentComment contentType='projects' contentId={project.id} className='mt-12' />
-                </FadeIn>
-            </article>
-        </main>
+                    <FadeIn direction='up' distance={16} duration={0.45} delay={0.35} trigger='always'>
+                        <ContentComment contentType='projects' contentId={project.id} className='mt-12' />
+                    </FadeIn>
+                </article>
+            </main>
+        </>
     );
 }

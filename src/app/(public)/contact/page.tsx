@@ -2,7 +2,7 @@ import { ABOUT_PAGE_CONTENT } from '@/constants/aboutConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generatePersonSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { Clock, Mail, MapPin, MessageSquare } from 'lucide-react';
 import type { Metadata } from 'next';
 
@@ -10,15 +10,15 @@ import { ContactForm } from '@/app/(public)/contact/ContactForm';
 import PageHeader from '@/components/layout/PageHeader';
 import FadeIn from '@/components/motion/FadeIn';
 
-const description = `Contact ${SITE_CONFIG.author.name} for collaboration, hiring, and product engineering projects across frontend, backend, and cloud systems.`;
+const description = `Connect with ${SITE_CONFIG.author.name} for thoughtful collaboration in web development, hiring, product engineering projects, software architecture, writing, and community-focused work.`;
 
-const keywordSet = new Set<string>(['contact', SITE_CONFIG.author.name, 'collaboration', 'hiring', 'software engineer', 'frontend', 'backend', 'cloud infrastructure']);
+const keywordSet = new Set<string>(['contact', SITE_CONFIG.author.name, 'web development', 'software engineering', 'collaboration', 'technical writing', 'system design', 'community building']);
 
 const contactOgImage = buildDynamicOgImageUrl({
-    title: 'Contact',
-    eyebrow: SITE_CONFIG.author.name,
-    subtitle: 'Open for collaboration, consulting, and product engineering opportunities.',
-    tags: ['contact', 'collaboration', 'hiring', 'engineering'],
+    title: 'Collaboration Rooted in Clear Engineering Thinking',
+    eyebrow: 'Collaboration',
+    subtitle: 'Start a focused conversation around product goals, practical tradeoffs, and delivery.',
+    tags: ['collaboration', 'engineering', 'writing', 'community'],
 });
 
 export const dynamic = 'force-static';
@@ -39,7 +39,19 @@ export const metadata: Metadata = createPageMetadata({
     },
 });
 
-const contactSchema = combineSchemas(generatePersonSchema(), generateWebSiteSchema());
+const contactSchema = combineSchemas(
+    generatePersonSchema(),
+    generateWebSiteSchema(),
+    generateWebPageSchema({
+        title: 'Contact',
+        description,
+        path: '/contact',
+    }),
+    generateBreadcrumbSchema([
+        { name: 'Home', url: SITE_CONFIG.url },
+        { name: 'Contact', url: `${SITE_CONFIG.url}/contact` },
+    ]),
+);
 
 // Contact info items
 const CONTACT_INFO = [

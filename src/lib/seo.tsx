@@ -4,22 +4,19 @@ import type { IArticle, ITopic } from '@/interfaces/schema';
 const toUnique = (values: readonly string[]): string[] => Array.from(new Set(values.filter(Boolean)));
 
 const getAuthorAlternateNames = (): string[] => {
-    return toUnique([
-        ...SITE_CONFIG.author.aliasesExact,
-        SITE_CONFIG.shortName,
-    ]);
+    return toUnique([...SITE_CONFIG.author.aliasesExact, SITE_CONFIG.shortName]);
 };
 
 /**
  * SEO Utilities for Enhanced Search Engine Optimization
- * 
+ *
  * Implements JSON-LD structured data for:
  * - Articles (BlogPosting, TechArticle)
  * - Breadcrumbs
  * - Person
  * - WebSite
  * - Topic lists and collection pages
- * 
+ *
  * This helps:
  * 1. Search engines understand content structure
  * 2. AI models scrape accurate data
@@ -34,9 +31,7 @@ const getAuthorAlternateNames = (): string[] => {
  * Used across all pages for author identity.
  */
 export function generatePersonSchema() {
-    const sameAs = SOCIAL_LINKS
-        .map((link) => link.url)
-        .filter((url) => /^https?:\/\//.test(url));
+    const sameAs = SOCIAL_LINKS.map((link) => link.url).filter((url) => /^https?:\/\//.test(url));
 
     const alternateNames = getAuthorAlternateNames();
 
@@ -57,9 +52,6 @@ export function generatePersonSchema() {
         knowsAbout: SITE_CONFIG.author.knowsAbout,
     };
 }
-
-// Backward-compatible alias for existing imports.
-export const generateOrganizationSchema = generatePersonSchema;
 
 /**
  * Website Schema
@@ -82,12 +74,12 @@ export function generateWebSiteSchema() {
         },
         ...(SITE_CONFIG.seo.search.enabled
             ? {
-                potentialAction: {
-                    '@type': 'SearchAction',
-                    target: searchTarget,
-                    'query-input': 'required name=search_term_string',
-                },
-            }
+                  potentialAction: {
+                      '@type': 'SearchAction',
+                      target: searchTarget,
+                      'query-input': 'required name=search_term_string',
+                  },
+              }
             : {}),
     };
 }
@@ -96,13 +88,30 @@ export function generateWebSiteSchema() {
  * Home WebPage schema to complete the identity graph.
  */
 export function generateHomeWebPageSchema() {
+    return generateWebPageSchema({
+        title: SITE_CONFIG.title,
+        description: SITE_CONFIG.description,
+        path: '/',
+    });
+}
+
+interface IGenerateWebPageSchemaOptions {
+    title: string;
+    description: string;
+    path: string;
+}
+
+export function generateWebPageSchema({ title, description, path }: IGenerateWebPageSchemaOptions) {
+    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
+    const url = normalizedPath === '/' ? SITE_CONFIG.url : `${SITE_CONFIG.url}${normalizedPath}`;
+
     return {
         '@context': 'https://schema.org',
         '@type': 'WebPage',
-        '@id': `${SITE_CONFIG.url}/#webpage`,
-        url: SITE_CONFIG.url,
-        name: SITE_CONFIG.title,
-        description: SITE_CONFIG.description,
+        '@id': `${url}#webpage`,
+        url,
+        name: title,
+        description,
         isPartOf: {
             '@id': `${SITE_CONFIG.url}/#website`,
         },
@@ -129,27 +138,28 @@ const toIsoString = (value: Date | string | undefined | null): string | undefine
     return new Date(value).toISOString();
 };
 
+const toArticleBodyExcerpt = (body: string | undefined): string | undefined => {
+    if (!body) return undefined;
+
+    const plain = body
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!plain) return undefined;
+    return plain.slice(0, 5000);
+};
+
 /**
  * Generate comprehensive Article schema
  * Combines TechArticle and BlogPosting for maximum SEO
  * Now includes comment count and related articles for better SEO
  */
-export function generateArticleSchema({
-    article,
-    topicSlug,
-    articleSlug,
-    topicTitle,
-    subtopicTitle,
-    commentCount = 0,
-    relatedArticles = [],
-}: IArticleSchemaProps) {
+export function generateArticleSchema({ article, topicSlug, articleSlug, topicTitle, subtopicTitle, commentCount = 0, relatedArticles = [] }: IArticleSchemaProps) {
     const url = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
+    const articleBodyExcerpt = toArticleBodyExcerpt(article.body);
 
-    const keywords = [
-        topicTitle,
-        ...(subtopicTitle ? [subtopicTitle] : []),
-        ...(article.tags || []),
-    ];
+    const keywords = [topicTitle, ...(subtopicTitle ? [subtopicTitle] : []), ...(article.tags || [])];
 
     const schema: Record<string, unknown> = {
         '@context': 'https://schema.org',
@@ -173,6 +183,7 @@ export function generateArticleSchema({
         dateModified: toIsoString(article.updatedAt),
         articleSection: topicTitle,
         keywords: keywords.join(', '),
+        ...(articleBodyExcerpt ? { articleBody: articleBodyExcerpt } : {}),
         wordCount: article.body ? article.body.split(/\s+/).length : 0,
         timeRequired: `PT${article.readingTime || 5}M`,
         inLanguage: 'en-US',
@@ -191,9 +202,7 @@ export function generateArticleSchema({
 
     // Add related articles for internal linking
     if (relatedArticles.length > 0) {
-        schema['relatedLink'] = relatedArticles.map(
-            (article) => `${SITE_CONFIG.url}/articles/${topicSlug}/${article.slug}`
-        );
+        schema['relatedLink'] = relatedArticles.map((article) => `${SITE_CONFIG.url}/articles/${topicSlug}/${article.slug}`);
     }
 
     return schema;
@@ -203,9 +212,7 @@ export function generateArticleSchema({
  * Generate Breadcrumb List Schema
  * Shows page hierarchy in search results
  */
-export function generateBreadcrumbSchema(
-    items: Array<{ name: string; url: string }>
-) {
+export function generateBreadcrumbSchema(items: Array<{ name: string; url: string }>) {
     return {
         '@context': 'https://schema.org',
         '@type': 'BreadcrumbList',
@@ -224,11 +231,7 @@ export function generateBreadcrumbSchema(
  * Generate ItemList schema for article collections
  * Used on topic pages and subtopic pages
  */
-export function generateArticleListSchema(
-    articles: Array<{ slug: string; title: string; description?: string }>,
-    topicSlug: string,
-    listName: string
-) {
+export function generateArticleListSchema(articles: Array<{ slug: string; title: string; description?: string }>, topicSlug: string, listName: string) {
     return {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
@@ -287,10 +290,5 @@ export function combineSchemas(...schemas: object[]) {
 export function JsonLd({ data }: { data: object }) {
     const json = JSON.stringify(data).replace(/</g, '\\u003c');
 
-    return (
-        <script
-            type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: json }}
-        />
-    );
+    return <script type='application/ld+json' dangerouslySetInnerHTML={{ __html: json }} />;
 }

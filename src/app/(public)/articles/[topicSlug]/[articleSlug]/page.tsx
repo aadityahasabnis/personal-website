@@ -10,7 +10,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateBreadcrumbSchema, generateOrganizationSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedArticleByPath, getPublishedArticleStaticPaths, type IPublicArticleDetail } from '@/server/new/public/content/article';
 
 export const revalidate = 3600;
@@ -50,7 +50,16 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
             tags: article.tags.slice(0, 4),
         });
     const keywords = Array.from(
-        new Set([...(article.seo?.keywords ?? article.tags), article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name, 'tutorial', 'guide', 'learn']),
+        new Set([
+            ...(article.seo?.keywords ?? article.tags),
+            article.topic.title,
+            ...(article.subtopic ? [article.subtopic.title] : []),
+            'software engineering',
+            'system design',
+            'problem solving',
+            'technical writing',
+            SITE_CONFIG.author.name,
+        ]),
     );
 
     return createPageMetadata({
@@ -111,6 +120,13 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
 
     const articleUrl = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
     const schemaKeywords = Array.from(new Set([...article.tags, article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name]));
+    const articleBodyExcerpt = article.body
+        ? article.body
+              .replace(/<[^>]+>/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim()
+              .slice(0, 5000)
+        : undefined;
 
     const articleSchema = {
         '@type': ['TechArticle', 'BlogPosting'],
@@ -129,11 +145,19 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
         dateModified: article.updatedAt,
         articleSection: article.topic.title,
         keywords: schemaKeywords.join(', '),
+        ...(articleBodyExcerpt ? { articleBody: articleBodyExcerpt } : {}),
         inLanguage: 'en-US',
         isAccessibleForFree: true,
     };
 
     const combinedSchema = combineSchemas(
+        generatePersonSchema(),
+        generateWebSiteSchema(),
+        generateWebPageSchema({
+            title: article.title,
+            description: article.description,
+            path: `/articles/${topicSlug}/${articleSlug}`,
+        }),
         articleSchema,
         generateBreadcrumbSchema(
             breadcrumbs.map((crumb) => ({
@@ -141,7 +165,6 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
                 url: `${SITE_CONFIG.url}${crumb.href}`,
             })),
         ),
-        generateOrganizationSchema(),
     );
 
     const content = article.html ?? article.body ?? '';

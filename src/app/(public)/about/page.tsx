@@ -2,20 +2,23 @@ import { ABOUT_PAGE_CONTENT } from '@/constants/aboutConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generatePersonSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import type { Metadata } from 'next';
 import AboutPageClient from './AboutPageClient';
 
 const { collaboration, identity, skills } = ABOUT_PAGE_CONTENT;
 
-const description = `${SITE_CONFIG.author.name} is a ${identity.title} based in ${identity.location}. ${identity.tagline}. Explore engineering experience, principles, and collaboration focus across frontend, backend, and cloud systems.`;
+const description = `${SITE_CONFIG.author.name} is a web developer and writer focused on reliable systems, practical problem solving, and clear communication based in ${identity.location}. ${identity.tagline}.`;
 
 const keywordSet = new Set<string>([
     'about',
     SITE_CONFIG.author.name,
-    identity.title.toLowerCase(),
-    'software engineer',
-    'product systems builder',
+    'web development',
+    'software engineering',
+    'problem solving',
+    'system thinking',
+    'technical writing',
+    'community building',
     'frontend architecture',
     'backend engineering',
     'cloud infrastructure',
@@ -24,10 +27,10 @@ const keywordSet = new Set<string>([
 ]);
 
 const aboutOgImage = buildDynamicOgImageUrl({
-    title: 'About',
-    eyebrow: identity.title,
-    subtitle: identity.tagline,
-    tags: ['frontend', 'backend', 'cloud', 'systems'],
+    title: 'Building Software with Clear, Practical Thinking',
+    eyebrow: 'Engineering',
+    subtitle: 'A closer look at work, decisions, and principles behind reliable web systems.',
+    tags: ['engineering', 'thinking', 'writing', 'systems'],
 });
 
 export const dynamic = 'force-static';
@@ -48,7 +51,19 @@ export const metadata: Metadata = createPageMetadata({
     },
 });
 
-const aboutSchema = combineSchemas(generatePersonSchema(), generateWebSiteSchema());
+const aboutSchema = combineSchemas(
+    generatePersonSchema(),
+    generateWebSiteSchema(),
+    generateWebPageSchema({
+        title: 'About',
+        description,
+        path: '/about',
+    }),
+    generateBreadcrumbSchema([
+        { name: 'Home', url: SITE_CONFIG.url },
+        { name: 'About', url: `${SITE_CONFIG.url}/about` },
+    ]),
+);
 
 /**
  * About Page - Server Component wrapper

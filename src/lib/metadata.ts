@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 
 interface IMetadataFactoryOptions {
     title: string;
+    titleAbsolute?: boolean;
     description: string;
     canonicalPath: string;
     keywords?: string[];
@@ -22,6 +23,20 @@ interface IMetadataFactoryOptions {
 
 const toAbsoluteUrl = (value: string): string => {
     return /^https?:\/\//.test(value) ? value : `${SITE_CONFIG.url}${value}`;
+};
+
+const toBrandedOgTitle = (title: string): string => {
+    const normalizedTitle = title.trim();
+
+    if (!normalizedTitle) {
+        return SITE_CONFIG.title;
+    }
+
+    if (normalizedTitle.includes(SITE_CONFIG.name) || normalizedTitle.includes(SITE_CONFIG.author.name)) {
+        return normalizedTitle;
+    }
+
+    return `${normalizedTitle} | ${SITE_CONFIG.name}`;
 };
 
 /**
@@ -53,10 +68,13 @@ export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
         : `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
 
     const metadata: Metadata = {
-        title: options.title,
+        title: options.titleAbsolute ? { absolute: options.title } : options.title,
         description: options.description,
         alternates: {
             canonical,
+            languages: {
+                [SITE_CONFIG.locale]: canonical,
+            },
         },
         ...(options.keywords && options.keywords.length > 0
             ? { keywords: options.keywords.join(', ') }
@@ -72,8 +90,10 @@ export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
     }
 
     if (options.includeSocial) {
+        const socialTitle = toBrandedOgTitle(options.title);
+
         metadata.openGraph = {
-            title: options.title,
+            title: socialTitle,
             description: options.description,
             url: canonical,
             siteName: SITE_CONFIG.name,
@@ -96,7 +116,7 @@ export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
 
         metadata.twitter = {
             card: 'summary_large_image',
-            title: options.title,
+            title: socialTitle,
             description: options.description,
             creator: SITE_CONFIG.seo.twitterHandle,
             site: SITE_CONFIG.seo.twitterHandle,

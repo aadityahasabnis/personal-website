@@ -3,20 +3,21 @@ import HeroSection from '@/components/sections/HeroSection';
 import NewsletterSection from '@/components/sections/NewsletterSection';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
-import { JsonLd, combineSchemas, generateHomeWebPageSchema, generateOrganizationSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import type { Metadata } from 'next';
 
 export const dynamic = 'force-static';
 
 // Static homepage with schema-first SEO output.
 
-const description = `Official site of ${SITE_CONFIG.author.name}. Explore articles, blogs, projects, and insights on software engineering and web systems.`;
+const description = SITE_CONFIG.description;
 
 export const metadata: Metadata = createPageMetadata({
     title: SITE_CONFIG.title,
+    titleAbsolute: true,
     description,
     canonicalPath: '/',
-    keywords: ['portfolio', 'software engineer', 'articles', 'blogs', 'projects', SITE_CONFIG.author.name],
+    keywords: [...SITE_CONFIG.seo.defaultKeywords, SITE_CONFIG.author.name],
     includeAuthor: true,
     includeSocial: true,
     socialType: 'website',
@@ -35,7 +36,15 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 const HomePage = () => {
-    const schema = combineSchemas(generateWebSiteSchema(), generateOrganizationSchema(), generateHomeWebPageSchema());
+    const schema = combineSchemas(
+        generateWebSiteSchema(),
+        generatePersonSchema(),
+        generateWebPageSchema({
+            title: SITE_CONFIG.title,
+            description,
+            path: '/',
+        }),
+    );
 
     return (
         <>
