@@ -1,5 +1,6 @@
-import { FaFacebook, FaGithub, FaInstagram, FaLinkedin, FaPinterest } from "react-icons/fa";
+import { FaFacebook, FaGithub, FaInstagram, FaLinkedin, FaPinterest, FaSpotify } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
+import { SiYoutubemusic } from "react-icons/si";
 
 // ============================================================
 // Site Configuration
@@ -40,7 +41,7 @@ export const SITE_CONFIG = {
 
   seo: {
     twitterHandle: '@aadityahasabnis',
-    ogImage: '/og-default.png',
+    ogImage: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aadizz-og-image.png-AH',
     ogLocale: 'en_US',
     feedLanguage: 'en-us',
     rssEnabled: true,
@@ -55,13 +56,16 @@ export const SITE_CONFIG = {
       'creative problem solving',
       'community building',
       'Aditya hasabnis',
-      'Aditya'
+      'Aditya',
+      'Hasabnis',
+      'Aaditya Hasabnis',
+      'Aaditya',
     ],
     preferredCrawlScopePaths: ['/', '/articles', '/notes', '/blogs', '/projects', '/about', '/contact'],
     keywordAliasCap: 2,
     websiteAlternateNames: ['Aaditya Hasabnis', 'Aditya Hasabnis'],
     search: {
-      enabled: true,
+      enabled: false,
       path: '/search',
       queryParam: 'q',
       minQueryLength: 2,
@@ -102,17 +106,9 @@ export const SOCIAL_LINKS = [
     icon: FaGithub,
   },
   {
-    id: 'X',
-    platform: 'X',
-    url: 'https://x.com/aadityahasabnis',
-    isExternal: true,
-    ariaLabel: 'Visit Aaditya Hasabnis on X',
-    icon: FaXTwitter,
-  },
-  {
     id: 'linkedin',
     platform: 'LinkedIn',
-    url: 'https://linkedin.com/in/aadityahasabnis',
+    url: 'https://linkedin.com/in/aaditya-hasabnis',
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on LinkedIn',
     icon: FaLinkedin,
@@ -126,6 +122,38 @@ export const SOCIAL_LINKS = [
     icon: FaInstagram
   },
   {
+    id: 'pinterest',
+    platform: 'Pinterest',
+    url: 'https://www.pinterest.com/aaditya_hasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on Pinterest',
+    icon: FaPinterest
+  },
+  {
+    id: 'ytmusic',
+    platform: 'YouTube Music',
+    url: 'https://music.youtube.com/@creative_northstar',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on YouTube Music',
+    icon: SiYoutubemusic
+  },
+  {
+    id: 'spotify',
+    platform: 'Spotify',
+    url: 'https://open.spotify.com/user/n24dav1km3ekgexm3dpleky38',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on Spotify',
+    icon: FaSpotify
+  },
+  {
+    id: 'X',
+    platform: 'X',
+    url: 'https://x.com/aadityahasabnis',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on X',
+    icon: FaXTwitter,
+  },
+  {
     id: 'facebook',
     platform: 'Facebook',
     url: 'https://www.facebook.com/profile.php?id=100016312514133',
@@ -133,14 +161,6 @@ export const SOCIAL_LINKS = [
     ariaLabel: 'Visit Aaditya Hasabnis on Facebook',
     icon: FaFacebook
   },
-  {
-    id: 'pinterest',
-    platform: 'Pinterest',
-    url: 'https://www.pinterest.com/aaditya_hasabnis',
-    isExternal: true,
-    ariaLabel: 'Visit Aaditya Hasabnis on Pinterest',
-    icon: FaPinterest
-  }
 ] as const;
 
 // ============================================================

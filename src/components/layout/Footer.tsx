@@ -8,6 +8,10 @@ const Footer = () => {
     const contactDescription = 'Open for freelance projects and collaboration opportunities.';
     const copyrightText = `© ${currentYear} ${SITE_CONFIG.name}. All rights reserved.`;
 
+    const PRIMARY_IDS = ['github', 'linkedin', 'X', 'instagram', 'ytmusic', 'facebook'];
+
+    const primarySocials = SOCIAL_LINKS.filter((link) => PRIMARY_IDS.includes(link.id));
+
     return (
         <footer className='relative border-border' role='contentinfo'>
             <div className='mx-auto grid gap-8 px-5 py-12 md:grid-cols-3 md:px-10 max-w-5xl'>
@@ -20,7 +24,7 @@ const Footer = () => {
                     </Link>
                     <p className='max-w-xs text-body text-muted-foreground'>{SITE_CONFIG.description}</p>
                     <nav className='flex items-center gap-3' aria-label='Footer social links'>
-                        {SOCIAL_LINKS.map((link) => {
+                        {primarySocials.map((link) => {
                             const Icon = link.icon;
 
                             return (

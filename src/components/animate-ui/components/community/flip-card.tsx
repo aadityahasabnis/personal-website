@@ -73,13 +73,13 @@ export const FlipCard = ({ name, role, username, image, tagline, links, centerCo
 
                 <div className='w-full mt-4'>
                     <p className='mb-2 text-xs font-semibold tracking-wide text-violet-400'>CONNECT</p>
-                    <div className='flex flex-wrap items-center justify-center gap-1'>
+
+                    <div className='grid grid-cols-4 gap-2 justify-center w-fit mx-auto'>
+                        {' '}
                         {links.map(({ id, url, ariaLabel }) => {
                             const Icon = SOCIAL_LINKS.find((item) => item.id === id)?.icon;
 
-                            if (!Icon) {
-                                return null;
-                            }
+                            if (!Icon) return null;
 
                             return (
                                 <a
