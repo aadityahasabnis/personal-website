@@ -1,3 +1,4 @@
+import type { OpenGraphType } from '@/constants/schemaConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import type { Metadata } from 'next';
 
@@ -9,7 +10,7 @@ interface IMetadataFactoryOptions {
     keywords?: string[];
     includeAuthor?: boolean;
     includeSocial?: boolean;
-    socialType?: 'article' | 'website';
+    socialType?: OpenGraphType;
     imageUrl?: string;
     openGraph?: {
         publishedTime?: string;
@@ -18,11 +19,22 @@ interface IMetadataFactoryOptions {
         tags?: string[];
     };
     robots?: Metadata['robots'];
-    other?: Record<string, string>;
+    other?: Metadata['other'];
 }
 
 const toAbsoluteUrl = (value: string): string => {
     return /^https?:\/\//.test(value) ? value : `${SITE_CONFIG.url}${value}`;
+};
+
+const detectMimeFromImageUrl = (url: string): string | undefined => {
+    const lower = url.toLowerCase();
+    if (lower.endsWith('.png')) return 'image/png';
+    if (lower.endsWith('.webp')) return 'image/webp';
+    if (lower.endsWith('.avif')) return 'image/avif';
+    if (lower.endsWith('.gif')) return 'image/gif';
+    if (lower.endsWith('.svg')) return 'image/svg+xml';
+    if (lower.endsWith('.jpg') || lower.endsWith('.jpeg')) return 'image/jpeg';
+    return undefined;
 };
 
 const toBrandedOgTitle = (title: string): string => {
@@ -63,9 +75,8 @@ const toBrandedOgTitle = (title: string): string => {
  */
 export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
     const canonical = toAbsoluteUrl(options.canonicalPath);
-    const image = options.imageUrl
-        ? toAbsoluteUrl(options.imageUrl)
-        : `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`;
+    const image = options.imageUrl ? toAbsoluteUrl(options.imageUrl) : toAbsoluteUrl(SITE_CONFIG.seo.ogImage);
+    const imageMime = detectMimeFromImageUrl(image);
 
     const metadata: Metadata = {
         title: options.titleAbsolute ? { absolute: options.title } : options.title,
@@ -99,7 +110,16 @@ export function createPageMetadata(options: IMetadataFactoryOptions): Metadata {
             siteName: SITE_CONFIG.name,
             locale: SITE_CONFIG.seo.ogLocale,
             type: options.socialType ?? 'website',
-            images: [{ url: image, width: 1200, height: 630, alt: options.title }],
+            images: [
+                {
+                    url: image,
+                    secureUrl: image.startsWith('https://') ? image : undefined,
+                    width: 1200,
+                    height: 630,
+                    alt: options.title,
+                    ...(imageMime ? { type: imageMime } : {}),
+                },
+            ],
             ...(options.openGraph?.publishedTime
                 ? { publishedTime: options.openGraph.publishedTime }
                 : {}),

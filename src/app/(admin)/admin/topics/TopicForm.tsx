@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import { AdminEntityForm, type IFieldConfig } from '@/components/form';
 import { getSeoFieldConfig } from '@/components/form/config/seoFields';
 import type { IFormData } from '@/components/form/form';
-import { VALIDATION_PATTERNS } from '@/constants/schemaConstants';
+import { OPEN_GRAPH_TYPES, VALIDATION_PATTERNS, isOpenGraphType } from '@/constants/schemaConstants';
 import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { slugify } from '@/lib/utils';
 import { createTopic } from '@/server/new/admin/topic/createTopic';
@@ -28,6 +28,7 @@ interface ITopicFormData extends IFormData {
     'seo.description': string;
     'seo.keywords': string[];
     'seo.ogImage': string;
+    'seo.ogType': string;
     'seo.canonicalUrl': string;
     'seo.noIndex': boolean;
     order: number;
@@ -38,13 +39,22 @@ interface ITopicFormData extends IFormData {
 // =============================================================
 
 const parseSeo = (data: ITopicFormData): ITopicSeoInput | null => {
-    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
-    if (!title && !description && !keywords && !ogImage && !canonicalUrl && !noIndex) return null;
+    const {
+        'seo.title': title,
+        'seo.description': description,
+        'seo.keywords': keywords,
+        'seo.ogImage': ogImage,
+        'seo.ogType': ogType,
+        'seo.canonicalUrl': canonicalUrl,
+        'seo.noIndex': noIndex,
+    } = data;
+    if (!title && !description && !keywords && !ogImage && !ogType && !canonicalUrl && !noIndex) return null;
     return {
         title: title || null,
         description: description || null,
         keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
         ogImage: ogImage || null,
+        ogType: ogType && isOpenGraphType(ogType) ? ogType : null,
         canonicalUrl: canonicalUrl || null,
         noIndex: Boolean(noIndex),
     };
@@ -110,7 +120,7 @@ const buildFields = (formData: ITopicFormData, isEditing: boolean): Array<IField
         ],
     },
 
-    ...getSeoFieldConfig(formData, '/articles'),
+    ...getSeoFieldConfig(formData, '/articles', OPEN_GRAPH_TYPES.WEBSITE),
 ];
 
 // =============================================================
@@ -145,6 +155,7 @@ export const TopicForm = ({ topic, isEditing = false }: ITopicFormProps) => {
         'seo.description': topic?.seo?.description ?? '',
         'seo.keywords': topic?.seo?.keywords ?? [],
         'seo.ogImage': topic?.seo?.ogImage ?? '',
+        'seo.ogType': topic?.seo?.ogType ?? OPEN_GRAPH_TYPES.WEBSITE,
         'seo.canonicalUrl': topic?.seo?.canonicalUrl ?? '',
         'seo.noIndex': topic?.seo?.noIndex ?? false,
         order: topic?.order ?? 0,

@@ -1,4 +1,4 @@
-import { type ContentType, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
+import { type ContentType, type OpenGraphType, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
 import { type ObjectId } from 'mongodb';
 import type { IAudit, IDocument, ITimestamps } from './base';
 
@@ -11,6 +11,7 @@ export interface ISeoMetadata {
     description: string | null;
     keywords: string[];
     ogImage: string | null;
+    ogType: OpenGraphType | null;
     canonicalUrl: string | null;
     noIndex: boolean;
 }

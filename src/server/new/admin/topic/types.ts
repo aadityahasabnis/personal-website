@@ -1,3 +1,4 @@
+import type { OpenGraphType } from '@/constants/schemaConstants';
 import type { ITopic } from '@/interfaces/schema';
 import type { ISeoMetadata } from '@/interfaces/schema/content';
 import type { ITableQueryParams } from '../shared';
@@ -11,6 +12,7 @@ export interface ITopicSeoInput {
     description?: string | null;
     keywords?: string[];
     ogImage?: string | null;
+    ogType?: OpenGraphType | null;
     canonicalUrl?: string | null;
     noIndex?: boolean;
 }

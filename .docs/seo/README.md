@@ -137,6 +137,10 @@ This folder contains implementation-focused SEO documentation for aadityahasabni
     - Focused implementation and debugging guide for `noindex` and `X-Robots-Tag`.
     - Emergency deindex workflow and durable exclusion patterns.
 
+34. `34-open-graph-social-cards-implementation-guide.md`
+    - Open Graph protocol mapping to project implementation rules.
+    - OG type strategy, image standards, canonical/noindex integration, and social debugger workflow.
+
 ## Usage
 
 - Start with `04-current-implementation-audit.md` for current status.
@@ -146,5 +150,6 @@ This folder contains implementation-focused SEO documentation for aadityahasabni
 - Use documents `18-24` for Search appearance optimization, AI-feature readiness, snippet/date/favicon controls, Discover/image quality, structured data governance, page experience, and optional SXG performance strategy.
 - Use documents `25-31` for advanced structured-data expansion planning, core entity schema contracts, media-rich result implementation, policy-sensitive schema guardrails, title-link controls, internationalization readiness, and schema rollout QA operations.
 - Use documents `32-33` for outbound link qualification policy and noindex/X-Robots implementation-debug operations.
+- Use document `34` for route-level Open Graph implementation, social card QA, and platform debugger verification.
 - Use examples in `examples/` for copy-ready article metadata patterns (SEO, OG, Twitter, and JSON-LD).
 - Re-run this audit whenever metadata, robots, sitemap, or structured data utilities change.

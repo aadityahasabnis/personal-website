@@ -11,6 +11,7 @@ export const buildSeo = (input?: Partial<ISeoMetadata> | null): ISeoMetadata | n
         description: input.description ?? null,
         keywords: input.keywords ?? [],
         ogImage: input.ogImage ?? null,
+        ogType: input.ogType ?? null,
         canonicalUrl: input.canonicalUrl ?? null,
         noIndex: input.noIndex ?? false,
     };

@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateArticleListSchema, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, getPublishedTopicTreeBySlug } from '@/server/new/public/content/article';
 
 // ISR: regenerate at most once per hour; on-demand revalidation via /api/revalidate
@@ -122,6 +122,8 @@ export default async function TopicPage({ params }: ITopicPageProps) {
         topicData.topic.title,
     );
     const combinedSchema = combineSchemas(
+        generatePersonSchema(),
+        generateWebSiteSchema(),
         topicSchema,
         articleListSchema,
         breadcrumbSchema,

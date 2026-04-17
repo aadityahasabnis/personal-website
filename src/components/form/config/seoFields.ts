@@ -1,3 +1,4 @@
+import { OPEN_GRAPH_TYPES, type OpenGraphType } from '@/constants/schemaConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { slugify } from '@/lib/utils';
@@ -10,6 +11,7 @@ export interface IBaseSeoFormContext {
     slug?: string;
     tags?: string[];
     coverImage?: string;
+    'seo.ogType'?: string;
 }
 
 /**
@@ -21,7 +23,8 @@ export interface IBaseSeoFormContext {
  */
 export const getSeoFieldConfig = <TFormBody extends IFormData & IBaseSeoFormContext>(
     formData: TFormBody,
-    canonicalBasePath: string
+    canonicalBasePath: string,
+    defaultOgType: OpenGraphType = OPEN_GRAPH_TYPES.WEBSITE
 ): Array<IFieldConfig<TFormBody>> => {
     // dynamically determine suggestions using the user's current input
     const derivedTitle = formData.title ? `${formData.title} — ${SITE_CONFIG.author.name}` : `SEO Title — ${SITE_CONFIG.author.name}`;
@@ -35,6 +38,7 @@ export const getSeoFieldConfig = <TFormBody extends IFormData & IBaseSeoFormCont
         subtitle: derivedOgSubtitle,
         tags: formData.tags ?? [],
     });
+    const resolvedOgType = formData['seo.ogType'] || defaultOgType;
 
     return [
         {
@@ -76,6 +80,28 @@ export const getSeoFieldConfig = <TFormBody extends IFormData & IBaseSeoFormCont
                     type: 'url',
                     hint: 'Open Graph image (1200×630). Auto-generated via /api/og when left blank; custom URL overrides it.',
                     allowCopy: true,
+                    colsize: 'full',
+                },
+                {
+                    fieldtype: 'select',
+                    name: 'seo.ogType',
+                    label: 'Open Graph Type',
+                    value: resolvedOgType,
+                    options: [
+                        { label: 'Website', value: OPEN_GRAPH_TYPES.WEBSITE },
+                        { label: 'Article', value: OPEN_GRAPH_TYPES.ARTICLE },
+                        { label: 'Video: Movie', value: OPEN_GRAPH_TYPES.VIDEO_MOVIE },
+                        { label: 'Video: Episode', value: OPEN_GRAPH_TYPES.VIDEO_EPISODE },
+                        { label: 'Video: TV Show', value: OPEN_GRAPH_TYPES.VIDEO_TV_SHOW },
+                        { label: 'Video: Other', value: OPEN_GRAPH_TYPES.VIDEO_OTHER },
+                        { label: 'Music: Song', value: OPEN_GRAPH_TYPES.MUSIC_SONG },
+                        { label: 'Music: Album', value: OPEN_GRAPH_TYPES.MUSIC_ALBUM },
+                        { label: 'Music: Playlist', value: OPEN_GRAPH_TYPES.MUSIC_PLAYLIST },
+                        { label: 'Music: Radio Station', value: OPEN_GRAPH_TYPES.MUSIC_RADIO_STATION },
+                        { label: 'Book', value: OPEN_GRAPH_TYPES.BOOK },
+                        { label: 'Profile', value: OPEN_GRAPH_TYPES.PROFILE },
+                    ],
+                    hint: 'Use article for written posts, website for generic pages, and specialized types only when content truly matches.',
                     colsize: 'full',
                 },
                 {

@@ -1,7 +1,7 @@
 {
     "name": "Aaditya Hasabnis",
-    "short_name": "Aaditya",
-    "description": "Personal site for articles, blogs, and projects",
+    "short_name": "Aadizz",
+    "description": "Web developer and writer sharing clear, practical perspectives on modern software, problem solving, and community-focused thinking.",
     "id": "/",
     "start_url": "/",
     "scope": "/",
@@ -11,7 +11,19 @@
     "display_override": ["standalone", "minimal-ui", "browser"],
     "background_color": "#ffffff",
     "theme_color": "#8b5cf6",
-    "categories": ["technology", "education", "productivity", "Writing", "software engineering", "Creative Problem Solving"],
+    "categories": [
+        "technology",
+        "education",
+        "productivity",
+        "Writing",
+        "web development",
+        "software engineering",
+        "frontend development",
+        "backend development",
+        "Creative Problem Solving",
+        "problem solving",
+        "system design"
+    ],
     "prefer_related_applications": false,
     "icons": [
         {

@@ -13,8 +13,13 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
  */
 const robots = (): MetadataRoute.Robots => {
     const baseUrl = SITE_CONFIG.url;
-    const allowPaths: string | string[] = SITE_CONFIG.seo.search.enabled ? ['/', SITE_CONFIG.seo.search.path] : '/';
-    const protectedPaths = ['/admin', '/admin/', '/api', '/api/', '/_next/', '/private/'];
+    const allowPaths: string[] = [
+        '/',
+        '/api/og',
+        '/api/og/',
+        ...(SITE_CONFIG.seo.search.enabled ? [SITE_CONFIG.seo.search.path] : []),
+    ];
+    const protectedPaths = ['/admin', '/admin/', '/api', '/api/', '/private/'];
 
     const sitemapEntries = [
         `${baseUrl}/sitemap.xml`,

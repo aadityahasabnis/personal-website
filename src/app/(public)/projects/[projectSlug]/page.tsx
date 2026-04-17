@@ -8,7 +8,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateProjectSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedProjectByPath, getPublishedProjectStaticPaths, type IPublicProjectDetail } from '@/server/new/public/content/project';
 
 interface IProjectDetailPageProps {
@@ -47,26 +47,50 @@ export const generateMetadata = async ({ params }: IProjectDetailPageProps): Pro
     const keywords = Array.from(
         new Set([...(project.tags ?? []), ...(project.techStack ?? []), 'web development', 'software engineering', 'system design', 'problem solving', SITE_CONFIG.author.name]),
     );
+    const articleTags = Array.from(new Set([...(project.tags ?? []), ...(project.seo?.keywords ?? [])]));
     const publishedTime = project.publishedAt;
+    const ogType = project.seo?.ogType ?? 'article';
+    const articleMeta =
+        ogType === 'article'
+            ? {
+                  'article:author': SITE_CONFIG.author.name,
+                  'article:publisher': SITE_CONFIG.url,
+                  'article:section': 'Project',
+                  ...(articleTags.length > 0 ? { 'article:tag': articleTags } : {}),
+                  ...(publishedTime ? { 'article:published_time': publishedTime } : {}),
+                  ...(project.updatedAt ? { 'article:modified_time': project.updatedAt } : {}),
+              }
+            : {};
 
     return createPageMetadata({
         title,
         description,
-        canonicalPath: `/projects/${projectSlug}`,
+        canonicalPath: project.seo?.canonicalUrl ?? `/projects/${projectSlug}`,
         keywords,
         includeAuthor: true,
         includeSocial: true,
-        socialType: 'article',
+        socialType: ogType,
         imageUrl: image,
         openGraph: {
             ...(publishedTime ? { publishedTime } : {}),
             modifiedTime: project.updatedAt,
             authors: [SITE_CONFIG.author.name],
-            tags: keywords,
+            tags: articleTags,
         },
         robots: {
-            index: true,
+            index: !project.seo?.noIndex,
             follow: true,
+            googleBot: {
+                index: !project.seo?.noIndex,
+                follow: true,
+                'max-video-preview': -1,
+                'max-image-preview': 'large',
+                'max-snippet': -1,
+            },
+        },
+        other: {
+            ...articleMeta,
+            ...(project.updatedAt ? { 'og:updated_time': project.updatedAt } : {}),
         },
     });
 };
@@ -88,6 +112,19 @@ export default async function ProjectDetailPage({ params }: IProjectDetailPagePr
             title: project.title,
             description: project.description,
             path: `/projects/${projectSlug}`,
+        }),
+        generateProjectSchema({
+            slug: projectSlug,
+            title: project.title,
+            description: project.description,
+            body: project.body,
+            tags: project.tags,
+            techStack: project.techStack,
+            imageUrl: project.seo?.ogImage ?? project.coverImage,
+            publishedAt: project.publishedAt,
+            updatedAt: project.updatedAt,
+            liveUrl: project.liveUrl,
+            githubUrl: project.githubUrl,
         }),
         generateBreadcrumbSchema([
             { name: 'Home', url: SITE_CONFIG.url },

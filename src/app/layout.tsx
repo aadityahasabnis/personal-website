@@ -86,7 +86,7 @@ export const metadata: Metadata = {
         shortcut: '/favicon-16x16.png',
         apple: '/apple-touch-icon.png',
     },
-    manifest: '/site.webmanifest',
+    manifest: '/manifest.webmanifest',
     alternates: {
         ...(SITE_CONFIG.seo.rssEnabled
             ? {

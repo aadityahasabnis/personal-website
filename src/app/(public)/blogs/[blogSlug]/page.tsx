@@ -8,7 +8,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBlogPostingSchema, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedBlogByPath, getPublishedBlogStaticPaths, type IPublicBlogDetail } from '@/server/new/public/content/blog';
 
 interface IBlogDetailPageProps {
@@ -46,26 +46,50 @@ export const generateMetadata = async ({ params }: IBlogDetailPageProps): Promis
         });
     const baseKeywords = ['writing', 'personal essays', 'ideas and thinking', 'life reflections', 'creative writing', 'self growth', SITE_CONFIG.author.name];
     const keywords = Array.from(new Set([...(blog.tags ?? []), ...baseKeywords]));
+    const articleTags = Array.from(new Set([...(blog.tags ?? []), ...(blog.seo?.keywords ?? [])]));
     const publishedTime = blog.publishedAt;
+    const ogType = blog.seo?.ogType ?? 'article';
+    const articleMeta =
+        ogType === 'article'
+            ? {
+                  'article:author': SITE_CONFIG.author.name,
+                  'article:publisher': SITE_CONFIG.url,
+                  'article:section': 'Blog',
+                  ...(articleTags.length > 0 ? { 'article:tag': articleTags } : {}),
+                  ...(publishedTime ? { 'article:published_time': publishedTime } : {}),
+                  ...(blog.updatedAt ? { 'article:modified_time': blog.updatedAt } : {}),
+              }
+            : {};
 
     return createPageMetadata({
         title,
         description,
-        canonicalPath: `/blogs/${blogSlug}`,
+        canonicalPath: blog.seo?.canonicalUrl ?? `/blogs/${blogSlug}`,
         keywords,
         includeAuthor: true,
         includeSocial: true,
-        socialType: 'article',
+        socialType: ogType,
         imageUrl: image,
         openGraph: {
             ...(publishedTime ? { publishedTime } : {}),
             modifiedTime: blog.updatedAt,
             authors: [SITE_CONFIG.author.name],
-            tags: keywords,
+            tags: articleTags,
         },
         robots: {
-            index: true,
+            index: !blog.seo?.noIndex,
             follow: true,
+            googleBot: {
+                index: !blog.seo?.noIndex,
+                follow: true,
+                'max-video-preview': -1,
+                'max-image-preview': 'large',
+                'max-snippet': -1,
+            },
+        },
+        other: {
+            ...articleMeta,
+            ...(blog.updatedAt ? { 'og:updated_time': blog.updatedAt } : {}),
         },
     });
 };
@@ -87,6 +111,16 @@ export default async function BlogDetailPage({ params }: IBlogDetailPageProps) {
             title: blog.title,
             description: blog.description,
             path: `/blogs/${blogSlug}`,
+        }),
+        generateBlogPostingSchema({
+            slug: blogSlug,
+            title: blog.title,
+            description: blog.description,
+            body: blog.body,
+            tags: blog.tags,
+            imageUrl: blog.seo?.ogImage ?? blog.coverImage,
+            publishedAt: blog.publishedAt,
+            updatedAt: blog.updatedAt,
         }),
         generateBreadcrumbSchema([
             { name: 'Home', url: SITE_CONFIG.url },

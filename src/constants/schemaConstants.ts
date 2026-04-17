@@ -63,6 +63,29 @@ export const PUBLISH_STATUS = { DRAFT: 'draft', PUBLISHED: 'published', ARCHIVED
 export type PublishStatusType = (typeof PUBLISH_STATUS)[keyof typeof PUBLISH_STATUS];
 
 // ============================================================
+// Open Graph Types
+// ============================================================
+
+export const OPEN_GRAPH_TYPES = {
+  WEBSITE: 'website',
+  ARTICLE: 'article',
+  VIDEO_MOVIE: 'video.movie',
+  VIDEO_EPISODE: 'video.episode',
+  VIDEO_TV_SHOW: 'video.tv_show',
+  VIDEO_OTHER: 'video.other',
+  MUSIC_SONG: 'music.song',
+  MUSIC_ALBUM: 'music.album',
+  MUSIC_PLAYLIST: 'music.playlist',
+  MUSIC_RADIO_STATION: 'music.radio_station',
+  BOOK: 'book',
+  PROFILE: 'profile',
+} as const;
+
+export type OpenGraphType = (typeof OPEN_GRAPH_TYPES)[keyof typeof OPEN_GRAPH_TYPES];
+export const OPEN_GRAPH_TYPE_VALUES: readonly OpenGraphType[] = Object.values(OPEN_GRAPH_TYPES);
+export const isOpenGraphType = (value: string): value is OpenGraphType => OPEN_GRAPH_TYPE_VALUES.includes(value as OpenGraphType);
+
+// ============================================================
 // Schema Limits
 // ============================================================
 

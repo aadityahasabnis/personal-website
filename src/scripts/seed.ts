@@ -24,7 +24,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 import { MEDIA_FILE_TYPES, MEDIA_FOLDERS } from '@/constants/mediaConstants';
-import { CONTACT_STATUS, CONTENT_TYPES, PROJECT_STATUS, PUBLISH_STATUS } from '@/constants/schemaConstants';
+import { CONTACT_STATUS, CONTENT_TYPES, OPEN_GRAPH_TYPES, PROJECT_STATUS, PUBLISH_STATUS } from '@/constants/schemaConstants';
 import Admin from '@/server/models/Admin';
 import Comment from '@/server/models/Comment';
 import Contact from '@/server/models/Contact';
@@ -399,6 +399,7 @@ const buildSeo = (title: string, description: string, keywords: string[], ogImag
     description,
     keywords,
     ogImage,
+    ogType: OPEN_GRAPH_TYPES.ARTICLE,
     canonicalUrl: null,
     noIndex: false,
 });

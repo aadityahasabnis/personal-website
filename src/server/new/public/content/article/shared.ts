@@ -1,4 +1,4 @@
-import { CONTENT_TYPES } from '@/constants/schemaConstants';
+import { CONTENT_TYPES, isOpenGraphType } from '@/constants/schemaConstants';
 import Content from '@/server/models/Content';
 import Subtopic from '@/server/models/Subtopic';
 import Topic from '@/server/models/Topic';
@@ -61,6 +61,7 @@ export interface IArticleDetailLean {
         description?: string | null;
         keywords?: string[];
         ogImage?: string | null;
+        ogType?: string | null;
         canonicalUrl?: string | null;
         noIndex?: boolean;
     } | null;
@@ -169,6 +170,7 @@ export const toPublicArticleDetail = (
               description: article.seo.description ?? null,
               keywords: article.seo.keywords ?? [],
               ogImage: article.seo.ogImage ?? null,
+              ogType: article.seo.ogType && isOpenGraphType(article.seo.ogType) ? article.seo.ogType : null,
               canonicalUrl: article.seo.canonicalUrl ?? null,
               noIndex: Boolean(article.seo.noIndex),
           }

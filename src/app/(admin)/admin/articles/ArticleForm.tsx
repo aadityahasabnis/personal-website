@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AdminEntityForm, type IFieldConfig, type IStepConfig } from '@/components/form';
 import { getSeoFieldConfig } from '@/components/form/config/seoFields';
 import type { IFormData, IHandleChange } from '@/components/form/form';
-import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
+import { OPEN_GRAPH_TYPES, PUBLISH_STATUS, isOpenGraphType, type PublishStatusType } from '@/constants/schemaConstants';
 import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { useActionQuery } from '@/hooks/server/useActionQuery';
 import { slugify } from '@/lib/utils';
@@ -36,6 +36,7 @@ interface IArticleFormData extends IFormData {
     'seo.description': string;
     'seo.keywords': string[];
     'seo.ogImage': string;
+    'seo.ogType': string;
     'seo.canonicalUrl': string;
     'seo.noIndex': boolean;
 }
@@ -61,13 +62,24 @@ const estimateReadingTime = (html: string): number => {
 type IArticleSeoPayload = Exclude<IArticleCreateInput['seo'], undefined>;
 
 const parseSeo = (data: IArticleFormData): IArticleSeoPayload => {
-    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
-    if (!title && !description && !keywords?.length && !ogImage && !canonicalUrl && !noIndex) return null;
+    const {
+        'seo.title': title,
+        'seo.description': description,
+        'seo.keywords': keywords,
+        'seo.ogImage': ogImage,
+        'seo.ogType': ogType,
+        'seo.canonicalUrl': canonicalUrl,
+        'seo.noIndex': noIndex,
+    } = data;
+    const resolvedOgType = ogType && isOpenGraphType(ogType) ? ogType : OPEN_GRAPH_TYPES.ARTICLE;
+    const hasSeoOverrides = Boolean(title || description || keywords?.length || ogImage || canonicalUrl || noIndex || resolvedOgType !== OPEN_GRAPH_TYPES.ARTICLE);
+    if (!hasSeoOverrides) return null;
     return {
         title: title || null,
         description: description || null,
         keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
         ogImage: ogImage || null,
+        ogType: resolvedOgType,
         canonicalUrl: canonicalUrl || null,
         noIndex: Boolean(noIndex),
     };
@@ -228,7 +240,7 @@ const buildContentSeoFields = (formData: IArticleFormData): Array<IFieldConfig<I
             },
         ],
     },
-    ...getSeoFieldConfig(formData, '/articles'),
+    ...getSeoFieldConfig(formData, '/articles', OPEN_GRAPH_TYPES.ARTICLE),
 ];
 
 // =============================================================
@@ -295,6 +307,7 @@ export const ArticleForm = ({ article, isEditing = false }: IArticleFormProps): 
         'seo.description': article?.seo?.description ?? '',
         'seo.keywords': article?.seo?.keywords ?? [],
         'seo.ogImage': article?.seo?.ogImage ?? '',
+        'seo.ogType': article?.seo?.ogType ?? OPEN_GRAPH_TYPES.ARTICLE,
         'seo.canonicalUrl': article?.seo?.canonicalUrl ?? '',
         'seo.noIndex': article?.seo?.noIndex ?? false,
     };

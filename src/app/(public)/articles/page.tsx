@@ -7,7 +7,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateBreadcrumbSchema, generateWebPageSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedArticleTopics, type IPublicTopicSummary } from '@/server/new/public/content/article';
 import { FileText, StarIcon } from 'lucide-react';
 
@@ -93,6 +93,8 @@ export default async function Page() {
     };
 
     const combinedSchema = combineSchemas(
+        generatePersonSchema(),
+        generateWebSiteSchema(),
         breadcrumbSchema,
         collectionSchema,
         generateWebPageSchema({

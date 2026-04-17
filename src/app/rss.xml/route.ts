@@ -21,6 +21,10 @@ function buildRfc822Date(date: Date | string | undefined | null): string {
     return new Date(date).toUTCString();
 }
 
+function toAbsoluteUrl(value: string): string {
+    return /^https?:\/\//.test(value) ? value : `${SITE_CONFIG.url}${value}`;
+}
+
 interface IRssArticle {
     topicSlug: string;
     articleSlug: string;
@@ -128,7 +132,7 @@ export async function GET(): Promise<Response> {
     <ttl>60</ttl>
     <atom:link href="${SITE_CONFIG.url}/rss.xml" rel="self" type="application/rss+xml" />
     <image>
-      <url>${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}</url>
+    <url>${toAbsoluteUrl(SITE_CONFIG.seo.ogImage)}</url>
       <title>${escapeXml(SITE_CONFIG.name)}</title>
       <link>${SITE_CONFIG.url}</link>
     </image>

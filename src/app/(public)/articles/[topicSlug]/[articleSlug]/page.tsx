@@ -10,7 +10,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
-import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
+import { JsonLd, combineSchemas, generateArticleSchema, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
 import { getPublishedArticleByPath, getPublishedArticleStaticPaths, type IPublicArticleDetail } from '@/server/new/public/content/article';
 
 export const revalidate = 3600;
@@ -61,27 +61,28 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
             SITE_CONFIG.author.name,
         ]),
     );
+    const articleTags = Array.from(new Set([...(article.tags ?? []), ...(article.seo?.keywords ?? [])]));
 
     return createPageMetadata({
         title,
         description,
-        canonicalPath: `/articles/${topicSlug}/${articleSlug}`,
+        canonicalPath: article.seo?.canonicalUrl ?? `/articles/${topicSlug}/${articleSlug}`,
         keywords,
         includeAuthor: true,
         includeSocial: true,
-        socialType: 'article',
+        socialType: article.seo?.ogType ?? 'article',
         imageUrl: image,
         openGraph: {
             ...(article.publishedAt ? { publishedTime: article.publishedAt } : {}),
             modifiedTime: article.updatedAt,
             authors: [SITE_CONFIG.author.name],
-            tags: keywords,
+            tags: articleTags,
         },
         robots: {
-            index: true,
+            index: !article.seo?.noIndex,
             follow: true,
             googleBot: {
-                index: true,
+                index: !article.seo?.noIndex,
                 follow: true,
                 'max-video-preview': -1,
                 'max-image-preview': 'large',
@@ -90,10 +91,12 @@ export const generateMetadata = async ({ params }: IArticlePageProps): Promise<M
         },
         other: {
             'article:author': SITE_CONFIG.author.name,
+            'article:publisher': SITE_CONFIG.url,
             'article:section': article.topic.title,
+            ...(articleTags.length > 0 ? { 'article:tag': articleTags } : {}),
             ...(article.publishedAt && { 'article:published_time': article.publishedAt }),
             ...(article.updatedAt && { 'article:modified_time': article.updatedAt }),
-            'article:tag': keywords.join(', '),
+            ...(article.updatedAt && { 'og:updated_time': article.updatedAt }),
             'twitter:label1': 'Reading time',
             'twitter:data1': `${article.readingTime} min read`,
             'twitter:label2': 'Written by',
@@ -118,37 +121,22 @@ const ArticlePage = async ({ params }: IArticlePageProps) => {
         { label: article.title, href: `/articles/${topicSlug}/${articleSlug}` },
     ];
 
-    const articleUrl = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
-    const schemaKeywords = Array.from(new Set([...article.tags, article.topic.title, ...(article.subtopic ? [article.subtopic.title] : []), SITE_CONFIG.author.name]));
-    const articleBodyExcerpt = article.body
-        ? article.body
-              .replace(/<[^>]+>/g, ' ')
-              .replace(/\s+/g, ' ')
-              .trim()
-              .slice(0, 5000)
-        : undefined;
-
-    const articleSchema = {
-        '@type': ['TechArticle', 'BlogPosting'],
-        '@id': articleUrl,
-        url: articleUrl,
-        headline: article.title,
-        description: article.description,
-        image: article.seo?.ogImage ?? article.coverImage ?? `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`,
-        author: {
-            '@id': `${SITE_CONFIG.url}/#person`,
+    const articleSchema = generateArticleSchema({
+        article: {
+            title: article.title,
+            description: article.description,
+            body: article.body,
+            tags: article.tags,
+            coverImage: article.seo?.ogImage ?? article.coverImage,
+            readingTime: article.readingTime,
+            publishedAt: article.publishedAt,
+            updatedAt: article.updatedAt,
         },
-        publisher: {
-            '@id': `${SITE_CONFIG.url}/#person`,
-        },
-        ...(article.publishedAt ? { datePublished: article.publishedAt } : {}),
-        dateModified: article.updatedAt,
-        articleSection: article.topic.title,
-        keywords: schemaKeywords.join(', '),
-        ...(articleBodyExcerpt ? { articleBody: articleBodyExcerpt } : {}),
-        inLanguage: 'en-US',
-        isAccessibleForFree: true,
-    };
+        topicSlug,
+        articleSlug,
+        topicTitle: article.topic.title,
+        ...(article.subtopic ? { subtopicTitle: article.subtopic.title } : {}),
+    });
 
     const combinedSchema = combineSchemas(
         generatePersonSchema(),

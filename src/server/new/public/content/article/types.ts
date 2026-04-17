@@ -1,3 +1,4 @@
+import type { OpenGraphType } from '@/constants/schemaConstants';
 import type { IPublicListQuery } from '../../shared';
 
 export interface IPublicTopicSummary {
@@ -67,6 +68,7 @@ export interface IPublicArticleDetail {
         description: string | null;
         keywords: string[];
         ogImage: string | null;
+        ogType: OpenGraphType | null;
         canonicalUrl: string | null;
         noIndex: boolean;
     } | null;

@@ -1,7 +1,13 @@
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
-import type { IArticle, ITopic } from '@/interfaces/schema';
+import type { ITopic } from '@/interfaces/schema';
 
 const toUnique = (values: readonly string[]): string[] => Array.from(new Set(values.filter(Boolean)));
+
+const toAbsoluteUrl = (value: string): string => {
+    return /^https?:\/\//.test(value) ? value : `${SITE_CONFIG.url}${value}`;
+};
+
+const getDefaultOgImage = (): string => toAbsoluteUrl(SITE_CONFIG.seo.ogImage);
 
 const getAuthorAlternateNames = (): string[] => {
     return toUnique([...SITE_CONFIG.author.aliasesExact, SITE_CONFIG.shortName]);
@@ -44,7 +50,7 @@ export function generatePersonSchema() {
         familyName: SITE_CONFIG.author.familyName,
         ...(alternateNames.length > 0 ? { alternateName: alternateNames } : {}),
         url: SITE_CONFIG.url,
-        image: `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`,
+        image: getDefaultOgImage(),
         email: SITE_CONFIG.author.email,
         description: SITE_CONFIG.author.bio,
         sameAs,
@@ -124,7 +130,16 @@ export function generateWebPageSchema({ title, description, path }: IGenerateWeb
 // ===== ARTICLE SCHEMAS =====
 
 interface IArticleSchemaProps {
-    article: IArticle;
+    article: {
+        title: string;
+        description: string;
+        body: string;
+        tags: string[];
+        coverImage: string | null;
+        readingTime: number;
+        publishedAt: Date | string | null;
+        updatedAt: Date | string | null;
+    };
     topicSlug: string;
     articleSlug: string;
     topicTitle: string;
@@ -136,6 +151,17 @@ interface IArticleSchemaProps {
 const toIsoString = (value: Date | string | undefined | null): string | undefined => {
     if (!value) return undefined;
     return new Date(value).toISOString();
+};
+
+const toWordCount = (body: string | undefined): number | undefined => {
+    if (!body) return undefined;
+    const cleanBody = body
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    if (!cleanBody) return undefined;
+    return cleanBody.split(' ').length;
 };
 
 const toArticleBodyExcerpt = (body: string | undefined): string | undefined => {
@@ -158,6 +184,9 @@ const toArticleBodyExcerpt = (body: string | undefined): string | undefined => {
 export function generateArticleSchema({ article, topicSlug, articleSlug, topicTitle, subtopicTitle, commentCount = 0, relatedArticles = [] }: IArticleSchemaProps) {
     const url = `${SITE_CONFIG.url}/articles/${topicSlug}/${articleSlug}`;
     const articleBodyExcerpt = toArticleBodyExcerpt(article.body);
+    const wordCount = toWordCount(article.body);
+    const publishedAt = toIsoString(article.publishedAt);
+    const modifiedAt = toIsoString(article.updatedAt);
 
     const keywords = [topicTitle, ...(subtopicTitle ? [subtopicTitle] : []), ...(article.tags || [])];
 
@@ -168,24 +197,30 @@ export function generateArticleSchema({ article, topicSlug, articleSlug, topicTi
         url,
         mainEntityOfPage: {
             '@type': 'WebPage',
-            '@id': url,
+            '@id': `${url}#webpage`,
         },
         headline: article.title,
         description: article.description,
-        image: article.coverImage || `${SITE_CONFIG.url}${SITE_CONFIG.seo.ogImage}`,
+        image: article.coverImage ? toAbsoluteUrl(article.coverImage) : getDefaultOgImage(),
         author: {
+            '@type': 'Person',
             '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
         },
         publisher: {
+            '@type': 'Person',
             '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
         },
-        datePublished: toIsoString(article.publishedAt),
-        dateModified: toIsoString(article.updatedAt),
+        ...(publishedAt ? { datePublished: publishedAt } : {}),
+        ...(modifiedAt ? { dateModified: modifiedAt } : {}),
         articleSection: topicTitle,
         keywords: keywords.join(', '),
         ...(articleBodyExcerpt ? { articleBody: articleBodyExcerpt } : {}),
-        wordCount: article.body ? article.body.split(/\s+/).length : 0,
-        timeRequired: `PT${article.readingTime || 5}M`,
+        ...(wordCount ? { wordCount } : {}),
+        ...(article.readingTime > 0 ? { timeRequired: `PT${article.readingTime}M` } : {}),
         inLanguage: 'en-US',
         isAccessibleForFree: true,
     };
@@ -206,6 +241,114 @@ export function generateArticleSchema({ article, topicSlug, articleSlug, topicTi
     }
 
     return schema;
+}
+
+interface IGenerateBlogPostingSchemaOptions {
+    slug: string;
+    title: string;
+    description: string;
+    body?: string;
+    tags?: string[];
+    imageUrl?: string | null;
+    publishedAt?: string | null;
+    updatedAt?: string | null;
+}
+
+export function generateBlogPostingSchema(options: IGenerateBlogPostingSchemaOptions) {
+    const url = `${SITE_CONFIG.url}/blogs/${options.slug}`;
+    const articleBodyExcerpt = toArticleBodyExcerpt(options.body);
+    const wordCount = toWordCount(options.body);
+    const publishedAt = toIsoString(options.publishedAt);
+    const modifiedAt = toIsoString(options.updatedAt);
+
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        '@id': url,
+        url,
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${url}#webpage`,
+        },
+        headline: options.title,
+        description: options.description,
+        image: options.imageUrl ? toAbsoluteUrl(options.imageUrl) : getDefaultOgImage(),
+        author: {
+            '@type': 'Person',
+            '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
+        },
+        publisher: {
+            '@type': 'Person',
+            '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
+        },
+        ...(publishedAt ? { datePublished: publishedAt } : {}),
+        ...(modifiedAt ? { dateModified: modifiedAt } : {}),
+        ...(options.tags && options.tags.length > 0 ? { keywords: options.tags.join(', ') } : {}),
+        ...(articleBodyExcerpt ? { articleBody: articleBodyExcerpt } : {}),
+        ...(wordCount ? { wordCount } : {}),
+        inLanguage: 'en-US',
+        isAccessibleForFree: true,
+    };
+}
+
+interface IGenerateProjectSchemaOptions {
+    slug: string;
+    title: string;
+    description: string;
+    body?: string;
+    tags?: string[];
+    techStack?: string[];
+    imageUrl?: string | null;
+    publishedAt?: string | null;
+    updatedAt?: string | null;
+    liveUrl?: string | null;
+    githubUrl?: string | null;
+}
+
+export function generateProjectSchema(options: IGenerateProjectSchemaOptions) {
+    const url = `${SITE_CONFIG.url}/projects/${options.slug}`;
+    const articleBodyExcerpt = toArticleBodyExcerpt(options.body);
+    const modifiedAt = toIsoString(options.updatedAt);
+    const publishedAt = toIsoString(options.publishedAt);
+    const softwareKeywords = [...(options.tags ?? []), ...(options.techStack ?? [])];
+
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareSourceCode',
+        '@id': url,
+        url,
+        mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': `${url}#webpage`,
+        },
+        name: options.title,
+        description: options.description,
+        image: options.imageUrl ? toAbsoluteUrl(options.imageUrl) : getDefaultOgImage(),
+        author: {
+            '@type': 'Person',
+            '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
+        },
+        publisher: {
+            '@type': 'Person',
+            '@id': `${SITE_CONFIG.url}/#person`,
+            name: SITE_CONFIG.author.name,
+            url: SITE_CONFIG.url,
+        },
+        ...(publishedAt ? { datePublished: publishedAt } : {}),
+        ...(modifiedAt ? { dateModified: modifiedAt } : {}),
+        ...(options.liveUrl ? { codeSampleType: 'full', targetProduct: toAbsoluteUrl(options.liveUrl) } : {}),
+        ...(options.githubUrl ? { codeRepository: options.githubUrl } : {}),
+        ...(softwareKeywords.length > 0 ? { keywords: softwareKeywords.join(', ') } : {}),
+        ...(options.techStack && options.techStack.length > 0 ? { programmingLanguage: options.techStack } : {}),
+        ...(articleBodyExcerpt ? { text: articleBodyExcerpt } : {}),
+        inLanguage: 'en-US',
+    };
 }
 
 /**

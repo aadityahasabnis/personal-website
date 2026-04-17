@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { AdminEntityForm, type IFieldConfig, type IStepConfig } from '@/components/form';
 import { getSeoFieldConfig } from '@/components/form/config/seoFields';
 import type { IFormData, IHandleChange } from '@/components/form/form';
-import { PROJECT_STATUS, PUBLISH_STATUS, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
+import { OPEN_GRAPH_TYPES, PROJECT_STATUS, PUBLISH_STATUS, isOpenGraphType, type ProjectStatusType, type PublishStatusType } from '@/constants/schemaConstants';
 import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { slugify } from '@/lib/utils';
 import { createProject } from '@/server/new/admin/content/project/createProject';
@@ -44,6 +44,7 @@ interface IProjectFormData extends IFormData {
     'seo.description': string;
     'seo.keywords': string[];
     'seo.ogImage': string;
+    'seo.ogType': string;
     'seo.canonicalUrl': string;
     'seo.noIndex': boolean;
 }
@@ -69,13 +70,24 @@ const estimateReadingTime = (html: string): number => {
 type IProjectSeoPayload = Exclude<IProjectCreateInput['seo'], undefined>;
 
 const parseSeo = (data: IProjectFormData): IProjectSeoPayload => {
-    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
-    if (!title && !description && !keywords?.length && !ogImage && !canonicalUrl && !noIndex) return null;
+    const {
+        'seo.title': title,
+        'seo.description': description,
+        'seo.keywords': keywords,
+        'seo.ogImage': ogImage,
+        'seo.ogType': ogType,
+        'seo.canonicalUrl': canonicalUrl,
+        'seo.noIndex': noIndex,
+    } = data;
+    const resolvedOgType = ogType && isOpenGraphType(ogType) ? ogType : OPEN_GRAPH_TYPES.ARTICLE;
+    const hasSeoOverrides = Boolean(title || description || keywords?.length || ogImage || canonicalUrl || noIndex || resolvedOgType !== OPEN_GRAPH_TYPES.ARTICLE);
+    if (!hasSeoOverrides) return null;
     return {
         title: title || null,
         description: description || null,
         keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
         ogImage: ogImage || null,
+        ogType: resolvedOgType,
         canonicalUrl: canonicalUrl || null,
         noIndex: Boolean(noIndex),
     };
@@ -302,7 +314,7 @@ const buildContentSeoFields = (formData: IProjectFormData): Array<IFieldConfig<I
             },
         ],
     },
-    ...getSeoFieldConfig(formData, '/projects'),
+    ...getSeoFieldConfig(formData, '/projects', OPEN_GRAPH_TYPES.ARTICLE),
 ];
 
 // =============================================================
@@ -367,6 +379,7 @@ export const ProjectForm = ({ project, isEditing = false }: IProjectFormProps): 
         'seo.description': project?.seo?.description ?? '',
         'seo.keywords': project?.seo?.keywords ?? [],
         'seo.ogImage': project?.seo?.ogImage ?? '',
+        'seo.ogType': project?.seo?.ogType ?? OPEN_GRAPH_TYPES.ARTICLE,
         'seo.canonicalUrl': project?.seo?.canonicalUrl ?? '',
         'seo.noIndex': project?.seo?.noIndex ?? false,
     };

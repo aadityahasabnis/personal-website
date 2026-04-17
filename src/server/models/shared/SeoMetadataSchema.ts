@@ -1,4 +1,4 @@
-import { SCHEMA_LIMITS } from '@/constants/schemaConstants';
+import { OPEN_GRAPH_TYPE_VALUES, SCHEMA_LIMITS } from '@/constants/schemaConstants';
 import type { ISeoMetadata } from '@/interfaces/schema/content';
 import { Schema } from 'mongoose';
 
@@ -28,6 +28,12 @@ export const SeoMetadataSchema = new Schema<ISeoMetadata>(
         ogImage: {
             type: String,
             default: null,
+            trim: true,
+        },
+        ogType: {
+            type: String,
+            default: null,
+            enum: [...OPEN_GRAPH_TYPE_VALUES, null],
             trim: true,
         },
         canonicalUrl: {

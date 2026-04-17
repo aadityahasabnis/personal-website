@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { AdminEntityForm, type IFieldConfig, type IStepConfig } from '@/components/form';
 import { getSeoFieldConfig } from '@/components/form/config/seoFields';
 import type { IFormData, IHandleChange } from '@/components/form/form';
-import { PUBLISH_STATUS, type PublishStatusType } from '@/constants/schemaConstants';
+import { OPEN_GRAPH_TYPES, PUBLISH_STATUS, isOpenGraphType, type PublishStatusType } from '@/constants/schemaConstants';
 import { useFormOperations, useSnackbar } from '@/hooks/form';
 import { slugify } from '@/lib/utils';
 import { createBlog } from '@/server/new/admin/content/blog/createBlog';
@@ -31,6 +31,7 @@ interface IBlogFormData extends IFormData {
     'seo.description': string;
     'seo.keywords': string[];
     'seo.ogImage': string;
+    'seo.ogType': string;
     'seo.canonicalUrl': string;
     'seo.noIndex': boolean;
 }
@@ -56,13 +57,24 @@ const estimateReadingTime = (html: string): number => {
 type IBlogSeoPayload = Exclude<IBlogCreateInput['seo'], undefined>;
 
 const parseSeo = (data: IBlogFormData): IBlogSeoPayload => {
-    const { 'seo.title': title, 'seo.description': description, 'seo.keywords': keywords, 'seo.ogImage': ogImage, 'seo.canonicalUrl': canonicalUrl, 'seo.noIndex': noIndex } = data;
-    if (!title && !description && !keywords?.length && !ogImage && !canonicalUrl && !noIndex) return null;
+    const {
+        'seo.title': title,
+        'seo.description': description,
+        'seo.keywords': keywords,
+        'seo.ogImage': ogImage,
+        'seo.ogType': ogType,
+        'seo.canonicalUrl': canonicalUrl,
+        'seo.noIndex': noIndex,
+    } = data;
+    const resolvedOgType = ogType && isOpenGraphType(ogType) ? ogType : OPEN_GRAPH_TYPES.ARTICLE;
+    const hasSeoOverrides = Boolean(title || description || keywords?.length || ogImage || canonicalUrl || noIndex || resolvedOgType !== OPEN_GRAPH_TYPES.ARTICLE);
+    if (!hasSeoOverrides) return null;
     return {
         title: title || null,
         description: description || null,
         keywords: keywords && keywords.length > 0 ? keywords.filter(Boolean) : [],
         ogImage: ogImage || null,
+        ogType: resolvedOgType,
         canonicalUrl: canonicalUrl || null,
         noIndex: Boolean(noIndex),
     };
@@ -182,7 +194,7 @@ const buildContentSeoFields = (formData: IBlogFormData): Array<IFieldConfig<IBlo
             },
         ],
     },
-    ...getSeoFieldConfig(formData, '/blog'),
+    ...getSeoFieldConfig(formData, '/blogs', OPEN_GRAPH_TYPES.ARTICLE),
 ];
 
 // =============================================================
@@ -229,6 +241,7 @@ export const BlogForm = ({ blog, isEditing = false }: IBlogFormProps): React.Rea
         'seo.description': blog?.seo?.description ?? '',
         'seo.keywords': blog?.seo?.keywords ?? [],
         'seo.ogImage': blog?.seo?.ogImage ?? '',
+        'seo.ogType': blog?.seo?.ogType ?? OPEN_GRAPH_TYPES.ARTICLE,
         'seo.canonicalUrl': blog?.seo?.canonicalUrl ?? '',
         'seo.noIndex': blog?.seo?.noIndex ?? false,
     };
