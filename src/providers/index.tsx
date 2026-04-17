@@ -1,6 +1,7 @@
 'use client';
 
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { type ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { DialogProvider } from './DialogProvider';
@@ -10,7 +11,6 @@ import { ThemeProvider } from './ThemeProvider';
 interface IProvidersProps {
     children: ReactNode;
 }
-
 /**
  * Root providers wrapper
  *
@@ -23,6 +23,7 @@ export const Providers = ({ children }: IProvidersProps) => {
                 <LenisProvider>
                     <DialogProvider>
                         <Analytics />
+                        <SpeedInsights />
                         {children}
                         <Toaster
                             position='bottom-right'
