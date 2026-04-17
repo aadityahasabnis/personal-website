@@ -5,7 +5,7 @@ import { FadeIn } from '@/components/motion/FadeIn';
 import { HERO_SECTION } from '@/constants/homeConstants';
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, FileText, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense, useRef } from 'react';
 
@@ -64,12 +64,21 @@ export const HeroSection = () => {
                             {HERO_SECTION.primaryCta.label}
                             <ArrowRight className='size-4 transition-transform group-hover:translate-x-1' />
                         </Link>
-                        <Link
-                            href={HERO_SECTION.secondaryCta.href}
-                            className='group inline-flex items-center gap-2 px-6 py-3 text-label font-medium text-foreground bg-card border border-border rounded-full transition-base hover:border-primary/40 hover:text-primary'
-                        >
-                            {HERO_SECTION.secondaryCta.label}
-                        </Link>
+                        <div className='flex items-center gap-4'>
+                            <Link
+                                href={HERO_SECTION.secondaryCta.href}
+                                className='group inline-flex items-center gap-2 px-6 py-3 text-label font-medium text-foreground bg-card border border-border rounded-full transition-base hover:border-primary/40 hover:text-primary'
+                            >
+                                {HERO_SECTION.secondaryCta.label}
+                            </Link>
+                            <Link
+                                href='/resume'
+                                className='group inline-flex items-center gap-2 px-6 py-3 text-label font-medium text-foreground bg-card border border-border rounded-full transition-base hover:border-primary/40 hover:text-primary'
+                            >
+                                Resume
+                                <FileText className='size-4' />
+                            </Link>
+                        </div>
                     </div>
                 </FadeIn>
 

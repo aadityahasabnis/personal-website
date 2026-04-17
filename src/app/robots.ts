@@ -15,6 +15,7 @@ const robots = (): MetadataRoute.Robots => {
     const baseUrl = SITE_CONFIG.url;
     const allowPaths: string[] = [
         '/',
+        '/resume',
         '/api/og',
         '/api/og/',
         ...(SITE_CONFIG.seo.search.enabled ? [SITE_CONFIG.seo.search.path] : []),

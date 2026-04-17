@@ -3,7 +3,7 @@ import FadeIn from '@/components/motion/FadeIn';
 import { ScrollVelocityContainer, ScrollVelocityRow } from '@/components/ui/scroll-based-velocity';
 import { ABOUT_PAGE_CONTENT } from '@/constants/aboutConstants';
 import { SITE_CONFIG, SOCIAL_LINKS } from '@/constants/siteConstants';
-import { ArrowUpRight, Briefcase, Lightbulb, Mail, MapPin, PencilIcon, UsersRound } from 'lucide-react';
+import { ArrowUpRight, Briefcase, FileText, Lightbulb, Mail, MapPin, PencilIcon, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 
 /**
@@ -92,6 +92,13 @@ export default function AboutPageClient() {
                                     className='inline-flex items-center gap-2 px-6 py-3 text-label font-semibold rounded-full border border-border bg-background text-foreground transition-fast hover:border-primary/50 hover:text-primary'
                                 >
                                     {identity.ctas.secondary.label}
+                                </Link>
+                                <Link
+                                    href='/resume'
+                                    className='inline-flex items-center gap-2 px-6 py-3 text-label font-semibold rounded-full border border-border bg-background text-foreground transition-fast hover:border-primary/50 hover:text-primary'
+                                >
+                                    Resume / CV
+                                    <FileText className='size-4' />
                                 </Link>
                                 <Link href={identity.ctas.tertiary.href} className='inline-flex items-center gap-2 text-small font-semibold text-primary transition-fast hover:text-violet-500'>
                                     {identity.ctas.tertiary.label}

@@ -16,6 +16,7 @@ export { ProjectCard } from './project/ProjectCard';
 export { ProjectContent } from './project/ProjectContent';
 export { ProjectHeader } from './project/ProjectHeader';
 export { ProjectMeta } from './project/ProjectMeta';
+export { ResumeContainer, ResumeDivider, ResumeGrid, ResumeHeader, ResumeList, ResumeSection } from './resume';
 
 export type { IArticleCardProps } from './article/ArticleCard';
 export type { IArticleHeaderProps, IBreadcrumb } from './article/ArticleHeader';
@@ -34,4 +35,5 @@ export type { IProjectCardProps } from './project/ProjectCard';
 export type { IProjectContentProps } from './project/ProjectContent';
 export type { IProjectHeaderProps } from './project/ProjectHeader';
 export type { IProjectMetaProps } from './project/ProjectMeta';
+export type { IResumeSkillGroup } from './resume';
 

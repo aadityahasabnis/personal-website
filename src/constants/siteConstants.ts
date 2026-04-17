@@ -1,6 +1,6 @@
 import { FaFacebook, FaGithub, FaInstagram, FaLinkedin, FaPinterest, FaSpotify } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
-import { SiYoutubemusic } from "react-icons/si";
+import { SiLeetcode, SiYoutubemusic } from "react-icons/si";
 
 // ============================================================
 // Site Configuration
@@ -61,7 +61,7 @@ export const SITE_CONFIG = {
       'Aaditya Hasabnis',
       'Aaditya',
     ],
-    preferredCrawlScopePaths: ['/', '/articles', '/notes', '/blogs', '/projects', '/about', '/contact'],
+    preferredCrawlScopePaths: ['/', '/articles', '/notes', '/blogs', '/projects', '/resume', '/about', '/contact'],
     keywordAliasCap: 2,
     websiteAlternateNames: ['Aaditya Hasabnis', 'Aditya Hasabnis'],
     search: {
@@ -82,7 +82,9 @@ export const NAV_LINKS = [
   { label: 'Articles', href: '/articles', hideOnDesktop: false },
   { label: 'Blogs', href: '/blogs', hideOnDesktop: false },
   { label: 'Projects', href: '/projects', hideOnDesktop: false },
+  { label: 'Resume', href: '/resume', hideOnDesktop: true },
   { label: 'About', href: '/about', hideOnDesktop: false },
+  { label: 'Contact', href: '/contact', hideOnDesktop: true },
 ] as const;
 
 export const FOOTER_LINKS = {
@@ -112,6 +114,14 @@ export const SOCIAL_LINKS = [
     isExternal: true,
     ariaLabel: 'Visit Aaditya Hasabnis on LinkedIn',
     icon: FaLinkedin,
+  },
+  {
+    id: 'leetcode',
+    platform: 'LeetCode',
+    url: 'https://leetcode.com/u/aaditya3107',
+    isExternal: true,
+    ariaLabel: 'Visit Aaditya Hasabnis on LeetCode',
+    icon: SiLeetcode,
   },
   {
     id: 'instagram',

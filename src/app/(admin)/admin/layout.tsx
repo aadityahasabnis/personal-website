@@ -6,7 +6,7 @@ import { auth } from '@/lib/auth/admin';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
-    title: 'Admin | Aaditya Hasabnis',
+    title: 'Admin',
     robots: 'noindex, nofollow',
 };
 

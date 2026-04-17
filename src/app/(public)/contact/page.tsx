@@ -3,8 +3,9 @@ import { SITE_CONFIG } from '@/constants/siteConstants';
 import { createPageMetadata } from '@/lib/metadata';
 import { buildDynamicOgImageUrl } from '@/lib/ogImage';
 import { JsonLd, combineSchemas, generateBreadcrumbSchema, generatePersonSchema, generateWebPageSchema, generateWebSiteSchema } from '@/lib/seo';
-import { Clock, Mail, MapPin, MessageSquare } from 'lucide-react';
+import { Clock, FileText, Mail, MapPin, MessageSquare } from 'lucide-react';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 import { ContactForm } from '@/app/(public)/contact/ContactForm';
 import PageHeader from '@/components/layout/PageHeader';
@@ -133,6 +134,25 @@ const ContactPage = () => {
                                         </li>
                                     ))}
                                 </ul>
+                            </section>
+                        </FadeIn>
+
+                        <FadeIn direction='up' delay={0.15} duration={0.55} distance={18}>
+                            <section className='relative flex flex-col gap-3 p-6 rounded-xl border border-border bg-card shadow-none transition-slow hover:border-primary/25 hover:shadow-md'>
+                                <div className='flex items-center gap-2'>
+                                    <FileText className='size-5 text-primary' />
+                                    <h2 className='text-h6 font-semibold text-foreground'>Resume / CV</h2>
+                                </div>
+                                <p className='text-body leading-relaxed text-muted-foreground'>
+                                    Prefer a quick profile overview? View my latest resume for experience, projects, and technical background.
+                                </p>
+                                <Link
+                                    href='/resume'
+                                    className='inline-flex items-center justify-center gap-2 px-5 py-2.5 text-label font-semibold rounded-full border border-border bg-background text-foreground transition-fast hover:border-primary/40 hover:text-primary'
+                                >
+                                    View Resume
+                                    <FileText className='size-4' />
+                                </Link>
                             </section>
                         </FadeIn>
 
