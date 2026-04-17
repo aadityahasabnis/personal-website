@@ -41,7 +41,7 @@ export const SITE_CONFIG = {
 
   seo: {
     twitterHandle: '@aadityahasabnis',
-    ogImage: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aadizz-og-image.png-AH',
+    ogImage: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aadizz-og-image.jpg-hR',
     ogLocale: 'en_US',
     feedLanguage: 'en-us',
     rssEnabled: true,
