@@ -80,7 +80,8 @@ export const deleteSubtopic = async (
                             ...updatedNow(),
                         },
                     },
-                ]
+                ],
+                { updatePipeline: true }
             ),
         ]);
         revalidateSubtopicPaths(topic.slug);

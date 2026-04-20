@@ -6,7 +6,6 @@ import { Check, ChevronDown, Loader2 } from 'lucide-react';
 
 import type { DotNestedScalarKeys, IFormData, IHandleChange, StrongOmit } from '@/components/form/form';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
 import { FieldError, FieldHint, FieldLabel, HiddenInput } from './FieldComponents';
@@ -111,7 +110,7 @@ const CustomSelect = <TFormBody extends IFormData = IFormData, TValue extends IS
                     </button>
                 </PopoverTrigger>
 
-                <PopoverContent align='start' sideOffset={4} className='w-(--radix-popover-trigger-width) p-0'>
+                <PopoverContent align='start' sideOffset={4} className='w-(--radix-popover-trigger-width) max-h-[min(20rem,var(--radix-popover-content-available-height))] overflow-hidden p-0'>
                     {isSearchable ? (
                         <div className='border-border border-b p-2'>
                             <input
@@ -124,7 +123,7 @@ const CustomSelect = <TFormBody extends IFormData = IFormData, TValue extends IS
                         </div>
                     ) : null}
 
-                    <ScrollArea className='max-h-60'>
+                    <div className='max-h-[min(15rem,var(--radix-popover-content-available-height))] overflow-y-auto overscroll-contain'>
                         {filteredOptions.length === 0 ? (
                             <p className='px-3 py-2 text-small text-muted-foreground'>{noOptionsMessage}</p>
                         ) : (
@@ -159,7 +158,7 @@ const CustomSelect = <TFormBody extends IFormData = IFormData, TValue extends IS
                                 })}
                             </div>
                         )}
-                    </ScrollArea>
+                    </div>
                 </PopoverContent>
             </Popover>
 

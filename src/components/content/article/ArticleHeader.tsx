@@ -101,7 +101,7 @@ const ArticleHeader = ({
             {coverImage && (
                 <FadeIn direction='up' distance={14} duration={animationDuration} delay={d.cover} trigger='always'>
                     <div className='relative overflow-hidden mb-6 rounded-2xl border border-border'>
-                        <div className='relative h-52 w-full md:h-72'>
+                        <div className='relative h-52 w-full md:h-96'>
                             <Image src={coverImage} alt={title} fill className='object-cover' sizes='(max-width: 768px) 100vw, 1024px' priority />
                         </div>
                     </div>

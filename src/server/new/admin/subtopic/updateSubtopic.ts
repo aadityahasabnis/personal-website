@@ -103,7 +103,8 @@ export const updateSubtopic = async (
                                 ...updatedNow(),
                             },
                         },
-                    ]
+                    ],
+                    { updatePipeline: true }
                 ),
                 Topic.updateOne(
                     { _id: targetTopicId },
