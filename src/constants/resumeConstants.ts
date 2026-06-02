@@ -65,7 +65,7 @@ export const RESUME_DATA: IResumeData = {
         location: 'Pune, India',
         summary: 'Building scalable, secure, and maintainable web applications using modern technologies and frameworks.',
         avatarSrc: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aaditya-hasabnisidentity-photo.jpg-cK',
-        resumePdfUrl: 'https://cdn.aadityahasabnis.workers.dev/cdn/files/documents/aaditya-hasabnis-latest-resume.pdf-6a',
+        resumePdfUrl: 'https://cdn.aadityahasabnis.workers.dev/cdn/files/documents/aaditya-hasabnis-resume-2-6.pdf-wH',
     },
     profiles: [
         { label: 'LinkedIn', href: 'https://linkedin.com/in/aaditya-hasabnis' },
@@ -78,7 +78,7 @@ export const RESUME_DATA: IResumeData = {
             institutionUrl: 'https://www.linkedin.com/school/viitpune/posts/',
             timeline: '2022 - 2026',
             resultLabel: 'CGPA',
-            resultValue: '8.45',
+            resultValue: '8.53',
         },
         {
             title: 'Higher Secondary Certificate',

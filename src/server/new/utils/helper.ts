@@ -138,10 +138,12 @@ export const tryCatch = <TArgs extends unknown[], TResult>(
 // Database Utilities
 // =================================================
 
-export const cleanUndefined = <T extends Record<string, unknown>>(obj: T): Partial<T> => {
+export const cleanUndefined = <T extends object>(obj: T): { [K in keyof T]: T[K] } => {
     const cleaned = { ...obj };
-    for (const key of Object.keys(cleaned)) {
-        if (cleaned[key] === undefined) delete cleaned[key];
+    for (const key in cleaned) {
+        if (cleaned[key] === undefined) {
+            delete cleaned[key];
+        }
     }
     return cleaned;
 };
