@@ -18,7 +18,7 @@ export const SITE_CONFIG = {
 
   author: {
     name: 'Aaditya Hasabnis',
-    adminProfileImage: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/aadizz-emoji.png-MW',
+    adminProfileImage: 'https://cdn.aadityahasabnis.workers.dev/cdn/images/gallery/adminaadizzimg.png-CP',
     givenName: 'Aaditya',
     marathiGivenName: 'आदित्य',
     familyName: 'Hasabnis',
