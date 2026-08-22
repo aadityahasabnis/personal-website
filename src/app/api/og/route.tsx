@@ -1,8 +1,6 @@
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-
 const trimText = (value: string | null, fallback: string, maxLength: number): string => {
     const candidate = value ?? fallback;
     return candidate.replace(/\s+/g, ' ').trim().slice(0, maxLength);
