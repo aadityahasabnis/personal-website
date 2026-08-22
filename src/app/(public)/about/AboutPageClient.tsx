@@ -158,7 +158,19 @@ export default function AboutPageClient() {
                                     <p className='text-small text-muted-foreground sm:text-right'>{item.period}</p>
                                 </div>
 
-                                <p className='text-small font-medium text-primary'>{item.company}</p>
+                                {item.companyUrl ? (
+                                    <a
+                                        href={item.companyUrl}
+                                        target='_blank'
+                                        rel='noreferrer'
+                                        className='inline-flex items-center gap-1 text-small font-medium text-primary transition-fast hover:text-violet-500'
+                                    >
+                                        {item.company}
+                                        <ArrowUpRight className='size-3.5' aria-hidden='true' />
+                                    </a>
+                                ) : (
+                                    <p className='text-small font-medium text-primary'>{item.company}</p>
+                                )}
                                 <div className='flex flex-col gap-2'>
                                     {item.description.map((paragraph) => (
                                         <p key={paragraph} className='text-body leading-relaxed text-muted-foreground'>

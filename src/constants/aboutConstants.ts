@@ -14,6 +14,7 @@ export interface IAboutExperienceItem {
     title: string;
     period: string;
     company: string;
+    companyUrl?: string;
     description: readonly string[];
     current?: boolean;
 }
@@ -86,6 +87,7 @@ export const ABOUT_PAGE_CONTENT = {
                 title: 'SDE Intern',
                 period: 'July 2025 - Jan 2026',
                 company: 'BytesWrite Solution Pvt. Ltd.',
+                companyUrl: 'https://www.linkedin.com/company/byteswrite',
                 description: [
                     'Designed and implemented recruitment workflows with role-based access control (RBAC), and built scalable REST APIs for end-to-end job lifecycle management.',
                     'Engineered SSR-based data fetching pipelines for improved performance and reliability, and developed an internal ERP workflow system with approval pipelines, task tracking, and centralized API logging to improve observability and maintainability.',
@@ -97,6 +99,7 @@ export const ABOUT_PAGE_CONTENT = {
                 title: 'Software Development Intern',
                 period: 'July 2024 - May 2025',
                 company: 'Two Register Pvt Ltd.',
+                companyUrl: 'https://www.linkedin.com/company/tworegisters/',
                 description: [
                     'Contributed to an enterprise-grade inventory and materials management system (UMMS) by delivering backend features and designing scalable REST APIs.',
                     'Optimized PostgreSQL schemas and queries with Express.js and Prisma ORM to improve production performance, reliability, and data consistency.',
