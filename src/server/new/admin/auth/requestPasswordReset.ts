@@ -8,6 +8,7 @@
 import { PASSWORD_RESET_CONFIG } from '@/constants/emailConstants';
 import type { IApiResponse } from '@/interfaces/actionHelper';
 import { connectDB } from '@/lib/db/connectDB';
+import { getPublicSiteUrl } from '@/lib/public-url';
 import Admin from '@/server/models/Admin';
 import { generateResetToken, getResetTokenExpiry } from '../../utils/auth-tokens';
 import { error, success } from '../../utils/helper';
@@ -94,10 +95,7 @@ export const requestPasswordReset = async (
         // Store token in admin document
         await admin.setPasswordResetToken(token, expiresAt);
 
-        // Build reset link
-        // In production, this would use the actual domain
-        const baseUrl = process.env.NEXTAUTH_URL ?? 'http://localhost:3000';
-        const resetLink = `${baseUrl}/admin/reset-password?token=${token}`;
+        const resetLink = `${getPublicSiteUrl()}/admin/reset-password?token=${encodeURIComponent(token)}`;
 
         // Generate email content
         const { html, text } = passwordResetEmailTemplate(

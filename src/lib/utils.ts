@@ -35,6 +35,15 @@ export const formatDate = (date?: Date | string): string => {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 };
 
+export const formatDateTime = (date?: Date | string): string => {
+    if (!date) return '';
+    return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'short',
+        timeStyle: 'short',
+        timeZone: 'UTC',
+    }).format(new Date(date));
+};
+
 export const formatRelativeTime = (date: Date | string): string => {
     const diff = Date.now() - new Date(date).getTime();
     const m = Math.floor(diff / 60000);

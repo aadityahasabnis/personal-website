@@ -8,6 +8,7 @@ export { default as ActionForm, type IActionFormProps } from './ActionForm';
 export { default as AdminEntityForm, type IAdminEntityFormProps } from './AdminEntityForm';
 export { default as CustomCheckbox, type ICustomCheckboxProps } from './CustomCheckbox';
 export { default as CustomInput, type ICustomInputProps, type InputType } from './CustomInput';
+export { default as CustomOtpInput } from './CustomOtpInput';
 export { default as CustomRichText, type ICustomRichTextProps } from './CustomRichText';
 export { default as CustomSelect, type ICustomSelectProps, type ISelectFieldValue, type ISelectOption } from './CustomSelect';
 export { default as CustomTagInput, type ICustomTagInputProps } from './CustomTagInput';

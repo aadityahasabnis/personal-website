@@ -12,6 +12,7 @@ import { cn } from '@/lib/utils';
 
 import CustomCheckbox from './CustomCheckbox';
 import CustomInput, { type InputType } from './CustomInput';
+import CustomOtpInput from './CustomOtpInput';
 import CustomRichText from './CustomRichText';
 import CustomSelect, { type ISelectFieldValue, type ISelectOption } from './CustomSelect';
 import CustomTagInput from './CustomTagInput';
@@ -65,6 +66,12 @@ export interface IInputFieldConfig<TFormBody extends IFormData> extends IBaseFie
           }
         | undefined;
     autoComplete?: string | undefined;
+}
+
+export interface IOtpFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
+    fieldtype: 'otp';
+    name: TScalarPath<TFormBody>;
+    label?: string | undefined;
 }
 
 export interface ITextAreaFieldConfig<TFormBody extends IFormData> extends IBaseFieldConfig, ISharedFieldConfig {
@@ -137,6 +144,7 @@ export interface IGroupFieldConfig<TFormBody extends IFormData> extends IBaseFie
 
 export type IFieldConfig<TFormBody extends IFormData> =
     | IInputFieldConfig<TFormBody>
+    | IOtpFieldConfig<TFormBody>
     | ITextAreaFieldConfig<TFormBody>
     | ISelectFieldConfig<TFormBody>
     | ICheckboxFieldConfig<TFormBody>
@@ -184,6 +192,20 @@ export const renderField = <TFormBody extends IFormData>(formData: TFormBody, ha
                     supplementaryLink={field.supplementaryLink}
                     autoComplete={field.autoComplete}
                     containerClassName={containerClassName}
+                />
+            );
+        case 'otp':
+            return (
+                <CustomOtpInput
+                    key={key}
+                    name={field.name}
+                    value={getResolvedValue(formData, field.name, '')}
+                    onChange={handleChange}
+                    required={field.required}
+                    disabled={field.disabled}
+                    label={field.label}
+                    hint={field.hint}
+                    errorMessage={field.errorMessage}
                 />
             );
         case 'textArea':
@@ -323,6 +345,7 @@ export interface IFormWrapperProps<TFormBody extends IFormData> {
     handleSecondaryClick?: (() => void) | undefined;
     className?: string | undefined;
     submitLabel?: string | undefined;
+    submittingLabel?: string | undefined;
     cancelLabel?: string | undefined;
     handleChange: IHandleChange;
     setFormData: Dispatch<SetStateAction<TFormBody>>;
@@ -341,6 +364,7 @@ const FormWrapper = <TFormBody extends IFormData>({
     handleSecondaryClick,
     className,
     submitLabel = 'Submit',
+    submittingLabel = 'Saving…',
     cancelLabel = 'Discard',
     handleChange,
     formData,
@@ -354,7 +378,7 @@ const FormWrapper = <TFormBody extends IFormData>({
     const router = useRouter();
 
     return (
-        <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6 pb-5', className)}>
+            <form onSubmit={handleSubmit} className={cn('flex flex-col gap-6 pb-5', className)}>
             <div className='grid gap-5 sm:grid-cols-2 md:grid-cols-6'>{formConfig.map((field, index) => renderField(formData, handleChange, field, index))}</div>
 
             {hideActionable ? null : (
@@ -369,8 +393,8 @@ const FormWrapper = <TFormBody extends IFormData>({
                             {cancelLabel}
                         </Button>
                     </div>
-                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='h-9 w-full min-w-32 shadow-sm sm:w-auto'>
-                        {isSubmitting ? 'Saving…' : submitLabel}
+                    <Button ref={submitBtnRef} type='submit' disabled={!isModified || isSubmitting || disabled} className='h-9 w-full min-w-32 cursor-pointer shadow-sm sm:w-auto'>
+                        {isSubmitting ? submittingLabel : submitLabel}
                     </Button>
                 </div>
             )}

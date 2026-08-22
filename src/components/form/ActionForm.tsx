@@ -29,6 +29,7 @@ export interface IActionFormProps<TFormBody extends IFormData, TResult> {
     transformPayload?: ((formData: TFormBody) => TFormBody) | undefined;
     invalidateKeys?: QueryKey[] | undefined;
     submitLabel?: string | undefined;
+    submittingLabel?: string | undefined;
     cancelLabel?: string | undefined;
     className?: string | undefined;
     disabled?: boolean | undefined;
@@ -48,6 +49,7 @@ export function ActionForm<TFormBody extends IFormData, TResult>({
     transformPayload,
     invalidateKeys,
     submitLabel,
+    submittingLabel,
     cancelLabel,
     className,
     disabled,
@@ -106,6 +108,7 @@ export function ActionForm<TFormBody extends IFormData, TResult>({
             handleSecondaryClick={handleSecondary}
             className={className}
             submitLabel={submitLabel}
+            submittingLabel={submittingLabel}
             cancelLabel={cancelLabel}
             handleChange={handleChange}
             setFormData={setFormData}

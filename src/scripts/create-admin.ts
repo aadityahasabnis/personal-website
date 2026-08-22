@@ -18,7 +18,7 @@ const getArg = (name: string, fallback: string) => {
     return arg ? arg.split('=')[1] : process.env[`ADMIN_${name.toUpperCase()}`] ?? fallback;
 };
 
-const EMAIL = getArg('email', 'aaditya.hasabnis@gmail.com');
+const EMAIL = getArg('email', 'aaditya.hasabnis.dev@gmail.com');
 const PASSWORD = getArg('password', 'Admin@123');
 const NAME = getArg('name', 'Aaditya Hasabnis');
 

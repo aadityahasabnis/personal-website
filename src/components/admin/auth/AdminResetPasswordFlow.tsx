@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, type ReactElement } from 'react';
 
+import { AdminAuthShell } from '@/components/admin/auth/AdminAuthShell';
 import { ActionForm, type IFieldConfig } from '@/components/form';
 import { Button } from '@/components/ui/button';
 import { SITE_CONFIG } from '@/constants/siteConstants';
@@ -74,8 +75,8 @@ export function AdminResetPasswordFlow(): ReactElement {
 
     if (isTokenMissing) {
         return (
-            <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-                <section className='relative flex w-full max-w-xl flex-col gap-5 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8' aria-label='Reset password'>
+            <AdminAuthShell eyebrow='Password recovery' title='Your reset link is incomplete.'>
+                <div className='flex flex-col gap-5'>
                     <div className='flex items-start gap-3 p-4 text-regular text-destructive bg-destructive/10 border border-destructive/25 rounded-lg'>
                         <AlertCircle className='mt-0.5 size-5 shrink-0' />
                         <div className='flex flex-col gap-1'>
@@ -94,32 +95,26 @@ export function AdminResetPasswordFlow(): ReactElement {
                             </Link>
                         </Button>
                     </div>
-                </section>
-            </div>
+                </div>
+            </AdminAuthShell>
         );
     }
 
     if (isTokenLoading) {
         return (
-            <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-                <section
-                    className='relative flex w-full max-w-lg items-center gap-3 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8'
-                    aria-label='Verifying reset token'
-                >
+            <AdminAuthShell eyebrow='Password recovery' title='Checking your reset link.'>
+                <div className='flex items-center gap-3 p-4 text-body text-muted-foreground bg-muted/40 border border-border rounded-xl'>
                     <Loader2 className='size-5 animate-spin text-primary' />
-                    <p className='text-regular text-muted-foreground'>Verifying your reset link...</p>
-                </section>
-            </div>
+                    <p>Verifying your reset link...</p>
+                </div>
+            </AdminAuthShell>
         );
     }
 
     if (isTokenErrored) {
         return (
-            <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-                <section
-                    className='relative flex w-full max-w-xl flex-col gap-5 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8'
-                    aria-label='Reset password verification error'
-                >
+            <AdminAuthShell eyebrow='Password recovery' title='We could not verify this link.'>
+                <div className='flex flex-col gap-5'>
                     <div className='flex items-start gap-3 p-4 text-regular text-warning bg-warning/10 border border-warning/25 rounded-lg'>
                         <ShieldAlert className='mt-0.5 size-5 shrink-0' />
                         <div className='flex flex-col gap-1'>
@@ -135,18 +130,15 @@ export function AdminResetPasswordFlow(): ReactElement {
                             <Link href='/admin/forgot-password'>Request new link</Link>
                         </Button>
                     </div>
-                </section>
-            </div>
+                </div>
+            </AdminAuthShell>
         );
     }
 
     if (!isTokenValid) {
         return (
-            <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-                <section
-                    className='relative flex w-full max-w-xl flex-col gap-5 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8'
-                    aria-label='Reset password invalid token'
-                >
+            <AdminAuthShell eyebrow='Password recovery' title='This link has expired.'>
+                <div className='flex flex-col gap-5'>
                     <div className='flex items-start gap-3 p-4 text-regular text-warning bg-warning/10 border border-warning/25 rounded-lg'>
                         <ShieldAlert className='mt-0.5 size-5 shrink-0' />
                         <div className='flex flex-col gap-1'>
@@ -165,14 +157,14 @@ export function AdminResetPasswordFlow(): ReactElement {
                             </Link>
                         </Button>
                     </div>
-                </section>
-            </div>
+                </div>
+            </AdminAuthShell>
         );
     }
 
     return (
-        <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-            <section className='relative flex w-full max-w-xl flex-col gap-6 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8' aria-label='Reset password'>
+        <AdminAuthShell eyebrow='Password recovery' title='Create a new password.'>
+            <div className='flex flex-col gap-7'>
                 <header className='flex flex-col gap-2'>
                     <h1 className='text-title font-semibold text-foreground'>Set a new password</h1>
                     <p className='text-regular text-muted-foreground'>
@@ -181,18 +173,19 @@ export function AdminResetPasswordFlow(): ReactElement {
                     <p className='text-small text-muted-foreground'>{SITE_CONFIG.name} admin security</p>
                 </header>
 
-                <div className='flex flex-col gap-4 p-4 bg-background/50 border border-border rounded-xl sm:p-5'>
+                <div className='flex flex-col gap-4'>
                     <ActionForm<IResetPasswordFormData, IResetPasswordResult>
                         action={resetPasswordAction}
                         initialData={{ token, newPassword: '', confirmPassword: '' }}
                         fields={resetFields}
                         submitLabel='Update Password'
+                        submittingLabel='Updating...'
                         cancelLabel='Clear'
                         className='gap-4 pb-0'
                         navigateBackRequired={false}
                         onSuccess={({ result }) => {
                             showSuccess('Password updated', result.message);
-                            router.push('/admin/login');
+                            router.push('/admin');
                             router.refresh();
                         }}
                         onError={({ message }) => {
@@ -201,16 +194,8 @@ export function AdminResetPasswordFlow(): ReactElement {
                     />
                 </div>
 
-                <footer className='flex items-center justify-end'>
-                    <Button asChild type='button' variant='ghost' size='sm' className='gap-2'>
-                        <Link href='/admin/login'>
-                            <ArrowLeft className='size-4' />
-                            Back to login
-                        </Link>
-                    </Button>
-                </footer>
-            </section>
-        </div>
+            </div>
+        </AdminAuthShell>
     );
 }
 

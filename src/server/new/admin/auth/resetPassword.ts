@@ -6,6 +6,7 @@
 // ============================================================
 
 import type { IApiResponse } from '@/interfaces/actionHelper';
+import { signIn } from '@/lib/auth/admin';
 import bcrypt from 'bcryptjs';
 import { isResetTokenExpired } from '../../utils/auth-tokens';
 import { error, handleError, success } from '../../utils/helper';
@@ -110,9 +111,24 @@ export const resetPassword = async (
         admin.passwordHash = passwordHash;
         await admin.clearPasswordResetToken();
 
+        // The reset token has authenticated this request, so create the session directly.
+        try {
+            const signInResult = await signIn('credentials', {
+                email: admin.email,
+                password: newPassword,
+                redirect: false,
+            });
+
+            if (signInResult && typeof signInResult === 'object' && 'error' in signInResult) {
+                return error('Password was updated, but the session could not be created. Please log in again.', 500);
+            }
+        } catch {
+            return error('Password was updated, but the session could not be created. Please log in again.', 500);
+        }
+
         return success({
             success: true,
-            message: 'Password reset successfully. You can now log in with your new password.',
+            message: 'Password reset successfully. You are now signed in.',
         });
     } catch (err) {
         return handleError(err, 'Failed to reset password');

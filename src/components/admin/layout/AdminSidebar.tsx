@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { SITE_CONFIG } from '@/constants/siteConstants';
 import { cn } from '@/lib/utils';
 import { BookOpen, FileText, FolderKanban, ImageIcon, Layers, LayoutDashboard, Mail, Menu, MessageSquare, Settings, type LucideIcon } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -141,7 +142,7 @@ const AdminSidebar = (): React.ReactElement => {
                 <SheetContent side='left' className='w-72 p-0' showCloseButton={false}>
                     <SheetHeader className='border-b border-border px-4 py-4'>
                         <div className='flex items-center gap-3'>
-                            <div className='flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary text-base font-bold text-primary-foreground'>A</div>
+                            <Image src={SITE_CONFIG.author.adminProfileImage} alt={`${SITE_CONFIG.name} profile`} width={36} height={36} className='size-9 shrink-0 rounded-lg object-cover' />
                             <div className='flex flex-col'>
                                 <SheetTitle className='text-sm font-semibold'>{SITE_CONFIG.name}</SheetTitle>
                                 <span className='text-xs text-muted-foreground'>Admin Panel</span>
@@ -185,7 +186,9 @@ const AdminSidebar = (): React.ReactElement => {
             >
                 {/* Logo */}
                 <div className='flex h-16 items-center border-b border-border px-3'>
-                    <div className='flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary text-base font-bold text-primary-foreground shadow-sm'>A</div>
+                    <span className='relative h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-sm'>
+                        <Image src={SITE_CONFIG.author.adminProfileImage} alt={`${SITE_CONFIG.name} profile`} width={40} height={40} className='object-cover' />
+                    </span>
                     <div className={cn('ml-3 flex flex-col whitespace-nowrap', 'transition-all duration-200 ease-out', isHovered ? 'translate-x-0 opacity-100' : '-translate-x-2 opacity-0')}>
                         <span className='text-sm font-semibold text-foreground'>{SITE_CONFIG.name}</span>
                         <span className='text-xs text-muted-foreground'>Admin Panel</span>

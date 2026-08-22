@@ -1,12 +1,12 @@
 'use client';
 
-import { ArrowLeft, CheckCircle2, Mail } from 'lucide-react';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState, type ReactElement } from 'react';
 
+import { AdminAuthShell } from '@/components/admin/auth/AdminAuthShell';
 import { ActionForm, type IFieldConfig } from '@/components/form';
 import { Button } from '@/components/ui/button';
-import { SITE_CONFIG } from '@/constants/siteConstants';
 import { useSnackbar } from '@/hooks';
 import type { IFormData } from '@/interfaces/actionHelper';
 import { requestPasswordReset, type IRequestPasswordResetResult } from '@/server/new/admin/auth';
@@ -52,23 +52,30 @@ export function AdminForgotPasswordFlow(): ReactElement {
     }, [requestedEmail]);
 
     return (
-        <div className='relative flex min-h-screen items-center justify-center px-4 py-8 bg-muted/30'>
-            <section className='relative flex w-full max-w-xl flex-col gap-6 p-6 text-foreground bg-card border border-border rounded-2xl shadow-glow-sm sm:p-8' aria-label='Forgot password'>
-                <header className='flex flex-col gap-3'>
-                    <div className='flex items-center gap-3'>
-                        <span className='relative flex size-12 items-center justify-center text-primary-foreground bg-primary rounded-xl shadow-glow-sm'>
-                            <Mail className='size-5' />
-                        </span>
-                        <div className='flex flex-col gap-0.5'>
-                            <h1 className='text-title font-semibold text-foreground'>Forgot your password?</h1>
-                            <p className='text-small text-muted-foreground'>{SITE_CONFIG.name} admin recovery</p>
-                        </div>
-                    </div>
-                    <p className='text-regular text-muted-foreground'>Enter your admin email. If an account exists, we will send a secure reset link.</p>
+        <AdminAuthShell
+            eyebrow='Account recovery'
+            title='Get back in securely.'
+            footer={
+                <div className='flex items-center justify-between gap-3 border-t border-border pt-4'>
+                    <Button type='button' variant='ghost' size='sm' onClick={() => showInfo('Check spam and promotions folders if email delivery is delayed.')}>Need help?</Button>
+                    <Button asChild type='button' variant='ghost' size='sm' className='gap-2'>
+                        <Link href='/admin/login'>
+                            <ArrowLeft className='size-4' />
+                            Back to login
+                        </Link>
+                    </Button>
+                </div>
+            }
+        >
+            <div className='flex flex-col gap-7'>
+                <header className='flex flex-col gap-2'>
+                    <p className='text-label font-semibold uppercase tracking-[0.14em] text-primary'>Reset access</p>
+                    <h2 className='text-h1 font-semibold text-foreground'>Forgot your password?</h2>
+                    <p className='text-body leading-relaxed text-muted-foreground'>Enter your admin email. If an account exists, we will send a secure reset link.</p>
                 </header>
 
                 {requestedEmail ? (
-                    <div className='flex items-start gap-2 p-3 text-regular text-success bg-success/10 border border-success/25 rounded-lg'>
+                    <div className='flex items-start gap-3 p-4 text-body text-success bg-success/10 border border-success/25 rounded-xl'>
                         <CheckCircle2 className='mt-0.5 size-4 shrink-0' />
                         <div className='flex flex-col gap-1'>
                             <p className='font-medium'>Reset instructions sent</p>
@@ -77,12 +84,13 @@ export function AdminForgotPasswordFlow(): ReactElement {
                     </div>
                 ) : null}
 
-                <div className='flex flex-col gap-4 p-4 bg-background/50 border border-border rounded-xl sm:p-5'>
+                <div className='flex flex-col gap-4'>
                     <ActionForm<IForgotPasswordFormData, IRequestPasswordResetResult>
                         action={requestPasswordResetAction}
                         initialData={{ email: '' }}
                         fields={FORGOT_PASSWORD_FIELDS}
                         submitLabel='Send Reset Link'
+                        submittingLabel='Sending...'
                         cancelLabel='Clear'
                         className='gap-4 pb-0'
                         navigateBackRequired={false}
@@ -96,19 +104,8 @@ export function AdminForgotPasswordFlow(): ReactElement {
                     />
                 </div>
 
-                <footer className='flex items-center justify-between gap-3'>
-                    <Button type='button' variant='ghost' size='sm' onClick={() => showInfo('Check spam and promotions folders if email delivery is delayed.')}>
-                        Need help?
-                    </Button>
-                    <Button asChild type='button' variant='ghost' size='sm' className='gap-2'>
-                        <Link href='/admin/login'>
-                            <ArrowLeft className='size-4' />
-                            Back to login
-                        </Link>
-                    </Button>
-                </footer>
-            </section>
-        </div>
+            </div>
+        </AdminAuthShell>
     );
 }
 

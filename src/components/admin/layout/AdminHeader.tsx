@@ -3,13 +3,14 @@
 import { ExternalLink, LogOut, Moon, RefreshCw, Search, Settings, Sun } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useTheme } from 'next-themes';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState, useTransition } from 'react';
 
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { SITE_CONFIG } from '@/constants/siteConstants';
 import { cn } from '@/lib/utils';
 import { CommandPalette } from '../CommandPalette';
 
@@ -51,13 +52,6 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
     const toggleTheme = (): void => {
         setTheme(theme === 'dark' ? 'light' : 'dark');
     };
-
-    const userInitials = user.name
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
 
     return (
         <TooltipProvider delayDuration={0}>
@@ -126,22 +120,15 @@ const AdminHeader = ({ user }: IAdminHeaderProps): React.ReactElement => {
                     {/* User Menu */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant='ghost' className={cn('relative h-9 gap-2 rounded-lg px-2', 'hover:bg-muted', 'focus-visible:ring-2 focus-visible:ring-primary/20')}>
-                                <Avatar size='sm'>
-                                    <AvatarFallback className={cn('bg-linear-to-br from-primary/80 to-primary', 'text-[10px] font-semibold text-primary-foreground')}>{userInitials}</AvatarFallback>
-                                </Avatar>
-                                <div className='hidden flex-col items-start sm:flex'>
-                                    <span className='text-sm font-medium leading-none'>{user.name}</span>
-                                    <span className='text-[10px] text-muted-foreground leading-none mt-0.5'>{user.role}</span>
-                                </div>
+                            <Button variant='ghost' size='icon' className={cn('relative h-9 w-9 rounded-full p-0', 'hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0')}>
+                                <span className='relative h-8 w-8 shrink-0 overflow-hidden rounded-full shadow-sm'>
+                                    <Image src={SITE_CONFIG.author.adminProfileImage} alt={`${SITE_CONFIG.name} profile`} fill sizes='32px' className='object-cover' />
+                                </span>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align='end' sideOffset={8} className='w-56 p-1'>
                             {/* User Info - Not hoverable */}
                             <div className='flex items-center gap-3 px-2 py-3 select-none'>
-                                <Avatar size='sm'>
-                                    <AvatarFallback className={cn('bg-linear-to-br from-primary/80 to-primary', 'text-xs font-semibold text-primary-foreground')}>{userInitials}</AvatarFallback>
-                                </Avatar>
                                 <div className='flex flex-1 flex-col overflow-hidden'>
                                     <span className='truncate text-sm font-medium text-foreground'>{user.name}</span>
                                     <span className='truncate text-xs text-muted-foreground'>{user.email}</span>

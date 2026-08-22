@@ -10,6 +10,7 @@ import type { IFormData } from '@/components/form/form';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useFormOperations, useSnackbar } from '@/hooks/form';
+import { formatDateTime } from '@/lib/utils';
 import {
     changeAdminPassword,
     type IAdminSettingsProfile,
@@ -417,15 +418,13 @@ export const SettingsForm = ({ profile }: ISettingsFormProps): React.ReactElemen
                         <div>
                             <dt className="text-muted-foreground">Last Login</dt>
                             <dd className="text-foreground">
-                                {profile.lastLoginAt
-                                    ? new Date(profile.lastLoginAt).toLocaleString()
-                                    : 'Never'}
+                                {profile.lastLoginAt ? formatDateTime(profile.lastLoginAt) : 'Never'}
                             </dd>
                         </div>
                         <div>
                             <dt className="text-muted-foreground">Last Updated</dt>
                             <dd className="text-foreground">
-                                {new Date(profile.updatedAt).toLocaleString()}
+                                {formatDateTime(profile.updatedAt)}
                             </dd>
                         </div>
                     </dl>

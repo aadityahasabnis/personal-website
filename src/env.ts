@@ -16,6 +16,7 @@ export const env = {
     MONGODB_URI:           get('MONGODB_URI'),
     DB_NAME:               get('DB_NAME', false) || 'portfolio',
     NEXTAUTH_SECRET:       get('NEXTAUTH_SECRET'),
+    NEXTAUTH_URL:          get('NEXTAUTH_URL', false),
     GOOGLE_CLIENT_ID:      get('GOOGLE_CLIENT_ID', false),
     GOOGLE_CLIENT_SECRET:  get('GOOGLE_CLIENT_SECRET', false),
     CLOUDINARY_CLOUD_NAME: get('CLOUDINARY_CLOUD_NAME', false),
