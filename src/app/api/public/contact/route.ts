@@ -5,7 +5,7 @@ import { submitPublicContact, type ISubmitPublicContactInput } from '@/server/ne
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const ALLOWED_ORIGINS = new Set(['https://aadityahasabnis.github.io']);
+const ALLOWED_ORIGINS = new Set(['https://aadityahasabnis.github.io', 'https://links.aadityahasabnis.com']);
 const CORS_METHODS = 'POST, OPTIONS';
 const CORS_HEADERS = 'Content-Type';
 const CORS_MAX_AGE_SECONDS = '86400';
